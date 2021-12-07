@@ -9,7 +9,7 @@ Finally, we could mount a seed generation (and new mutation strategy) to speed u
 
 In a first approximation, my goal would be to automatically generate the *bytecode* to interact with a library from static analysis.
 
-Long story short, I want to generalize this problem:
+Long story short, I want to generalize this problem (taken from Nyx -- Usenix Sec 2020):
 ![alt text](./img/img_nyx.png)
 
 
