@@ -1,5 +1,6 @@
 #include "myLib.hpp"
 #include <iostream>
+#include <string.h>
 
 using namespace std;
 
@@ -9,9 +10,42 @@ using namespace std;
 
 int STATE = INIT;
 
-void print_value( int x )
+typedef struct {
+    int x;
+    int z;
+    char s[10];
+} my_connection;
+
+
+void echo_connection(my_connection a_conn, my_connection *r_conn) {
+    cout << "ciao\n";
+}
+
+my_connection make_connection(int arg_x, int arg_z, char *arg_s) {
+    my_connection a_ret;
+    a_ret.x = arg_x;
+    a_ret.z = arg_z;
+
+    strncpy(a_ret.s, arg_s, strlen(a_ret.s));
+
+    return a_ret;
+}
+
+static my_connection a_conn;
+
+my_connection* make_connection2(int arg_x, int arg_z, char *arg_s) {
+    a_conn.x = arg_x;
+    a_conn.z = arg_z;
+
+    strncpy(a_conn.s, arg_s, strlen(a_conn.s));
+
+    return &a_conn;
+}
+
+void print_value( int *x, int b )
 {
-    cout << x << "\n";
+    cout << *x << "\n";
+    *x = b;
 }
 
 void set_state(int x) {
@@ -23,7 +57,7 @@ int get_state() {
 }
 
 void leak() {
-
+    my_connection a = make_connection(0xA, 0xB, "ciao");
 }
 
 int taint() {
