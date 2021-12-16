@@ -1,0 +1,8 @@
+libxml2/*
+phasar/*
+
+LLVM/build
+LLVM/binutils/
+LLVM/clang/
+LLVM/lld/
+LLVM/llvm/
