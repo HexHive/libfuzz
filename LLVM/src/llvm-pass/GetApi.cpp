@@ -79,10 +79,10 @@ namespace {
         string str_ret;
 
         str_ret += "{";
-        str_ret += "'name': '" + this->name + "', ";
-        str_ret += "'flag': '" + this->flag + "', ";
-        str_ret += "'size': "  + to_string(this->size) + ", ";
-        str_ret += "'type': '" + this->type + "'";
+        str_ret += "\"name\": \"" + this->name + "\", ";
+        str_ret += "\"flag\": \"" + this->flag + "\", ";
+        str_ret += "\"size\": "  + to_string(this->size) + ", ";
+        str_ret += "\"type\": \"" + this->type + "\"";
         str_ret += "}";
 
         return str_ret;
@@ -97,9 +97,9 @@ namespace {
       string str_ret;
 
       str_ret += "{";
-      str_ret += "'function_name': '" + this->function_name + "', ";
-      str_ret += "'return_info': " + this->return_info.to_json() + ", ";
-      str_ret += "'arguments_info': [";
+      str_ret += "\"function_name\": \"" + this->function_name + "\", ";
+      str_ret += "\"return_info\": " + this->return_info.to_json() + ", ";
+      str_ret += "\"arguments_info\": [";
       
       int max_arg = this->arguments_info.size();
       int n_arg = 0;

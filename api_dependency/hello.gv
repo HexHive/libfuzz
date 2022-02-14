@@ -1,0 +1,10 @@
+digraph G {
+	connect -> send_msg
+	connect -> receive_msg
+	connect -> close
+	send_msg -> connect
+	send_msg -> receive_msg
+	receive_msg -> connect
+	receive_msg -> send_msg
+	close -> connect
+}
