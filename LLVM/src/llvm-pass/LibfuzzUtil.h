@@ -11,6 +11,10 @@
 #define LLVM_TRANSFORMS_UTILS_HEXTYPE_H
 
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Argument.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -102,8 +106,11 @@ namespace libfuzz {
     }
   } function_record;
   
-  void dumpCoerceMap(std::string func_name, unsigned arg_pos, std::string arg_original, std::string arg_coerce);
+  // void dumpCoerceMap(std::string func_name, unsigned arg_pos, std::string arg_original, std::string arg_coerce);
+  void dumpCoerceMap(llvm::Function *func, unsigned arg_pos, std::string arg_original_name, std::string arg_original_type, llvm::Argument *arg_coerce);
   void dumpApiInfo(function_record a_fun);
+
+  uint64_t estimate_size(llvm::Type* a_type, bool has_byval, llvm::DataLayout *DL);
   
 } // llvm namespace
 #endif  // LLVM_TRANSFORMS_UTILS_HEXTYPE_H

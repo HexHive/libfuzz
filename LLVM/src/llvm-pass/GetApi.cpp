@@ -69,31 +69,19 @@ namespace {
 
       my_fun.function_name = function_name.str();
       my_fun.return_info.set_from_type(retType);
-      my_fun.return_info.size = this->estimate_size(retType);
+      my_fun.return_info.size = libfuzz::estimate_size(retType, false, this->DL);
       my_fun.return_info.name = "return";
 
       for(auto &arg : F.args()) {
           libfuzz::argument_record an_argument;
           an_argument.set_from_argument(&arg);
-          an_argument.size = this->estimate_size(arg.getType(), arg.hasByValAttr());
+          an_argument.size = libfuzz::estimate_size(arg.getType(), arg.hasByValAttr(), this->DL);
           my_fun.arguments_info.push_back(an_argument);
       }
       
       libfuzz::dumpApiInfo(my_fun);
 
       return false;
-    }
-
-    uint64_t estimate_size(Type* a_type, bool has_byval = false) {
-      
-      Type *typ_pointed = a_type;
-
-      if (has_byval && isa<PointerType>(a_type) ) {
-        PointerType *a_ptrtype = dyn_cast<PointerType>(a_type);
-        typ_pointed = a_ptrtype->getElementType();
-      }
-
-      return typ_pointed->isSized() ? this->DL->getTypeSizeInBits(typ_pointed) : 0;
     }
   };
 }

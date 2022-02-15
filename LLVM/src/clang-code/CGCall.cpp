@@ -2762,7 +2762,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
           auto AI = Fn->getArg(FirstIRArg + i);
           AI->setName(Arg->getName() + ".coerce" + Twine(i));
-          dumpCoerceMap(Fn->getName().str(), FirstIRArg + i, Arg->getName().str(), AI->getName().str());
+          dumpCoerceMap(Fn, FirstIRArg + i, Arg->getName().str(), Arg->getType().getAsString(), AI);
           Address EltPtr = Builder.CreateStructGEP(AddrToStoreInto, i);
           Builder.CreateStore(AI, EltPtr);
         }
@@ -2776,7 +2776,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         assert(NumIRArgs == 1);
         auto AI = Fn->getArg(FirstIRArg);
         AI->setName(Arg->getName() + ".coerce");
-        dumpCoerceMap(Fn->getName().str(), FirstIRArg, Arg->getName().str(), AI->getName().str());
+        dumpCoerceMap(Fn, FirstIRArg, Arg->getName().str(), Arg->getType().getAsString(), AI);
         CreateCoercedStore(AI, Ptr, /*DstIsVolatile=*/false, *this);
       }
 

@@ -75,9 +75,19 @@ namespace libfuzz {
     log.close();
   }
 
-  void dumpCoerceMap(std::string func_name, unsigned arg_pos, std::string arg_original, std::string arg_coerce) {
+  void dumpCoerceMap(llvm::Function *func, unsigned arg_pos, std::string arg_original_name, std::string arg_original_type,  llvm::Argument *arg_coerce) {
     std::string fileName = getCoerceFileLog();
-    std::string line = func_name + "|" + std::to_string(arg_pos) + "|" + arg_original + "|" + arg_coerce + "\n";
+
+    llvm::DataLayout* DL = new DataLayout(func->getParent());
+
+    llvm::Type *arg_coerce_type = arg_coerce->getType();
+
+    std::string arg_coerce_name = arg_coerce->getName().str();
+    uint64_t arg_coerce_size = estimate_size(arg_coerce_type, arg_coerce->hasByValAttr(), DL);
+    std::string arg_coerce_type_str;
+    llvm::raw_string_ostream ostream(arg_coerce_type_str);
+    arg_coerce_type->print(ostream);
+    std::string line = func->getName().str() + "|" + std::to_string(arg_pos) + "|" + arg_original_name + "|" + arg_original_type + "|" + arg_coerce_name + "|" + arg_coerce_type_str + "|" + std::to_string(arg_coerce_size) + "\n";
     dumpLine(line, fileName);
   }
 
@@ -85,6 +95,18 @@ namespace libfuzz {
     std::string fileName = getApiFileLog();
     std::string line = a_fun.to_json() + "\n";
     dumpLine(line, fileName);
+  }
+
+  uint64_t estimate_size(llvm::Type* a_type, bool has_byval, llvm::DataLayout* DL) {
+    
+    Type *typ_pointed = a_type;
+
+    if (has_byval && isa<PointerType>(a_type) ) {
+      PointerType *a_ptrtype = dyn_cast<PointerType>(a_type);
+      typ_pointed = a_ptrtype->getElementType();
+    }
+
+    return typ_pointed->isSized() ? DL->getTypeSizeInBits(typ_pointed) : 0;
   }
 
 }
