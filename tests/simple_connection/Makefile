@@ -10,7 +10,7 @@ all: $(TARGET_LIB).so $(TARGET_CLIENT)
 	echo "done!"
 
 $(TARGET_LIB).so: $(TARGET_LIB).cpp $(TARGET_LIB).hpp
-	export LIBFUZZ_LOG_PATH=`pwd`/apis.log
+	export LIBFUZZ_LOG_PATH=`pwd`
 	rm ${LIBFUZZ_LOG_PATH} | true
 	mkdir -p $(LIB_LIBRARY)
 	$(CXX) -mllvm -get-api-pass -fPIC -c -o $(TARGET_LIB).o $<
@@ -24,7 +24,8 @@ $(TARGET_LIB).ll: $(TARGET_LIB).cpp $(TARGET_LIB).hpp
 
 clean:
 	rm -Rf $(LIB_LIBRARY)
-	rm $(TARGET_CLIENT) $(TARGET_LIB).o
+	rm -f $(TARGET_CLIENT) $(TARGET_LIB).o
+	rm -f apis.log coerce.log
 
 run:
 	@LD_LIBRARY_PATH=./$(LIB_LIBRARY):$(LD_LIBRARY_PATH) ./$(TARGET_CLIENT)

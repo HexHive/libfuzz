@@ -2,7 +2,7 @@
 
 
 # install LibFuzz source codes
-./scripts/install-hextype-files.sh
+./scripts/install-libfuzz-files.sh
 
 # I may need a debug makefile in the future, not now!
 # if [[ $# -eq 0 ]]; then

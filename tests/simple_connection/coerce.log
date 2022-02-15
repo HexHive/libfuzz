@@ -1,0 +1,8 @@
+send_msg|2|conn|conn.coerce0
+send_msg|3|conn|conn.coerce1
+receive_msg|2|conn|conn.coerce0
+receive_msg|3|conn|conn.coerce1
+_Z5PAPPA10connectioniS_|0|conn|conn.coerce0
+_Z5PAPPA10connectioniS_|1|conn|conn.coerce1
+_Z5PAPPA10connectioniS_|3|conn2|conn2.coerce0
+_Z5PAPPA10connectioniS_|4|conn2|conn2.coerce1

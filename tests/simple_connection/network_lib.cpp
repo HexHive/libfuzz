@@ -11,3 +11,7 @@ unsigned int receive_msg(char* buff, size_t buff_len, connection conn) {
   return 0;
 }
 void close(connection *conn) {}
+
+void PAPPA(connection conn, int x, connection conn2) {
+  // return 0;
+}
