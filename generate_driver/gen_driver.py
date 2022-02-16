@@ -5,46 +5,14 @@ import argparse, json, graphviz, collections
 
 RE_NONTERMINAL = re.compile(r'(<[^<> ]*>)')
 
-def get_grammar(dependency_graph):
+import sys
+sys.path.insert(1, '../libraries')
+from libfuzzutils import get_api_list, read_coerce_log
 
-    # {"close": ["connect","close"],
-    # "connect": ["connect", "send_msg", "receive_msg", "close"],
-    # "receive_msg": [ "connect", "send_msg", "receive_msg", "close"],
-    # "send_msg": [ "connect", "send_msg", "receive_msg", "close" ] }
+def load_grammar(grammar_file):
 
-    # {"<start>": ["<open_conn>", "<close_conn>", "<send>", "<recv>", "<end>"],
-    #     "<open_conn>": ["open_conn;<open_conn>", "open_conn;<send>", "open_conn;<close_conn>", "open_conn;<end>"],
-    #     "<send>": ["send;<open_conn>", "send;<send>", "send;<close_conn>", "send;<recv>", "send;<end>"],
-    #     "<recv>": ["recv;<open_conn>", "recv;<send>", "recv;<close_conn>", "recv;<recv>", "recv;<end>"],
-    #     "<close_conn>": ["close_conn;<open_conn>", "close_conn;<send>", "close_conn;<close_conn>", "close_conn;<end>"],
-    #     "<end>": [""] 
-    # }
-
-    dep_graph = None
-    with open(dependency_graph, 'r') as f:
-        dep_graph = json.load(f)
-
-    inv_dep_graph = dict((k, set()) for k in list(dep_graph.keys()))
-
-    # print(dep_graph)
-
-    dep_graph.items()
-
-    for api, deps in dep_graph.items():
-        for dep in deps:
-            inv_dep_graph[dep].add(api)
-
-    # print(inv_dep_graph)
-
-    grammar = {}
-
-    grammar["<start>"] = list([ f"<{api}>" for api in inv_dep_graph.keys() ]) + ["<end>"]
-    for api, nexts in inv_dep_graph.items():
-        grammar[f"<{api}>"] = [ f"{api};<{n}>" for n in nexts ] + [f"{api};<start>"]
-
-    grammar["<end>"] = [""]
-
-    print(grammar)
+    with open(grammar_file, 'r') as f:
+        grammar = json.load(f)
 
     return grammar
 
@@ -127,7 +95,7 @@ def generate_init_vars(context):
 def get_address_of(variable):
     return f"&{variable}"
 
-def expand_rules(sequence):
+def expand_rules(sequence, expansion_rules):
 
     statements = []
 
@@ -141,16 +109,19 @@ def expand_rules(sequence):
         # elif token == "close_conn":
         #     statements += ["close_conn($*conn);"]
 
-        if token == "connect":
-            statements += ["connect($*char, $int, $*conn);"]
-        elif token == "send_msg":
-            statements += ["$int = send_msg($*char, $int, $conn);"]
-        elif token == "receive_msg":
-            statements += ["$int = receive_msg($*char, $int, $conn);"]
-        elif token == "close":
-            statements += ["close($*conn);"]
+        if token in expansion_rules:
+            statements += [expansion_rules[token]]
 
-    GET_VARIABLES = re.compile(r'(\$[*a-z_]*)')
+        # if token == "connect":
+        #     statements += ["connect($*char, $int, $*conn);"]
+        # elif token == "send_msg":
+        #     statements += ["$int = send_msg($*char, $int, $conn);"]
+        # elif token == "receive_msg":
+        #     statements += ["$int = receive_msg($*char, $int, $conn);"]
+        # elif token == "close":
+        #     statements += ["close($*conn);"]
+
+    GET_VARIABLES = re.compile(r'(\$[a-z0-9_*]*)')
 
     statements_expanded = []
 
@@ -160,9 +131,9 @@ def expand_rules(sequence):
         variables = GET_VARIABLES.findall(statement)
 
         for t in variables:
-            if t.startswith("$*"):
+            if t.startswith("$") and t.endswith("*"):
 
-                tt = t.replace("$*", "$")
+                tt = t.replace("*", "")
                 
                 # I can decide to add a new var to the context, if I want
                 if random.getrandbits(1) == 1 or not has_vars_type(tt, context):
@@ -200,26 +171,85 @@ def expand_rules(sequence):
     statements_context = generate_init_vars(context)
 
     return "\n".join(statements_context + [""] + statements_expanded)
+
+def normalize_type(a_type):
+    if a_type == "i32":
+        return "$uint32_t"
+    elif a_type == "i64":
+        return "$uint64_t"
+    elif a_type == "i8*":
+        return "$char*"
+    # elif a_type.startswith("\%\struct"):
+    elif a_type.startswith("%struct"):
+        return a_type.replace("%struct.", "$")
+
+    print(f"what is? {a_type}")
+    exit(1)
+
+def load_expansion_rules(apis, coerce):
+
+    expansion_rules = {}
+
+    coerce_info = read_coerce_log(coerce)
+    apis_list = get_api_list(apis, coerce_info)
         
+    for api in apis_list:
+        function_name = api["function_name"]
+        return_info = api["return_info"]
+        arguments_info = api["arguments_info"]
+
+        args_str = ""
+        for e, arg in enumerate(arguments_info):
+            the_type = normalize_type(arg["type"])
+            the_name = arg["name"]
+            # args_str += f"{the_type} {the_name}"
+            args_str += f"{the_type}"
+            if e != len(arguments_info) -1:
+                args_str += ", "
+
+        if return_info["size"] == 0:
+            rule = f"{function_name}({args_str})"
+        else:
+            ret_type = normalize_type(return_info["type"])
+            rule = f"{ret_type} {function_name}({args_str})"
+        
+        expansion_rules[function_name] = rule
+    
+    print()
+    print(expansion_rules)
+    print()
+    # exit(1)
+
+    return expansion_rules
 
 def main():
 
-    parser = argparse.ArgumentParser(description='Generate drivers from dependency graph')
-    parser.add_argument('--dependency_graph', type=str, help='The dependency graph')
+    parser = argparse.ArgumentParser(description='Generate drivers from grammar')
+    parser.add_argument('--grammar', type=str, help='The grammar')
+    parser.add_argument('--apis', type=str, help='The API log from the compilation')
+    parser.add_argument('--coerce', type=str, help='Map between coerce and C args')
+    parser.add_argument('--header', type=str, help='The library header file')
 
     args = parser.parse_args()
 
-    dependency_graph = args.dependency_graph
+    grammar = args.grammar
+    apis = args.apis
+    header = args.header
+    coerce = args.coerce
 
-    print(f"Dependency Graph: {dependency_graph}")
+    print(f"Grammar: {grammar}")
+    print(f"APIs: {apis}")
+    print(f"Header: {header}")
+    print(f"Coerce: {coerce}")
 
-    grammar = get_grammar(dependency_graph)
+    expansion_rules = load_expansion_rules(apis, coerce)
+    grammar = load_grammar(grammar)
 
     # for i in range(10):
     driver_first = simple_grammar_fuzzer(grammar=grammar, start_symbol="<start>", max_nonterminals=3, log=False)
     print(driver_first)
     print()
-    driver_second = expand_rules(driver_first)
+    driver_second = expand_rules(driver_first, expansion_rules)
     print(driver_second)
 
 if __name__ == "__main__":
