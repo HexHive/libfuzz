@@ -1,0 +1,10 @@
+{
+    "analysis": {
+        "apis": "./targets/simple_connection/apis.log",
+        "coercemap": "./targets/simple_connection/coerce.log",
+        "headers": "./targets/simple_connection/"
+    },
+    "fuzzer": {
+        "workdir": "./workdir"
+    }
+}

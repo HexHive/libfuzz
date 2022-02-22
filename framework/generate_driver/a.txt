@@ -1,0 +1,43 @@
+Grammar: ../generate_grammar/grammar.json
+APIs: ../tests/simple_connection/apis.log
+Header: ../tests/simple_connection/network_lib.hpp
+Coerce: ../tests/simple_connection/coerce.log
+doing: connect
+doing: send_msg
+doing: receive_msg
+doing: close
+
+{'connect': 'connect($char*, $uint32_t, $connection*)', 'send_msg': '$uint32_t send_msg($char*, $uint64_t, $connection)', 'receive_msg': '$uint32_t receive_msg($char*, $uint64_t, $connection)', 'close': 'close($connection*)'}
+
+send_msg;send_msg;connect;receive_msg;send_msg;receive_msg;connect;connect;receive_msg;
+
+uint32_t uint32_t_0 = input();
+char char_0 = input();
+uint64_t uint64_t_0 = input();
+connection connection_0 = input();
+char char_1 = input();
+uint32_t uint32_t_1 = input();
+uint32_t uint32_t_2 = input();
+char char_2 = input();
+connection connection_1 = input();
+uint32_t uint32_t_3 = input();
+char char_3 = input();
+uint64_t uint64_t_1 = input();
+connection connection_2 = input();
+char char_4 = input();
+connection connection_3 = input();
+char char_5 = input();
+uint32_t uint32_t_4 = input();
+uint32_t uint32_t_5 = input();
+char char_6 = input();
+uint64_t uint64_t_2 = input();
+
+uint32_t_0 send_msg(&char_0, uint64_t_0, connection_0)
+uint32_t_0 send_msg(&char_0, uint64_t_0, connection_0)
+connect(&char_1, uint32_t_1, &connection_0)
+uint32_t_1 receive_msg(&char_0, uint64_t_0, connection_0)
+uint32_t_2 send_msg(&char_2, uint64_t_0, connection_1)
+uint32_t_3 receive_msg(&char_3, uint64_t_1, connection_2)
+connect(&char_4, uint32_t_3, &connection_3)
+connect(&char_5, uint32_t_4, &connection_3)
+uint32_t_5 receive_msg(&char_6, uint64_t_2, connection_1)

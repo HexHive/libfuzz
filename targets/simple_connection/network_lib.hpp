@@ -10,7 +10,6 @@
 struct connection {
    unsigned char ip[4];
    unsigned int port;
-   unsigned int stupid;
    bool is_connected;
 };
 

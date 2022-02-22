@@ -37,7 +37,7 @@ tu = index.parse(sys.argv[1], args=args)
 funcs = find_funcs_and_calls(tu)
 for f in funcs:
     print(fully_qualified(f))
-    for a in f.get_arguments():
-        print(a.displayname)
-        print(a.kind)
-    print(f)
+    # for a in f.get_arguments():
+    #     print(a.displayname)
+    #     print(a.kind)
+    # print(f)

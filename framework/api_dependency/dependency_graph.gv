@@ -1,16 +1,12 @@
 digraph G {
-	connect -> connect
 	connect -> send_msg
 	connect -> receive_msg
 	connect -> close
 	send_msg -> connect
-	send_msg -> send_msg
 	send_msg -> receive_msg
 	send_msg -> close
 	receive_msg -> connect
 	receive_msg -> send_msg
-	receive_msg -> receive_msg
 	receive_msg -> close
 	close -> connect
-	close -> close
 }
