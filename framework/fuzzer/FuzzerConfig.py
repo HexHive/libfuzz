@@ -6,6 +6,7 @@ import json
 from types import SimpleNamespace
 
 from dependency import DependencyGraphGenerator, TypeDependencyGraphGenerator
+from grammar import GrammarGenerator, NonTerminal
 
 class FuzzerConfig:
     """
@@ -30,6 +31,8 @@ class FuzzerConfig:
 
         with open(config_path, "rt") as f:
             self._config = json.load(f)
+
+        self.start_term = NonTerminal("start")
 
     @cached_property
     def work_dir(self):
@@ -56,6 +59,9 @@ class FuzzerConfig:
         if not "coercemap" in analysis:
             raise Exception("'coercemap' not defined")
 
+        if not "dependency_policy" in analysis:
+            raise Exception("'dependency_policy' not defined")
+
         api_logs = analysis["apis"]
         hedader_folder = analysis["headers"]
         coerce_map = analysis["coercemap"]
@@ -67,6 +73,11 @@ class FuzzerConfig:
         raise NotImplementedError
 
     @cached_property
+    def grammar_generator(self):
+        return GrammarGenerator(self.start_term)
+
+    @cached_property
     def driver_generator(self):
         print("STUB: driver_generator")
         return None
+        

@@ -6,7 +6,7 @@ class FuzzerSession:
         self._workdir = config.work_dir
 
         self._dependency_generator = config.dependency_generator
-
+        self._grammar_generator = config.grammar_generator
         self._driver_generator = config.driver_generator
 
         # list of drivers to fuzz
@@ -15,8 +15,11 @@ class FuzzerSession:
     def run(self):
         DGraph = self._dependency_generator.create()
 
-        print("TODO: generate grammar")
-        InitGrammar = self._driver_generator.create(DGraph)
+        InitGrammar = self._grammar_generator.create(DGraph)
+
+        print(InitGrammar)
+        # for e, elem in enumerate(InitGrammar):
+        #     print(f"{e} -> {elem} \w {len(InitGrammar.get_expansion_rules(elem))} elements")
 
         print("TODO: generate initial drivers")
 

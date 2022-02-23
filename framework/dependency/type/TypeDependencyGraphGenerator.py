@@ -1,8 +1,7 @@
 import json, os
 
 from common import Utils, Api, Arg
-from dependency import DependencyGraphGenerator
-from .TypeDependencyGraph import TypeDependencyGraph
+from dependency import DependencyGraphGenerator, DependencyGraph
 
 class TypeDependencyGraphGenerator(DependencyGraphGenerator):
     def __init__(self, api_logs, hedader_folder, coerce_map):
@@ -11,14 +10,14 @@ class TypeDependencyGraphGenerator(DependencyGraphGenerator):
         self.coerce_info = Utils.read_coerce_log(coerce_map)
         self.apis_list = Utils.get_api_list(api_logs, self.coerce_info)
 
-    def create(self) -> TypeDependencyGraph:
-        dependency_graph = TypeDependencyGraph()
+    def create(self) -> DependencyGraph:
+        dependency_graph = DependencyGraph()
         for api_a in self.apis_list:
             for api_b in self.apis_list:
                 api_a_functionname = api_a.function_name
                 api_b_functionname = api_b.function_name
                 if self.dependency_on(api_a, api_b):
-                    dependency_graph.addEdge(api_a, api_b)
+                    dependency_graph.add_edge(api_a, api_b)
                     # api_a_depdences = dependency_graph.get(api_a_functionname, [])
                     # api_a_depdences += [api_b_functionname]
                     # dependency_graph[api_a_functionname] = api_a_depdences
