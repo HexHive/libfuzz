@@ -13,10 +13,10 @@ class FuzzerSession:
         self.drivers = []
 
     def run(self):
-        
-        print("TODO: generate dependecy graph")
+        DGraph = self._dependency_generator.create()
 
         print("TODO: generate grammar")
+        InitGrammar = self._driver_generator.create(DGraph)
 
         print("TODO: generate initial drivers")
 

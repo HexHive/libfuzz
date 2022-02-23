@@ -5,6 +5,8 @@ from os import path
 import json
 from types import SimpleNamespace
 
+from dependency import DependencyGraphGenerator, TypeDependencyGraphGenerator
+
 class FuzzerConfig:
     """
     A parser for the JSON-formatted fuzzer configuration file.
@@ -38,9 +40,31 @@ class FuzzerConfig:
         return wd
 
     @cached_property
-    def dependency_generator(self):
-        print("STUB: dependency_generator")
-        return None
+    def dependency_generator(self) -> DependencyGraphGenerator:
+
+        if not "analysis" in self._config:
+            raise Exception("'analysis' not defined")
+
+        analysis = self._config["analysis"]
+
+        if not "apis" in analysis:
+            raise Exception("'apis' not defined")
+        
+        if not "headers" in analysis:
+            raise Exception("'headers' not defined")
+
+        if not "coercemap" in analysis:
+            raise Exception("'coercemap' not defined")
+
+        api_logs = analysis["apis"]
+        hedader_folder = analysis["headers"]
+        coerce_map = analysis["coercemap"]
+        dependency_policy = analysis["dependency_policy"]
+
+        if dependency_policy == "only_type":
+            return TypeDependencyGraphGenerator(api_logs, hedader_folder, coerce_map)
+
+        raise NotImplementedError
 
     @cached_property
     def driver_generator(self):

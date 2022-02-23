@@ -2,7 +2,8 @@
     "analysis": {
         "apis": "./targets/simple_connection/apis.log",
         "coercemap": "./targets/simple_connection/coerce.log",
-        "headers": "./targets/simple_connection/"
+        "headers": "./targets/simple_connection/",
+        "dependency_policy": "only_type"
     },
     "fuzzer": {
         "workdir": "./workdir"

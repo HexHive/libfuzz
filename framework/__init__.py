@@ -8,8 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__)))
 # logging.setLoggerClass(ColoredLogger)
 # root_logger = ColoredLogger()
 
-# import common, fuzzer, generator, input, interaction, loader, models, mutator, \
-#        networkio, profiler, ptrace, statemanager, tests
+import dependency, common
 
 # import atexit
 # from profiler import ProfilingStoppedEvent
