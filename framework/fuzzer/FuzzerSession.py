@@ -17,9 +17,7 @@ class FuzzerSession:
 
         InitGrammar = self._grammar_generator.create(DGraph)
 
-        print(InitGrammar)
-        # for e, elem in enumerate(InitGrammar):
-        #     print(f"{e} -> {elem} \w {len(InitGrammar.get_expansion_rules(elem))} elements")
+        InitGrammar.pprint()
 
         print("TODO: generate initial drivers")
 

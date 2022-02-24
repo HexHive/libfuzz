@@ -13,7 +13,7 @@ class Grammar(ABC):
             self.elements[elem_nt] = set()
         self.elements[elem_nt].add(exprule)
 
-    def get_expansion_rules(self, elem: NonTerminal):
+    def get_expansion_rules(self, elem: NonTerminal) -> [ExpantionRule]:
         if not elem in self.elements:
             raise Exception(f"Element {elem} not in the grammar")
 
@@ -31,4 +31,12 @@ class Grammar(ABC):
 
     def __str__(self):
         return f"{self.__class__.__name__}(name={self.start_term.name}, n_elem={self.num_elements()})"
+
+    def pprint(self):
+        print(self)
+        # for e, elem in enumerate(self):
+        for elem in self:
+            print(f"{elem} \w {len(self.get_expansion_rules(elem))} rules:")
+            for er in self.get_expansion_rules(elem):
+                print(f"\t{er}")
     
