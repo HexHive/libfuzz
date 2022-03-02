@@ -8,8 +8,7 @@ from types import SimpleNamespace
 from dependency import DependencyGraphGenerator, TypeDependencyGraphGenerator
 from grammar import GrammarGenerator, NonTerminal
 from driver import DriverGenerator
-from backend import BackendDriver, PseudocodeBackendDriver
-from miner import Miner, MockMiner
+from miner import Miner, MockMiner, BackendDriver, MockBackendDriver
 
 from fuzzer import Pool
 
@@ -105,33 +104,7 @@ class FuzzerConfig:
         return DriverGenerator(api_logs, coerce_map, hedader_folder)
 
     @cached_property
-    def backend_driver(self) -> BackendDriver:
-
-        if not "fuzzer" in self._config:
-            raise Exception("'fuzzer' not defined")
-
-        fuzzer = self._config["fuzzer"]
-
-        if not "backend_driver" in fuzzer:
-            raise Exception("'backend_driver' not defined")
-
-        backend_driver = fuzzer["backend_driver"]
-
-        if backend_driver == "pseudocode":
-            return PseudocodeBackendDriver()
-
-        if backend_driver == "client":
-            raise NotImplementedError
-
-        if backend_driver == "libfuzz":
-            raise NotImplementedError
-
-        raise NotImplementedError
-
-    @cached_property
     def miner(self) -> Miner:
-        backend = self.backend_driver
-
         if not "fuzzer" in self._config:
             raise Exception("'fuzzer' not defined")
 
@@ -143,7 +116,7 @@ class FuzzerConfig:
         miner = fuzzer["miner"]
         
         if miner == "mock":
-            return MockMiner(backend)
+            return MockMiner()
 
         raise NotImplementedError
 

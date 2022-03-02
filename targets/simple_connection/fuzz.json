@@ -8,7 +8,6 @@
     "fuzzer": {
         "workdir": "./workdir",
         "pool_size": 30,
-        "backend_driver": "pseudocode",
         "miner": "mock"
     }
 }

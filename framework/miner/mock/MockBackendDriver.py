@@ -1,7 +1,7 @@
 from driver import Driver
-from backend import BackendDriver
+from miner import BackendDriver
 
-class PseudocodeBackendDriver(BackendDriver):
+class MockBackendDriver(BackendDriver):
 
     def __init__(self):
         pass

@@ -5,5 +5,7 @@ for func in ('debug', 'info', 'warning', 'error', 'critical'):
 
 from .Miner         import Miner
 from .FeedbackTest  import FeedbackTest
+from .BackendDriver import BackendDriver
 
-from .mock.MockMiner import MockMiner
+from .mock.MockBackendDriver    import MockBackendDriver
+from .mock.MockMiner            import MockMiner

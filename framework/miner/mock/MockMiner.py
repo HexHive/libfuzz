@@ -1,12 +1,16 @@
-from miner  import Miner, FeedbackTest
-from backend import BackendDriver
+from miner  import Miner, FeedbackTest, MockBackendDriver
 
 class MockMiner(Miner):
 
-    def __init__(self, backend: BackendDriver):
-        self._backend = backend
-        # self._executor = executor
+    def __init__(self):
+        self._backend = MockBackendDriver()
 
     def test(self, driver) -> FeedbackTest:
-        print("[TODO] I run the test!")
+
+        # create a pseudo code file
+        
+
+        # prented to execute
+
+        # return the feedback
         return FeedbackTest()
