@@ -1,7 +1,7 @@
 
 from dependency import DependencyGraph
 
-from . import Grammar, Terminal, NonTerminal, Element, ExpantionRule
+from . import Grammar, Terminal, NonTerminal, Symbol, ExpantionRule
 
 class GrammarGenerator:
     def __init__(self, start_term):
@@ -21,7 +21,8 @@ class GrammarGenerator:
                 inv_dep_graph[dep].add(api)
 
         for api in inv_dep_graph.keys():
-            nt = NonTerminal(api.function_name + "_nt")
+            # nt = NonTerminal(api.function_name + "_nt")
+            nt = NonTerminal(api.function_name)
             expantion_rule = ExpantionRule([nt])
             grammar.add_expantion_rule(self.start_term, expantion_rule)
 
@@ -30,16 +31,23 @@ class GrammarGenerator:
 
 
         for api, nexts in inv_dep_graph.items():
-            nt = NonTerminal(api.function_name + "_nt")
+            # nt = NonTerminal(api.function_name + "_nt")
+            nt = NonTerminal(api.function_name)
             t = Terminal(api.function_name)
 
             for n in nexts:
-                nnt = NonTerminal(n.function_name + "_nt")
+                # nnt = NonTerminal(n.function_name + "_nt")
+                nnt = NonTerminal(n.function_name)
                 expantion_rule = ExpantionRule([t, nnt])
                 grammar.add_expantion_rule(nt, expantion_rule)
 
             expantion_rule = ExpantionRule([t, nt])
             grammar.add_expantion_rule(nt, expantion_rule)
+
+            expantion_rule = ExpantionRule([t, self.start_term])
+            grammar.add_expantion_rule(nt, expantion_rule)
+
+            
 
 
         #     grammar[f"<{api}>"] = [ f"{api};<{n}>" for n in nexts ] + [f"{api};<start>"]

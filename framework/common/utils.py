@@ -1,5 +1,6 @@
 
 import json, collections
+from typing import List, Set, Dict, Tuple, Optional
 
 from .api import Api, Arg
 
@@ -94,7 +95,7 @@ class Utils:
         return coerce_info
 
     @staticmethod
-    def get_api_list(apis, coerce_info):
+    def get_api_list(apis, coerce_info) -> List[Api]:
 
         # TODO: make a white list form the original header
         blacklist = ["__cxx_global_var_init", "_GLOBAL__sub_I_network_lib.cpp"]

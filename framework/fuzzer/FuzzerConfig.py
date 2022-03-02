@@ -7,6 +7,11 @@ from types import SimpleNamespace
 
 from dependency import DependencyGraphGenerator, TypeDependencyGraphGenerator
 from grammar import GrammarGenerator, NonTerminal
+from driver import DriverGenerator
+from backend import BackendDriver, PseudocodeBackendDriver
+from miner import Miner, PseudocodeMiner
+
+from fuzzer import Pool
 
 class FuzzerConfig:
     """
@@ -78,6 +83,40 @@ class FuzzerConfig:
 
     @cached_property
     def driver_generator(self):
-        print("STUB: driver_generator")
-        return None
+
+        if not "analysis" in self._config:
+            raise Exception("'analysis' not defined")
+
+        analysis = self._config["analysis"]
+
+        if not "apis" in analysis:
+            raise Exception("'apis' not defined")
         
+        if not "headers" in analysis:
+            raise Exception("'headers' not defined")
+
+        if not "coercemap" in analysis:
+            raise Exception("'coercemap' not defined")
+
+        api_logs = analysis["apis"]
+        hedader_folder = analysis["headers"]
+        coerce_map = analysis["coercemap"]
+
+        return DriverGenerator(api_logs, coerce_map, hedader_folder)
+
+    @cached_property
+    def backend_driver(self) -> BackendDriver:
+        return PseudocodeBackendDriver()
+
+    @cached_property
+    def miner(self) -> Miner:
+        # TODO: add backendimplementation from config
+
+        backend = self.backend_driver
+
+        return PseudocodeMiner(backend)
+
+    @cached_property
+    def pool(self) -> Pool:
+        # TODO: make pool_size in config
+        return Pool(30)

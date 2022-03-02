@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from . import Element
+from . import Symbol
 
-class NonTerminal(Element):
+class NonTerminal(Symbol):
     def __init__(self, name):
         self.name = name

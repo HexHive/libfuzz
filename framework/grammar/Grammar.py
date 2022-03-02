@@ -1,36 +1,44 @@
 from abc import ABC, abstractmethod
 
-from . import Element, NonTerminal, ExpantionRule
+from . import Symbol, NonTerminal, ExpantionRule
 
 class Grammar(ABC):
-    def __init__(self, start_term: NonTerminal):
-        self.elements = {}
-        self.elements[start_term] = set()
-        self.start_term = start_term
+    def __init__(self, start_symbol: NonTerminal):
+        self.symbols = {}
+        self.symbols[start_symbol] = set()
+        self.start_symbol = start_symbol
     
     def add_expantion_rule(self, elem_nt: NonTerminal, exprule: ExpantionRule):
-        if elem_nt not in self.elements:
-            self.elements[elem_nt] = set()
-        self.elements[elem_nt].add(exprule)
+        if elem_nt not in self.symbols:
+            self.symbols[elem_nt] = set()
+
+        if exprule not in self.symbols[elem_nt]:
+            self.symbols[elem_nt].add(exprule)
+
+    def __getitem__(self, key):
+        return self.symbols[key]
 
     def get_expansion_rules(self, elem: NonTerminal) -> [ExpantionRule]:
-        if not elem in self.elements:
+        if not elem in self.symbols:
             raise Exception(f"Element {elem} not in the grammar")
 
-        return self.elements[elem]
+        return self.symbols[elem]
 
     def num_expansions(self):
         return len(self.expansion_list)
 
     def __iter__(self):
-        for v in self.elements:
+        for v in self.symbols:
             yield v
 
-    def num_elements(self):
-        return len(self.elements)
+    def num_symbols(self):
+        return len(self.symbols)
+
+    def get_start_symbol(self):
+        return self.start_symbol
 
     def __str__(self):
-        return f"{self.__class__.__name__}(name={self.start_term.name}, n_elem={self.num_elements()})"
+        return f"{self.__class__.__name__}(name={self.start_symbol.name}, n_elem={self.num_symbols()})"
 
     def pprint(self):
         print(self)

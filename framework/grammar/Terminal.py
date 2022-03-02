@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
-from . import Element
+from . import Symbol
 
-class Terminal(Element):
+class Terminal(Symbol):
     def __init__(self, name):
         self.name = name
 

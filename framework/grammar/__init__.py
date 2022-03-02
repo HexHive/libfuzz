@@ -3,7 +3,7 @@ logger = logging.getLogger("dependency")
 for func in ('debug', 'info', 'warning', 'error', 'critical'):
     setattr(sys.modules[__name__], func, getattr(logger, func))
 
-from .Element           import Element
+from .Symbol            import Symbol
 from .Grammar           import Grammar
 from .Terminal          import Terminal
 from .NonTerminal       import NonTerminal
