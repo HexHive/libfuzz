@@ -1,13 +1,13 @@
 from typing import List, Set, Dict, Tuple, Optional
 
-from . import Statement, Type, Variable
+from . import Statement, Type, Value, PointerType, Address, Variable
 
 class ApiCall(Statement):
     function_name:  str
     arg_types:      List[Type]
-    arg_vars:       List[Variable]
+    arg_vars:       List[Value]
     ret_type:       Type
-    ret_var:        Variable
+    ret_var:        Value
 
     def __init__(self, function_name, arg_types, ret_type):
         super().__init__()
@@ -22,9 +22,16 @@ class ApiCall(Statement):
     def get_pos_args_types(self):
         return enumerate(self.arg_types)
 
-    def set_pos_arg_var(self, pos: int, var: Variable):
+    def set_pos_arg_var(self, pos: int, var: Value):
         if pos < 0 or pos > len(self.arg_vars):
             raise Exception(f"{pos} out of range [0, {len(self.arg_vars)}]")
+
+        # I must ensure the value is coherent with the argument type
+        if isinstance(var, Variable) and isinstance(self.arg_types[pos], PointerType):
+            raise Exception(f"{var} cannot be of type {self.arg_types[pos]}")
+
+        if isinstance(var, Address) and not isinstance(self.arg_types[pos], Type):
+            raise Exception(f"{var} cannot be of type {self.arg_types[pos]}")
 
         self.arg_vars[pos] = var
 

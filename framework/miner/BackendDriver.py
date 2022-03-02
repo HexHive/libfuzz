@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 class BackendDriver(ABC):
 
     @abstractmethod
-    def __init__(self):
+    def __init__(self, working_dir):
         pass
 
     @abstractmethod

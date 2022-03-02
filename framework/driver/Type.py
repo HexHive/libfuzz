@@ -2,8 +2,10 @@ from abc import abstractmethod
 
 class Type:
     token: str
-    def __init__(self, token):
-        self.token = token
+    size: int
+    def __init__(self, token, size = 0):
+        self.token  = token
+        self.size   = size
 
     def __str__(self):
         return f"{self.__class__.__name__}(name={self.token})"
@@ -17,3 +19,6 @@ class Type:
 
     def __eq__(self, other):
         return hash(self) == hash(other)
+
+    def get_size(self):
+        return self.size

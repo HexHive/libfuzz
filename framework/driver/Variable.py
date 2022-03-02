@@ -31,3 +31,14 @@ class Variable(Value):
 
     def get_address(self):
         return self.addr
+
+    def get_allocated_size(self):
+        # if the Variable is a pointer, I have to understand how many elements it is 
+        # supposed to point to
+        from . import PointerType
+        if isinstance(self.type, PointerType):
+            raise NotImplementedError
+
+        print(self.type)
+
+        return self.type.get_size()

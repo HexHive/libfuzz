@@ -116,7 +116,7 @@ class FuzzerConfig:
         miner = fuzzer["miner"]
         
         if miner == "mock":
-            return MockMiner()
+            return MockMiner(self.work_dir)
 
         raise NotImplementedError
 

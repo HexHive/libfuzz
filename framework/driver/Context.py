@@ -1,7 +1,7 @@
 from typing import List, Set, Dict, Tuple, Optional
 import random
 
-from . import Type, PointerType, Variable, VarDecl, Statement
+from . import Type, PointerType, Variable, VarDecl, Statement, Value
 
 class Context:
     # trace the variable alives in this context
@@ -14,7 +14,7 @@ class Context:
         self.vars_counter = {}
         self.stub_void = Type("void")
 
-    def create_new_var(self, type: Type):
+    def create_new_val(self, type: Type):
 
         # if I require a void var, I just return without put in the context
         if type == self.stub_void:
@@ -31,6 +31,9 @@ class Context:
 
         return new_var
 
+    def get_allocated_size(self):
+        return sum([ v.get_allocated_size() for v in self.vars_alive ])
+
     def has_vars_type(self, type: Type):
         for v in self.vars_alive:
             if v.get_type() == type:
@@ -42,7 +45,7 @@ class Context:
         a_var = random.choice([v for v in self.vars_alive if v.get_type() == type])  
         return a_var
 
-    def randomly_gimme_a_var(self, type: Type):
+    def randomly_gimme_a_var(self, type: Type) -> Value:
 
         v = None
 
@@ -52,7 +55,7 @@ class Context:
             # I can decide to add a new var to the context, if I want
             if random.getrandbits(1) == 1 or not self.has_vars_type(tt):
                 # print(f"=> I create a new {tt} to get the address")
-                v = self.create_new_var(tt)
+                v = self.create_new_val(tt)
             # I pick a var from the context
             else:
                 # print(f"=> I get a random {tt} to get the address")
@@ -65,7 +68,7 @@ class Context:
             # if v not in context -> just create
             if not self.has_vars_type(type):
                 # print(f"=> {t} not in context, new one")
-                v = self.create_new_var(type)
+                v = self.create_new_val(type)
             else:
                 # I might get an existing one
                 if random.getrandbits(1) == 1:
@@ -74,7 +77,7 @@ class Context:
                 # or create a new var
                 else:
                     # print(f"=> decided to create a new {t}")
-                    v = self.create_new_var(type)
+                    v = self.create_new_val(type)
 
         if v is None:
             raise Exception("v was not assigned!")

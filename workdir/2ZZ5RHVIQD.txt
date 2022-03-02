@@ -1,0 +1,4 @@
+uint32_t uint32_t_0 = input();
+connection connection_0 = input();
+char char_0 = input();
+connect(&char_0, uint32_t_0, &connection_0);

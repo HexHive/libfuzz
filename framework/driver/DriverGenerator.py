@@ -103,6 +103,8 @@ class DriverGenerator:
                     statement.set_pos_arg_var(arg_pos, arg_var)
                 ret_var = context.randomly_gimme_a_var(statement.ret_type)
                 statement.set_ret_var(ret_var)       
+            else:
+                raise Exception(f"Don't know {statement}")
         statements_context = context.generate_def_vars()
 
-        return Driver(statements_context + statements)
+        return Driver(statements_context + statements, context)

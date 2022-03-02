@@ -1,0 +1,5 @@
+uint32_t uint32_t_0 = input();
+uint64_t uint64_t_0 = input();
+char char_0 = input();
+connection connection_0 = input();
+uint32_t_0 = receive_msg(&char_0, uint64_t_0, connection_0);
