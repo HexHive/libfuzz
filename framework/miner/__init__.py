@@ -6,4 +6,4 @@ for func in ('debug', 'info', 'warning', 'error', 'critical'):
 from .Miner         import Miner
 from .FeedbackTest  import FeedbackTest
 
-from .pseudocode.PseudocodeMiner import PseudocodeMiner
+from .mock.MockMiner import MockMiner

@@ -9,7 +9,7 @@ from dependency import DependencyGraphGenerator, TypeDependencyGraphGenerator
 from grammar import GrammarGenerator, NonTerminal
 from driver import DriverGenerator
 from backend import BackendDriver, PseudocodeBackendDriver
-from miner import Miner, PseudocodeMiner
+from miner import Miner, MockMiner
 
 from fuzzer import Pool
 
@@ -106,17 +106,59 @@ class FuzzerConfig:
 
     @cached_property
     def backend_driver(self) -> BackendDriver:
-        return PseudocodeBackendDriver()
+
+        if not "fuzzer" in self._config:
+            raise Exception("'fuzzer' not defined")
+
+        fuzzer = self._config["fuzzer"]
+
+        if not "backend_driver" in fuzzer:
+            raise Exception("'backend_driver' not defined")
+
+        backend_driver = fuzzer["backend_driver"]
+
+        if backend_driver == "pseudocode":
+            return PseudocodeBackendDriver()
+
+        if backend_driver == "client":
+            raise NotImplementedError
+
+        if backend_driver == "libfuzz":
+            raise NotImplementedError
+
+        raise NotImplementedError
 
     @cached_property
     def miner(self) -> Miner:
-        # TODO: add backendimplementation from config
-
         backend = self.backend_driver
 
-        return PseudocodeMiner(backend)
+        if not "fuzzer" in self._config:
+            raise Exception("'fuzzer' not defined")
+
+        fuzzer = self._config["fuzzer"]
+
+        if not "miner" in fuzzer:
+            raise Exception("'backend_driver' not defined")
+
+        miner = fuzzer["miner"]
+        
+        if miner == "mock":
+            return MockMiner(backend)
+
+        raise NotImplementedError
 
     @cached_property
     def pool(self) -> Pool:
         # TODO: make pool_size in config
-        return Pool(30)
+
+        if not "fuzzer" in self._config:
+            raise Exception("'fuzzer' not defined")
+
+        fuzzer = self._config["fuzzer"]
+
+        if not "pool_size" in fuzzer:
+            raise Exception("'pool_size' not defined")
+
+        pool_size = fuzzer["pool_size"]
+
+        return Pool(pool_size)
