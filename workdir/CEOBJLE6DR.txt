@@ -1,0 +1,13 @@
+uint32_t uint32_t_0[10] = input();
+uint64_t uint64_t_0[10] = input();
+connection connection_0[10] = input();
+connection connection_1[10] = input();
+void buff_void[1] = input();
+char char_0[10] = input();
+connection connection_2[10] = input();
+uint32_t uint32_t_1[10] = input();
+
+connect(NULL, uint32_t_0[0], &connection_0[0]);
+uint32_t_0[0] = send_msg(NULL, uint64_t_0[0], connection_1[0]);
+uint32_t_1[0] = receive_msg(&char_0[0], uint64_t_0[0], connection_2[0]);
+connect(&char_0[0], uint32_t_1[0], NULL);

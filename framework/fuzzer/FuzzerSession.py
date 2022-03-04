@@ -1,5 +1,4 @@
 from fuzzer         import FuzzerConfig, Pool
-from driver         import VarDecl, ApiCall
 
 class FuzzerSession:
     def __init__(self, config):

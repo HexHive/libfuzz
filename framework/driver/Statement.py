@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
 
-from . import Type
-
 class Statement(ABC):
 
     @abstractmethod

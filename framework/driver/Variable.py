@@ -1,20 +1,30 @@
-from . import Value, Type, Address
+from . import Value, Type, Address, Buffer
 
 class Variable(Value):
     token: str
-    type: Type
+    index: int
+    buffer: Buffer
+    
+    addr: Address.Address
 
-    def __init__(self, token, type):
+    def __init__(self, token, index, buffer):
         self.token  = token
-        self.type   = type
+        self.index  = index
+        self.buffer = buffer
 
         self.addr   = Address.Address(token, self)
+
+    def get_index(self):
+        return self.index
+
+    def get_buffer(self):
+        return self.buffer
 
     def get_token(self):
         return self.token
 
     def get_type(self):
-        return self.type
+        return self.buffer.get_type()
 
     def __str__(self):
         return f"{self.__class__.__name__}(name={self.token})"
@@ -38,7 +48,5 @@ class Variable(Value):
         from . import PointerType
         if isinstance(self.type, PointerType):
             raise NotImplementedError
-
-        print(self.type)
 
         return self.type.get_size()

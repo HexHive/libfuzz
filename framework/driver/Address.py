@@ -15,7 +15,6 @@ class Address(Value):
     def __hash__(self):
         return hash(self.token + str(self.__class__.__name__))
 
-
     def __str__(self):
         return f"{self.__class__.__name__}(name={self.token})"
     
@@ -24,3 +23,6 @@ class Address(Value):
 
     def __eq__(self, other):
         return hash(self) == hash(other)
+
+    def get_token(self):
+        return self.token

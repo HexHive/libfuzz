@@ -1,9 +1,9 @@
-import random
+import random, copy
 from typing import List, Set, Dict, Tuple, Optional
 
 from grammar import Grammar, Terminal, NonTerminal
 from common import Utils, Api, Arg
-from . import Driver, Statement, ApiCall, VarDecl, Type, PointerType, Variable, Context
+from . import Driver, Statement, ApiCall, BuffDecl, Type, PointerType, Variable, Context
 
 class DriverGenerator:
     concretization_logic: Dict[Terminal, ApiCall]
@@ -17,20 +17,20 @@ class DriverGenerator:
         driver_second = self.generate_driver_context_aware(driver_context_free)
         return driver_second
 
-    def normalize_type(self, a_type) -> Type:
+    def normalize_type(self, a_type, a_size) -> Type:
         if a_type == "i32":
-            return Type("uint32_t")
+            return Type("uint32_t", a_size)
         elif a_type == "i64":
-            return Type("uint64_t")
+            return Type("uint64_t", a_size)
         elif a_type == "i8*":
-            return PointerType("char*", Type("char"))
+            return PointerType("char*", Type("char", a_size))
         elif a_type == "void":
-            return Type("void")
+            return Type("void", a_size)
         elif a_type.startswith("%struct"):
             if a_type.endswith("*"):
-                return PointerType(a_type, Type(a_type[:-1]))
+                return PointerType(a_type, Type(a_type[:-1], a_size))
             else:
-                return Type(a_type)
+                return Type(a_type, a_size)
             # return a_type.replace("%struct.", "$")
 
         raise Exception(f"Type '{a_type}' unknown")
@@ -49,13 +49,13 @@ class DriverGenerator:
 
             args_str = []
             for e, arg in enumerate(arguments_info):
-                the_type = self.normalize_type(arg.type)
+                the_type = self.normalize_type(arg.type, arg.size)
                 args_str += [the_type]
 
             if return_info.size == 0:
-                ret_type = self.normalize_type('void')
+                ret_type = self.normalize_type('void', 0)
             else:
-                ret_type = self.normalize_type(return_info.type)
+                ret_type = self.normalize_type(return_info.type, return_info.size)
             
             stmt = ApiCall(function_name, args_str, ret_type)
             
@@ -93,18 +93,19 @@ class DriverGenerator:
 
     def generate_driver_context_aware(self, driver_ctx_free) -> Driver:
 
-        statements = [ self.concretization_logic[s] for s in driver_ctx_free if s.name != "end"]
-
+        new_statement = lambda x: copy.deepcopy(self.concretization_logic[x]) 
+        statements = [ new_statement(s) for s in driver_ctx_free if s.name != "end" ]
+        
         context = Context()
         for statement in statements:
             if isinstance(statement, ApiCall):
                 for arg_pos, arg_type in statement.get_pos_args_types():
-                    arg_var = context.randomly_gimme_a_var(arg_type)
+                    arg_var = context.randomly_gimme_a_var(arg_type, statement.function_name)
                     statement.set_pos_arg_var(arg_pos, arg_var)
-                ret_var = context.randomly_gimme_a_var(statement.ret_type)
+                ret_var = context.randomly_gimme_a_var(statement.ret_type, statement.function_name)
                 statement.set_ret_var(ret_var)       
             else:
                 raise Exception(f"Don't know {statement}")
-        statements_context = context.generate_def_vars()
+        statements_context = context.generate_def_buffer()
 
         return Driver(statements_context + statements, context)

@@ -1,4 +1,4 @@
-from driver import Driver, ApiCall, VarDecl, Type, PointerType, Address, Variable, Statement, Value
+from driver import Driver, ApiCall, BuffDecl, Type, PointerType, Address, Variable, Statement, Value, NullConstant
 from miner import BackendDriver
 
 import random, string, os
@@ -14,7 +14,9 @@ class MockBackendDriver(BackendDriver):
         print(self.working_dir)
 
         # file name for the driver
-        driver_filename = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)) + ".txt"
+        # driver_filename = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)) + ".txt"
+
+        driver_filename = "CEOBJLE6DR.txt"
 
         print(f"Driver filename: {driver_filename}")
 
@@ -27,38 +29,34 @@ class MockBackendDriver(BackendDriver):
             for stmt in stmt_instances:
                 f.write(stmt + "\n")
 
-        print(driver.get_input_size())
+        # print(driver.get_input_size())
 
         return driver_filename
 
-
-    # # PointerType
-    # def emit_code(self):
-    #     var = self.variable
-    #     type = var.get_type()
-    #     return f"[THIS IS A POINTER!] {type.emit_code()} {var.get_token()} = input();"
-
     # Address
-    def address_emit(self, address: Address):
+    def address_emit(self, address: Address) -> str:
         variable = address.variable
         return f"&{self.variable_emit(variable)}"
 
-    def stmt_emit(self, stmt: Statement):
-        if isinstance(stmt, VarDecl):
-            return self.vardec_emit(stmt)
+    def stmt_emit(self, stmt: Statement) -> str:
+        if isinstance(stmt, BuffDecl):
+            return self.buffdec_emit(stmt)
         elif isinstance(stmt, ApiCall):
             return self.apicall_emit(stmt)
         raise NotImplementedError
 
-    # VarDecl
-    def vardec_emit(self, vardecl: VarDecl):
-        var = vardecl.variable
-        type = var.get_type()
+    # BuffDecl
+    def buffdec_emit(self, buffdecl: BuffDecl) -> str:
+        buffer      = buffdecl.get_buffer()
 
-        return f"{self.type_emit(type)} {self.variable_emit(var)} = input();"
+        type        = buffer.get_type()
+        n_element   = buffer.get_number_elements()
+        token       = self.clean_token(buffer.get_token())
+
+        return f"{self.type_emit(type)} {token}[{n_element}] = input();"
 
     # ApiCall
-    def apicall_emit(self, apicall: ApiCall):
+    def apicall_emit(self, apicall: ApiCall) -> str:
         ret_var = apicall.ret_var
         arg_vars = apicall.arg_vars
         function_name = apicall.function_name
@@ -77,23 +75,32 @@ class MockBackendDriver(BackendDriver):
             return self.variable_emit(value)
         if isinstance(value, Address):
             return self.address_emit(value)
+        if isinstance(value, NullConstant):
+            return self.nullconst_emit(value)
 
         raise Exception(f"I don't know {value}")
 
+    # NullConstant
+    def nullconst_emit(self, nullcnst: NullConstant) -> str:
+        return "NULL"
+
+    def clean_token(self, token: str) -> str:
+        t = token.replace("%", "").replace("*", "")
+        if "." in t:
+            t = t.split(".")[-1]
+        return t
+
     # Variable
     def variable_emit(self, variable: Variable) -> str:
-        var_str = variable.token.replace("%", "")
+        idx     = variable.get_index()
+        buffer  = variable.get_buffer()
+        token   = self.clean_token(buffer.token)
 
-        if "." in var_str:
-            var_str = var_str.split(".")[-1]
-
-        return var_str
+        return f"{token}[{idx}]"
 
     # Type
     def type_emit(self, type: Type) -> str:
-        var_str = type.token.replace("%", "")
-
-        if "." in var_str:
-            var_str = var_str.split(".")[-1]
-
-        return var_str
+        if isinstance(type, PointerType):
+            type = type.get_pointee_type()
+        
+        return self.clean_token(type.token)

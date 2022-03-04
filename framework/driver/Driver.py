@@ -1,8 +1,8 @@
 from typing import List, Set, Dict, Tuple, Optional
-# from . import Statement
+from . import Statement
 
 class Driver:
-    # statements: List[Statement]
+    statements: List[Statement.Statement]
 
     def __init__(self, statements, context):
         self.statements = statements
