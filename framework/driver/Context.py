@@ -26,8 +26,8 @@ class Context:
         self.buffs_alive.add(self.buffer_void)
 
         # TODO: make this from config?
-        # self.MAX_ARRAY_SIZE = 1024
-        self.MAX_ARRAY_SIZE = 10
+        self.MAX_ARRAY_SIZE = 1024
+        # self.MAX_ARRAY_SIZE = 10
 
         # TODO: map buffer and input
         # self.buffer_map = {}
