@@ -1,4 +1,4 @@
-libxml2/*
+targets/*
 phasar/*
 
 LLVM/build
