@@ -6,4 +6,4 @@ export PROGRAM=driver1
 export TARGET=libtiff 
 export TIMEOUT=60
 ./build.sh
-./run.sh
+# ./run.sh
