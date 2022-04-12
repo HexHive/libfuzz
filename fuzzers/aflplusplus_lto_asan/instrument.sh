@@ -30,23 +30,11 @@ if [[ " ${DYNAMIC_TARGETS[@]} " =~ " $TARGET_NAME " ]]; then
 fi
 
 # Build the AFL-only instrumented version
-(
-    export OUT="$OUT/afl"
-    export LDFLAGS="$LDFLAGS -L$OUT"
-
-    # "$MAGMA/build.sh"
-    "$TARGET/build.sh"
-)
-
-# Build the CmpLog instrumented version
 # (
-#    export OUT="$OUT/cmplog"
-#    export LDFLAGS="$LDFLAGS -L$OUT"
-#
-#    export AFL_LLVM_CMPLOG=1
-#
-#    # "$MAGMA/build.sh"
-#    "$TARGET/build.sh"
+export OUT="$OUT/afl"
+export LDFLAGS="$LDFLAGS -L$OUT"
+
+    # "$TARGET/build.sh"
 # )
 
 # NOTE: We pass $OUT directly to the target build.sh script, since the artifact

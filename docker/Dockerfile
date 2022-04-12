@@ -50,6 +50,7 @@ USER root:root
 RUN mkdir -p ${FUZZER} && chown ${user}:${group} ${FUZZER}
 COPY --chown=${user}:${group} ${libpp_root}/${fuzzer_path} ${FUZZER}/
 COPY --chown=${user}:${group} ${libpp_root}/fuzzers/run.sh ${LIBPP_R}/fuzzers/
+COPY --chown=${user}:${group} ${libpp_root}/fuzzers/build_and_run.sh ${LIBPP_R}/fuzzers/
 RUN ${FUZZER}/preinstall.sh
 USER ${user}:${group}
 RUN ${FUZZER}/fetch.sh
@@ -74,12 +75,14 @@ ENV CXXFLAGS ${BUILD_FLAGS}
 ENV LIBS -lrt
 ENV LDFLAGS -L"${OUT}" -g
 
-RUN ${FUZZER}/instrument.sh
+# RUN ${FUZZER}/instrument.sh
+RUN ${TARGET}/build_library.sh
 
 # ALL THINGS TO SET EXTERNALLY?
 ARG timeout_arg=60
 ENV TIMEOUT $timeout_arg 
 ENV FUZZARGS ""
 ENV ARGS "@@"
-ENTRYPOINT "${LIBPP_R}/fuzzers/run.sh"
+# ENTRYPOINT "${LIBPP_R}/fuzzers/run.sh"
+ENTRYPOINT "${LIBPP_R}/fuzzers/build_and_run.sh"
 
