@@ -1,6 +1,6 @@
-targets/*
 phasar/*
 workdir/*
+analysis/*
 
 LLVM/build
 LLVM/binutils/
