@@ -179,3 +179,8 @@ class Utils:
                             return_info["size"], return_info["type"])
 
         return Api(function_name, return_info, arguments_info)
+
+
+    @staticmethod
+    def get_include_functions(hedader_folder) -> List[str]:
+        return []

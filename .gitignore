@@ -1,6 +1,7 @@
 phasar/*
 workdir/*
 analysis/*
+*.pyc
 
 LLVM/build
 LLVM/binutils/

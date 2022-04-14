@@ -13,7 +13,8 @@ logging.getLogger("fuzzer").setLevel(logging.DEBUG)
 
 def __main():
 
-    default_config = "./targets/simple_connection/fuzz.json"
+    # default_config = "./targets/simple_connection/fuzz.json"
+    default_config = "./targets/libtiff/fuzz.json"
 
     parser = argparse.ArgumentParser(description='Automatic Driver Generator')
     parser.add_argument('--config', type=str, help='The grammar', default=default_config)
