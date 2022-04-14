@@ -24,10 +24,10 @@ class DriverGenerator:
             return Type("uint64_t", a_size)
         elif a_type == "i8*":
             return PointerType("char*", Type("char", a_size))
-        elif a_type == "i8**":
-            return PointerType("char**", PointerType("char*", Type("char", a_size)))
-        elif a_type == "i16":
-            return Type("uint16_t", a_size)
+        # elif a_type == "i8**":
+        #     return PointerType("char**", PointerType("char*", Type("char", a_size)))
+        # elif a_type == "i16":
+        #     return Type("uint16_t", a_size)
         elif a_type == "void":
             return Type("void", a_size)
         elif a_type.startswith("%struct"):
@@ -45,9 +45,7 @@ class DriverGenerator:
 
         coerce_info = Utils.read_coerce_log(coerce)
         included_functions = Utils.get_include_functions(hedader_folder)
-        print(included_functions)
-        exit(1)
-        apis_list = Utils.get_api_list(apis, coerce_info)
+        apis_list = Utils.get_api_list(apis, coerce_info, included_functions)
         
         for api in apis_list:
             function_name = api.function_name

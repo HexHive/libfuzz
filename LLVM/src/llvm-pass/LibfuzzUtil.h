@@ -15,6 +15,8 @@
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -35,11 +37,20 @@ namespace libfuzz {
       uint64_t size;
       std::string type;
       void set_from_type(llvm::Type *arg_type) {
+
         if (arg_type->isPtrOrPtrVectorTy()) {
-            this->flag = "ref";
+
+          llvm::PointerType *a_ptype = dyn_cast<llvm::PointerType>(arg_type);
+
+          if (isa<llvm::FunctionType>(a_ptype->getPointerElementType())) {
+            this->flag = "fun";
           } else {
-            this->flag = "val";
+            this->flag = "ref";
           }
+
+        } else {
+          this->flag = "val";
+        }
         llvm::raw_string_ostream ostream(type);
         arg_type->print(ostream);
       };
@@ -53,7 +64,15 @@ namespace libfuzz {
           this->flag = "ret";
         else {
           if (a_type->isPtrOrPtrVectorTy()) {
-            this->flag = "ref";
+
+            llvm::PointerType *a_ptype = dyn_cast<llvm::PointerType>(a_type);
+
+            if (isa<llvm::FunctionType>(a_ptype->getPointerElementType())) {
+              this->flag = "fun";
+            } else {
+              this->flag = "ref";
+            }
+
           } else {
             this->flag = "val";
           }
@@ -80,6 +99,7 @@ namespace libfuzz {
   typedef struct {
     std::string function_name;
     argument_record return_info;
+    std::string is_vararg;
     std::vector<argument_record> arguments_info;
     std::string to_json() {
       std::string str_ret;
@@ -87,6 +107,7 @@ namespace libfuzz {
       str_ret += "{";
       str_ret += "\"function_name\": \"" + this->function_name + "\", ";
       str_ret += "\"return_info\": " + this->return_info.to_json() + ", ";
+      str_ret += "\"is_vararg\": " + this->is_vararg + ", ";
       str_ret += "\"arguments_info\": [";
       
       int max_arg = this->arguments_info.size();

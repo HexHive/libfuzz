@@ -95,7 +95,7 @@ class Utils:
         return coerce_info
 
     @staticmethod
-    def get_api_list(apis, coerce_info) -> List[Api]:
+    def get_api_list(apis, coerce_info, included_functions) -> List[Api]:
 
         # TODO: make a white list form the original header
         blacklist = ["__cxx_global_var_init", "_GLOBAL__sub_I_network_lib.cpp"]
@@ -108,7 +108,10 @@ class Utils:
                 if l.startswith("#"):
                     continue
                 api = json.loads(l)
-                if api["function_name"] in blacklist:
+                function_name = api["function_name"]
+                if function_name in blacklist:
+                    continue
+                if not function_name in included_functions:
                     continue
                 apis_list += [Utils.normalize_coerce_args(api, coerce_info)]
                 # print(apis_list)
@@ -183,4 +186,13 @@ class Utils:
 
     @staticmethod
     def get_include_functions(hedader_folder) -> List[str]:
-        return []
+
+        exported_functions = set()
+
+        with open(hedader_folder) as f:
+            for l in f:
+                l_strip = l.strip()
+                p_par = l_strip.find("(")
+                exported_functions |= { l_strip[:p_par] }
+
+        return list(exported_functions)

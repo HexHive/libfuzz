@@ -1,15 +1,1 @@
-connection connection_1[1024] = input();
-connection connection_0[1024] = input();
-uint64_t uint64_t_0[1024] = input();
 void buff_void[1] = input();
-uint64_t uint64_t_1[1024] = input();
-char char_0[1024] = input();
-connection connection_3[1024] = input();
-uint32_t uint32_t_0[1024] = input();
-connection connection_2[1024] = input();
-uint32_t_0[0] = send_msg(NULL, uint64_t_0[0], connection_0[0]);
-uint32_t_0[0] = send_msg(NULL, uint64_t_1[0], connection_1[0]);
-connect(&char_0[0], uint32_t_0[0], NULL);
-close(NULL);
-close(&connection_2[0]);
-uint32_t_0[0] = receive_msg(NULL, uint64_t_0[0], connection_3[0]);

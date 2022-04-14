@@ -64,10 +64,12 @@ namespace {
 
       Type * retType = F.getReturnType();
       StringRef function_name = F.getName();
+      bool is_vararg = F.isVarArg();
 
       errs() << "Doing: " << function_name << "\n";
 
       my_fun.function_name = function_name.str();
+      my_fun.is_vararg = is_vararg ? "true" : "false";
       my_fun.return_info.set_from_type(retType);
       my_fun.return_info.size = libfuzz::estimate_size(retType, false, this->DL);
       my_fun.return_info.name = "return";
