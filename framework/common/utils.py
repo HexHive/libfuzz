@@ -122,6 +122,7 @@ class Utils:
     @staticmethod
     def normalize_coerce_args(api, coerce_info) -> Api:
         function_name = api["function_name"]
+        is_vararg = api["is_vararg"]
         # print(f"doing: {function_name}")
         arguments_info = api["arguments_info"]
         return_info = api["return_info"]
@@ -181,7 +182,7 @@ class Utils:
         return_info = Arg(return_info["name"], return_info["flag"],
                             return_info["size"], return_info["type"])
 
-        return Api(function_name, return_info, arguments_info)
+        return Api(function_name, is_vararg, return_info, arguments_info)
 
 
     @staticmethod

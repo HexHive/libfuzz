@@ -1,10 +1,12 @@
 class Api:
     function_name: str
+    is_vararg: bool
     return_info: str
     arguments_info: str
 
-    def __init__(self, function_name, return_info, arguments_info):
+    def __init__(self, function_name, is_vararg, return_info, arguments_info):
         self.function_name = function_name
+        self.is_vararg = is_vararg
         self.return_info = return_info
         self.arguments_info = arguments_info
 
