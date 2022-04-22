@@ -41,10 +41,32 @@ class FuzzerConfig:
     @cached_property
     def work_dir(self):
         wd = self._config["fuzzer"]["workdir"]
-        tree = { "queue", "crash" }
-        for t in tree:
-            os.makedirs(os.path.join(wd, t), exist_ok=True)
+        os.makedirs(wd, exist_ok=True)
         return wd
+
+    @cached_property
+    def queue_dir(self):
+        d = os.path.join(self.work_dir, "queue")
+        os.makedirs(d, exist_ok=True)
+        return d
+
+    @cached_property
+    def cache_dir(self):
+        d = os.path.join(self.work_dir, "cache")
+        os.makedirs(d, exist_ok=True)
+        return d
+
+    @cached_property
+    def drivers_dir(self):
+        d = os.path.join(self.work_dir, "drivers")
+        os.makedirs(d, exist_ok=True)
+        return d
+
+    @cached_property
+    def reports_dir(self):
+        d = os.path.join(self.work_dir, "reports")
+        os.makedirs(d, exist_ok=True)
+        return d
 
     @cached_property
     def dependency_generator(self) -> DependencyGraphGenerator:
@@ -116,7 +138,7 @@ class FuzzerConfig:
         miner = fuzzer["miner"]
         
         if miner == "mock":
-            return MockMiner(self.work_dir)
+            return MockMiner(self.drivers_dir)
 
         raise NotImplementedError
 
