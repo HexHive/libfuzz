@@ -7,7 +7,7 @@
     },
     "fuzzer": {
         "workdir": "./workdir",
-        "pool_size": 30,
+        "pool_size": 10,
         "miner": "mock"
     }
 }

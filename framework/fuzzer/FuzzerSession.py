@@ -30,5 +30,5 @@ class FuzzerSession:
             print("TODO: generate/mutate new fuzzers")
 
             # TODO: just for debug/develop
-            break
+            # break
 

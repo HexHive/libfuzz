@@ -78,21 +78,29 @@ class Context:
     def get_random_var(self, type: Type) -> Variable:
         return self.get_random_buffer(type)[0]
 
-    def randomly_gimme_a_var(self, type: Type, towhom) -> Value:
+    def randomly_gimme_a_var(self, type: Type, towhom, is_ret: bool = False) -> Value:
 
         v = None
 
         if isinstance(type, PointerType):
             tt = type.get_pointee_type()
 
-            a_choice = random.choice(self.poninter_strategies)
+            if is_ret:
+                a_choice = Context.POINTER_STRATEGY_ARRAY
+            else:
+                a_choice = random.choice(self.poninter_strategies)
+
             # just NULL
             if a_choice == Context.POINTER_STRATEGY_NULL:
                 v = NullConstant(tt)
             # a vector
             elif a_choice == Context.POINTER_STRATEGY_ARRAY:
                 if random.getrandbits(1) == 0 or not self.has_buffer_type(tt):
-                    vp = self.create_new_array(tt)
+                    try:
+                        vp = self.create_new_array(tt)
+                    except:
+                        print("within 'a_choice == Context.POINTER_STRATEGY_ARRAY'")
+                        from IPython import embed; embed(); exit()
                 else:
                     vp = self.get_random_buffer(tt)
 
@@ -102,7 +110,11 @@ class Context:
             # if v not in context -> just create
             if not self.has_vars_type(type):
                 # print(f"=> {t} not in context, new one")
-                v = self.create_new_val(type)
+                try:
+                    v = self.create_new_val(type)
+                except:
+                    print("within 'not self.has_vars_type(type):'")
+                    from IPython import embed; embed(); exit()
             else:
                 # I might get an existing one
                 if random.getrandbits(1) == 1:

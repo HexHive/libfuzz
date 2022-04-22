@@ -1,1 +1,0 @@
-void buff_void[1] = input();

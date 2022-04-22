@@ -14,7 +14,10 @@ class DriverGenerator:
 
     def create_random_driver(self, grammar: Grammar):
         driver_context_free = self.generate_driver_context_free(grammar)
+        print("generate_driver_context_free")
+        print(driver_context_free)
         driver_second = self.generate_driver_context_aware(driver_context_free)
+        print("generate_driver_context_aware")
         return driver_second
 
     def normalize_type(self, a_type, a_size, a_flag) -> Type:
@@ -33,29 +36,29 @@ class DriverGenerator:
         a_type_core = a_type.replace("*", "")
 
         if a_type_core == "i8":
-            return Type("char", a_size)
+            type_core = Type("char", a_size)
         elif a_type_core == "i16":
-            return Type("uint16_t", a_size)
+            type_core = Type("uint16_t", a_size)
         elif a_type_core == "i32":
             type_core = Type("uint32_t", a_size)
         elif a_type_core == "i64":
-            return Type("uint64_t", a_size)
+            type_core = Type("uint64_t", a_size)
         elif a_type_core == "void":
-            return Type("void", a_size)
+            type_core = Type("void", a_size)
         elif a_type_core == "float":
-            return Type("float", a_size)
+            type_core = Type("float", a_size)
         elif a_type_core == "double":
-            return Type("double", a_size)
+            type_core = Type("double", a_size)
         elif a_type_core.startswith("%struct"):
             # FIXME: this is very wrong! a_size should be according to the type, if it is a pointer, size will be 64 (or 32).
             # TODO: buid a map that matches custom structures and real size, to extract from LLVM
-            return Type(a_type_core[1:], a_size)
+            type_core = Type(a_type_core[1:], a_size)
         else:
             raise Exception(f"Type '{a_type_core}' unknown")
 
-        return_type = a_type_core
+        return_type = type_core
         for x in range(1, pointer_level + 1):
-            return_type = PointerType( a_type_core + "*"*x , copy.copy(return_type))
+            return_type = copy.deepcopy(PointerType( a_type_core + "*"*x , copy.deepcopy(return_type)))
 
         return return_type
 
@@ -96,7 +99,8 @@ class DriverGenerator:
         symbols = [grammar.get_start_symbol()]
         expansion_trials = 0
 
-        while len(self.nonterminals(symbols)) > 0: # and len(symbols) < 10:
+        while len(self.nonterminals(symbols)) > 0 and len(symbols) < 10:
+            print(f"Driver size: {len(symbols)}")
             symbol_to_expand = random.choice(self.nonterminals(symbols))
 
             expansions = grammar[symbol_to_expand]
@@ -114,12 +118,24 @@ class DriverGenerator:
                 if expansion_trials >= self.max_expansion_trials:
                     raise Exception(f"Cannot expand {symbol_to_expand}")
 
-        return symbols
+        symbols_only_terminal = []
+        for s in symbols:
+            if isinstance(s, Terminal):
+                symbols_only_terminal += [copy.deepcopy(s)]
+            elif isinstance(s, NonTerminal):
+                symbols_only_terminal += [copy.deepcopy(s).convertToTerminal()]
+            else:
+                raise Exception(f"what is '{s}'?")
+
+        return symbols_only_terminal
 
     def generate_driver_context_aware(self, driver_ctx_free) -> Driver:
 
         new_statement = lambda x: copy.deepcopy(self.concretization_logic[x]) 
         statements = [ new_statement(s) for s in driver_ctx_free if s.name != "end" ]
+
+        print("after statements created!")
+        # from IPython import embed; embed(); exit()
         
         context = Context()
         for statement in statements:
@@ -127,7 +143,7 @@ class DriverGenerator:
                 for arg_pos, arg_type in statement.get_pos_args_types():
                     arg_var = context.randomly_gimme_a_var(arg_type, statement.function_name)
                     statement.set_pos_arg_var(arg_pos, arg_var)
-                ret_var = context.randomly_gimme_a_var(statement.ret_type, statement.function_name)
+                ret_var = context.randomly_gimme_a_var(statement.ret_type, statement.function_name, True)
                 statement.set_ret_var(ret_var)       
             else:
                 raise Exception(f"Don't know {statement}")

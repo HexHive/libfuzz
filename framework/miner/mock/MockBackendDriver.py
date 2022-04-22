@@ -9,14 +9,14 @@ class MockBackendDriver(BackendDriver):
         self.working_dir = working_dir
 
     # this return the filename
-    def emit(self, driver: Driver) -> str:
+    def emit(self, driver: Driver, driver_filename: str):
 
         print(self.working_dir)
 
         # file name for the driver
         # driver_filename = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)) + ".txt"
 
-        driver_filename = "CEOBJLE6DR.txt"
+        # driver_filename = "CEOBJLE6DR.txt"
 
         print(f"Driver filename: {driver_filename}")
 
@@ -31,7 +31,7 @@ class MockBackendDriver(BackendDriver):
 
         # print(driver.get_input_size())
 
-        return driver_filename
+        # return driver_filename
 
     # Address
     def address_emit(self, address: Address) -> str:
@@ -58,13 +58,14 @@ class MockBackendDriver(BackendDriver):
     # ApiCall
     def apicall_emit(self, apicall: ApiCall) -> str:
         ret_var = apicall.ret_var
+        ret_type = apicall.ret_type
         arg_vars = apicall.arg_vars
         function_name = apicall.function_name
 
         ret_var_code = self.value_emit(ret_var)
         arg_vars_code = ", ".join([self.value_emit(a) for a in arg_vars])
 
-        if ret_var.get_type() == Type("void"):
+        if ret_type == Type("void"):
             return f"{function_name}({arg_vars_code});"
 
         return f"{ret_var_code} = {function_name}({arg_vars_code});"

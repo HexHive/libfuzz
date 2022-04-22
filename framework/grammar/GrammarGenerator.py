@@ -18,6 +18,9 @@ class GrammarGenerator:
 
         for api, deps in dgraph.items():
             for dep in deps:
+                if not dep in inv_dep_graph:
+                    inv_dep_graph[dep] = set()
+                
                 inv_dep_graph[dep].add(api)
 
         for api in inv_dep_graph.keys():
