@@ -8,16 +8,14 @@ from . import Driver, Statement, ApiCall, BuffDecl, Type, PointerType, Variable,
 class DriverGenerator:
     concretization_logic: Dict[Terminal, ApiCall]
 
-    def __init__(self, apis, coerce, hedader_folder, max_nonterminals = 3):
+    def __init__(self, apis, coerce, hedader_folder, driver_size, max_nonterminals = 3):
         self.concretization_logic = self.load_concretization_logic(apis, coerce, hedader_folder)
         self.max_nonterminals = 3
+        self.driver_size = driver_size
 
     def create_random_driver(self, grammar: Grammar):
         driver_context_free = self.generate_driver_context_free(grammar)
-        print("generate_driver_context_free")
-        print(driver_context_free)
         driver_second = self.generate_driver_context_aware(driver_context_free)
-        print("generate_driver_context_aware")
         return driver_second
 
     def normalize_type(self, a_type, a_size, a_flag) -> Type:
@@ -99,8 +97,7 @@ class DriverGenerator:
         symbols = [grammar.get_start_symbol()]
         expansion_trials = 0
 
-        while len(self.nonterminals(symbols)) > 0 and len(symbols) < 10:
-            print(f"Driver size: {len(symbols)}")
+        while len(self.nonterminals(symbols)) > 0 and len(symbols) <= self.driver_size:
             symbol_to_expand = random.choice(self.nonterminals(symbols))
 
             expansions = grammar[symbol_to_expand]

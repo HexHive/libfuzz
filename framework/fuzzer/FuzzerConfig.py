@@ -39,6 +39,20 @@ class FuzzerConfig:
         self.start_term = NonTerminal("start")
 
     @cached_property
+    def driver_size(self):
+
+        if not "fuzzer" in self._config:
+            raise Exception("'fuzzer' not defined")
+
+        fuzzer = self._config["fuzzer"]
+
+        # default value
+        if not "driver_size" in fuzzer:
+            return 10
+
+        return fuzzer["driver_size"]
+
+    @cached_property
     def work_dir(self):
         wd = self._config["fuzzer"]["workdir"]
         os.makedirs(wd, exist_ok=True)
@@ -123,7 +137,7 @@ class FuzzerConfig:
         hedader_folder = analysis["headers"]
         coerce_map = analysis["coercemap"]
 
-        return DriverGenerator(api_logs, coerce_map, hedader_folder)
+        return DriverGenerator(api_logs, coerce_map, hedader_folder, self.driver_size)
 
     @cached_property
     def miner(self) -> Miner:

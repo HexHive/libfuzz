@@ -11,14 +11,10 @@ class MockBackendDriver(BackendDriver):
     # this return the filename
     def emit(self, driver: Driver, driver_filename: str):
 
-        print(self.working_dir)
-
         # file name for the driver
         # driver_filename = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)) + ".txt"
 
         # driver_filename = "CEOBJLE6DR.txt"
-
-        print(f"Driver filename: {driver_filename}")
 
         stmt_instances = []
 
