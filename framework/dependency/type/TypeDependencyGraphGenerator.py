@@ -7,9 +7,7 @@ class TypeDependencyGraphGenerator(DependencyGraphGenerator):
     def __init__(self, api_logs, hedader_folder, coerce_map):
         super().__init__()
 
-        coerce_info = Utils.read_coerce_log(coerce_map)
-        included_functions = Utils.get_include_functions(hedader_folder)
-        self.apis_list = Utils.get_api_list(api_logs, coerce_info, included_functions)
+        self.apis_list = Utils.get_api_list(api_logs, coerce_map, hedader_folder)
 
     def create(self) -> DependencyGraph:
         dependency_graph = DependencyGraph()

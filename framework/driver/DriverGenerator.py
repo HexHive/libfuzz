@@ -64,9 +64,7 @@ class DriverGenerator:
 
         concretization_logic = {}
 
-        coerce_info = Utils.read_coerce_log(coerce)
-        included_functions = Utils.get_include_functions(hedader_folder)
-        apis_list = Utils.get_api_list(apis, coerce_info, included_functions)
+        apis_list = Utils.get_api_list(apis, coerce, hedader_folder)
         
         for api in apis_list:
             function_name = api.function_name

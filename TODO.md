@@ -10,6 +10,7 @@
 # road map
 
 - make random drivers compile and test their crash (this will be funny!!)
+    0. introduce incomplete types and handle the grammar
     1. lifuzz stub without input binding
     2. pseudocode into c code without input binding
     2.1 add headers

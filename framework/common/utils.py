@@ -95,7 +95,10 @@ class Utils:
         return coerce_info
 
     @staticmethod
-    def get_api_list(apis, coerce_info, included_functions) -> List[Api]:
+    def get_api_list(apis, coerce_map, hedader_folder) -> List[Api]:
+
+        coerce_info = Utils.read_coerce_log(coerce_map)
+        included_functions = Utils.get_include_functions(hedader_folder)
 
         # TODO: make a white list form the original header
         blacklist = ["__cxx_global_var_init", "_GLOBAL__sub_I_network_lib.cpp"]
