@@ -14,7 +14,7 @@ The Docker is used to fuzz a target library, and the scripts to control it are i
 
 ## Dockerfile workflow:
 
-Logically, the `Dockerfile` follows this logic:
+Logically, the `Dockerfile` follows this steps:
 
 ```
 // Fuzzer
@@ -34,13 +34,13 @@ set ./build_and_run.sh
 +-- ./run.sh
 ```
 
-`./docker/build.sh` script kicks the Docker building, i.e., follow `Dockerfile` specification.
+`./docker/build.sh` kicks the Docker building, i.e., follow `Dockerfile` specification.
 
-`./docker/run.sh` script builds the driver against the target library, map the shared folders with the host, and start fuzzing, i.e., it runs the entry points `./build_and_run.sh`
+`./docker/run.sh` builds the driver against the target library, maps the shared folders with the host, and starts fuzzing. In short, it runs the entry points `./build_and_run.sh`
 
 ## Docker important folders
 
-There are three main folders in the Docker containers:
+There are three main folders in the Docker container:
 ```
 +-- /libfuzzpp
 |   +-- fuzzers  # contains the fuzzer (usually AFL++)
