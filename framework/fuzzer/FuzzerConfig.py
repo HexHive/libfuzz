@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from dependency import DependencyGraphGenerator, TypeDependencyGraphGenerator
 from grammar import GrammarGenerator, NonTerminal
 from driver import DriverGenerator
-from miner import Miner, MockMiner, BackendDriver, MockBackendDriver
+from miner import Miner, MockMiner, LFMiner
 
 from fuzzer import Pool
 
@@ -77,6 +77,18 @@ class FuzzerConfig:
         return d
 
     @cached_property
+    def headers_dir(self):
+        if not "miner" in self._config:
+            raise Exception("'miner' not defined")
+
+        miner = self._config["miner"]
+
+        if not "headers" in miner:
+            raise Exception("'headers' not defined")
+
+        return miner["headers"]
+
+    @cached_property
     def reports_dir(self):
         d = os.path.join(self.work_dir, "reports")
         os.makedirs(d, exist_ok=True)
@@ -138,7 +150,7 @@ class FuzzerConfig:
         coerce_map = analysis["coercemap"]
 
         return DriverGenerator(api_logs, coerce_map, hedader_folder, self.driver_size)
-
+        
     @cached_property
     def miner(self) -> Miner:
         if not "fuzzer" in self._config:
@@ -153,6 +165,9 @@ class FuzzerConfig:
         
         if miner == "mock":
             return MockMiner(self.drivers_dir)
+
+        if miner == "libfuzz":
+            return LFMiner(self.drivers_dir, self.headers_dir)
 
         raise NotImplementedError
 

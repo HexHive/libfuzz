@@ -3,12 +3,16 @@
         "apis": "/workspace/libfuzz/analysis/libtiff/work/apipass/apis.log",
         "coercemap": "/workspace/libfuzz/analysis/libtiff/work/apipass/coerce.log",
         "headers": "/workspace/libfuzz/analysis/libtiff/work/apipass/exported_functions.txt",
+        "incomplete_types": "/workspace/libfuzz/analysis/libtiff/work/apipass/incomplete_types.txt",
         "dependency_policy": "only_type"
     },
     "fuzzer": {
         "workdir": "./workdir",
         "pool_size": 10,
         "driver_size": 10,
-        "miner": "mock"
+        "miner": "libfuzz"
+    },
+    "miner": {
+        "headers": "/workspace/libfuzz/analysis/libtiff/work/include/"
     }
 }

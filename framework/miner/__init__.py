@@ -9,3 +9,6 @@ from .BackendDriver     import BackendDriver
 
 from .mock.MockBackendDriver    import MockBackendDriver
 from .mock.MockMiner            import MockMiner
+
+from .libfuzz.LFBackendDriver   import LFBackendDriver
+from .libfuzz.LFMiner           import LFMiner
