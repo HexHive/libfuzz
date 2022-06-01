@@ -6,7 +6,7 @@ import json
 from types import SimpleNamespace
 
 from dependency import DependencyGraphGenerator, TypeDependencyGraphGenerator
-from grammar import GrammarGenerator, NonTerminal
+from grammar import GrammarGenerator, NonTerminal, Terminal
 from driver import DriverGenerator
 from miner import Miner, MockMiner, LFMiner
 
@@ -37,6 +37,7 @@ class FuzzerConfig:
             self._config = json.load(f)
 
         self.start_term = NonTerminal("start")
+        self.end_term = Terminal("end")
 
     @cached_property
     def driver_size(self):
@@ -125,8 +126,26 @@ class FuzzerConfig:
         raise NotImplementedError
 
     @cached_property
+    def incomplete_types(self):
+
+        if not "analysis" in self._config:
+            raise Exception("'analysis' not defined")
+
+        analysis = self._config["analysis"]
+
+        if not "incomplete_types" in analysis:
+            raise Exception("'incomplete_types' not defined")
+
+        incomplete_types_list = []
+        with open(analysis["incomplete_types"]) as f:
+            for l in f:
+                incomplete_types_list += [l.strip()]
+
+        return incomplete_types_list
+
+    @cached_property
     def grammar_generator(self):
-        return GrammarGenerator(self.start_term)
+        return GrammarGenerator(self.start_term, self.end_term, self.incomplete_types)
 
     @cached_property
     def driver_generator(self):

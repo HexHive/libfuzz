@@ -4,9 +4,10 @@ from dependency import DependencyGraph
 from . import Grammar, Terminal, NonTerminal, Symbol, ExpantionRule
 
 class GrammarGenerator:
-    def __init__(self, start_term):
+    def __init__(self, start_term, end_term, incomplete_types_list):
         self.start_term = start_term
-        self.end_term = Terminal("end")
+        self.end_term = end_term
+        self.incomplete_types_list = incomplete_types_list
 
     def create(self, dgraph: DependencyGraph) -> Grammar:
 
@@ -24,9 +25,10 @@ class GrammarGenerator:
                 inv_dep_graph[dep].add(api)
 
         for api in inv_dep_graph.keys():
-            nt = NonTerminal(api.function_name)
-            expantion_rule = ExpantionRule([nt])
-            grammar.add_expantion_rule(self.start_term, expantion_rule)
+            if not self.has_incomplete_type(api):
+                nt = NonTerminal(api.function_name)
+                expantion_rule = ExpantionRule([nt])
+                grammar.add_expantion_rule(self.start_term, expantion_rule)
 
         expantion_rule = ExpantionRule([self.end_term])
         grammar.add_expantion_rule(self.start_term, expantion_rule)
@@ -51,10 +53,24 @@ class GrammarGenerator:
 
         return grammar
 
+    def has_incomplete_type(self, api):
+
+        for arg in api.arguments_info:
+
+            # removing trailing stars
+            x = arg.type
+            while x[-1] == "*":
+                x = x[:-1]
+
+            if x in self.incomplete_types_list:
+                return True
+
+        return False
+
 # import re, random
 # import argparse, json, graphviz, collections
 
-# RE_NONTERMINAL = re.compile(r'(<[^<> ]*>)')
+# RE_NONTERMINALself.has_incomplete_type(api): = re.compile(r'(<[^<> ]*>)')
 
 # import sys
 # sys.path.insert(1, '../libraries')
