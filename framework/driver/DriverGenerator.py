@@ -13,7 +13,7 @@ class DriverGenerator:
         self.max_nonterminals = 3
         self.driver_size = driver_size
 
-    def create_random_driver(self, grammar: Grammar):
+    def create_random_driver(self, grammar: Grammar) -> Driver:
         driver_context_free = self.generate_driver_context_free(grammar)
         driver_second = self.generate_driver_context_aware(driver_context_free)
         return driver_second

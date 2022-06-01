@@ -131,5 +131,5 @@ class Context:
         return v
     
     def generate_def_buffer(self) -> List[Statement]:
-        return [BuffDecl(x) for x in self.buffs_alive if x.get_token()!= self.stub_void]
+        return [BuffDecl(x) for x in self.buffs_alive if x.get_type()!= self.stub_void]
         
