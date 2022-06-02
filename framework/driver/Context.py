@@ -32,7 +32,10 @@ class Context:
         # TODO: map buffer and input
         # self.buffer_map = {}
 
-    def create_new_array(self, type):
+    def create_new_buffer(self, type):
+        # if isinstance(type, PointerType):
+        #     raise Exception(f"This function creates buffers only for base types (no pointers!) {type}")
+
         buff_counter = self.buffs_counter.get(type, 0)
 
         buff_name = f"{type.token}_{buff_counter}"
@@ -44,13 +47,13 @@ class Context:
 
         return new_buffer
 
-    def create_new_val(self, type: Type):
+    def create_new_var(self, type: Type):
 
         # in case of void, I just return a void from a buffer void
         if type == self.stub_void:
             return self.buffer_void[0]
 
-        buffer = self.create_new_array(type)
+        buffer = self.create_new_buffer(type)
 
         # for the time being, I always return the first element
         return buffer[0]
@@ -97,8 +100,11 @@ class Context:
             elif a_choice == Context.POINTER_STRATEGY_ARRAY:
                 if random.getrandbits(1) == 0 or not self.has_buffer_type(tt):
                     try:
-                        vp = self.create_new_array(tt)
-                    except:
+                        if tt.is_incomplete:
+                            vp = self.create_new_buffer(type)
+                        else:
+                            vp = self.create_new_buffer(tt)
+                    except Exception as e:
                         print("within 'a_choice == Context.POINTER_STRATEGY_ARRAY'")
                         from IPython import embed; embed(); exit()
                 else:
@@ -107,11 +113,16 @@ class Context:
                 v = vp.get_address()
 
         else:
+            # if "type" is incomplete, I can't get its value at all.
+            # besides void!
+            if type.is_incomplete and type != self.stub_void:
+                raise Exception(f"Cannot get a value from {type}!")
+ 
             # if v not in context -> just create
             if not self.has_vars_type(type):
                 # print(f"=> {t} not in context, new one")
                 try:
-                    v = self.create_new_val(type)
+                    v = self.create_new_var(type)
                 except:
                     print("within 'not self.has_vars_type(type):'")
                     from IPython import embed; embed(); exit()
@@ -123,7 +134,7 @@ class Context:
                 # or create a new var
                 else:
                     # print(f"=> decided to create a new {t}")
-                    v = self.create_new_val(type)
+                    v = self.create_new_var(type)
 
         if v is None:
             raise Exception("v was not assigned!")

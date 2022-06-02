@@ -45,7 +45,11 @@ class LFBackendDriver(BackendDriver):
     # Address
     def address_emit(self, address: Address) -> str:
         variable = address.variable
-        return f"&{self.variable_emit(variable)}"
+
+        if isinstance(variable.get_type(), PointerType):
+            return f"{self.variable_emit(variable)}"
+        else:
+            return f"&{self.variable_emit(variable)}"
 
     def stmt_emit(self, stmt: Statement) -> str:
         if isinstance(stmt, BuffDecl):
@@ -62,7 +66,19 @@ class LFBackendDriver(BackendDriver):
         n_element   = buffer.get_number_elements()
         token       = self.clean_token(buffer.get_token())
 
-        return f"{self.type_emit(type)} {token}[{n_element}] = input();"
+        # if isinstance(type, PointerType):
+        #     print("buffdec_emit")
+        #     from IPython import embed; embed(); exit()
+        
+        n_stars = 0
+        tmp_type = type
+        while isinstance(tmp_type, PointerType):
+            n_stars += 1
+            tmp_type = tmp_type.get_pointee_type()
+
+        str_stars = "*"*n_stars
+
+        return f"{self.type_emit(type)} {str_stars}{token}[{n_element}];"
 
     # ApiCall
     def apicall_emit(self, apicall: ApiCall) -> str:

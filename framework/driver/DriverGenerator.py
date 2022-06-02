@@ -18,7 +18,7 @@ class DriverGenerator:
         driver_second = self.generate_driver_context_aware(driver_context_free)
         return driver_second
 
-    def normalize_type(self, a_type, a_size, a_flag) -> Type:
+    def normalize_type(self, a_type, a_size, a_flag, a_is_incomplete) -> Type:
         
         if a_flag == "ref" or a_flag == "ret":
             if not re.search("\*$", a_type) and "*" in a_type:
@@ -34,23 +34,23 @@ class DriverGenerator:
         a_type_core = a_type.replace("*", "")
 
         if a_type_core == "i8":
-            type_core = Type("char", a_size)
+            type_core = Type("char", a_size, a_is_incomplete)
         elif a_type_core == "i16":
-            type_core = Type("uint16_t", a_size)
+            type_core = Type("uint16_t", a_size, a_is_incomplete)
         elif a_type_core == "i32":
-            type_core = Type("uint32_t", a_size)
+            type_core = Type("uint32_t", a_size, a_is_incomplete)
         elif a_type_core == "i64":
-            type_core = Type("uint64_t", a_size)
+            type_core = Type("uint64_t", a_size, a_is_incomplete)
         elif a_type_core == "void":
-            type_core = Type("void", a_size)
+            type_core = Type("void", a_size, a_is_incomplete)
         elif a_type_core == "float":
-            type_core = Type("float", a_size)
+            type_core = Type("float", a_size, a_is_incomplete)
         elif a_type_core == "double":
-            type_core = Type("double", a_size)
+            type_core = Type("double", a_size, a_is_incomplete)
         elif a_type_core.startswith("%struct"):
             # FIXME: this is very wrong! a_size should be according to the type, if it is a pointer, size will be 64 (or 32).
             # TODO: buid a map that matches custom structures and real size, to extract from LLVM
-            type_core = Type(a_type_core[1:], a_size)
+            type_core = Type(a_type_core[1:], a_size, a_is_incomplete)
         else:
             raise Exception(f"Type '{a_type_core}' unknown")
 
@@ -63,23 +63,23 @@ class DriverGenerator:
     def load_concretization_logic(self, apis_list) -> Dict[Terminal, ApiCall]:
 
         concretization_logic = {}
-        
+
         for api in apis_list:
             function_name = api.function_name
             return_info = api.return_info
             arguments_info = api.arguments_info
 
-            args_str = []
+            arg_list_type = []
             for e, arg in enumerate(arguments_info):
-                the_type = self.normalize_type(arg.type, arg.size, arg.flag)
-                args_str += [the_type]
+                the_type = self.normalize_type(arg.type, arg.size, arg.flag, arg.is_type_incomplete)
+                arg_list_type += [the_type]
 
             if return_info.size == 0:
-                ret_type = self.normalize_type('void', 0, "val")
+                ret_type = self.normalize_type('void', 0, "val", True)
             else:
-                ret_type = self.normalize_type(return_info.type, return_info.size, return_info.flag)
+                ret_type = self.normalize_type(return_info.type, return_info.size, return_info.flag, return_info.is_type_incomplete)
             
-            stmt = ApiCall(function_name, args_str, ret_type)
+            stmt = ApiCall(function_name, arg_list_type, ret_type)
             
             concretization_logic[Terminal(function_name)] = stmt
             
