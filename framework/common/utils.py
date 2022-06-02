@@ -95,10 +95,20 @@ class Utils:
         return coerce_info
 
     @staticmethod
-    def get_api_list(apis, coerce_map, hedader_folder) -> List[Api]:
+    def get_incomplete_types_list(incomplete_types):
+        incomplete_types_list = []
+        with open(incomplete_types) as f:
+            for l in f:
+                incomplete_types_list += [l.strip()]
+
+        return incomplete_types_list
+
+    @staticmethod
+    def get_api_list(apis, coerce_map, hedader_folder, incomplete_types) -> List[Api]:
 
         coerce_info = Utils.read_coerce_log(coerce_map)
         included_functions = Utils.get_include_functions(hedader_folder)
+        incomplete_types_list = Utils.get_incomplete_types_list(incomplete_types)
 
         # TODO: make a white list form the original header
         blacklist = ["__cxx_global_var_init", "_GLOBAL__sub_I_network_lib.cpp"]
@@ -116,14 +126,14 @@ class Utils:
                     continue
                 if not function_name in included_functions:
                     continue
-                apis_list += [Utils.normalize_coerce_args(api, coerce_info)]
+                apis_list += [Utils.normalize_coerce_args(api, coerce_info, incomplete_types_list)]
                 # print(apis_list)
                 # exit()
 
         return apis_list
 
     @staticmethod
-    def normalize_coerce_args(api, coerce_info) -> Api:
+    def normalize_coerce_args(api, coerce_info, incomplete_types_list) -> Api:
         function_name = api["function_name"]
         is_vararg = api["is_vararg"]
         # print(f"doing: {function_name}")
@@ -168,8 +178,9 @@ class Utils:
 
             arguments_info = []
             for a_json in arguments_info_json:
+                is_incomplete = Utils.is_incomplete(a_json["type"], incomplete_types_list)
                 a = Arg(a_json["name"], a_json["flag"], 
-                        a_json["size"], a_json["type"])
+                        a_json["size"], a_json["type"], is_incomplete)
 
                 arguments_info.append(a)
 
@@ -177,16 +188,27 @@ class Utils:
             arguments_info_json = arguments_info
             arguments_info = []
             for a_json in arguments_info_json:
+                is_incomplete = Utils.is_incomplete(a_json["type"], incomplete_types_list)
                 a = Arg(a_json["name"], a_json["flag"], 
-                        a_json["size"], a_json["type"])
+                        a_json["size"], a_json["type"], is_incomplete)
 
                 arguments_info.append(a)
 
+        is_incomplete = Utils.is_incomplete(return_info["type"], incomplete_types_list)
         return_info = Arg(return_info["name"], return_info["flag"],
-                            return_info["size"], return_info["type"])
+                            return_info["size"], return_info["type"], is_incomplete)
 
         return Api(function_name, is_vararg, return_info, arguments_info)
 
+    @staticmethod
+    def is_incomplete(a_type, incomplete_types_list):
+
+        # removing trailing stars
+        x = a_type
+        while x[-1] == "*":
+            x = x[:-1]
+
+        return x in incomplete_types_list
 
     @staticmethod
     def get_include_functions(hedader_folder) -> List[str]:

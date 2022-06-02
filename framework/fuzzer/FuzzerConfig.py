@@ -9,6 +9,7 @@ from dependency import DependencyGraphGenerator, TypeDependencyGraphGenerator
 from grammar import GrammarGenerator, NonTerminal, Terminal
 from driver import DriverGenerator
 from miner import Miner, MockMiner, LFMiner
+from common import Utils
 
 from fuzzer import Pool
 
@@ -103,52 +104,33 @@ class FuzzerConfig:
 
         analysis = self._config["analysis"]
 
-        if not "apis" in analysis:
-            raise Exception("'apis' not defined")
+        # if not "apis" in analysis:
+        #     raise Exception("'apis' not defined")
         
-        if not "headers" in analysis:
-            raise Exception("'headers' not defined")
+        # if not "headers" in analysis:
+        #     raise Exception("'headers' not defined")
 
-        if not "coercemap" in analysis:
-            raise Exception("'coercemap' not defined")
+        # if not "coercemap" in analysis:
+        #     raise Exception("'coercemap' not defined")
 
         if not "dependency_policy" in analysis:
             raise Exception("'dependency_policy' not defined")
 
-        api_logs = analysis["apis"]
-        hedader_folder = analysis["headers"]
-        coerce_map = analysis["coercemap"]
+        # api_logs = analysis["apis"]
+        # hedader_folder = analysis["headers"]
+        # coerce_map = analysis["coercemap"]
         dependency_policy = analysis["dependency_policy"]
 
         if dependency_policy == "only_type":
-            return TypeDependencyGraphGenerator(api_logs, hedader_folder, coerce_map)
+            return TypeDependencyGraphGenerator(self.api_list)
 
         raise NotImplementedError
-
-    @cached_property
-    def incomplete_types(self):
-
-        if not "analysis" in self._config:
-            raise Exception("'analysis' not defined")
-
-        analysis = self._config["analysis"]
-
-        if not "incomplete_types" in analysis:
-            raise Exception("'incomplete_types' not defined")
-
-        incomplete_types_list = []
-        with open(analysis["incomplete_types"]) as f:
-            for l in f:
-                incomplete_types_list += [l.strip()]
-
-        return incomplete_types_list
-
     @cached_property
     def grammar_generator(self):
-        return GrammarGenerator(self.start_term, self.end_term, self.incomplete_types)
+        return GrammarGenerator(self.start_term, self.end_term)
 
     @cached_property
-    def driver_generator(self):
+    def api_list(self):
 
         if not "analysis" in self._config:
             raise Exception("'analysis' not defined")
@@ -167,8 +149,14 @@ class FuzzerConfig:
         api_logs = analysis["apis"]
         hedader_folder = analysis["headers"]
         coerce_map = analysis["coercemap"]
+        incomplete_types = analysis["incomplete_types"]
 
-        return DriverGenerator(api_logs, coerce_map, hedader_folder, self.driver_size)
+        return Utils.get_api_list(api_logs, coerce_map, hedader_folder, incomplete_types)
+
+    @cached_property
+    def driver_generator(self):
+
+        return DriverGenerator(self.api_list, self.driver_size)
         
     @cached_property
     def miner(self) -> Miner:

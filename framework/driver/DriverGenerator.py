@@ -8,8 +8,8 @@ from . import Driver, Statement, ApiCall, BuffDecl, Type, PointerType, Variable,
 class DriverGenerator:
     concretization_logic: Dict[Terminal, ApiCall]
 
-    def __init__(self, apis, coerce, hedader_folder, driver_size, max_nonterminals = 3):
-        self.concretization_logic = self.load_concretization_logic(apis, coerce, hedader_folder)
+    def __init__(self, api_list, driver_size, max_nonterminals = 3):
+        self.concretization_logic = self.load_concretization_logic(api_list)
         self.max_nonterminals = 3
         self.driver_size = driver_size
 
@@ -60,11 +60,9 @@ class DriverGenerator:
 
         return return_type
 
-    def load_concretization_logic(self, apis, coerce, hedader_folder) -> Dict[Terminal, ApiCall]:
+    def load_concretization_logic(self, apis_list) -> Dict[Terminal, ApiCall]:
 
         concretization_logic = {}
-
-        apis_list = Utils.get_api_list(apis, coerce, hedader_folder)
         
         for api in apis_list:
             function_name = api.function_name

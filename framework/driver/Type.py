@@ -3,9 +3,12 @@ from abc import abstractmethod
 class Type:
     token: str
     size: int
-    def __init__(self, token, size = 0):
+    is_incomplete: bool
+    
+    def __init__(self, token, size = 0, is_incomplete = False):
         self.token  = token
         self.size   = size
+        self.is_incomplete = is_incomplete
 
     def __str__(self):
         return f"{self.__class__.__name__}(name={self.token})"

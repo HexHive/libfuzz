@@ -7,6 +7,8 @@
 - how to include the includes? add all or only a part of? (maybe all from the include directory)
 - fuzzer session multithreading, one for generating and one for reading the feedback
 
+- make API list as @cacheproperty from Utils.get_api_list( and then pass the API list 
+
 # road map
 
 - make random drivers compile and test their crash (this will be funny!!)

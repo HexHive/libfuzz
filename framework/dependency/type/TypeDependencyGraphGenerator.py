@@ -4,10 +4,9 @@ from common import Utils, Api, Arg
 from dependency import DependencyGraphGenerator, DependencyGraph
 
 class TypeDependencyGraphGenerator(DependencyGraphGenerator):
-    def __init__(self, api_logs, hedader_folder, coerce_map):
+    def __init__(self, api_list):
         super().__init__()
-
-        self.apis_list = Utils.get_api_list(api_logs, coerce_map, hedader_folder)
+        self.apis_list = api_list
 
     def create(self) -> DependencyGraph:
         dependency_graph = DependencyGraph()
