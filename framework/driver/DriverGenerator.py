@@ -140,6 +140,8 @@ class DriverGenerator:
                 statement.set_ret_var(ret_var)       
             else:
                 raise Exception(f"Don't know {statement}")
-        statements_context = context.generate_def_buffer()
 
-        return Driver(statements_context + statements, context)
+        statements_buffdecl = context.generate_buffer_decl()
+        statements_buffinit = context.generate_buffer_init()
+
+        return Driver(statements_buffdecl + statements_buffinit + statements, context)

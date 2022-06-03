@@ -1,4 +1,4 @@
-from driver import Driver, ApiCall, BuffDecl, Type, PointerType, Address, Variable, Statement, Value, NullConstant
+from driver import Driver, ApiCall, BuffDecl, BuffInit, Type, PointerType, Address, Variable, Statement, Value, NullConstant
 from miner import BackendDriver
 
 import random, string, os
@@ -29,9 +29,11 @@ class LFBackendDriver(BackendDriver):
             for header in self.headers:
                 f.write(f"#include <{header}>\n")
 
+            f.write(f"\n#include <string.h>\n")
+
             f.write("\n")
 
-            f.write("extern \"C\" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {\n")
+            f.write("extern \"C\" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t Size) {\n")
 
             for stmt in stmt_instances:
                 f.write("\t" + stmt + "\n")
@@ -54,6 +56,8 @@ class LFBackendDriver(BackendDriver):
     def stmt_emit(self, stmt: Statement) -> str:
         if isinstance(stmt, BuffDecl):
             return self.buffdec_emit(stmt)
+        elif isinstance(stmt, BuffInit):
+            return self.buffinit_emit(stmt)
         elif isinstance(stmt, ApiCall):
             return self.apicall_emit(stmt)
         raise NotImplementedError
@@ -79,6 +83,18 @@ class LFBackendDriver(BackendDriver):
         str_stars = "*"*n_stars
 
         return f"{self.type_emit(type)} {str_stars}{token}[{n_element}];"
+
+    # BuffInit
+    def buffinit_emit(self, buffinit: BuffInit) -> str:
+        buffer      = buffinit.get_buffer()
+
+        type        = buffer.get_type()
+        token       = self.clean_token(buffer.get_token())
+
+        if type.is_incomplete:
+            raise Exception(f"I can't initialize a buffer of imcomplete types {type}")
+  
+        return f"memcpy({token}, data, sizeof({token}));data += sizeof({token});"
 
     # ApiCall
     def apicall_emit(self, apicall: ApiCall) -> str:

@@ -13,6 +13,7 @@ from .Address               import Address
 from .NullConstant          import NullConstant
 from .ApiCall               import ApiCall
 from .BuffDecl              import BuffDecl
+from .BuffInit              import BuffInit
 from .Buffer                import Buffer
 from .Context               import Context
 from .DriverGenerator       import DriverGenerator
