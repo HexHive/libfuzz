@@ -1,3 +1,5 @@
+import os, shutil
+
 from miner  import Miner, GrammarFeedback, LFBackendDriver
 
 class LFMiner(Miner):
@@ -10,14 +12,32 @@ class LFMiner(Miner):
 
     def test(self, driver) -> GrammarFeedback:
 
-        file_name = f"driver{self._idx}.cc"
+        m_idx = self._idx 
         self._idx = self._idx + 1
+
+        file_name = f"driver{m_idx}.cc"
 
         # create a pseudo code file
         self._backend.emit(driver, file_name)
 
         # prented to execute
         print(f"LFMiner EXECUTION OF {file_name}")
+
+        # TODO: to get from config anyhow?
+        SEED_FOLDER = f"/workspace/libfuzz/workdir/corpus/driver{m_idx}"
+
+        # clean previous seeds
+        shutil.rmtree(SEED_FOLDER, ignore_errors=True)
+        os.mkdir(SEED_FOLDER)
+
+        # seed size in bytes
+        seed_size = driver.get_input_size()
+        
+        # TODO: number of seed for driver to configure!
+        for x in range(1, 21):
+            with open(os.path.join(SEED_FOLDER, f"seed{x}.bin"), "wb") as f:
+                f.write(os.urandom(seed_size))
+
 
         # return the feedback -- empty, then random?
         return GrammarFeedback()

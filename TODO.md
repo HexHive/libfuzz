@@ -2,12 +2,19 @@
 
 - LLVM get structures real size and log it
 - make sure the driver knows their input size
-- generate driver.cc -> 
-- map input to actual structures 
-- how to include the includes? add all or only a part of? (maybe all from the include directory)
+    - handle strange structures such as _IO_FILE
+
+- generate driver.cc ->
+    - add a check that data size is as long as excepted
+
 - fuzzer session multithreading, one for generating and one for reading the feedback
 
-- make API list as @cacheproperty from Utils.get_api_list( and then pass the API list 
+- driver generation
+    - handle `const` return
+    - handle `void*` pointers, either return or as parameter
+    - handle `handers` (function pointers) returned from APIs
+    - `char*` is not `unsigned char*`
+ 
 
 # road map
 

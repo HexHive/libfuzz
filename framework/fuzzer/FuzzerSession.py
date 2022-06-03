@@ -24,11 +24,9 @@ class FuzzerSession:
         while not self._pool.empty():
             driver = self._pool.pop()
             f = self._miner.test(driver)
-            print(f)
-            print("TODO: get fuzzing feedback")
-            print("TODO: update grammar")
-            print("TODO: generate/mutate new fuzzers")
+            # print("TODO: get fuzzing feedback")
+            # print("TODO: update grammar")
+            # print("TODO: generate/mutate new fuzzers")
 
             # TODO: just for debug/develop
             # break
-

@@ -126,8 +126,7 @@ class DriverGenerator:
 
         new_statement = lambda x: copy.deepcopy(self.concretization_logic[x]) 
         statements = [ new_statement(s) for s in driver_ctx_free if s.name != "end" ]
-
-        print("after statements created!")
+        
         # from IPython import embed; embed(); exit()
         
         context = Context()

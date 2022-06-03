@@ -49,3 +49,6 @@ class Buffer:
 
         self._init(0)
         return self.variables[0].get_address()
+
+    def get_allocated_size(self):
+        return self.n_element * self.type.get_size()

@@ -13,4 +13,5 @@ class Driver:
             yield s
  
     def get_input_size(self):
-        return self.context.get_allocated_size()
+        # the size if estimated at bits, we transform it into bytes
+        return int(self.context.get_allocated_size()/8)

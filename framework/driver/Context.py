@@ -59,7 +59,7 @@ class Context:
         return buffer[0]
 
     def get_allocated_size(self):
-        return sum([ v.get_allocated_size() for v in self.vars_alive ])
+        return sum([ b.get_allocated_size() for b in self.buffs_alive ])
 
     def has_vars_type(self, type: Type):
         for v in self.buffs_alive:
