@@ -1,5 +1,5 @@
 
-import json, collections
+import json, collections, copy
 from typing import List, Set, Dict, Tuple, Optional
 
 from .api import Api, Arg
@@ -104,7 +104,29 @@ class Utils:
         return incomplete_types_list
 
     @staticmethod
-    def get_api_list(apis, coerce_map, hedader_folder, incomplete_types) -> List[Api]:
+    def get_apis_clang_list(apis_clang):
+
+        apis_clang_list = {}
+
+        with open(apis_clang) as  f:
+            for l in f:
+                if not l.strip():
+                    continue
+                if l.startswith("#"):
+                    continue
+                api = json.loads(l)
+
+                function_name = api["function_name"]
+
+                if function_name in apis_clang_list:
+                    raise Exception(f"Function '{function_name}' already extracted!")
+
+                apis_clang_list[function_name] = copy.deepcopy(api)
+        
+        return apis_clang_list
+
+    @staticmethod
+    def get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types) -> List[Api]:
 
         coerce_info = Utils.read_coerce_log(coerce_map)
         included_functions = Utils.get_include_functions(hedader_folder)
@@ -113,8 +135,10 @@ class Utils:
         # TODO: make a white list form the original header
         blacklist = ["__cxx_global_var_init", "_GLOBAL__sub_I_network_lib.cpp"]
 
+        apis_clang_list = Utils.get_apis_clang_list(apis_clang)
+
         apis_list = []
-        with open(apis) as  f:
+        with open(apis_llvm) as  f:
             for l in f:
                 if not l.strip():
                     continue
@@ -126,14 +150,14 @@ class Utils:
                     continue
                 if not function_name in included_functions:
                     continue
-                apis_list += [Utils.normalize_coerce_args(api, coerce_info, incomplete_types_list)]
+                apis_list += [Utils.normalize_coerce_args(api, apis_clang_list, coerce_info, incomplete_types_list)]
                 # print(apis_list)
                 # exit()
 
         return apis_list
 
     @staticmethod
-    def normalize_coerce_args(api, coerce_info, incomplete_types_list) -> Api:
+    def normalize_coerce_args(api, apis_clang_list, coerce_info, incomplete_types_list) -> Api:
         function_name = api["function_name"]
         is_vararg = api["is_vararg"]
         # print(f"doing: {function_name}")
@@ -197,6 +221,14 @@ class Utils:
         is_incomplete = Utils.is_incomplete(return_info["type"], incomplete_types_list)
         return_info = Arg(return_info["name"], return_info["flag"],
                             return_info["size"], return_info["type"], is_incomplete)
+
+        # normalize arguments_info and return_info
+        if return_info.flag in ["val", "ref"]:
+            return_info.type = apis_clang_list[function_name]["return_info"]["type_clang"]
+        
+        for i, arg_info in enumerate(arguments_info):
+            if arg_info.flag in ["val", "ref"]:
+                arg_info.type =  apis_clang_list[function_name]["arguments_info"][i]["type_clang"]
 
         return Api(function_name, is_vararg, return_info, arguments_info)
 

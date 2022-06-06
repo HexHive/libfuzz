@@ -137,8 +137,11 @@ class FuzzerConfig:
 
         analysis = self._config["analysis"]
 
-        if not "apis" in analysis:
-            raise Exception("'apis' not defined")
+        if not "apis_llvm" in analysis:
+            raise Exception("'apis_llvm' not defined")
+
+        if not "apis_clang" in analysis:
+            raise Exception("'apis_clang' not defined")
         
         if not "headers" in analysis:
             raise Exception("'headers' not defined")
@@ -146,12 +149,15 @@ class FuzzerConfig:
         if not "coercemap" in analysis:
             raise Exception("'coercemap' not defined")
 
-        api_logs = analysis["apis"]
+        apis_llvm = analysis["apis_llvm"]
+        apis_clang = analysis["apis_clang"]
         hedader_folder = analysis["headers"]
         coerce_map = analysis["coercemap"]
         incomplete_types = analysis["incomplete_types"]
 
-        return Utils.get_api_list(api_logs, coerce_map, hedader_folder, incomplete_types)
+        # t = Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types)
+        # from IPython import embed; embed(); exit()
+        return Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types)
 
     @cached_property
     def driver_generator(self):

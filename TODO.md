@@ -8,6 +8,9 @@
     - add a check that data size is as long as excepted
 
 - fuzzer session multithreading, one for generating and one for reading the feedback
+    - basically, the miner becomes just a Backend to generate (save a driverX.cc file)
+    - then, there should be another thread (which is in the framework probably) that pulls from the driver folder and starts the fuzzing
+    - probably we need three threads: one to generate, one for fuzzing, one to read the fuzzing result.
 
 - driver generation
     - handle `const` return

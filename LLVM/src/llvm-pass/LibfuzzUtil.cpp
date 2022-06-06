@@ -60,7 +60,8 @@ namespace libfuzz {
       if(getenv("LIBFUZZ_LOG_PATH")) {
         char buff[1000];
         strcpy(buff, getenv("LIBFUZZ_LOG_PATH"));
-        ApiFilePath = std::string(buff) + "/apis.log";
+        // what about set the file as variable as well?!
+        ApiFilePath = std::string(buff) + "/apis_llvm.json";
       } else {
         errs() << "LIBFUZZ_LOG_PATH not found, set it!\n";
         exit(1);

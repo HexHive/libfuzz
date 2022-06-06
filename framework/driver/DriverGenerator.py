@@ -25,7 +25,7 @@ class DriverGenerator:
                 raise Exception(f"Type '{a_type}' is not a valid pointer")
         elif a_flag == "fun":
             # FIXME: for the time being, function pointers become i8*
-            a_type = "i8*"
+            a_type = "void*"
         elif a_flag == "val":
             if "*" in a_type:
                 raise Exception(f"Type '{a_type}' seems a pointer while expecting a 'val'")
@@ -33,26 +33,28 @@ class DriverGenerator:
         pointer_level = a_type.count("*")
         a_type_core = a_type.replace("*", "")
 
-        if a_type_core == "i8":
-            type_core = Type("char", a_size, a_is_incomplete)
-        elif a_type_core == "i16":
-            type_core = Type("uint16_t", a_size, a_is_incomplete)
-        elif a_type_core == "i32":
-            type_core = Type("uint32_t", a_size, a_is_incomplete)
-        elif a_type_core == "i64":
-            type_core = Type("uint64_t", a_size, a_is_incomplete)
-        elif a_type_core == "void":
-            type_core = Type("void", a_size, a_is_incomplete)
-        elif a_type_core == "float":
-            type_core = Type("float", a_size, a_is_incomplete)
-        elif a_type_core == "double":
-            type_core = Type("double", a_size, a_is_incomplete)
-        elif a_type_core.startswith("%struct"):
-            # FIXME: this is very wrong! a_size should be according to the type, if it is a pointer, size will be 64 (or 32).
-            # TODO: buid a map that matches custom structures and real size, to extract from LLVM
-            type_core = Type(a_type_core[1:], a_size, a_is_incomplete)
-        else:
-            raise Exception(f"Type '{a_type_core}' unknown")
+        type_core = Type(a_type_core, a_size, a_is_incomplete)
+
+        # if a_type_core == "i8":
+        #     type_core = Type("char", a_size, a_is_incomplete)
+        # elif a_type_core == "i16":
+        #     type_core = Type("uint16_t", a_size, a_is_incomplete)
+        # elif a_type_core == "i32":
+        #     type_core = Type("uint32_t", a_size, a_is_incomplete)
+        # elif a_type_core == "i64":
+        #     type_core = Type("uint64_t", a_size, a_is_incomplete)
+        # elif a_type_core == "void":
+        #     type_core = Type("void", a_size, a_is_incomplete)
+        # elif a_type_core == "float":
+        #     type_core = Type("float", a_size, a_is_incomplete)
+        # elif a_type_core == "double":
+        #     type_core = Type("double", a_size, a_is_incomplete)
+        # elif a_type_core.startswith("%struct"):
+        #     # FIXME: this is very wrong! a_size should be according to the type, if it is a pointer, size will be 64 (or 32).
+        #     # TODO: buid a map that matches custom structures and real size, to extract from LLVM
+        #     type_core = Type(a_type_core[1:], a_size, a_is_incomplete)
+        # else:
+        #     raise Exception(f"Type '{a_type_core}' unknown")
 
         return_type = type_core
         for x in range(1, pointer_level + 1):

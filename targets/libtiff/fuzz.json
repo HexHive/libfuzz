@@ -1,6 +1,7 @@
 {
     "analysis": {
-        "apis": "/workspace/libfuzz/analysis/libtiff/work/apipass/apis.log",
+        "apis_llvm": "/workspace/libfuzz/analysis/libtiff/work/apipass/apis_llvm.json",
+        "apis_clang": "/workspace/libfuzz/analysis/libtiff/work/apipass/apis_clang.json",
         "coercemap": "/workspace/libfuzz/analysis/libtiff/work/apipass/coerce.log",
         "headers": "/workspace/libfuzz/analysis/libtiff/work/apipass/exported_functions.txt",
         "incomplete_types": "/workspace/libfuzz/analysis/libtiff/work/apipass/incomplete_types.txt",
