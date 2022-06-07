@@ -4899,6 +4899,8 @@ pacemaker_fuzzing:
                  than insertion (the next option) in hopes of keeping
                  files reasonably small. */
 
+              if (get_afl_env("AFL_FIXED_SEED_SIZE")) { break; }
+
               u32 del_from, del_len;
 
               if (temp_len < 2) { break; }
@@ -4924,6 +4926,8 @@ pacemaker_fuzzing:
             }
 
             case 14:
+
+              if (get_afl_env("AFL_FIXED_SEED_SIZE")) { break; }
 
               if (temp_len + HAVOC_BLK_XL < MAX_FILE) {
 
@@ -5097,6 +5101,8 @@ pacemaker_fuzzing:
               }
 
               /* Insert an extra. */
+
+              if (get_afl_env("AFL_FIXED_SEED_SIZE")) { break; }
 
               else if (r == 1 && (afl->extras_cnt || afl->a_extras_cnt)) {
 
