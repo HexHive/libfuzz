@@ -201,26 +201,29 @@ class Utils:
             # exit()
 
             arguments_info = []
-            for a_json in arguments_info_json:
+            for i, a_json in enumerate(arguments_info_json):
                 is_incomplete = Utils.is_incomplete(a_json["type"], incomplete_types_list)
+                is_const = apis_clang_list[function_name]["arguments_info"][i]["const"]
                 a = Arg(a_json["name"], a_json["flag"], 
-                        a_json["size"], a_json["type"], is_incomplete)
+                        a_json["size"], a_json["type"], is_incomplete, is_const)
 
                 arguments_info.append(a)
 
         else:
             arguments_info_json = arguments_info
             arguments_info = []
-            for a_json in arguments_info_json:
+            for i, a_json in enumerate(arguments_info_json):
                 is_incomplete = Utils.is_incomplete(a_json["type"], incomplete_types_list)
+                is_const = apis_clang_list[function_name]["arguments_info"][i]["const"]
                 a = Arg(a_json["name"], a_json["flag"], 
-                        a_json["size"], a_json["type"], is_incomplete)
+                        a_json["size"], a_json["type"], is_incomplete, is_const)
 
                 arguments_info.append(a)
 
+        is_const = apis_clang_list[function_name]["return_info"]["const"]
         is_incomplete = Utils.is_incomplete(return_info["type"], incomplete_types_list)
         return_info = Arg(return_info["name"], return_info["flag"],
-                            return_info["size"], return_info["type"], is_incomplete)
+                            return_info["size"], return_info["type"], is_incomplete, is_const)
 
         # normalize arguments_info and return_info
         if return_info.flag in ["val", "ref"]:

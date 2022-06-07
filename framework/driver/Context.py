@@ -17,6 +17,7 @@ class Context:
         self.buffs_alive = set()
         self.buffs_counter = {}
         self.stub_void = Type("void")
+        self.stub_char_array = PointerType("char*", Type("char", 8))
         self.poninter_strategies = [Context.POINTER_STRATEGY_NULL, 
                                     Context.POINTER_STRATEGY_ARRAY]
                                     # Context.POINTER_STRATEGY_DEP]
@@ -32,14 +33,19 @@ class Context:
         # TODO: map buffer and input
         # self.buffer_map = {}
 
+    def is_void_ponter(self, arg):
+        return isinstance(arg, PointerType) and arg.get_pointee_type() == self.stub_void
+
     def create_new_buffer(self, type):
         # if isinstance(type, PointerType):
         #     raise Exception(f"This function creates buffers only for base types (no pointers!) {type}")
 
         buff_counter = self.buffs_counter.get(type, 0)
+        
+        pnt = "_p" if isinstance(type, PointerType) else ""
 
-        buff_name = f"{type.token}_{buff_counter}"
-
+        buff_name = f"{type.token}{pnt}_{buff_counter}"
+        buff_name = buff_name.replace(" ", "")
         new_buffer = Buffer(buff_name, self.MAX_ARRAY_SIZE, type)
 
         self.buffs_alive.add(new_buffer)
@@ -86,12 +92,16 @@ class Context:
         v = None
 
         if isinstance(type, PointerType):
-            tt = type.get_pointee_type()
+            if type.get_pointee_type().is_incomplete or is_ret:
+                tt = type
+            else:
+                tt = type.get_pointee_type()
 
             if is_ret:
                 a_choice = Context.POINTER_STRATEGY_ARRAY
             else:
                 a_choice = random.choice(self.poninter_strategies)
+
 
             # just NULL
             if a_choice == Context.POINTER_STRATEGY_NULL:
@@ -100,10 +110,7 @@ class Context:
             elif a_choice == Context.POINTER_STRATEGY_ARRAY:
                 if random.getrandbits(1) == 0 or not self.has_buffer_type(tt):
                     try:
-                        if tt.is_incomplete:
-                            vp = self.create_new_buffer(type)
-                        else:
-                            vp = self.create_new_buffer(tt)
+                        vp = self.create_new_buffer(tt)
                     except Exception as e:
                         print("within 'a_choice == Context.POINTER_STRATEGY_ARRAY'")
                         from IPython import embed; embed(); exit()
@@ -145,5 +152,5 @@ class Context:
         return [BuffDecl(x) for x in self.buffs_alive if x.get_type()!= self.stub_void]
 
     def generate_buffer_init(self) -> List[Statement]:
-        return [BuffInit(x) for x in self.buffs_alive if not x.get_type().is_incomplete and not isinstance(x.get_type(), PointerType) and x.get_type()!= self.stub_void]
+        return [BuffInit(x) for x in self.buffs_alive if not x.get_type().is_incomplete and not isinstance(x.get_type(), PointerType) and x.get_type() != self.stub_void]
         

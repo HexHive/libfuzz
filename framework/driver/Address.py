@@ -9,7 +9,7 @@ class Address(Value):
         self.variable = variable
 
     def get_variable(self):
-        return self.var
+        return self.variable
 
     # for an element, the hash is just the key + type
     def __hash__(self):

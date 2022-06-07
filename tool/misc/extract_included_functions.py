@@ -20,7 +20,12 @@ def get_info(type_str):
         info["const"] = False
         info["type_clang"] = type_str
 
-    info["type_clang"] = info["type_clang"].replace(" ", "")
+    # ducking ugly
+    info["type_clang"] = info["type_clang"].replace(" ", "").replace("unsigned", "unsigned ")
+    
+    # stuffs like char[100] into char*
+    if "[" in info["type_clang"]:
+        info["type_clang"] = re.sub('\[\d*\]', '*', info["type_clang"])
 
     return info
 

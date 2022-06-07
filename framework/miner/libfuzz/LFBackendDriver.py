@@ -109,7 +109,22 @@ class LFBackendDriver(BackendDriver):
         if ret_type == Type("void"):
             return f"{function_name}({arg_vars_code});"
 
-        return f"{ret_var_code} = {function_name}({arg_vars_code});"
+        # if self.function_name == "_TIFFmalloc":
+        #     from IPython import embed; embed(); exit()
+
+        cast_operator = ""
+        if isinstance(ret_var, Address):
+            ret_var_type = ret_var.get_variable().get_type()
+        else:
+            ret_var_type = ret_var.get_type()
+
+        if ret_type != ret_var_type:
+            # type_emit = self.type_emit(ret_var_type)
+            # from IPython import embed; embed(); exit()
+            # type_emit = self.clean_token()
+            cast_operator = f"({ret_var_type.token})"
+
+        return f"{ret_var_code} = {cast_operator} {function_name}({arg_vars_code});"
     
     # Value
     def value_emit(self, value: Value) -> str:

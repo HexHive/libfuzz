@@ -13,6 +13,7 @@
     - probably we need three threads: one to generate, one for fuzzing, one to read the fuzzing result.
 
 - driver generation
+    - stange error `KeyError: Terminal(name=start)` sometime..
     - handle `const` return
     - handle `void*` pointers, either return or as parameter
     - handle `handers` (function pointers) returned from APIs

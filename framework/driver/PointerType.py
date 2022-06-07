@@ -7,3 +7,11 @@ class PointerType(Type):
 
     def get_pointee_type(self):
         return self.type
+
+    def get_base_type(self):
+        parent_type = self.get_pointee_type()
+
+        if not isinstance(parent_type, PointerType):
+            return parent_type
+
+        return parent_type.get_base_type()

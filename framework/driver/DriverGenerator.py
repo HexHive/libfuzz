@@ -23,9 +23,9 @@ class DriverGenerator:
         if a_flag == "ref" or a_flag == "ret":
             if not re.search("\*$", a_type) and "*" in a_type:
                 raise Exception(f"Type '{a_type}' is not a valid pointer")
-        elif a_flag == "fun":
+        elif a_flag == "fun" and "(" in a_type :
             # FIXME: for the time being, function pointers become i8*
-            a_type = "void*"
+            a_type = "char*"
         elif a_flag == "val":
             if "*" in a_type:
                 raise Exception(f"Type '{a_type}' seems a pointer while expecting a 'val'")
@@ -135,9 +135,20 @@ class DriverGenerator:
         for statement in statements:
             if isinstance(statement, ApiCall):
                 for arg_pos, arg_type in statement.get_pos_args_types():
-                    arg_var = context.randomly_gimme_a_var(arg_type, statement.function_name)
+                    if context.is_void_ponter(arg_type):
+                        arg_var = context.randomly_gimme_a_var(context.stub_char_array, statement.function_name)
+                    else:
+                        arg_var = context.randomly_gimme_a_var(arg_type, statement.function_name)
                     statement.set_pos_arg_var(arg_pos, arg_var)
-                ret_var = context.randomly_gimme_a_var(statement.ret_type, statement.function_name, True)
+
+                # if isinstance(statement.ret_type, PointerType):
+                #     from IPython import embed; embed(); exit()
+                #     ret_var = self.context.randomly_gimme_a_var(self.context.stub_void, statement.function_name, True)
+                # else:
+                if context.is_void_ponter(statement.ret_type):
+                    ret_var = context.randomly_gimme_a_var(copy.deepcopy(context.stub_char_array), statement.function_name, True)
+                else:
+                    ret_var = context.randomly_gimme_a_var(statement.ret_type, statement.function_name, True)
                 statement.set_ret_var(ret_var)       
             else:
                 raise Exception(f"Don't know {statement}")

@@ -22,13 +22,15 @@ class Arg:
     size: int
     type: str
     is_type_incomplete: bool
+    is_const: bool
 
-    def __init__(self, name, flag, size, type, is_type_incomplete):
+    def __init__(self, name, flag, size, type, is_type_incomplete, is_const):
         self.name = name
         self.flag = flag
         self.size = size
         self.type = type
         self.is_type_incomplete = is_type_incomplete
+        self.is_const = is_const
 
     def __str__(self):
         return f"Arg(name={self.name})"
