@@ -18,13 +18,14 @@ class DriverGenerator:
         driver_second = self.generate_driver_context_aware(driver_context_free)
         return driver_second
 
-    def normalize_type(self, a_type, a_size, a_flag, a_is_incomplete) -> Type:
+    def normalize_type(self, a_type, a_size, a_flag, a_is_incomplete, a_is_const) -> Type:
         
         if a_flag == "ref" or a_flag == "ret":
             if not re.search("\*$", a_type) and "*" in a_type:
                 raise Exception(f"Type '{a_type}' is not a valid pointer")
         elif a_flag == "fun" and "(" in a_type :
             # FIXME: for the time being, function pointers become i8*
+            # FIXME: add casting in the backend, eventually (?)
             a_type = "char*"
         elif a_flag == "val":
             if "*" in a_type:
@@ -33,7 +34,7 @@ class DriverGenerator:
         pointer_level = a_type.count("*")
         a_type_core = a_type.replace("*", "")
 
-        type_core = Type(a_type_core, a_size, a_is_incomplete)
+        type_core = Type(a_type_core, a_size, a_is_incomplete, a_is_const)
 
         # if a_type_core == "i8":
         #     type_core = Type("char", a_size, a_is_incomplete)
@@ -73,13 +74,15 @@ class DriverGenerator:
 
             arg_list_type = []
             for e, arg in enumerate(arguments_info):
-                the_type = self.normalize_type(arg.type, arg.size, arg.flag, arg.is_type_incomplete)
+                # the_type = self.normalize_type(arg.type, arg.size, arg.flag, arg.is_type_incomplete, arg.is_const)
+                # NOTE: for simplicity, const type as arguments can be consider non-const, see `Driver_IR.md` for more info
+                the_type = self.normalize_type(arg.type, arg.size, arg.flag, arg.is_type_incomplete, False)
                 arg_list_type += [the_type]
 
             if return_info.size == 0:
-                ret_type = self.normalize_type('void', 0, "val", True)
+                ret_type = self.normalize_type('void', 0, "val", True, False)
             else:
-                ret_type = self.normalize_type(return_info.type, return_info.size, return_info.flag, return_info.is_type_incomplete)
+                ret_type = self.normalize_type(return_info.type, return_info.size, return_info.flag, return_info.is_type_incomplete, return_info.is_const)
             
             stmt = ApiCall(function_name, arg_list_type, ret_type)
             

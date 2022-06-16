@@ -82,7 +82,9 @@ class LFBackendDriver(BackendDriver):
 
         str_stars = "*"*n_stars
 
-        return f"{self.type_emit(type)} {str_stars}{token}[{n_element}];"
+        const_attr = "const " if type.is_const else ""
+
+        return f"{const_attr}{self.type_emit(type)} {str_stars}{token}[{n_element}];"
 
     # BuffInit
     def buffinit_emit(self, buffinit: BuffInit) -> str:

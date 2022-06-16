@@ -4,6 +4,7 @@ class PointerType(Type):
     def __init__(self, token, type: Type):
         super().__init__(token)
         self.type = type
+        self.is_const = type.is_const
 
     def get_pointee_type(self):
         return self.type

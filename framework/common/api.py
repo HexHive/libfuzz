@@ -21,6 +21,7 @@ class Arg:
     flag: str
     size: int
     type: str
+    # these are attributes from my perspective
     is_type_incomplete: bool
     is_const: bool
 
