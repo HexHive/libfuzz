@@ -36,6 +36,9 @@ class Context:
     def is_void_ponter(self, arg):
         return isinstance(arg, PointerType) and arg.get_pointee_type() == self.stub_void
 
+    def get_null_constant(self):
+        return NullConstant(self.stub_void)
+
     def create_new_buffer(self, type):
         # if isinstance(type, PointerType):
         #     raise Exception(f"This function creates buffers only for base types (no pointers!) {type}")

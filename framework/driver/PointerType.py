@@ -5,6 +5,8 @@ class PointerType(Type):
         super().__init__(token)
         self.type = type
         self.is_const = type.is_const
+        # it makes sense because I always have poninter to functions
+        self.to_function = False
 
     def get_pointee_type(self):
         return self.type

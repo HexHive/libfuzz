@@ -23,10 +23,10 @@ class DriverGenerator:
         if a_flag == "ref" or a_flag == "ret":
             if not re.search("\*$", a_type) and "*" in a_type:
                 raise Exception(f"Type '{a_type}' is not a valid pointer")
-        elif a_flag == "fun" and "(" in a_type :
-            # FIXME: for the time being, function pointers become i8*
-            # FIXME: add casting in the backend, eventually (?)
-            a_type = "char*"
+        # elif a_flag == "fun" and "(" in a_type :
+        #     # FIXME: for the time being, function pointers become i8*
+        #     # FIXME: add casting in the backend, eventually (?)
+        #     a_type = "char*"
         elif a_flag == "val":
             if "*" in a_type:
                 raise Exception(f"Type '{a_type}' seems a pointer while expecting a 'val'")
@@ -60,6 +60,9 @@ class DriverGenerator:
         return_type = type_core
         for x in range(1, pointer_level + 1):
             return_type = copy.deepcopy(PointerType( a_type_core + "*"*x , copy.deepcopy(return_type)))
+
+        if isinstance(return_type, PointerType):
+            return_type.to_function = a_flag == "fun" and "(" in a_type
 
         return return_type
 
@@ -140,6 +143,8 @@ class DriverGenerator:
                 for arg_pos, arg_type in statement.get_pos_args_types():
                     if context.is_void_ponter(arg_type):
                         arg_var = context.randomly_gimme_a_var(context.stub_char_array, statement.function_name)
+                    elif isinstance(arg_type, PointerType) and arg_type.to_function:
+                        arg_var = context.get_null_constant()
                     else:
                         arg_var = context.randomly_gimme_a_var(arg_type, statement.function_name)
                     statement.set_pos_arg_var(arg_pos, arg_var)
@@ -150,6 +155,8 @@ class DriverGenerator:
                 # else:
                 if context.is_void_ponter(statement.ret_type):
                     ret_var = context.randomly_gimme_a_var(copy.deepcopy(context.stub_char_array), statement.function_name, True)
+                elif isinstance(statement.ret_type, PointerType) and statement.ret_type.to_function:
+                    ret_var = context.randomly_gimme_a_var(context.stub_void, statement.function_name, True)
                 else:
                     ret_var = context.randomly_gimme_a_var(statement.ret_type, statement.function_name, True)
                 statement.set_ret_var(ret_var)       
