@@ -46,8 +46,9 @@ class Context:
         buff_counter = self.buffs_counter.get(type, 0)
         
         pnt = "_p" if isinstance(type, PointerType) else ""
+        cst = "c" if type.is_const else ""
 
-        buff_name = f"{type.token}{pnt}_{buff_counter}"
+        buff_name = f"{type.token}{pnt}_{cst}{buff_counter}"
         buff_name = buff_name.replace(" ", "")
         new_buffer = Buffer(buff_name, self.MAX_ARRAY_SIZE, type)
 

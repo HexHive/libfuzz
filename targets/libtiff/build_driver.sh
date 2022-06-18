@@ -41,7 +41,7 @@ source ${FUZZER}/instrument.sh
 #     $WORK/lib/libtiffxx.a $WORK/lib/libtiff.a -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic \
 #     $LDFLAGS $LIBS
 
-PROGRAM_W_EXT=`ls $SHARED/drivers/ | grep "${PROGRAM}\.*"`
+PROGRAM_W_EXT=`ls $SHARED/drivers/ | grep "${PROGRAM}\.*.cc"`
 
 echo "Compiling: $SHARED/drivers/$PROGRAM_W_EXT"
 

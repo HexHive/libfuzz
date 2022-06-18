@@ -9,8 +9,8 @@
     },
     "fuzzer": {
         "workdir": "./workdir",
-        "pool_size": 10,
-        "driver_size": 10,
+        "pool_size": 20,
+        "driver_size": 30,
         "miner": "libfuzz"
     },
     "miner": {

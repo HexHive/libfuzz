@@ -11,19 +11,21 @@
 #       unset)
 ##
 
-if [ -z $FUZZER ] || [ -z $TARGET ] || [ -z $PROGRAM ] || [ -z $TIMEOUT ]; then
+# if [ -z $FUZZER ] || [ -z $TARGET ] || [ -z $PROGRAM ] || [ -z $TIMEOUT ]; then
+if [ -z $FUZZER ] || [ -z $TARGET ] || [ -z $TIMEOUT ]; then
     echo '$FUZZER, $TARGET, $PROGRAM, and $TIMEOUT must be specified as environment variables.'
     exit 1
 fi
 IMG_NAME="libpp-$TARGET"
 LIBPP=../
 
+# --build-arg program_name="$PROGRAM" \
+
 set -x
 docker build -t "$IMG_NAME" \
     --build-arg target_name="$TARGET" \
     --build-arg timeout_arg="$TIMEOUT" \
     --build-arg fuzzer_name="$FUZZER" \
-    --build-arg program_name="$PROGRAM" \
     --build-arg USER_ID=$(id -u $USER) \
     --build-arg GROUP_ID=$(id -g $USER) \
     -f "$LIBPP/docker/Dockerfile" "$LIBPP"

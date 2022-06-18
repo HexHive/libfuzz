@@ -39,8 +39,8 @@ RUN mkdir -p ${SHARED} ${OUT} && \
 ARG libpp_path=libpp
 ENV LIBPP	${LIBPP_R}/${libpp_path}
 
-ARG program_name
-ENV PROGRAM $program_name
+# ARG program_name
+# ENV PROGRAM $program_name
 
 # LOAD FUZZER
 ARG fuzzer_name

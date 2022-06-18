@@ -3,4 +3,6 @@
 
 
 ${TARGET}/build_driver.sh
-${LIBPP_R}/fuzzers/run.sh
+if [[ -n "${BUILD_AND_RUN}" ]]; then
+    ${LIBPP_R}/fuzzers/run.sh
+fi
