@@ -8,7 +8,7 @@ class FuzzerSession:
         self._dependency_generator  = config.dependency_generator
         self._grammar_generator     = config.grammar_generator
         self._driver_generator      = config.driver_generator
-        self._miner                 = config.miner
+        self._backend               = config.backend
         self._pool                  = config.pool
 
     def run(self):
@@ -23,10 +23,14 @@ class FuzzerSession:
 
         while not self._pool.empty():
             driver = self._pool.pop()
-            f = self._miner.test(driver)
-            # print("TODO: get fuzzing feedback")
-            # print("TODO: update grammar")
-            # print("TODO: generate/mutate new fuzzers")
 
-            # TODO: just for debug/develop
+            driver_name = self._backend.get_name()
+
+            print(f"Generating driver: {driver_name}")
+            self._backend.emit_driver(driver, driver_name)
+
+            print(f"Generating seeds for: {driver_name}")
+            self._backend.emit_seeds(driver, driver_name)
+
+            # for debug, eventually
             # break

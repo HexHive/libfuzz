@@ -11,7 +11,8 @@
         "workdir": "./workdir",
         "pool_size": 20,
         "driver_size": 30,
-        "miner": "libfuzz"
+        "num_seeds": 20,
+        "backend": "libfuzz"
     },
     "miner": {
         "headers": "/workspace/libfuzz/analysis/libtiff/work/include/"

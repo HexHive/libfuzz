@@ -1,15 +1,28 @@
-from driver import Driver, ApiCall, BuffDecl, Type, PointerType, Address, Variable, Statement, Value, NullConstant
-from miner import BackendDriver
+from driver import Driver, ApiCall, BuffDecl, BuffInit, Type, PointerType, Address, Variable, Statement, Value, NullConstant
+from backend import BackendDriver
 
 import random, string, os
 
 class MockBackendDriver(BackendDriver):
 
-    def __init__(self, working_dir):
+    def __init__(self, working_dir, seeds_dir, num_seeds):
         self.working_dir = working_dir
+        self.seeds_dir = seeds_dir
+        self.num_seeds = num_seeds
+        self._idx = 0
+
+    def get_name(self) -> str:
+        file_name = f"Driver{self._idx}.txt"
+        self._idx = self._idx + 1
+
+        return file_name
+
+    def emit_seeds(self, driver, driver_filename: str):
+        #NOTE: the mock backend does not generate any seed
+        return 
 
     # this return the filename
-    def emit(self, driver: Driver, driver_filename: str):
+    def emit_driver(self, driver: Driver, driver_filename: str):
 
         # file name for the driver
         # driver_filename = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)) + ".txt"
@@ -39,6 +52,8 @@ class MockBackendDriver(BackendDriver):
             return self.buffdec_emit(stmt)
         elif isinstance(stmt, ApiCall):
             return self.apicall_emit(stmt)
+        elif isinstance(stmt, BuffInit):
+            return ""
         raise NotImplementedError
 
     # BuffDecl

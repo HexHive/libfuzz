@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from dependency import DependencyGraphGenerator, TypeDependencyGraphGenerator
 from grammar import GrammarGenerator, NonTerminal, Terminal
 from driver import DriverGenerator
-from miner import Miner, MockMiner, LFMiner
+from backend import BackendDriver, MockBackendDriver, LFBackendDriver
 from common import Utils
 
 from fuzzer import Pool
@@ -77,6 +77,13 @@ class FuzzerConfig:
         d = os.path.join(self.work_dir, "drivers")
         os.makedirs(d, exist_ok=True)
         return d
+
+    @cached_property
+    def seeds_dir(self):
+        d = os.path.join(self.work_dir, "corpus")
+        os.makedirs(d, exist_ok=True)
+        return d
+    
 
     @cached_property
     def headers_dir(self):
@@ -161,26 +168,37 @@ class FuzzerConfig:
 
     @cached_property
     def driver_generator(self):
-
         return DriverGenerator(self.api_list, self.driver_size)
         
     @cached_property
-    def miner(self) -> Miner:
+    def num_seeds(self):
         if not "fuzzer" in self._config:
             raise Exception("'fuzzer' not defined")
 
         fuzzer = self._config["fuzzer"]
 
-        if not "miner" in fuzzer:
+        if not "num_seeds" in fuzzer:
+            raise Exception("'num_seeds' not defined")
+
+        return int(fuzzer["num_seeds"])
+
+    @cached_property
+    def backend(self) -> BackendDriver:
+        if not "fuzzer" in self._config:
+            raise Exception("'fuzzer' not defined")
+
+        fuzzer = self._config["fuzzer"]
+
+        if not "backend" in fuzzer:
             raise Exception("'backend_driver' not defined")
 
-        miner = fuzzer["miner"]
+        backend = fuzzer["backend"]
         
-        if miner == "mock":
-            return MockMiner(self.drivers_dir)
+        if backend == "mock":
+            return MockBackendDriver(self.drivers_dir, self.seeds_dir, self.num_seeds)
 
-        if miner == "libfuzz":
-            return LFMiner(self.drivers_dir, self.headers_dir)
+        if backend == "libfuzz":
+            return LFBackendDriver(self.drivers_dir, self.seeds_dir, self.num_seeds, self.headers_dir)
 
         raise NotImplementedError
 

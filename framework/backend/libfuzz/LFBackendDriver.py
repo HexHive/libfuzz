@@ -1,18 +1,49 @@
 from driver import Driver, ApiCall, BuffDecl, BuffInit, Type, PointerType, Address, Variable, Statement, Value, NullConstant
-from miner import BackendDriver
+from backend import BackendDriver
 
-import random, string, os
+import random, string, os, shutil
 
 class LFBackendDriver(BackendDriver):
 
-    def __init__(self, working_dir, headers_dir):
+    def __init__(self, working_dir, seeds_dir, num_seeds, headers_dir):
         self.working_dir = working_dir
+        self.seeds_dir   = seeds_dir
         self.headers_dir = headers_dir
+        self.num_seeds = num_seeds
+        self._idx = 0
 
         self.headers = os.listdir(headers_dir)
 
+    def get_name(self) -> str:
+        m_idx = self._idx 
+        self._idx = self._idx + 1
+
+        file_name = f"driver{m_idx}.cc"
+
+        return file_name
+
+    def emit_seeds(self, driver, driver_filename: str):
+
+        # hack to remove extension!
+        if "." in driver_filename:
+            ext_pos = driver_filename.find(".")
+            driver_filename = driver_filename[:ext_pos]
+
+        seed_folder = os.path.join(self.seeds_dir, driver_filename)
+
+        # clean previous seeds
+        shutil.rmtree(seed_folder, ignore_errors=True)
+        os.mkdir(seed_folder)
+
+        # seed size in bytes
+        seed_size = driver.get_input_size()
+        
+        for x in range(1, self.num_seeds + 1):
+            with open(os.path.join(seed_folder, f"seed{x}.bin"), "wb") as f:
+                f.write(os.urandom(seed_size))
+
     # this return the filename
-    def emit(self, driver: Driver, driver_filename: str):
+    def emit_driver(self, driver: Driver, driver_filename: str):
 
         # file name for the driver
         # driver_filename = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)) + ".txt"
