@@ -11,6 +11,7 @@
         "docker_path": "/workspace/libfuzz/docker/Dockerfile",
         "context_path": "/workspace/libfuzz/docker/",
         "fuzzer_nane": "aflplusplus_lto_asan",
+        "fuzzer_verbose": true,
         "fuzzer_timeout": 120,
         "target_library": "libtiff",
         "workdir": "./workdir",

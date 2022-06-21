@@ -3,9 +3,10 @@ import os, subprocess
 # static class with utils for interacting with the Docker container
 class FuzzerWrapper:
 
-    def __init__(self, docker_path, context_path):
+    def __init__(self, docker_path, context_path, fuzzer_verbose):
         self.context_path = context_path
         self.docker_path = docker_path
+        self.fuzzer_verbose = fuzzer_verbose
 
     def get_image_name(self, target):
         return f"libpp-{target}"
@@ -52,7 +53,8 @@ class FuzzerWrapper:
             if not line:
                 break
 
-            print(line.decode("utf-8") )
+            if self.fuzzer_verbose:
+                print(line.decode("utf-8")[:-1] )
 
     def fuzz_one(self, program, target):
 
@@ -63,7 +65,9 @@ class FuzzerWrapper:
 
         env = {}
         env["PROGRAM"]  = program[:-3]
-        env["IMAGE"]   = img_name
+        env["IMAGE"]    = img_name
+        # TODO: transform this into a configuration flag
+        env["MODE"]     = "build+run"
 
         env_str = {k: str(v) for k, v in env.items()} 
 
@@ -81,12 +85,5 @@ class FuzzerWrapper:
             if not line:
                 break
 
-            print(line.decode("utf-8")[:-1] )
-        
-# docker run \
-#     -v /workspace/libfuzz/workdir/reports/:/libfuzzpp_shared/findings/ \
-#     -v /workspace/libfuzz/workdir/drivers/:/libfuzzpp_shared/drivers/ \
-#     -v /workspace/libfuzz/workdir/corpus/:/libfuzzpp_shared/corpus/ \
-#     --env PROGRAM=$PROGRAM \
-#     --env BUILD_AND_RUN=0 \
-#     libpp-$TARGET
+            if self.fuzzer_verbose:
+                print(line.decode("utf-8")[:-1] )

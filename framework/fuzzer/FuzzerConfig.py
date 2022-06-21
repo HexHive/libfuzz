@@ -72,7 +72,13 @@ class FuzzerConfig:
             raise Exception("'context_path' not defined")
         context_path = fuzzer["context_path"]
 
-        return FuzzerWrapper(docker_path, context_path)
+        # default value
+        if not "fuzzer_verbose" in fuzzer:
+            fuzzer_verbose = False
+        else:
+            fuzzer_verbose = fuzzer["fuzzer_verbose"]
+
+        return FuzzerWrapper(docker_path, context_path, fuzzer_verbose)
 
     @cached_property
     def work_dir(self):
