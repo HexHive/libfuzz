@@ -8,13 +8,18 @@
         "dependency_policy": "only_type"
     },
     "fuzzer": {
+        "docker_path": "/workspace/libfuzz/docker/Dockerfile",
+        "context_path": "/workspace/libfuzz/docker/",
+        "fuzzer_nane": "aflplusplus_lto_asan",
+        "fuzzer_timeout": 120,
+        "target_library": "libtiff",
         "workdir": "./workdir",
         "pool_size": 20,
         "driver_size": 30,
         "num_seeds": 20,
         "backend": "libfuzz"
     },
-    "miner": {
+    "backend": {
         "headers": "/workspace/libfuzz/analysis/libtiff/work/include/"
     }
 }

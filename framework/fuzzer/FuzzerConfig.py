@@ -11,7 +11,7 @@ from driver import DriverGenerator
 from backend import BackendDriver, MockBackendDriver, LFBackendDriver
 from common import Utils
 
-from fuzzer import Pool
+from fuzzer import Pool, FuzzerWrapper
 
 class FuzzerConfig:
     """
@@ -55,6 +55,26 @@ class FuzzerConfig:
         return fuzzer["driver_size"]
 
     @cached_property
+    def fuzzer_wrapper(self):
+
+        if not "fuzzer" in self._config:
+            raise Exception("'fuzzer' not defined")
+
+        fuzzer = self._config["fuzzer"]
+
+        # default value
+        if not "docker_path" in fuzzer:
+            raise Exception("'docker_path' not defined")
+        docker_path = fuzzer["docker_path"]
+
+        # default value
+        if not "context_path" in fuzzer:
+            raise Exception("'context_path' not defined")
+        context_path = fuzzer["context_path"]
+
+        return FuzzerWrapper(docker_path, context_path)
+
+    @cached_property
     def work_dir(self):
         wd = self._config["fuzzer"]["workdir"]
         os.makedirs(wd, exist_ok=True)
@@ -65,6 +85,45 @@ class FuzzerConfig:
         d = os.path.join(self.work_dir, "queue")
         os.makedirs(d, exist_ok=True)
         return d
+
+    @cached_property
+    def target_library(self):
+        if not "fuzzer" in self._config:
+            raise Exception("'fuzzer' not defined")
+
+        fuzzer = self._config["fuzzer"]
+
+        # default value
+        if not "target_library" in fuzzer:
+            raise Exception("'target_library' not defined")
+
+        return fuzzer["target_library"]
+
+    @cached_property
+    def fuzzer_timeout(self):
+        if not "fuzzer" in self._config:
+            raise Exception("'fuzzer' not defined")
+
+        fuzzer = self._config["fuzzer"]
+
+        # default value
+        if not "fuzzer_timeout" in fuzzer:
+            raise Exception("'fuzzer_timeout' not defined")
+
+        return fuzzer["fuzzer_timeout"]
+
+    @cached_property
+    def fuzzer_nane(self):
+        if not "fuzzer" in self._config:
+            raise Exception("'fuzzer' not defined")
+
+        fuzzer = self._config["fuzzer"]
+
+        # default value
+        if not "fuzzer_nane" in fuzzer:
+            raise Exception("'fuzzer_nane' not defined")
+
+        return fuzzer["fuzzer_nane"]
 
     @cached_property
     def cache_dir(self):
@@ -87,15 +146,15 @@ class FuzzerConfig:
 
     @cached_property
     def headers_dir(self):
-        if not "miner" in self._config:
-            raise Exception("'miner' not defined")
+        if not "backend" in self._config:
+            raise Exception("'backend' not defined")
 
-        miner = self._config["miner"]
+        backend = self._config["backend"]
 
-        if not "headers" in miner:
+        if not "headers" in backend:
             raise Exception("'headers' not defined")
 
-        return miner["headers"]
+        return backend["headers"]
 
     @cached_property
     def reports_dir(self):

@@ -1,4 +1,5 @@
-from fuzzer         import FuzzerConfig, Pool
+from fuzzer import FuzzerConfig, Pool
+from driver import Driver        
 
 class FuzzerSession:
     def __init__(self, config):
@@ -10,6 +11,11 @@ class FuzzerSession:
         self._driver_generator      = config.driver_generator
         self._backend               = config.backend
         self._pool                  = config.pool
+        self._fuzzer_name           = config.fuzzer_nane
+        self._fuzzer_timeout        = config.fuzzer_timeout
+        self._target_library        = config.target_library
+
+        self.fuzzwrap               = config.fuzzer_wrapper
 
     def run(self):
         DGraph = self._dependency_generator.create()
@@ -32,5 +38,34 @@ class FuzzerSession:
             print(f"Generating seeds for: {driver_name}")
             self._backend.emit_seeds(driver, driver_name)
 
+            print(f"Fuzzing: {driver_name}")
+            self.fuzz_one(driver_name)
+
             # for debug, eventually
-            # break
+            print("debug!")
+            break
+
+    # wrapper to invoke AFL in the Docker
+    def fuzz_one(self, driver_name: str):
+        
+        fuzzwrap = self.fuzzwrap
+
+        # get program (driver) [argument!]
+
+        # get target (library)
+        target  = self._target_library
+        # get timeout 
+        timeout = self._fuzzer_timeout
+        # get fuzzer
+        fuzzer  = self._fuzzer_name
+
+        # if container does not exist
+        if not fuzzwrap.does_image_exist(target):
+            # build container for $target
+            print("The image does not exist, going to create it!")
+            fuzzwrap.build_image(fuzzer, target, timeout)
+        
+        # fuzz one driver!
+        fuzzwrap.fuzz_one(driver_name, target)
+
+

@@ -17,7 +17,7 @@ def __main():
     default_config = "./targets/libtiff/fuzz.json"
 
     parser = argparse.ArgumentParser(description='Automatic Driver Generator')
-    parser.add_argument('--config', type=str, help='The grammar', default=default_config)
+    parser.add_argument('--config', type=str, help='The configuration', default=default_config)
 
     args = parser.parse_args()
 

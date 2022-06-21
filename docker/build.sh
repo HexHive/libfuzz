@@ -13,7 +13,7 @@
 
 # if [ -z $FUZZER ] || [ -z $TARGET ] || [ -z $PROGRAM ] || [ -z $TIMEOUT ]; then
 if [ -z $FUZZER ] || [ -z $TARGET ] || [ -z $TIMEOUT ]; then
-    echo '$FUZZER, $TARGET, $PROGRAM, and $TIMEOUT must be specified as environment variables.'
+    echo '$FUZZER, $TARGET, and $TIMEOUT must be specified as environment variables.'
     exit 1
 fi
 IMG_NAME="libpp-$TARGET"
