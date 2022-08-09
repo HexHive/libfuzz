@@ -1,7 +1,9 @@
 #!/bin/bash
 
 export LIBFUZZ=/workspace/libfuzz/
-export TARGET=$LIBFUZZ/analysis/libtiff/ 
+export TARGET=$LIBFUZZ/analysis/libtiff_wllvm/ 
+# for test with WLLVM
+# export TARGET=$LIBFUZZ/analysis/libtiff/
 
 ./fetch.sh
 
@@ -10,10 +12,15 @@ rm -rf "$WORK"
 mkdir -p "$WORK"
 mkdir -p "$WORK/lib" "$WORK/include"
 
-export CC=$LIBFUZZ/LLVM/build/bin/clang
-export CXX=$LIBFUZZ/LLVM/build/bin/clang++
+export CC=wllvm
+export CXX=wllvm++
+export LLVM_COMPILER=clang
+
+# export CC=$LIBFUZZ/LLVM/build/bin/clang
+# export CXX=$LIBFUZZ/LLVM/build/bin/clang++
 export LIBFUZZ_LOG_PATH=$WORK/apipass
-export CFLAGS="-mllvm -get-api-pass"
+# export CFLAGS="-mllvm -get-api-pass"
+
 
 mkdir -p $LIBFUZZ_LOG_PATH
 
@@ -22,7 +29,10 @@ cd "$TARGET/repo"
 ./autogen.sh
 echo "./configure"
 # ./configure --disable-shared --prefix="$WORK"
-./configure --disable-shared --prefix="$WORK" CFLAGS="-mllvm -get-api-pass" CC=$LIBFUZZ/LLVM/build/bin/clang CXX=$LIBFUZZ/LLVM/build/bin/clang++
+./configure --disable-shared --prefix="$WORK" CC=wllvm CXX=wllvm++
+# test for wllvm
+# ./configure --disable-shared --prefix="$WORK" CFLAGS="-mllvm -get-api-pass" CC=$LIBFUZZ/LLVM/build/bin/clang CXX=$LIBFUZZ/LLVM/build/bin/clang++
+
 
 # configure compiles some shits for testing, better remove it
 # rm $LIBFUZZ_LOG_PATH/apis.log

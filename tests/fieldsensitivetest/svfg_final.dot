@@ -1,0 +1,35 @@
+digraph "SVFG" {
+	label="SVFG";
+
+	Node0x561e9cc8b590 [shape=record,color=black,label="{IntraPHIVFGNode ID: 22 PAGNode: [21 = PHI(34, )]    xxsetup \{ in line: 13 file: library.c \}}"];
+	Node0x561e9cc8b590 -> Node0x561e9cc8b420[style=solid];
+	Node0x561e9cc8b420 [shape=record,color=yellow,penwidth=2,label="{FormalRetVFGNode ID: 21 Fun[xxsetup]RetPN ID: 21 unique return node for function xxsetup}"];
+	Node0x561e9cc8b280 [shape=record,color=yellow,penwidth=2,label="{FormalParmVFGNode ID: 20 Fun[edit]ValVar ID: 7\n %struct.my_struct* %0 \{ 0th arg edit in line: 9 file: library.c \}}"];
+	Node0x561e9cc8b280 -> Node0x561e9cc8a180[style=solid];
+	Node0x561e9cc8b0e0 [shape=record,color=yellow,penwidth=2,label="{FormalParmVFGNode ID: 19 Fun[xxsetup]ValVar ID: 22\n %struct.my_struct* %0 \{ 0th arg xxsetup in line: 13 file: library.c \}}"];
+	Node0x561e9cc8b0e0 -> Node0x561e9cc8a350[style=solid];
+	Node0x561e9cc8b0e0 -> Node0x561e9cc8a4b0[style=solid];
+	Node0x561e9cc8b0e0 -> Node0x561e9cc8a610[style=solid];
+	Node0x561e9cc8af60 [shape=record,color=blue,label="{StoreVFGNode ID: 18 StoreStmt: [Var29 \<-- Var31]  \n   store i8 48, i8* %5, align 1, !dbg !48, !tbaa !49 \{ ln: 16  cl: 10  fl: library.c \}}"];
+	Node0x561e9cc8ae30 [shape=record,color=blue,label="{StoreVFGNode ID: 17 StoreStmt: [Var25 \<-- Var27]  \n   store \<2 x i64\> \<i64 10, i64 10\>, \<2 x i64\>* %3, align 8, !dbg !39, !tbaa !40 \{ ln: 14  cl: 7  fl: library.c \}}"];
+	Node0x561e9cc8ad00 [shape=record,color=blue,label="{StoreVFGNode ID: 16 StoreStmt: [Var9 \<-- Var11]  \n   store i64 10, i64* %2, align 8, !dbg !38, !tbaa !39 \{ ln: 10  cl: 7  fl: library.c \}}"];
+	Node0x561e9cc8aba0 [shape=record,color=red,label="{LoadVFGNode ID: 15 LoadStmt: [Var33 \<-- Var32]  \n   %7 = load i64, i64* %6, align 8, !dbg !50, !tbaa !51 \{ ln: 17  cl: 12  fl: library.c \}}"];
+	Node0x561e9cc8aba0 -> Node0x561e9cc8a020[style=solid];
+	Node0x561e9cc8a950 [shape=record,color=red,label="{LoadVFGNode ID: 14 LoadStmt: [Var29 \<-- Var28]  \n   %5 = load i8*, i8** %4, align 8, !dbg !44, !tbaa !45 \{ ln: 16  cl: 5  fl: library.c \}}"];
+	Node0x561e9cc8a950 -> Node0x561e9cc8af60[style=solid];
+	Node0x561e9cc8a610 [shape=record,color=purple,label="{GepVFGNode ID: 13 GepStmt: [Var32 \<-- Var22]  \n   %6 = getelementptr inbounds %struct.my_struct, %struct.my_struct* %0, i64 0, i32 4, !dbg !50 \{ ln: 17  cl: 12  fl: library.c \}}"];
+	Node0x561e9cc8a610 -> Node0x561e9cc8aba0[style=solid];
+	Node0x561e9cc88f60 [shape=record,color=grey,label="{NullPtrVFGNode ID: 0 PAGNode ID: 0\n}"];
+	Node0x561e9cc88f60 -> Node0x561e9cc89c80[style=solid];
+	Node0x561e9cc89c80 [shape=record,color=black,label="{CopyVFGNode ID: 7 CopyStmt: [Var1 \<-- Var0]  \n i8* null \{ constant data \}}"];
+	Node0x561e9cc89de0 [shape=record,color=black,label="{CopyVFGNode ID: 8 CopyStmt: [Var25 \<-- Var24]  \n   %3 = bitcast i64* %2 to \<2 x i64\>*, !dbg !39 \{ ln: 14  cl: 7  fl: library.c \}}"];
+	Node0x561e9cc89de0 -> Node0x561e9cc8ae30[style=solid];
+	Node0x561e9cc8a020 [shape=record,color=black,label="{CopyVFGNode ID: 9 CopyStmt: [Var34 \<-- Var33]  \n   %8 = trunc i64 %7 to i32, !dbg !52 \{ ln: 17  cl: 9  fl: library.c \}}"];
+	Node0x561e9cc8a020 -> Node0x561e9cc8b590[style=solid];
+	Node0x561e9cc8a180 [shape=record,color=purple,label="{GepVFGNode ID: 10 GepStmt: [Var9 \<-- Var7]  \n   %2 = getelementptr inbounds %struct.my_struct, %struct.my_struct* %0, i64 0, i32 8, !dbg !37 \{ ln: 10  cl: 5  fl: library.c \}}"];
+	Node0x561e9cc8a180 -> Node0x561e9cc8ad00[style=solid];
+	Node0x561e9cc8a350 [shape=record,color=purple,label="{GepVFGNode ID: 11 GepStmt: [Var24 \<-- Var22]  \n   %2 = getelementptr inbounds %struct.my_struct, %struct.my_struct* %0, i64 0, i32 1, !dbg !38 \{ ln: 14  cl: 5  fl: library.c \}}"];
+	Node0x561e9cc8a350 -> Node0x561e9cc89de0[style=solid];
+	Node0x561e9cc8a4b0 [shape=record,color=purple,label="{GepVFGNode ID: 12 GepStmt: [Var28 \<-- Var22]  \n   %4 = getelementptr inbounds %struct.my_struct, %struct.my_struct* %0, i64 0, i32 0, !dbg !44 \{ ln: 16  cl: 5  fl: library.c \}}"];
+	Node0x561e9cc8a4b0 -> Node0x561e9cc8a950[style=solid];
+}

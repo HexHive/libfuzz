@@ -1,0 +1,8 @@
+bin
+CMakeFiles
+*.dot
+*.txt
+*.cmake
+*.ll
+*/**/Makefile
+Makefile
