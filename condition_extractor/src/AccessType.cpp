@@ -149,9 +149,12 @@ AccessTypeSet AccessTypeSet::extractAccessType(
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Copy) {
                 auto inst = (Instruction*)vNode->getValue();
 
+                acNode.setAccess(AccessType::Access::read);
+                ats.insert(acNode, vNode->getICFGNode());
+
                 // XXX: casting operations complitate things a lot. For the time
                 // being I just leave it.
-                if (Instruction::isCast(inst->getOpcode())) 
+                if (Instruction::isCast(inst->getOpcode()))
                     skipNode = true;
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Cmp) {
                 acNode.setAccess(AccessType::Access::read);
@@ -219,10 +222,10 @@ AccessTypeSet AccessTypeSet::extractAccessType(
                         p_succ.pushFrame(cs);
                         if (p_succ.getStackSize() >= MAX_STACKSIZE) {
                             ok_continue = false;
-                            outs() << "[INFO] Stack size too big!\n";
+                            outs() << "[INFO] Stack si ze too big!\n";
                         } else if (cs->isIndirectCall()) {
                             ok_continue = false;
-                            outs() << "[INFO] Indirect call, I stop!\n";
+                            // outs() << "[INFO] Indirect call, I stop!\n";
                         }
                     }
 
