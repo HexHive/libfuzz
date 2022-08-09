@@ -69,6 +69,40 @@ bool dominatesAccessType(Dominator *dom,
 
 }
 
+void pruneAccessTypes(Dominator* dom, AccessTypeSet ats_set) {
+
+    std::set<std::pair<AccessType, AccessType>> pairs;
+
+    for (auto at1: ats_set) {
+        for (auto at2: ats_set) {
+            if (at1.equals(at2.toString()))
+                continue;
+
+            if (at1.getFields() == at2.getFields()) {
+                if (at1.getAccess() == AccessType::Access::write)
+                    pairs.insert(std::make_pair(at1,at2));
+                else if (at1.getAccess() == AccessType::Access::read)
+                    pairs.insert(std::make_pair(at2,at1));
+            }
+
+        }
+    }
+
+    outs() << "I found these pairs:\n";
+    for (auto px: pairs) {
+        outs() << px.first.toString() << "\n";
+        outs() << px.second.toString() << "\n";
+        if (dominatesAccessType(dom, ats_set.getICFGNodes(px.first), 
+                                     ats_set.getICFGNodes(px.second)))
+            outs() << "write comes first!\n";
+        if (dominatesAccessType(dom, ats_set.getICFGNodes(px.second), 
+                                     ats_set.getICFGNodes(px.first)))
+            outs() << "read comes first!\n";
+        outs() << "=====\n";
+    }
+
+}
+
 int main(int argc, char ** argv)
 {
 
@@ -140,12 +174,12 @@ int main(int argc, char ** argv)
     //     FunEntryICFGNode *fun_entry = icfg->getFunEntryICFGNode(fun);
 
     //     dom = Dominator::createDom(point_to_analysys, fun_entry);
-    //     outs() << "[INFO] dumping dominators...\n";
-    //     std::string str;
-    //     raw_string_ostream rawstr(str);
-    //     rawstr <<  "dom_" << fun->getName();
-    //     // dom->dumpTransRed(rawstr.str());
-    //     dom->dumpDom(rawstr.str());
+    //     // outs() << "[INFO] dumping dominators...\n";
+    //     // std::string str;
+    //     // raw_string_ostream rawstr(str);
+    //     // rawstr <<  "dom_" << fun->getName();
+    //     // // dom->dumpTransRed(rawstr.str());
+    //     // dom->dumpDom(rawstr.str());
 
     //     // delete dom;
     // }
@@ -184,6 +218,9 @@ int main(int argc, char ** argv)
 
     outs() << "[INFO] print results...\n";
     for (auto const& p: param_access) {
+
+        // pruneAccessTypes(dom, p.second);
+
         outs() << "For param:\n";
         outs() << p.first->toString() << "\n";
         outs() << "Collected " << p.second.size() << " access type:\n";
