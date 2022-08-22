@@ -24,11 +24,247 @@ bool areCompatible(FunctionType* caller,FunctionType* callee) {
     return are_comp;
 }
 
-/*!
- * An example to query/collect all the uses of a definition of a value along value-flow graph (VFG)
- */
-AccessTypeSet AccessTypeSet::extractAccessType(
-    const SVFG* vfg, const Value* val)
+AccessTypeSet AccessTypeSet::extractReturnAccessType(
+    const SVFG* vfg, const Value* val) {
+
+    SVFIR* pag = SVFIR::getPAG();
+
+    PointerAnalysis* pta = vfg->getPTA(); 
+
+    PAGNode* pNode = pag->getGNode(pag->getValueNode(val));
+    // const VFGNode* vNode = vfg->getDefSVFGNode(pNode);
+    // need a stack -> FILO
+    // let S be a stack
+    // std::vector<Path> worklist;
+    // std::set<Path> visited;
+    // S.push(v)
+    // worklist.push_back(Path(vNode));
+
+    SVFModule *svfModule = pag->getModule();
+
+    ICFG* icfg = pag->getICFG();
+
+    const Function *fun = pNode->getFunction();
+    const SVFFunction *svfun = svfModule->getSVFFunction(fun);
+
+    FunExitICFGNode *fun_exit = icfg->getFunExitICFGNode(svfun);
+
+    Type *retType = fun->getReturnType();
+
+    PHIFun phi;
+    PHIFunInv phi_inv;
+    getPhiFunction(svfModule, icfg, &phi, &phi_inv);  
+
+    // std::set<const VFGNode*> alloca_set;
+    std::set<const Value*> allocainst_set;
+    // std::set<const AllocaInst*> allocainst_set;
+
+    // how many alloca?
+    FunEntryICFGNode *entry_node = icfg->getFunEntryICFGNode(svfun);
+
+    std::stack<std::pair<ICFGNode*,std::stack<ICFGEdge*>>> working;
+
+    std::set<ICFGNode*> visited;
+
+    std::stack<ICFGEdge*> empty_stack;
+    working.push(std::make_pair(entry_node, empty_stack));
+
+    while(!working.empty()) {
+
+        auto el = working.top();
+        working.pop();
+
+        ICFGNode *node = el.first;
+        std::stack<ICFGEdge*> curr_stack = el.second;
+
+        if (auto intra_stmt = SVFUtil::dyn_cast<IntraICFGNode>(node)) {
+            if (auto alloca = SVFUtil::dyn_cast<AllocaInst>(
+                intra_stmt->getInst())) {
+                // outs() << "[INFO] alloca " << *alloca << "\n";
+                if (alloca->getAllocatedType() == retType) {
+                    // outs() << "[INFO] => type ok!\n";
+                    // alloca_set.insert(vfgnode);
+                    allocainst_set.insert(alloca);
+                }
+            } else if (auto callinst = SVFUtil::dyn_cast<CallInst>(
+                intra_stmt->getInst())) {
+                // outs() << "[INFO] callinst " << *callinst << "\n";
+                FunctionType *ftype = callinst->getFunctionType();
+                if (ftype->getReturnType() == retType) {
+                    // outs() << "[INFO] => type ok!\n";
+                    // alloca_set.insert(vfgnode);
+                    allocainst_set.insert(callinst);
+                }
+            } else if (auto bitcastinst = SVFUtil::dyn_cast<BitCastInst>(
+                intra_stmt->getInst())) {
+                // outs() << "[INFO] bitcastinst " << *bitcastinst << "\n";
+                if (bitcastinst->getDestTy() == retType) {
+                    // outs() << "[INFO] => type ok!\n";
+                    // alloca_set.insert(vfgnode);
+                    allocainst_set.insert(bitcastinst);
+                }
+            }
+        } else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
+            auto inst = SVFUtil::dyn_cast<CallInst>(call_node->getCallSite());
+            // outs() << "[INFO] callinst2 " << *inst << "\n";
+            FunctionType *ftype = inst->getFunctionType();
+            if (ftype->getReturnType() == retType) {
+                // outs() << "[INFO] => type ok!\n";
+                // alloca_set.insert(vfgnode);
+                allocainst_set.insert(inst);
+            }
+        }  
+
+        // for (auto vfgnode: node->getVFGNodes()) {
+        //     // if (vfgnode->toString().find("@malloc(") != std::string::npos && 
+        //     //     vfgnode->getValue() != nullptr) {
+        //     //     // if (auto inst =
+        //     //     //     SVFUtil::dyn_cast<Instruction>(vfgnode->getValue())) {
+        //     //     // outs() << "[INFO] candidate: " << vfgnode->toString() << "\n";
+        //     //     alloca_set.insert(vfgnode);
+        //     //     allocainst_set.insert(vfgnode->getValue());
+        //     // }
+            
+
+        //     if (SVFUtil::isa<AddrVFGNode>(vfgnode)) {
+        //         outs() << "[INFO] candidate " << vfgnode->toString() << "\n";
+        //         if (auto alloca = SVFUtil::dyn_cast<AllocaInst>(
+        //             vfgnode->getValue())) {
+        //             outs() << "[INFO] alloca " << *alloca << "\n";
+        //             if (alloca->getAllocatedType() == retType) {
+        //                 alloca_set.insert(vfgnode);
+        //                 allocainst_set.insert(alloca);
+        //             }
+        //         } else if (auto callinst = SVFUtil::dyn_cast<CallInst>(
+        //             vfgnode->getValue())) {
+        //             outs() << "[INFO] callinst " << *callinst << "\n";
+        //             FunctionType *ftype = callinst->getFunctionType();
+        //             if (ftype->getReturnType() == retType) {
+        //                 alloca_set.insert(vfgnode);
+        //                 allocainst_set.insert(alloca);
+        //             }
+        //         }
+                
+        //     } 
+        // }
+
+        if (node->hasOutgoingEdge()) {
+            ICFGNode::const_iterator it = node->OutEdgeBegin();
+            ICFGNode::const_iterator eit = node->OutEdgeEnd();
+        
+            for (; it != eit; ++it) {
+                ICFGEdge *edge = *it;
+                ICFGNode *dst = edge->getDstNode();
+
+                if (visited.find(dst) != visited.end()) 
+                    continue;
+                
+                if(auto ret_edge = SVFUtil::dyn_cast<RetCFGEdge>(edge)) {
+
+                    if (curr_stack.size() != 0) {
+                        ICFGEdge *ret = curr_stack.top();
+                        if (ret_edge == ret) {
+                            curr_stack.pop();
+                            working.push(std::make_pair(dst, curr_stack));
+                            visited.insert(dst);
+                        }
+                    }
+                }
+                else if(auto call_edge = SVFUtil::dyn_cast<CallCFGEdge>(edge)) {
+                    ICFGEdge *next_ret = phi[call_edge];
+                    curr_stack.push(next_ret);
+                    working.push(std::make_pair(dst, curr_stack));
+                    visited.insert(dst);
+                }
+                 else {
+                    working.push(std::make_pair(dst, curr_stack));
+                    visited.insert(dst);
+                }
+            }
+        }
+
+    }
+
+    outs() << "\n";
+
+    AccessTypeSet ats;
+    // std::map<const Instruction*, AccessTypeSet> all_ats;
+    std::map<const Value*, AccessTypeSet> all_ats;
+    for (auto a: allocainst_set) {
+        // outs() << "[INFO] paraAT() " << *a << "\n";
+        AccessTypeSet l_ats = AccessTypeSet::extractParameterAccessType(vfg, a, retType);
+
+        // for (auto at: l_ats) { 
+        //     outs() << at.toString() << "\n";
+        //     l_ats.printICFGNodes(at);
+        // }
+        // exit(1);
+
+        bool do_not_return = true;
+        for (auto at: l_ats)
+            if (at.getAccess() == AccessType::Access::ret) {
+                auto l_ats_all_nodes = l_ats.getICFGNodes(at);
+                for (auto inst: l_ats_all_nodes)
+                    if (inst == fun_exit) {
+                        for (auto at2: l_ats)
+                            for (auto inst2:  l_ats.getICFGNodes(at2))
+                                ats.insert(at2, inst2);
+                        do_not_return = false;
+                        break;
+                    }
+            }
+
+        if (do_not_return)
+            all_ats[a] = l_ats;
+    }
+
+    // outs() << "[INFO] Partial results:\n";
+    // for (auto atsx: all_ats) { 
+    //     outs() << *(atsx.first) << "\n";
+    //     for (auto at: atsx.second) {
+    //         outs() << at.toString() << "\n";
+    //         atsx.second.printICFGNodes(at);
+    //     } 
+    // }
+
+    // outs() << "[INFO] Partial merge:\n";
+    // for (auto at: ats) {
+    //     outs() << at.toString() << "\n";
+    //     ats.printICFGNodes(at);
+    // } 
+
+
+    bool ast_is_changed = true;
+    while (ast_is_changed) {
+
+        ast_is_changed = false;
+
+        auto ats_all_nodes_before = ats.getAllICFGNodes();
+
+        for (auto atsx: all_ats) {
+            auto ats_all_nodes = ats_all_nodes_before;
+            auto atsx_all_nodes = atsx.second.getAllICFGNodes();
+            for (auto inst: atsx_all_nodes)
+                if (ats_all_nodes.find(inst) != ats_all_nodes.end()) {
+                    for (auto atx:  atsx.second)
+                        for (auto inst: atsx.second.getICFGNodes(atx))
+                            ats.insert(atx, inst);
+                    break;
+                }
+        }
+
+        auto ats_all_nodes_merged = ats.getAllICFGNodes();
+
+        ast_is_changed = ats_all_nodes_merged != ats_all_nodes_before;
+
+    }
+
+    return ats;
+
+}
+
+AccessTypeSet AccessTypeSet::extractParameterAccessType(
+    const SVFG* vfg, const Value* val, Type *seek_type = nullptr)
 {
     SVFIR* pag = SVFIR::getPAG();
 
@@ -154,13 +390,24 @@ AccessTypeSet AccessTypeSet::extractAccessType(
 
                 // XXX: casting operations complitate things a lot. For the time
                 // being I just leave it.
-                if (Instruction::isCast(inst->getOpcode()))
-                    skipNode = true;
+
+                if (auto bitcastinst = SVFUtil::dyn_cast<BitCastInst>(inst)) {
+                    if (bitcastinst->getDestTy() != seek_type) {
+                        skipNode = true;
+                    }
+                }
+                // if (Instruction::isCast(inst->getOpcode()))
+                //     skipNode = true;
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Cmp) {
                 acNode.setAccess(AccessType::Access::read);
                 ats.insert(acNode, vNode->getICFGNode());
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::BinaryOp) {
                 acNode.setAccess(AccessType::Access::read);
+                ats.insert(acNode, vNode->getICFGNode());
+            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::FRet) {
+                // outs() << "[INFO] I found a FormalRet\n";
+                // outs() << vNode->toString() << "\n";
+                acNode.setAccess(AccessType::Access::ret);
                 ats.insert(acNode, vNode->getICFGNode());
             }
 

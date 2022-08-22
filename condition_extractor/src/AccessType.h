@@ -14,7 +14,8 @@ using namespace std;
 
 class AccessType {
     public:
-        typedef enum _access { read, write, none } Access;
+        typedef enum _access { read, write, 
+                               ret, none } Access;
 
 
     private:
@@ -94,6 +95,8 @@ class AccessType {
                 rawstr << "read";
             else if (access == Access::write)
                 rawstr << "write";
+            else if (access == Access::ret)
+                rawstr << "return";
             else if (access == Access::none)
                 rawstr << "none";
             rawstr << ")";
@@ -180,10 +183,17 @@ class AccessTypeSet {
         //     return
         // }
 
+        bool operator<(const AccessTypeSet& rhs) const {
+            return ats < rhs.ats;
+        }
+
     
 
     public: // static functions!
-        static AccessTypeSet extractAccessType(const SVFG*, const Value*);
+        static AccessTypeSet extractParameterAccessType(
+            const SVFG*, const Value*, Type*);
+        static AccessTypeSet extractReturnAccessType(
+            const SVFG*, const Value*);
 
 };
 

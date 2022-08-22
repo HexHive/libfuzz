@@ -188,6 +188,7 @@ int main(int argc, char ** argv)
 
     // TEST FOR ACCESS TYPE!! DO NOT REMOVE
     PAG::FunToArgsListMap funmap = pag->getFunArgsMap();
+    // PAG::FunToRetMap funmap = pag->getFunRets();
 
     PTACallGraph* callgraph = point_to_analysys->getPTACallGraph();
     builder.updateCallGraph(callgraph);
@@ -210,10 +211,12 @@ int main(int argc, char ** argv)
 
         outs() << fun->getName() << "\n";
 
-        // bool first = true;
         for (auto const& p : x.second) {
-            param_access[p] = AccessTypeSet::extractAccessType(svfg,p->getValue());
+            param_access[p] = AccessTypeSet::extractParameterAccessType(svfg,p->getValue(), nullptr);
         }
+
+        // auto p = x.second;
+        // param_access[p] = AccessTypeSet::extractReturnAccessType(svfg,p->getValue());
     }
 
     outs() << "[INFO] print results...\n";

@@ -6,30 +6,36 @@
 #include <stdlib.h>
 #include "library.h"
 
-void edit(my_struct *s) {
-	s->h = 10;
+void another_init(my_struct *m) {
+	m->cc = 10;
+	m->i = 5;
 }
 
-int xxsetup(my_struct *s) {
-	s->a = 10;
-	s->b = 10;
-	s->c[0] = '0';
-	return s->d;
+my_struct* my_malloc() {
+	return (my_struct*)malloc(sizeof(my_struct));
 }
 
+my_struct* create_struct(uint64_t aa, uint64_t bb) {
 
-static void fun1(my_struct *s) {
+	if (aa == 0 || bb == 1)
+		return NULL;
 
-	xxsetup(s);
-		// s->h = 10;
-	edit(s);
-	s->g = 5;
+	my_struct *m = my_malloc();
+
+	another_init(m);
+
+	m->a = aa;
+	m->b = bb;
+
+	return m;
+
 }
 
-static void fun2(my_struct *s) {
+my_struct* create_default_struct() {
 
-	xxsetup(s);
-		// s->h = 3;
-	edit(s);
-	s->i = 5;
+	my_struct *m = create_struct(10, 5);
+
+	another_init(m);
+
+	return m;
 }
