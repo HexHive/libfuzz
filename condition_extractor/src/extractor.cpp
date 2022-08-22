@@ -48,15 +48,13 @@ static llvm::cl::opt<std::string> InputFilename(cl::Positional,
 
 // at1 over_dom at2 iif
 // for each i2 in at2 . exists i1 in at1 s.t. i1 dom i2
-bool dominatesAccessType(Dominator *dom,
-                        std::set<const ICFGNode*> at1,
-                        std::set<const ICFGNode*> at2) {
+bool dominatesAccessType(Dominator *dom, AccessType at1, AccessType at2) {
 
     uint n_instr_dominated = 0;
     bool is_dominated;
-    for (auto i2: at2) {
+    for (auto i2: at2.getICFGNodes()) {
         is_dominated = false;
-        for (auto i1: at1) {
+        for (auto i1: at1.getICFGNodes()) {
             is_dominated |= dom->dominates( const_cast<ICFGNode*>(i1),
                                             const_cast<ICFGNode*>(i2));
             if (is_dominated)
@@ -65,7 +63,7 @@ bool dominatesAccessType(Dominator *dom,
         n_instr_dominated += is_dominated ? 1 : 0;
     }
 
-    return n_instr_dominated == at2.size();
+    return n_instr_dominated == at2.getICFGNodes().size();
 
 }
 
@@ -92,11 +90,9 @@ void pruneAccessTypes(Dominator* dom, AccessTypeSet ats_set) {
     for (auto px: pairs) {
         outs() << px.first.toString() << "\n";
         outs() << px.second.toString() << "\n";
-        if (dominatesAccessType(dom, ats_set.getICFGNodes(px.first), 
-                                     ats_set.getICFGNodes(px.second)))
+        if (dominatesAccessType(dom, px.first, px.second))
             outs() << "write comes first!\n";
-        if (dominatesAccessType(dom, ats_set.getICFGNodes(px.second), 
-                                     ats_set.getICFGNodes(px.first)))
+        if (dominatesAccessType(dom, px.second, px.first))
             outs() << "read comes first!\n";
         outs() << "=====\n";
     }
@@ -187,8 +183,8 @@ int main(int argc, char ** argv)
     
 
     // TEST FOR ACCESS TYPE!! DO NOT REMOVE
-    PAG::FunToArgsListMap funmap = pag->getFunArgsMap();
-    // PAG::FunToRetMap funmap = pag->getFunRets();
+    // PAG::FunToArgsListMap funmap = pag->getFunArgsMap();
+    PAG::FunToRetMap funmap = pag->getFunRets();
 
     PTACallGraph* callgraph = point_to_analysys->getPTACallGraph();
     builder.updateCallGraph(callgraph);
@@ -209,14 +205,14 @@ int main(int argc, char ** argv)
             continue;
         }
 
-        outs() << fun->getName() << "\n";
+        outs() << "[INFO] processing: " << fun->getName() << "\n";
 
-        for (auto const& p : x.second) {
-            param_access[p] = AccessTypeSet::extractParameterAccessType(svfg,p->getValue(), nullptr);
-        }
+        // for (auto const& p : x.second) {
+        //     param_access[p] = AccessTypeSet::extractParameterAccessType(svfg,p->getValue());
+        // }
 
-        // auto p = x.second;
-        // param_access[p] = AccessTypeSet::extractReturnAccessType(svfg,p->getValue());
+        auto p = x.second;
+        param_access[p] = AccessTypeSet::extractReturnAccessType(svfg,p->getValue());
     }
 
     outs() << "[INFO] print results...\n";
@@ -230,7 +226,7 @@ int main(int argc, char ** argv)
         for (auto at: p.second) {
             outs() << at.toString() << "\n";
             if (verbose)
-                p.second.printICFGNodes(at);
+                at.printICFGNodes();
         } 
         outs() << "\n";
     }

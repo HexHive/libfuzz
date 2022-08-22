@@ -19,6 +19,7 @@ class AccessType {
 
 
     private:
+        std::set<const ICFGNode*> icfg_set;
         std::vector<int> fields;
         Access access;
 
@@ -32,9 +33,19 @@ class AccessType {
         AccessType& operator=(const AccessType &rhs) {
             this->fields = rhs.fields;
             this->access = rhs.access;
+            // hope this does not make a mess!
+            this->icfg_set = rhs.icfg_set;
 
             return *this;
         };
+
+        void addICFGNode(const ICFGNode* icfg_node) {
+            icfg_set.insert(icfg_node);
+        }
+
+        std::set<const ICFGNode*> getICFGNodes() const {
+            return icfg_set;
+        }
 
         void addField(int a_field) {
             fields.push_back(a_field);
@@ -69,6 +80,12 @@ class AccessType {
         }
 
         bool equals(std::string s) {return s == toString();}
+
+        void printICFGNodes() const {
+            for (auto inst: getICFGNodes())
+                outs() << inst->toString() << "\n";
+            outs() << "\n";
+        }
 
         std::string toString() {
 
@@ -115,52 +132,41 @@ class AccessType {
 
 
 class AccessTypeSet {
-    // public:
-    //      ICFGNodeSet;
-
     private:
-        std::map<AccessType, std::set<const ICFGNode*>> ats;
+        // std::map<AccessType, std::set<const ICFGNode*>> ats;
         std::set<AccessType> ats_set;
 
     public:
         void insert(AccessType at, const ICFGNode* inst) {
             // outs() << "[DEBUG] insert: " << at.toString() << "\n";
-            ats[at].insert(inst);
-            ats_set.insert(at);
+
+            // at is already in the set
+            auto at_iter = ats_set.find(at);
+            if (at_iter != ats_set.end()) {
+                AccessType at_prev = *at_iter;
+                at_prev.addICFGNode(inst);
+                ats_set.erase(at_prev);
+                ats_set.insert(at_prev);
+            } else {
+                at.addICFGNode(inst);
+                ats_set.insert(at);
+            }
         }
 
         size_t size() const {
-            return ats.size();
+            return ats_set.size();
         }
 
         std::set<const ICFGNode*> getAllICFGNodes() const {
             std::set<const ICFGNode*> allNodes;
 
-            for (auto p1: ats) {
-                for (auto p2: p1.second) {
-                    allNodes.insert(p2);
+            for (auto at: ats_set) {
+                for (auto icfg_node: at.getICFGNodes()) {
+                    allNodes.insert(icfg_node);
                 }
             }
 
             return allNodes;
-        }
-
-        std::set<const ICFGNode*> getICFGNodes(AccessType at) const {
-            auto insts = ats.find(at);
-            if (insts == ats.end()) {
-                std::set<const ICFGNode*> empty;
-                return empty;
-            }
-            return insts->second;
-        }
-
-        void printICFGNodes(AccessType at) const {
-            auto insts = ats.find(at);
-            if (insts == ats.end())
-                return;
-            for (auto inst: insts->second)
-                outs() << inst->toString() << "\n";
-            outs() << "\n";
         }
 
         std::set<AccessType>::iterator begin() const {
@@ -171,27 +177,15 @@ class AccessTypeSet {
             return ats_set.end();
         }
 
-        // std::string toString() const {
-        //     return "aa";
-        // }
-
-        // bool operator<(const AccessTypeSet& rhs) const {
-        //     // if (fields == rhs.fields)
-        //     //     return access < rhs.access;
-            
-        //     // return fields < rhs.fields;
-        //     return
-        // }
-
         bool operator<(const AccessTypeSet& rhs) const {
-            return ats < rhs.ats;
+            return ats_set < rhs.ats_set;
         }
 
     
 
     public: // static functions!
         static AccessTypeSet extractParameterAccessType(
-            const SVFG*, const Value*, Type*);
+            const SVFG*, const Value*, Type* = nullptr);
         static AccessTypeSet extractReturnAccessType(
             const SVFG*, const Value*);
 

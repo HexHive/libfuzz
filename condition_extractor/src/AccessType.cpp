@@ -196,18 +196,18 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
 
         // for (auto at: l_ats) { 
         //     outs() << at.toString() << "\n";
-        //     l_ats.printICFGNodes(at);
+        //     at.printICFGNodes();
         // }
         // exit(1);
 
         bool do_not_return = true;
         for (auto at: l_ats)
             if (at.getAccess() == AccessType::Access::ret) {
-                auto l_ats_all_nodes = l_ats.getICFGNodes(at);
+                auto l_ats_all_nodes = at.getICFGNodes();
                 for (auto inst: l_ats_all_nodes)
                     if (inst == fun_exit) {
                         for (auto at2: l_ats)
-                            for (auto inst2:  l_ats.getICFGNodes(at2))
+                            for (auto inst2:  at.getICFGNodes())
                                 ats.insert(at2, inst2);
                         do_not_return = false;
                         break;
@@ -223,14 +223,14 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
     //     outs() << *(atsx.first) << "\n";
     //     for (auto at: atsx.second) {
     //         outs() << at.toString() << "\n";
-    //         atsx.second.printICFGNodes(at);
+    //         at.printICFGNodes();
     //     } 
     // }
 
     // outs() << "[INFO] Partial merge:\n";
     // for (auto at: ats) {
     //     outs() << at.toString() << "\n";
-    //     ats.printICFGNodes(at);
+    //     at.printICFGNodes();
     // } 
 
 
@@ -247,7 +247,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
             for (auto inst: atsx_all_nodes)
                 if (ats_all_nodes.find(inst) != ats_all_nodes.end()) {
                     for (auto atx:  atsx.second)
-                        for (auto inst: atsx.second.getICFGNodes(atx))
+                        for (auto inst: atx.getICFGNodes())
                             ats.insert(atx, inst);
                     break;
                 }
@@ -264,7 +264,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
 }
 
 AccessTypeSet AccessTypeSet::extractParameterAccessType(
-    const SVFG* vfg, const Value* val, Type *seek_type = nullptr)
+    const SVFG* vfg, const Value* val, Type *seek_type)
 {
     SVFIR* pag = SVFIR::getPAG();
 
