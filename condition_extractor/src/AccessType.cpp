@@ -24,6 +24,138 @@ bool areCompatible(FunctionType* caller,FunctionType* callee) {
     return are_comp;
 }
 
+AccessTypeSet AccessTypeSet::extractRawPointerAccessType(
+    const SVFG* vfg, const Value* val, Type* seek_type) {
+
+    AccessTypeSet ats;
+
+    // 0.A) only with BitCastInst
+    assert(SVFUtil::isa<BitCastInst>(val) && "val must be a BitCastInt!");
+
+    const BitCastInst* bitcast_inst = SVFUtil::dyn_cast<BitCastInst>(val);
+    // 0.B) the BitCastInst must cast from my known type!
+    assert(bitcast_inst->getDestTy() == seek_type && "val must cast from seek_type!");
+
+    StructType* st = (StructType*)seek_type;
+
+    SVFIR* pag = SVFIR::getPAG();
+
+
+    LLVMModuleSet *llvmModuleSet = SVF::LLVMModuleSet::getLLVMModuleSet();
+    PAGNode* pNode = pag->getGNode(pag->getValueNode(val));
+    const VFGNode* vNode = vfg->getDefSVFGNode(pNode);
+
+    const Type *seek_origin;
+    if (SVFUtil::isa<PointerType>(seek_type)) {
+        seek_origin = seek_type->getPointerElementType();
+    } else {
+        seek_origin = seek_type;
+    }
+
+    assert(SVFUtil::isa<StructType>(seek_origin) && 
+            "I need a pointer to a struct!");
+    
+    const StructType *seek_struct = SVFUtil::dyn_cast<StructType>(seek_origin);
+
+    const StructLayout *seek_layout;
+
+    for (int i = 0; i < llvmModuleSet->getModuleNum(); i++) {
+        Module *llvmModule = llvmModuleSet->getModule(i);
+        DataLayout *datalayout = SVF::LLVMUtil::getDataLayout(llvmModule);
+        if (datalayout->getStructLayout( 
+                const_cast<StructType*>(seek_struct))) {
+            seek_layout = datalayout->getStructLayout(
+                const_cast<StructType*>(seek_struct));
+            break;
+        }
+    }
+
+    auto struct_offsets = seek_layout->getMemberOffsets();
+    // this conversion is slow, but then I can use find() from the vector
+    std::vector<uint64_t> struct_offsets_v = struct_offsets.vec();
+    // outs() << "[DEBUG] field -> offset (bytes?)\n";
+    // int i = 0;
+    // for (auto o: struct_offsets) {
+    //     outs() << " -> " << i << ": " << o << "\n";
+    //     i++;
+    // }
+    // outs() << "\n";
+
+    std::set<VFGNode*> generation_nodes;
+    std::set<VFGNode*> gep_nodes;
+
+    // 1) find the declartion: alloca or i8* return function
+    for (VFGNode::const_iterator it = vNode->InEdgeBegin(), 
+        eit = vNode->InEdgeEnd(); it != eit; ++it) {
+        VFGEdge* edge = *it;
+
+        // try to follow only Direct Edges
+        if (SVFUtil::isa<SVF::DirectSVFGEdge>(edge)) {
+            VFGNode* node = edge->getSrcNode();
+
+            if (auto call = SVFUtil::dyn_cast<ActualRetVFGNode>(node)) {
+                generation_nodes.insert(node);
+            } else if (auto addr = SVFUtil::dyn_cast<AddrVFGNode>(node)) {
+                generation_nodes.insert(node);
+            }
+        }
+    }
+
+    outs() << "[INFO] found these generators:\n";
+    for (auto gn: generation_nodes) {
+        outs() << " -> " << gn->toString() << "\n";
+    }
+
+    for (auto gn: generation_nodes) {
+        for (VFGNode::const_iterator it = gn->OutEdgeBegin(), 
+            eit = gn->OutEdgeEnd(); it != eit; ++it) {
+
+            VFGEdge* edge = *it;
+
+            if (!SVFUtil::isa<SVF::DirectSVFGEdge>(edge))
+                continue;
+
+            VFGNode* node = edge->getDstNode();
+
+            if (auto gep = SVFUtil::dyn_cast<GetElementPtrInst>
+                (node->getValue())) {
+                gep_nodes.insert(node);
+            }
+        
+        }
+    }
+
+    outs() << "[INFO] found these GEPs:\n";
+    for (auto gep: gep_nodes) {
+        auto inst = SVFUtil::dyn_cast<GetElementPtrInst>(gep->getValue());
+        if (inst->hasAllConstantIndices() &&
+            inst->getNumIndices() == 1) {
+            outs() << " -> " << gep->toString() << "\n";
+
+            ConstantInt *CI=dyn_cast<ConstantInt>(inst->getOperand(1));
+            uint64_t idx = CI->getZExtValue();
+
+            outs() << " -> offset: " << idx << "\n";
+
+            auto idx_iterator = std::find(struct_offsets_v.begin(), 
+                                            struct_offsets_v.end(), idx);
+            if (idx_iterator != struct_offsets_v.end()) {
+                unsigned int field = idx_iterator - struct_offsets_v.begin();
+                outs() << " -> field: " << field << "\n";
+            } else {
+                outs() << " -> field not found :(\n";
+            }
+
+            outs() << "\n";
+        }
+    }
+
+    exit(1);
+
+    return ats;
+
+}
+
 AccessTypeSet AccessTypeSet::extractReturnAccessType(
     const SVFG* vfg, const Value* val) {
 
@@ -57,6 +189,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
 
     // std::set<const VFGNode*> alloca_set;
     std::set<const Value*> allocainst_set;
+    std::set<const Value*> bitcastinst_set;
     // std::set<const AllocaInst*> allocainst_set;
 
     // how many alloca?
@@ -97,11 +230,12 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                 }
             } else if (auto bitcastinst = SVFUtil::dyn_cast<BitCastInst>(
                 intra_stmt->getInst())) {
-                // outs() << "[INFO] bitcastinst " << *bitcastinst << "\n";
+                outs() << "[INFO] bitcastinst " << *bitcastinst << "\n";
                 if (bitcastinst->getDestTy() == retType) {
-                    // outs() << "[INFO] => type ok!\n";
+                    outs() << "[INFO] => type ok!\n";
                     // alloca_set.insert(vfgnode);
                     allocainst_set.insert(bitcastinst);
+                    bitcastinst_set.insert(bitcastinst);
                 }
             }
         } else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
@@ -114,39 +248,6 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                 allocainst_set.insert(inst);
             }
         }  
-
-        // for (auto vfgnode: node->getVFGNodes()) {
-        //     // if (vfgnode->toString().find("@malloc(") != std::string::npos && 
-        //     //     vfgnode->getValue() != nullptr) {
-        //     //     // if (auto inst =
-        //     //     //     SVFUtil::dyn_cast<Instruction>(vfgnode->getValue())) {
-        //     //     // outs() << "[INFO] candidate: " << vfgnode->toString() << "\n";
-        //     //     alloca_set.insert(vfgnode);
-        //     //     allocainst_set.insert(vfgnode->getValue());
-        //     // }
-            
-
-        //     if (SVFUtil::isa<AddrVFGNode>(vfgnode)) {
-        //         outs() << "[INFO] candidate " << vfgnode->toString() << "\n";
-        //         if (auto alloca = SVFUtil::dyn_cast<AllocaInst>(
-        //             vfgnode->getValue())) {
-        //             outs() << "[INFO] alloca " << *alloca << "\n";
-        //             if (alloca->getAllocatedType() == retType) {
-        //                 alloca_set.insert(vfgnode);
-        //                 allocainst_set.insert(alloca);
-        //             }
-        //         } else if (auto callinst = SVFUtil::dyn_cast<CallInst>(
-        //             vfgnode->getValue())) {
-        //             outs() << "[INFO] callinst " << *callinst << "\n";
-        //             FunctionType *ftype = callinst->getFunctionType();
-        //             if (ftype->getReturnType() == retType) {
-        //                 alloca_set.insert(vfgnode);
-        //                 allocainst_set.insert(alloca);
-        //             }
-        //         }
-                
-        //     } 
-        // }
 
         if (node->hasOutgoingEdge()) {
             ICFGNode::const_iterator it = node->OutEdgeBegin();
@@ -190,32 +291,42 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
     AccessTypeSet ats;
     // std::map<const Instruction*, AccessTypeSet> all_ats;
     std::map<const Value*, AccessTypeSet> all_ats;
-    for (auto a: allocainst_set) {
-        // outs() << "[INFO] paraAT() " << *a << "\n";
-        AccessTypeSet l_ats = AccessTypeSet::extractParameterAccessType(vfg, a, retType);
+    // for (auto a: allocainst_set) {
+    //     // outs() << "[INFO] paraAT() " << *a << "\n";
+    //     AccessTypeSet l_ats = AccessTypeSet::extractParameterAccessType(vfg, a, retType);
 
-        // for (auto at: l_ats) { 
-        //     outs() << at.toString() << "\n";
-        //     at.printICFGNodes();
-        // }
-        // exit(1);
+    //     // for (auto at: l_ats) { 
+    //     //     outs() << at.toString() << "\n";
+    //     //     at.printICFGNodes();
+    //     // }
+    //     // exit(1);
 
-        bool do_not_return = true;
-        for (auto at: l_ats)
-            if (at.getAccess() == AccessType::Access::ret) {
-                auto l_ats_all_nodes = at.getICFGNodes();
-                for (auto inst: l_ats_all_nodes)
-                    if (inst == fun_exit) {
-                        for (auto at2: l_ats)
-                            for (auto inst2:  at.getICFGNodes())
-                                ats.insert(at2, inst2);
-                        do_not_return = false;
-                        break;
-                    }
-            }
+    //     bool do_not_return = true;
+    //     for (auto at: l_ats)
+    //         if (at.getAccess() == AccessType::Access::ret) {
+    //             auto l_ats_all_nodes = at.getICFGNodes();
+    //             for (auto inst: l_ats_all_nodes)
+    //                 if (inst == fun_exit) {
+    //                     for (auto at2: l_ats)
+    //                         for (auto inst2:  at.getICFGNodes())
+    //                             ats.insert(at2, inst2);
+    //                     do_not_return = false;
+    //                     break;
+    //                 }
+    //         }
 
-        if (do_not_return)
-            all_ats[a] = l_ats;
+    //     if (do_not_return)
+    //         all_ats[a] = l_ats;
+    // }
+
+    for (auto a: bitcastinst_set) {
+        AccessTypeSet l_ats = AccessTypeSet::extractRawPointerAccessType(vfg, a, retType);
+
+        for (auto at: l_ats) { 
+            outs() << at.toString() << "\n";
+            at.printICFGNodes();
+        }
+        exit(1);
     }
 
     // outs() << "[INFO] Partial results:\n";

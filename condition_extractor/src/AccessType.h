@@ -188,6 +188,8 @@ class AccessTypeSet {
             const SVFG*, const Value*, Type* = nullptr);
         static AccessTypeSet extractReturnAccessType(
             const SVFG*, const Value*);
+        static AccessTypeSet extractRawPointerAccessType(
+            const SVFG*, const Value*, Type*);
 
 };
 
