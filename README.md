@@ -15,17 +15,6 @@ Long story short, I want to generalize this problem (taken from Nyx -- Usenix Se
 
 Then, the actual fuzzying optimization can be left as ortogonal problem.
 
-# Static Analysis
-
-Use Phasar (https://phasar.org) as first LLVM analysis framework.
-
-## Road Map
-
-1) Take a library (https://aflplus.plus/docs/tutorials/libxml2_tutorial/) and get data-flow information with Phasar
-
-2) Make a taint anaylsis from https://phasar.org/download/ you can use the one from the example http://phasar.org/wp-content/uploads/2018/06/taint_analysis_plugin.zip and expand it. Try on phasar first (and understand how to compile it)
-
-
 # Documentation
 
 The internals are [here](./documentation/INDEX.md). In the link, you will find a technical description of the workflow and **how to include a new library target** in the system.
