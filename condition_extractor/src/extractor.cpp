@@ -29,7 +29,7 @@
 #include "SVF-FE/LLVMUtil.h"
 #include "Graphs/SVFG.h"
 #include "WPA/Andersen.h"
-#include "WPA/AndersenSFR.h"
+#include "WPA/AndersenPWC.h"
 #include "WPA/TypeAnalysis.h"
 #include "SVF-FE/SVFIRBuilder.h"
 #include "Util/Options.h"
