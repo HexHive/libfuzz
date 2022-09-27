@@ -1,0 +1,28 @@
+FROM ubuntu:20.04 AS libfuzzpp_dev_image
+
+WORKDIR /root
+
+RUN apt-get -q update && \
+    DEBIAN_FRONTEND="noninteractive" \ 
+    apt-get -y install --no-install-suggests --no-install-recommends \
+    sudo make ninja-build texinfo bison zsh ccache autoconf libtool \
+    zlib1g-dev liblzma-dev libjpeg-turbo8-dev automake cmake nasm \ 
+    build-essential git openssh-client python3 python3.9 python3-dev \
+    python3-setuptools python-is-python3 python3-venv python3-pip \
+    libtool libtool-bin libglib2.0-dev wget vim jupp nano \
+    bash-completion less apt-utils apt-transport-https \
+    ca-certificates gnupg dialog libpixman-1-dev gnuplot-nox \
+    nodejs npm graphviz libtinfo-dev libz-dev zip unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get full-upgrade -y && \
+    apt-get -y install --no-install-suggests --no-install-recommends  \
+    clang-12 clang-tools-12 lldb llvm gcc g++ libncurses5
+
+
+COPY . /root/libfuzz
+
+
+RUN git clone https://github.com/SVF-tools/SVF.git && cd SVF && ./build.sh
+RUN cd SVF && ./setup.sh
+RUN cd libfuzz && pip install -r requirements.txt
