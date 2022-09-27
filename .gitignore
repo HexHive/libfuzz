@@ -1,10 +1,4 @@
-phasar/*
 workdir/*
 analysis/*
 **/*.pyc
 
-LLVM/build
-LLVM/binutils/
-LLVM/clang/
-LLVM/lld/
-LLVM/llvm/
