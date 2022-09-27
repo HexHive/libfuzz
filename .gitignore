@@ -1,4 +1,4 @@
 workdir/*
 analysis/*
 **/*.pyc
-
+.vscode/
