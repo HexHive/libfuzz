@@ -25,4 +25,4 @@ COPY . /root/libfuzz
 
 RUN git clone https://github.com/SVF-tools/SVF.git && cd SVF && ./build.sh
 RUN cd SVF && ./setup.sh
-RUN cd libfuzz && pip install -r requirements.txt
+RUN cd libfuzz && python3.9 -m pip install -r requirements.txt
