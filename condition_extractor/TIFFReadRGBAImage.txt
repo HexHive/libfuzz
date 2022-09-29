@@ -1,0 +1,283 @@
+
+*********CallGraph Stats***************
+################ (program : workspace)###############
+-------------------------------------------------------
+CalRetPairInCycle   2880
+MaxNodeInCycle      135
+NodeInCycle         135
+TotalEdge           17289
+TotalCycle          1
+TotalNode           748
+#######################################################
+
+*********General Stats***************
+################ (program : workspace)###############
+AddrsNum            4570
+TotalFieldObjects   93
+StoresNum           46963
+FSObjNum            1021
+FIObjNum            312
+GepsNum             14966
+MaxStructSize       203
+IndCallSites        271
+TotalSVFStmts       126070
+TotalPointers       104484
+BBWith3Succ         284
+ReturnsNum          1079
+VarArrayObj         29
+CopysNum            7262
+ConstArrayObj       23
+CallsNum            7859
+TotalPTASVFStmts    33923
+TotalObjects        1334
+FunctionObjs        748
+GlobalObjs          39
+HeapObjs            12
+StackObjs           533
+ConstStructObj      3
+VarStructObj        35
+NonPtrObj           1208
+ConstantObj         0
+LocalVarInRecur     0
+TotalCallSite       5077
+LoadsNum            10377
+BBWith2Succ         6343
+-------------------------------------------------------
+#######################################################
+
+*********Constraint Graph Stats***************
+################ (program : workspace)###############
+-------------------------------------------------------
+AvgIn/OutEdge       1.50502
+AvgIn/OutAddrEdge   0.111729
+AvgIn/OutLoadEdge   0.123851
+AvgIn/OutCopyEdge   1.20848
+MaxInAddrEdge       1
+MaxOutStoreEdge     243
+NumOfCGNode         104094
+TotalValidNode      25902
+AvgIn/OutStoreEdge  0
+TotalValidObjNode   1354
+NumOfGeps           13483
+NumOfCGEdge         36089
+NumOfAddrs          2894
+MaxOutAddrEdge      1585
+NumOfLoads          3208
+NumOfStores         1579
+MaxOutLoadEdge      45
+NumOfCopys          17819
+MaxOutCopyEdge      3058
+MaxInStoreEdge      152
+MaxInLoadEdge       243
+MaxInCopyEdge       658
+#######################################################
+
+*********Andersen Pointer Analysis Stats***************
+################ (program : workspace)###############
+-------------------------------------------------------
+AvgPtsSetSize       23.4522
+LoadStoreTime       0
+CollapseTime        0
+UpdateCGTime        0
+CopyGepTime         0
+SCCMergeTime        0
+SCCDetectTime       0
+AvgTopLvlPtsSize    91.068
+TotalTime           6.77
+PointsToConstPtr    5434
+MaxNodesInSCC       489
+TotalPWCCycleNum    153
+TotalCycleNum       629
+IndEdgeSolved       12457
+NodesInCycles       2735
+MaxPtsSetSize       329
+NumOfSCCDetect      19
+IndCallSites        271
+DYFieldObjs         93
+PointsToBlkPtr      0
+MemObjects          1334
+Pointers            104370
+NumOfFieldExpand    0
+Iterations          19
+DYFieldPtrs         114
+NumOfSFRs           0
+GepProcessed        32178
+LoadProcessed       70906
+CopyProcessed       46224
+StoreProcessed      36658
+AddrProcessed       2917
+TotalObjects        1427
+NullPointer         1182
+TotalPointers       104484
+#######################################################
+****Persistent Points-To Cache Statistics: bv-finalize****
+UniquePointsToSets       3614
+TotalUnions              91976
+PropertyUnions           65319
+UniqueUnions             1927
+LookupUnions             21273
+PreemptiveUnions         3457
+TotalComplements         1989875
+PropertyComplements      1974253
+UniqueComplements        966
+LookupComplements        13690
+PreemptiveComplements    966
+TotalIntersections       33475
+PropertyIntersections    31083
+UniqueIntersections      142
+LookupIntersections      178
+PreemptiveIntersections  2072
+
+****Memory SSA Statistics****
+
+************************
+################ (program : workspace)###############
+-------------------------------------------------------
+AverageRegSize      7.73592
+SSARenameTime       0.035
+InsertPHITime       0.033
+GenMUCHITime        0.148
+GenRegionTime       1.497
+TotalMSSATime       1.737
+BBHasMSSAPhi        2583
+StoreHasChi         4981
+MaxRegSize          313
+MemRegions          746
+FunHasRetMu         619
+FunEntryChi         2677
+StoreChiNode        7698
+LoadMuNode          16387
+MSSAPhi             8631
+LoadHasMu           10377
+CSChiNode           4739
+CSMuNode            9095
+CSHasChi            1625
+FunRetMu            2663
+FunHasEntryChi      520
+CSHasMu             2503
+#######################################################
+
+****SVFG Statistics****
+
+************************
+################ (program : workspace)###############
+-------------------------------------------------------
+OptTime             0
+ATNodeTime          0.048
+AvgWeight           38.0642
+TLNodeTime          0
+ConnIndEdgeTime     0.104
+ConnDirEdgeTime     0
+TotalTime           0.152
+MaxIndOutDeg        311
+MaxIndInDeg         654
+Store               46963
+MaxOutDegree        8164
+Gep                 14966
+Addr                4570
+ActualRet           1707
+AvgOutDegree        1
+ActualParam         13885
+AvgIndOutDeg        2
+FormalRet           468
+DirectCallEdge      41815
+ActualIn            9095
+TotalNode           162739
+AvgInDegree         1
+Copy                7262
+FormalIn            2677
+FormalOut           2663
+PHI                 6769
+ActualOut           4739
+Load                10377
+IndirectEdge        69529
+MSSAPhi             8631
+TotalEdge           246611
+DirectEdge          177082
+FormalParam         1741
+AvgIndInDeg         1
+IndirectEdgeLabels  2646564
+IndCallEdge         9566
+IndRetEdge          4329
+DirectRetEdge       7519
+MaxInDegree         683
+#######################################################
+analyzing function: TIFFReadRGBAImage
+[INFO] running analysis...
+TIFFReadRGBAImage
+[INFO] print results...
+For param:
+ValVar ID: 65782
+ %struct.tiff* %0 { 0th arg TIFFReadRGBAImage in line: 546 file: tif_getimage.c }
+Collected 47 access type:
+(., read)
+(.-1, read)
+(.0, read)
+(.3, read)
+(.9.-1, read)
+(.9.3, read)
+(.9.6, read)
+(.9.7, read)
+(.9.8, read)
+(.9.9, read)
+(.9.10, read)
+(.9.11, read)
+(.9.12, read)
+(.9.13, read)
+(.9.14, read)
+(.9.15, read)
+(.9.16, read)
+(.9.17, read)
+(.9.18, read)
+(.9.23, read)
+(.9.24, read)
+(.9.30, read)
+(.9.31, read)
+(.9.41.0, read)
+(.9.41.1, read)
+(.9.42, read)
+(.9.43.0, read)
+(.9.43.0, write)
+(.9.43.1, read)
+(.9.43.2, read)
+(.9.44, read)
+(.23, read)
+(.55, read)
+(.62, read)
+(.62.-1, read)
+(.62.0, read)
+(.62.3, read)
+(.62.7, read)
+(.63, read)
+(.64, read)
+(.64, write)
+(.64.-1, read)
+(.64.0, read)
+(.64.3, read)
+(.64.7, read)
+(.65.0, read)
+(.65.1, read)
+
+For param:
+ValVar ID: 65783
+ i32 %1 { 1st arg TIFFReadRGBAImage in line: 546 file: tif_getimage.c }
+Collected 1 access type:
+(., read)
+
+For param:
+ValVar ID: 65784
+ i32 %2 { 2nd arg TIFFReadRGBAImage in line: 546 file: tif_getimage.c }
+Collected 1 access type:
+(., read)
+
+For param:
+ValVar ID: 65785
+ i32* %3 { 3rd arg TIFFReadRGBAImage in line: 546 file: tif_getimage.c }
+Collected 0 access type:
+
+For param:
+ValVar ID: 65786
+ i32 %4 { 4th arg TIFFReadRGBAImage in line: 546 file: tif_getimage.c }
+Collected 1 access type:
+(., read)
+
