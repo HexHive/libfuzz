@@ -19,10 +19,10 @@ RUN apt-get update && apt-get full-upgrade -y && \
     apt-get -y install --no-install-suggests --no-install-recommends  \
     clang-12 clang-tools-12 lldb llvm gcc g++ libncurses5
 
-
-COPY . /root/libfuzz
-
-
-RUN git clone https://github.com/SVF-tools/SVF.git && cd SVF && ./build.sh
+RUN git clone https://github.com/SVF-tools/SVF.git && \
+    cd SVF && \ 
+    git checkout 1c09651a6c4089402b1c072a1b0ab901bc963846 \
+    ./build.sh
 RUN cd SVF && ./setup.sh
-RUN cd libfuzz && python3.9 -m pip install -r requirements.txt
+COPY ./requirements.txt /root/python/requirements.txt
+RUN cd /root/python && python3.9 -m pip install -r requirements.txt

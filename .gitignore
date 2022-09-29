@@ -2,3 +2,4 @@ workdir/*
 analysis/*
 **/*.pyc
 .vscode/
+.devcontainer/devcontainer.json
