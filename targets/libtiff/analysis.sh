@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export LIBFUZZ=/workspace/libfuzz/
-export TARGET=$LIBFUZZ/analysis/libtiff_wllvm/ 
+export LIBFUZZ=/workspaces/libfuzz/
+export TARGET=$LIBFUZZ/analysis/libtiff/ 
 # for test with WLLVM
 # export TARGET=$LIBFUZZ/analysis/libtiff/
 
@@ -15,6 +15,7 @@ mkdir -p "$WORK/lib" "$WORK/include"
 export CC=wllvm
 export CXX=wllvm++
 export LLVM_COMPILER=clang
+export LLVM_COMPILER_PATH=/root/SVF/llvm-13.0.0.obj/bin
 
 # export CC=$LIBFUZZ/LLVM/build/bin/clang
 # export CXX=$LIBFUZZ/LLVM/build/bin/clang++
@@ -29,7 +30,7 @@ cd "$TARGET/repo"
 ./autogen.sh
 echo "./configure"
 # ./configure --disable-shared --prefix="$WORK"
-./configure --disable-shared --prefix="$WORK" CC=wllvm CXX=wllvm++
+./configure --disable-shared --prefix="$WORK" CC=wllvm CXX=wllvm++ CXXFLAGS="-g -O0" CFLAGS="-g -O0"
 # test for wllvm
 # ./configure --disable-shared --prefix="$WORK" CFLAGS="-mllvm -get-api-pass" CC=$LIBFUZZ/LLVM/build/bin/clang CXX=$LIBFUZZ/LLVM/build/bin/clang++
 

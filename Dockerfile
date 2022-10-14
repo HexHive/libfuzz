@@ -10,9 +10,9 @@ RUN apt-get -q update && \
     build-essential git openssh-client python3 python3.9 python3-dev \
     python3-setuptools python-is-python3 python3-venv python3-pip \
     libtool libtool-bin libglib2.0-dev wget vim jupp nano \
-    bash-completion less apt-utils apt-transport-https \
+    bash-completion less apt-utils apt-transport-https curl  \
     ca-certificates gnupg dialog libpixman-1-dev gnuplot-nox \
-    nodejs npm graphviz libtinfo-dev libz-dev zip unzip \
+    nodejs npm graphviz libtinfo-dev libz-dev zip unzip libclang-12-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && apt-get full-upgrade -y && \
@@ -26,3 +26,5 @@ RUN git clone https://github.com/SVF-tools/SVF.git && \
 RUN cd SVF && ./setup.sh
 COPY ./requirements.txt /root/python/requirements.txt
 RUN cd /root/python && python3.9 -m pip install -r requirements.txt
+
+RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
