@@ -9,6 +9,7 @@ export LLVM_DIR=$SVF_DIR/$LLVMHome
 export Z3_DIR=$SVF_DIR/$Z3Home
 export PATH=$LLVM_DIR/bin:$PATH
 export PATH=$PROJECTHOME/bin:$PATH
+export SVF_DIR
 echo "export LLVM_DIR=$LLVM_DIR" >> ~/.bashrc
 echo "export Z3_DIR=$Z3_DIR" >> ~/.bashrc
 echo "export PATH=$LLVM_DIR/bin:$PROJECTHOME/bin:$PATH" >> ~/.bashrc

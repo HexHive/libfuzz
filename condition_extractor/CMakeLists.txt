@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.4.3)
+project("Condition Extractor")
 if (DEFINED LLVM_DIR)
         set(ENV{LLVM_DIR} "${LLVM_DIR}")
     endif()
