@@ -1,20 +1,42 @@
-# Strengthening fuzzing of libraries with static analysis information
+# LibFuzz++
 
-The idea is to use static analysis to analyse the source code of some libraries.
+Purpose: LibFuzz++ automatically generates drivers (unit-tests) starting from a library source.
 
-The static analysis should give information about API and global structures of the library.
-Finally, we could mount a seed generation (and new mutation strategy) to speed up library fuzzing without using a software a proxy.
+The whole framework is composed of three main components:
 
-## Goals and contribution
+- Static analyzer: it takes a library soure code an emits a list of constraints.
+- Driver generator: it uses the library constraints (from the static analyzer) and synthetizes the drivers (+ seeds).
+- Fuzzing: we use libfuzz to fuzz the new generated drivers.
 
-In a first approximation, my goal would be to automatically generate the *bytecode* to interact with a library from static analysis.
+## How to Install
 
-Long story short, I want to generalize this problem (taken from Nyx -- Usenix Sec 2020):
-![alt text](./img/img_nyx.png)
+The environment has been designed for VS Code. 
+The Dockerfile in the root folder builds the container, that will be used as development environment in VS Code.
 
+**To install Docker extension and make your dev env:**
 
-Then, the actual fuzzying optimization can be left as ortogonal problem.
+https://code.visualstudio.com/docs/remote/containers#_quick-start-open-an-existing-folder-in-a-container
 
-# Documentation
+**Tips to use your GH SSH from inside the Docker**
 
-The internals are [here](./documentation/INDEX.md). In the link, you will find a technical description of the workflow and **how to include a new library target** in the system.
+https://code.visualstudio.com/docs/remote/containers#_sharing-git-credentials-with-your-container
+
+## How to set a target (add a new library)
+
+TODO
+
+## How to run regression tests
+
+TODO
+
+## How to run the static analyzer
+
+TODO
+
+## Tests
+
+We include a set of tests for validating the correctness of every component.
+
+### How to analyzer a target
+
+TODO
