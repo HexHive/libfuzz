@@ -38,6 +38,10 @@
 #include "AccessType.h"
 #include "PhiFunction.h"
 
+#include "json/json.h"
+#include <fstream> 
+
+
 using namespace llvm;
 using namespace std;
 using namespace SVF;
@@ -205,6 +209,9 @@ int main(int argc, char ** argv)
 
     std::map<const PAGNode*, AccessTypeSet> param_access;
     
+    Json::Value jsonResult(Json::arrayValue);
+
+
     outs() << "[INFO] running analysis...\n";
     for (auto const& x : funmap) {
         const SVFFunction *fun = x.first;
@@ -214,29 +221,46 @@ int main(int argc, char ** argv)
 
         outs() << "[INFO] processing: " << fun->getName() << "\n";
 
+        
+        
+
         // for (auto const& p : x.second) {
         //     param_access[p] = AccessTypeSet::extractParameterAccessType(svfg,p->getValue());
         // }
 
         auto p = x.second;
-        param_access[p] = AccessTypeSet::extractReturnAccessType(svfg,p->getValue());
+        AccessTypeSet returnAccessTypeSet = AccessTypeSet::extractReturnAccessType(svfg,p->getValue());
+        // param_access[p] = returnAccessTypeSet;
+
+        Json::Value functionResult;
+        functionResult["functionName"] = fun->getName();
+        functionResult["return"] = returnAccessTypeSet.toJson();
+        jsonResult.append(functionResult);
     }
 
-    outs() << "[INFO] print results...\n";
-    for (auto const& p: param_access) {
+    
 
-        // pruneAccessTypes(dom, p.second);
+    // outs() << "[INFO] print results...\n";
+    // for (auto const& p: param_access) {
 
-        outs() << "For param:\n";
-        outs() << p.first->toString() << "\n";
-        outs() << "Collected " << p.second.size() << " access type:\n";
-        for (auto at: p.second) {
-            outs() << at.toString() << "\n";
-            if (verbose)
-                at.printICFGNodes();
-        } 
-        outs() << "\n";
-    }
+    //     // pruneAccessTypes(dom, p.second);
+
+    //     outs() << "For param:\n";
+    //     outs() << p.first->toString() << "\n";
+    //     outs() << "Collected " << p.second.size() << " access type:\n";
+    //     for (auto at: p.second) {
+    //         outs() << at.toString() << "\n";
+    //         if (verbose)
+    //             at.printICFGNodes();
+    //     } 
+    //     outs() << "\n";
+    // }
+
+    // TODO Zuka: handle output file somehow. maybe function name? or user input? ....
+    std::ofstream jsonOutFile("json_output.json");
+    jsonOutFile << jsonResult << std::endl;
+    jsonOutFile.close();
+
     // TEST FOR ACCESS TYPE!! DO NOT REMOVE -- END
 
     // example of access type domination

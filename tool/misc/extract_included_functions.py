@@ -122,6 +122,7 @@ def _main():
 
     # Eventually, tell clang.cindex where libclang.dylib is -- or else apt install and good luck
     # clang.cindex.Config.set_library_path("/Users/tomgong/Desktop/build/lib")
+    clang.cindex.Config.set_library_file("/usr/local/lib/python3.9/dist-packages/clang/native/libclang.so")
     index = clang.cindex.Index.create()
 
     # Generate AST from filepath passed in the command line

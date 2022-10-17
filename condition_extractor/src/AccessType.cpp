@@ -580,7 +580,7 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                         p_succ.pushFrame(cs);
                         if (p_succ.getStackSize() >= MAX_STACKSIZE) {
                             ok_continue = false;
-                            outs() << "[INFO] Stack si ze too big!\n";
+                            outs() << "[INFO] Stack size too big!\n";
                         } else if (cs->isIndirectCall()) {
                             ok_continue = false;
                             // outs() << "[INFO] Indirect call, I stop!\n";

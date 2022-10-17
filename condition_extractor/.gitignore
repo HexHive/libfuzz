@@ -6,3 +6,5 @@ CMakeCache.*
 *.ll
 */**/Makefile
 Makefile
+*.a
+*.bc

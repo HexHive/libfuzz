@@ -7,6 +7,7 @@
 #include "WPA/Andersen.h"
 
 #include "PhiFunction.h"
+#include "json/json.h"
 
 using namespace SVF;
 using namespace llvm;
@@ -121,6 +122,27 @@ class AccessType {
             return rawstr.str();
         }
 
+        Json::Value toJson() {
+            Json::Value accessTypeJson;
+
+            if (access == Access::read) 
+                accessTypeJson["access"] = "read";
+            else if (access == Access::write)
+                accessTypeJson["access"] = "write";
+            else if (access == Access::ret)
+                accessTypeJson["access"] = "return";
+            else
+                accessTypeJson["access"] = "none";
+
+            Json::Value fieldsJson(Json::arrayValue);
+
+            for (auto field: fields)
+                fieldsJson.append(field);
+        
+            accessTypeJson["fields"] = fieldsJson;
+            return accessTypeJson;
+        }
+
         bool operator<(const AccessType& rhs) const {
             if (fields == rhs.fields)
                 return access < rhs.access;
@@ -167,6 +189,15 @@ class AccessTypeSet {
             }
 
             return allNodes;
+        }
+
+        Json::Value toJson() {
+            Json::Value result(Json::arrayValue);
+
+            for (auto at: ats_set) 
+                result.append(at.toJson());
+
+            return result;
         }
 
         std::set<AccessType>::iterator begin() const {
