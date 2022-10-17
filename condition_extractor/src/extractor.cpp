@@ -258,7 +258,14 @@ int main(int argc, char ** argv)
 
     // TODO Zuka: handle output file somehow. maybe function name? or user input? ....
     std::ofstream jsonOutFile("json_output.json");
-    jsonOutFile << jsonResult << std::endl;
+    if (verbose){
+        jsonOutFile << jsonResult << std::endl;
+    } else {
+        Json::StreamWriterBuilder jsonBuilder;
+        jsonBuilder.settings_["indentation"] = "";
+        std::unique_ptr<Json::StreamWriter> writer(jsonBuilder.newStreamWriter());
+        writer->write(jsonResult, &jsonOutFile);
+    }
     jsonOutFile.close();
 
     // TEST FOR ACCESS TYPE!! DO NOT REMOVE -- END
