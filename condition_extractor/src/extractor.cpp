@@ -44,7 +44,17 @@ using namespace SVF;
 
 static llvm::cl::opt<std::string> InputFilename(cl::Positional,
         llvm::cl::desc("<input bitcode>"), llvm::cl::init("-"));
+static llvm::cl::opt<std::string> FunctionName("function",
+        llvm::cl::desc("<function name>"));
+static llvm::cl::opt<std::string> LibInterface("interface",
+        llvm::cl::desc("<library interface>"));
+static llvm::cl::opt<bool> Verbose("verbose",
+        llvm::cl::desc("<verbose>"));
+static llvm::cl::opt<bool> Verbose2("v",
+        llvm::cl::desc("<verbose>"), cl::Hidden);
 
+
+bool verbose;
 
 // at1 over_dom at2 iif
 // for each i2 in at2 . exists i1 in at1 s.t. i1 dom i2
@@ -107,19 +117,16 @@ int main(int argc, char ** argv)
     std::vector<std::string> moduleNameVec;
     LLVMUtil::processArguments(argc, argv, arg_num, arg_value, moduleNameVec);
     cl::ParseCommandLineOptions(arg_num, arg_value,
-                                "Whole Program Points-to Analysis\n");
+                                "Extract contraints from functions\n");
     
     bool all_functions = true;
     std::string function;
-    if (arg_num >= 3) {
+    if (FunctionName != "") {
         all_functions = false;
-        function = arg_value[2];
+        function = FunctionName;
     }
 
-    bool verbose = false;
-    if (arg_num == 4) {
-        verbose = true;
-    }
+    verbose = Verbose2 || Verbose;
 
     if (all_functions)
         outs() << "I analyze all the functions\n";

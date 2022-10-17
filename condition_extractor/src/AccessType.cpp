@@ -230,8 +230,8 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                 }
             } else if (auto bitcastinst = SVFUtil::dyn_cast<BitCastInst>(
                 intra_stmt->getInst())) {
-                outs() << "[INFO] bitcastinst " << *bitcastinst << "\n";
                 if (bitcastinst->getDestTy() == retType) {
+                    outs() << "[INFO] bitcastinst " << *bitcastinst << "\n";
                     outs() << "[INFO] => type ok!\n";
                     // alloca_set.insert(vfgnode);
                     allocainst_set.insert(bitcastinst);
@@ -291,43 +291,43 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
     AccessTypeSet ats;
     // std::map<const Instruction*, AccessTypeSet> all_ats;
     std::map<const Value*, AccessTypeSet> all_ats;
-    // for (auto a: allocainst_set) {
-    //     // outs() << "[INFO] paraAT() " << *a << "\n";
-    //     AccessTypeSet l_ats = AccessTypeSet::extractParameterAccessType(vfg, a, retType);
+    for (auto a: allocainst_set) {
+        // outs() << "[INFO] paraAT() " << *a << "\n";
+        AccessTypeSet l_ats = AccessTypeSet::extractParameterAccessType(vfg, a, retType);
 
-    //     // for (auto at: l_ats) { 
-    //     //     outs() << at.toString() << "\n";
-    //     //     at.printICFGNodes();
-    //     // }
-    //     // exit(1);
+        // for (auto at: l_ats) { 
+        //     outs() << at.toString() << "\n";
+        //     at.printICFGNodes();
+        // }
+        // exit(1);
 
-    //     bool do_not_return = true;
-    //     for (auto at: l_ats)
-    //         if (at.getAccess() == AccessType::Access::ret) {
-    //             auto l_ats_all_nodes = at.getICFGNodes();
-    //             for (auto inst: l_ats_all_nodes)
-    //                 if (inst == fun_exit) {
-    //                     for (auto at2: l_ats)
-    //                         for (auto inst2:  at.getICFGNodes())
-    //                             ats.insert(at2, inst2);
-    //                     do_not_return = false;
-    //                     break;
-    //                 }
-    //         }
+        bool do_not_return = true;
+        for (auto at: l_ats)
+            if (at.getAccess() == AccessType::Access::ret) {
+                auto l_ats_all_nodes = at.getICFGNodes();
+                for (auto inst: l_ats_all_nodes)
+                    if (inst == fun_exit) {
+                        for (auto at2: l_ats)
+                            for (auto inst2:  at.getICFGNodes())
+                                ats.insert(at2, inst2);
+                        do_not_return = false;
+                        break;
+                    }
+            }
 
-    //     if (do_not_return)
-    //         all_ats[a] = l_ats;
-    // }
-
-    for (auto a: bitcastinst_set) {
-        AccessTypeSet l_ats = AccessTypeSet::extractRawPointerAccessType(vfg, a, retType);
-
-        for (auto at: l_ats) { 
-            outs() << at.toString() << "\n";
-            at.printICFGNodes();
-        }
-        exit(1);
+        if (do_not_return)
+            all_ats[a] = l_ats;
     }
+
+    // for (auto a: bitcastinst_set) {
+    //     AccessTypeSet l_ats = AccessTypeSet::extractRawPointerAccessType(vfg, a, retType);
+
+    //     for (auto at: l_ats) { 
+    //         outs() << at.toString() << "\n";
+    //         at.printICFGNodes();
+    //     }
+    //     exit(1);
+    // }
 
     // outs() << "[INFO] Partial results:\n";
     // for (auto atsx: all_ats) { 
@@ -344,7 +344,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
     //     at.printICFGNodes();
     // } 
 
-
+    // MERGE traces that lead to a return value (and ignoring the others)
     bool ast_is_changed = true;
     while (ast_is_changed) {
 
