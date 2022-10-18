@@ -190,8 +190,8 @@ int main(int argc, char ** argv)
     
 
     // TEST FOR ACCESS TYPE!! DO NOT REMOVE
-    // PAG::FunToArgsListMap funmap = pag->getFunArgsMap();
-    PAG::FunToRetMap funmap = pag->getFunRets();
+    PAG::FunToArgsListMap funmap_par = pag->getFunArgsMap();
+    PAG::FunToRetMap funmap_ret = pag->getFunRets();
 
     PTACallGraph* callgraph = point_to_analysys->getPTACallGraph();
     builder.updateCallGraph(callgraph);
@@ -206,17 +206,27 @@ int main(int argc, char ** argv)
     std::map<const PAGNode*, AccessTypeSet> param_access;
     
     outs() << "[INFO] running analysis...\n";
-    for (auto const& x : funmap) {
+    for (auto const& x : funmap_par) {
         const SVFFunction *fun = x.first;
         if ( !all_functions && fun->getName() != function) {
             continue;
         }
 
-        outs() << "[INFO] processing: " << fun->getName() << "\n";
+        outs() << "[INFO] processing params for: " << fun->getName() << "\n";
 
-        // for (auto const& p : x.second) {
-        //     param_access[p] = AccessTypeSet::extractParameterAccessType(svfg,p->getValue());
-        // }
+        for (auto const& p : x.second) {
+            outs() << "[INFO] param: " << p->toString() << "\n";
+            param_access[p] = AccessTypeSet::extractParameterAccessType(svfg,p->getValue());
+        }
+    }
+
+    for (auto const& x : funmap_ret) {
+        const SVFFunction *fun = x.first;
+        if ( !all_functions && fun->getName() != function) {
+            continue;
+        }
+
+        outs() << "[INFO] processing ret for: " << fun->getName() << "\n";
 
         auto p = x.second;
         param_access[p] = AccessTypeSet::extractReturnAccessType(svfg,p->getValue());

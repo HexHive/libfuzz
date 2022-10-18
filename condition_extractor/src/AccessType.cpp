@@ -319,31 +319,6 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
             all_ats[a] = l_ats;
     }
 
-    // for (auto a: bitcastinst_set) {
-    //     AccessTypeSet l_ats = AccessTypeSet::extractRawPointerAccessType(vfg, a, retType);
-
-    //     for (auto at: l_ats) { 
-    //         outs() << at.toString() << "\n";
-    //         at.printICFGNodes();
-    //     }
-    //     exit(1);
-    // }
-
-    // outs() << "[INFO] Partial results:\n";
-    // for (auto atsx: all_ats) { 
-    //     outs() << *(atsx.first) << "\n";
-    //     for (auto at: atsx.second) {
-    //         outs() << at.toString() << "\n";
-    //         at.printICFGNodes();
-    //     } 
-    // }
-
-    // outs() << "[INFO] Partial merge:\n";
-    // for (auto at: ats) {
-    //     outs() << at.toString() << "\n";
-    //     at.printICFGNodes();
-    // } 
-
     // MERGE traces that lead to a return value (and ignoring the others)
     bool ast_is_changed = true;
     while (ast_is_changed) {
@@ -447,7 +422,7 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                 acNode.setAccess(AccessType::Access::read);
                 ats.insert(acNode, vNode->getICFGNode());
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Store) {
-                
+
                 const Value* prevValue = p.getPrevValue();
 
                 if (prevValue != nullptr) {
@@ -539,9 +514,11 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                 {
                     VFGEdge* edge = *it;
 
-                    // try to follow only Direct Edges
-                    if (!SVFUtil::isa<SVF::DirectSVFGEdge>(edge))
-                        continue;
+                    // follow indirect jumps if a store, probably add a flag
+                    if (vNode->getNodeKind() != VFGNode::VFGNodeK::Store)
+                        // try to follow only Direct Edges
+                        if (!SVFUtil::isa<SVF::DirectSVFGEdge>(edge))
+                            continue;
 
                     VFGNode* succNode = edge->getDstNode();
                     
