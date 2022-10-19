@@ -8,6 +8,7 @@
 
 #include "PhiFunction.h"
 #include "json/json.h"
+#include <fstream> 
 
 using namespace SVF;
 using namespace llvm;
@@ -327,6 +328,80 @@ class Path {
 
             return rawstr.str();
         }
+};
+
+class FunctionConditions {
+    private:
+        std::vector<AccessTypeSet> parameter_ats;
+        AccessTypeSet return_ats;
+        std::string function_name;
+
+    public:
+        void setFunctionName(std::string f) {function_name = f;}
+        std::string getFunctionName() {return function_name;}
+
+        void addParameterAccessTypeSet(AccessTypeSet par) {
+            parameter_ats.push_back(par);
+        }
+
+        AccessTypeSet getParameterAccessTypeSet(int idx) {
+            if (idx < 0 || idx >= parameter_ats.size())
+                assert("idx out of bounds!");
+
+            return parameter_ats[idx];
+        }
+
+        void setReturnAccessTypeSet(AccessTypeSet ret) {return_ats = ret;}
+        AccessTypeSet getReturnAccessTypeSet() {return return_ats;}
+
+        // for using it in std::set
+        bool operator<(const FunctionConditions& rhs) const 
+        {
+            return function_name < rhs.function_name;
+        }
+
+        Json::Value toJson() {
+
+            Json::Value functionResult;
+
+            functionResult["functionName"] = function_name;
+
+            int pn = 0;
+            for (auto param: parameter_ats) {
+                auto param_key = "param_" + std::to_string(pn);
+                functionResult[param_key] = param.toJson();
+                pn++;
+            }
+
+            functionResult["return"] = return_ats.toJson();
+
+            return functionResult;
+        }
+};
+
+class FunctionConditionsSet {
+    private:
+        std::map<std::string, FunctionConditions> fun_cond_set;
+    public:
+        void addFunctionConditions(FunctionConditions fun_cond) {
+            fun_cond_set.insert(
+                std::pair<std::string, FunctionConditions>
+                    (fun_cond.getFunctionName(),fun_cond)
+            );
+        }
+
+        Json::Value toJson() {
+            Json::Value funCondJson(Json::arrayValue);
+
+            for (auto fc: fun_cond_set)
+                funCondJson.append(fc.second.toJson());
+
+            return funCondJson;
+        }
+
+    public: // static functions
+        static void storeIntoJsonFile(FunctionConditionsSet,
+            std::string, bool);
 };
 
 #endif /* INCLUDE_DOM_ACCESSTYPE_H_ */

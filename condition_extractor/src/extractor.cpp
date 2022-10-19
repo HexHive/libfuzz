@@ -56,6 +56,8 @@ static llvm::cl::opt<bool> Verbose("verbose",
         llvm::cl::desc("<verbose>"));
 static llvm::cl::opt<bool> Verbose2("v",
         llvm::cl::desc("<verbose>"), cl::Hidden);
+static llvm::cl::opt<std::string> OutputFile("output",
+        llvm::cl::desc("<output file>"), llvm::cl::init("conditions.json"));
 
 
 bool verbose;
@@ -132,10 +134,17 @@ int main(int argc, char ** argv)
 
     verbose = Verbose2 || Verbose;
 
-    if (all_functions)
-        outs() << "I analyze all the functions\n";
-    else 
-        outs() << "analyzing function: " << function << "\n";
+    std::vector<std::string> functions;
+
+    if (all_functions) {
+        outs() << "[INFO] I analyze all the functions\n";
+        outs() << "[TODO] Read all the functions from LibInterface \n";
+        exit(1);
+    }
+    else {
+        outs() << "[INFO] analyzing function: " << function << "\n";
+        functions.push_back(function);
+    }
 
     if (Options::WriteAnder == "ir_annotator")
     {
@@ -191,9 +200,7 @@ int main(int argc, char ** argv)
     //     // delete dom;
     // }
     // // TEST FOR DOMINATORS!! DO NOT REMOVE -- END
-    
 
-    // TEST FOR ACCESS TYPE!! DO NOT REMOVE
     PAG::FunToArgsListMap funmap_par = pag->getFunArgsMap();
     PAG::FunToRetMap funmap_ret = pag->getFunRets();
 
@@ -207,44 +214,61 @@ int main(int argc, char ** argv)
     SVFG* svfg = svfBuilder.buildFullSVFG(point_to_analysys);
     svfg->updateCallGraph(point_to_analysys);
 
-    std::map<const PAGNode*, AccessTypeSet> param_access;
-    
-    Json::Value jsonResult(Json::arrayValue);
-
+    FunctionConditionsSet fun_cond_set;
 
     outs() << "[INFO] running analysis...\n";
-    for (auto const& x : funmap_par) {
-        const SVFFunction *fun = x.first;
-        if ( !all_functions && fun->getName() != function) {
-            continue;
+    for (auto f: functions) {
+
+        FunctionConditions fun_conds;
+
+        // Json::Value jsonResult(Json::arrayValue);
+
+        // Json::Value functionResult;
+        // functionResult["functionName"] = f;
+        fun_conds.setFunctionName(f);
+
+        for (auto const& x : funmap_par) {
+            const SVFFunction *fun = x.first;
+            if ( fun->getName() != f)
+                continue;
+
+            outs() << "[INFO] processing params for: " << 
+                        fun->getName() << "\n";
+
+            for (auto const& p : x.second) {
+                if (verbose)
+                    outs() << "[INFO] param: " << p->toString() << "\n";
+                AccessTypeSet parameterAccessTypeSet = 
+                    AccessTypeSet::extractParameterAccessType(
+                    svfg, p->getValue());
+
+                // auto param_key = "param_" + std::to_string(pn);
+                // functionResult[param_key] = parameterAccessTypeSet.toJson();
+
+                fun_conds.addParameterAccessTypeSet(parameterAccessTypeSet);
+
+            }
         }
 
-        outs() << "[INFO] processing params for: " << fun->getName() << "\n";
+        for (auto const& x : funmap_ret) {
+            const SVFFunction *fun = x.first;
+            if ( !all_functions && fun->getName() != function) {
+                continue;
+            }
 
-        for (auto const& p : x.second) {
-            outs() << "[INFO] param: " << p->toString() << "\n";
-            param_access[p] = AccessTypeSet::extractParameterAccessType(svfg,p->getValue());
+            auto p = x.second;
+            if (verbose)
+                outs() << "[INFO] return: " << p->toString() << "\n";
+            AccessTypeSet returnAccessTypeSet =
+                AccessTypeSet::extractReturnAccessType(svfg, p->getValue());
+
+            // functionResult["return"] = returnAccessTypeSet.toJson();
+            // jsonResult.append(functionResult);
+            fun_conds.setReturnAccessTypeSet(returnAccessTypeSet);
         }
-    }
 
-    for (auto const& x : funmap_ret) {
-        const SVFFunction *fun = x.first;
-        if ( !all_functions && fun->getName() != function) {
-            continue;
-        }
+        fun_cond_set.addFunctionConditions(fun_conds);
 
-        // for (auto const& p : x.second) {
-        //     param_access[p] = AccessTypeSet::extractParameterAccessType(svfg,p->getValue());
-        // }
-
-        auto p = x.second;
-        AccessTypeSet returnAccessTypeSet = AccessTypeSet::extractReturnAccessType(svfg,p->getValue());
-        // param_access[p] = returnAccessTypeSet;
-
-        Json::Value functionResult;
-        functionResult["functionName"] = fun->getName();
-        functionResult["return"] = returnAccessTypeSet.toJson();
-        jsonResult.append(functionResult);
     }
 
     
@@ -265,20 +289,14 @@ int main(int argc, char ** argv)
     //     outs() << "\n";
     // }
 
-    // TODO Zuka: handle output file somehow. maybe function name? or user input? ....
-    std::ofstream jsonOutFile("json_output.json");
-    Json::StreamWriterBuilder jsonBuilder;
-    if (!verbose)
-        jsonBuilder.settings_["indentation"] = "";
-    std::unique_ptr<Json::StreamWriter> writer(jsonBuilder.newStreamWriter());
-    writer->write(jsonResult, &jsonOutFile);
-    jsonOutFile.close();
 
     // TEST FOR ACCESS TYPE!! DO NOT REMOVE -- END
 
     // example of access type domination
     // bool wDomR = dominatesAccessType(dom, atW_set, atR_set);
     // bool rDomW = dominatesAccessType(dom, atR_set, atW_set);
+
+    FunctionConditionsSet::storeIntoJsonFile(fun_cond_set, OutputFile, verbose);
 
     // clean up memory
     if (dom)

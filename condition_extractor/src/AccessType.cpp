@@ -231,8 +231,8 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
             } else if (auto bitcastinst = SVFUtil::dyn_cast<BitCastInst>(
                 intra_stmt->getInst())) {
                 if (bitcastinst->getDestTy() == retType) {
-                    outs() << "[INFO] bitcastinst " << *bitcastinst << "\n";
-                    outs() << "[INFO] => type ok!\n";
+                    // outs() << "[INFO] bitcastinst " << *bitcastinst << "\n";
+                    // outs() << "[INFO] => type ok!\n";
                     // alloca_set.insert(vfgnode);
                     allocainst_set.insert(bitcastinst);
                     bitcastinst_set.insert(bitcastinst);
@@ -587,4 +587,25 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
     // }
 
     return ats;
+}
+
+void FunctionConditionsSet::storeIntoJsonFile(
+        FunctionConditionsSet fun_cond_set, 
+        std::string filename, bool verbose) {
+
+    // Json::Value jsonResult(Json::arrayValue);
+
+    Json::Value jsonResult = fun_cond_set.toJson();
+
+    std::ofstream jsonOutFile(filename);
+    Json::StreamWriterBuilder jsonBuilder;
+    if (!verbose)
+        jsonBuilder.settings_["indentation"] = "";
+        
+    std::unique_ptr<Json::StreamWriter> writer(
+        jsonBuilder.newStreamWriter());
+
+    writer->write(jsonResult, &jsonOutFile);
+    jsonOutFile.close();
+
 }
