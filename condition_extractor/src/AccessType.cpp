@@ -593,8 +593,6 @@ void FunctionConditionsSet::storeIntoJsonFile(
         FunctionConditionsSet fun_cond_set, 
         std::string filename, bool verbose) {
 
-    // Json::Value jsonResult(Json::arrayValue);
-
     Json::Value jsonResult = fun_cond_set.toJson();
 
     std::ofstream jsonOutFile(filename);
@@ -608,4 +606,14 @@ void FunctionConditionsSet::storeIntoJsonFile(
     writer->write(jsonResult, &jsonOutFile);
     jsonOutFile.close();
 
+}
+
+void FunctionConditionsSet::storeIntoTextFile(
+        FunctionConditionsSet fun_cond_set, 
+        std::string filename, bool verbose) {
+
+    std::ofstream txtOutFile(filename);
+    txtOutFile << fun_cond_set.toString();
+    txtOutFile.close();
+    
 }

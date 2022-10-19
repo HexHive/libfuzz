@@ -103,7 +103,10 @@ class AccessType {
             int max_fields = getNumFields();
             int i = 0;
             for (int f: getFields()) {
-                rawstr << f;
+                if (f == -1)
+                    rawstr << "*";
+                else 
+                    rawstr << f;
                 if (i < max_fields - 1)
                     rawstr << ".";
                 i++;
@@ -199,6 +202,15 @@ class AccessTypeSet {
                 result.append(at.toJson());
 
             return result;
+        }
+
+        std::string toString() {
+            std::stringstream sstream;
+
+            for (auto at: ats_set) 
+                sstream << at.toString() << std::endl;
+
+            return sstream.str();
         }
 
         std::set<AccessType>::iterator begin() const {
@@ -377,6 +389,25 @@ class FunctionConditions {
 
             return functionResult;
         }
+
+        std::string toString() {
+
+            std::stringstream sstream;
+
+            sstream << "Function: " << function_name << "\n";
+
+            int pn = 0;
+            for (auto param: parameter_ats) {
+                sstream << "param_" + std::to_string(pn) << ":\n";
+                sstream << param.toString();
+                pn++;
+            }
+
+            sstream << "return:\n";
+            sstream << return_ats.toString();
+
+            return sstream.str();
+        }
 };
 
 class FunctionConditionsSet {
@@ -399,8 +430,20 @@ class FunctionConditionsSet {
             return funCondJson;
         }
 
+        std::string toString() {
+
+            std::stringstream sstream;
+
+            for (auto fc: fun_cond_set)
+                sstream << fc.second.toString();
+
+            return sstream.str();
+        }
+
     public: // static functions
         static void storeIntoJsonFile(FunctionConditionsSet,
+            std::string, bool);
+        static void storeIntoTextFile(FunctionConditionsSet,
             std::string, bool);
 };
 

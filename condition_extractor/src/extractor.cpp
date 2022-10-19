@@ -46,6 +46,10 @@ using namespace llvm;
 using namespace std;
 using namespace SVF;
 
+
+// std because stdout gives conflict
+enum OutType {txt, json, stdo};
+
 static llvm::cl::opt<std::string> InputFilename(cl::Positional,
         llvm::cl::desc("<input bitcode>"), llvm::cl::init("-"));
 static llvm::cl::opt<std::string> FunctionName("function",
@@ -58,7 +62,13 @@ static llvm::cl::opt<bool> Verbose2("v",
         llvm::cl::desc("<verbose>"), cl::Hidden);
 static llvm::cl::opt<std::string> OutputFile("output",
         llvm::cl::desc("<output file>"), llvm::cl::init("conditions.json"));
-
+static llvm::cl::opt<OutType> OutputType("t", cl::desc("Output type:"), 
+        llvm::cl::init(stdo),
+        llvm::cl::values(
+            clEnumVal(txt , "Text file <output>"),
+            clEnumVal(json, "Json file <output>"),
+            clEnumVal(stdo, "Standard output, no <output>")
+        ));
 
 bool verbose;
 
@@ -145,6 +155,9 @@ int main(int argc, char ** argv)
         outs() << "[INFO] analyzing function: " << function << "\n";
         functions.push_back(function);
     }
+
+    if (OutputType != OutType::stdo)
+        outs() << "[WARNING] outputting in stdout, ignoring OutputFile\n";
 
     if (Options::WriteAnder == "ir_annotator")
     {
@@ -258,7 +271,7 @@ int main(int argc, char ** argv)
 
             auto p = x.second;
             if (verbose)
-                outs() << "[INFO] return: " << p->toString() << "\n";
+                outs() << "[INFO] return: " << p->toString();
             AccessTypeSet returnAccessTypeSet =
                 AccessTypeSet::extractReturnAccessType(svfg, p->getValue());
 
@@ -296,7 +309,15 @@ int main(int argc, char ** argv)
     // bool wDomR = dominatesAccessType(dom, atW_set, atR_set);
     // bool rDomW = dominatesAccessType(dom, atR_set, atW_set);
 
-    FunctionConditionsSet::storeIntoJsonFile(fun_cond_set, OutputFile, verbose);
+    if (OutputType == OutType::txt) {
+        FunctionConditionsSet::storeIntoTextFile(
+            fun_cond_set, OutputFile, verbose);
+    } else if (OutputType == OutType::json) {
+        FunctionConditionsSet::storeIntoJsonFile(
+            fun_cond_set, OutputFile, verbose);
+    } else if (OutputType == OutType::stdo) {
+        outs() << fun_cond_set.toString();
+    }
 
     // clean up memory
     if (dom)
