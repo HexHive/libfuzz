@@ -7,11 +7,11 @@
 #include "library.h"
 
 void TIFFFlush(TIFF* tif) {
-   tif = 0;
+   tif->tif_flags = 3;
 }
 
 void TIFFFreeDirectory(TIFF* tif) {
-   tif = 0;
+   tif->tif_flags = 5;
 }
 
 void _TIFFfree(void* p) {
@@ -28,7 +28,7 @@ void api1(TIFF* tif)
 	if (tif->tif_mode != O_RDONLY)
 		TIFFFlush(tif);
 	// (*tif->tif_cleanup)(tif);
-	TIFFFreeDirectory(tif);
+	// TIFFFreeDirectory(tif);
 
 	if (tif->tif_dirlist)
 		_TIFFfree(tif->tif_dirlist);

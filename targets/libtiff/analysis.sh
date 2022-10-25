@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export LIBFUZZ=/root/libfuzz/
-export TARGET=$LIBFUZZ/analysis/libtiff/ 
+export LIBFUZZ=/workspaces/libfuzz/
+export TARGET=$LIBFUZZ/analysis/libtiff_O3/ 
 # for test with WLLVM
 # export TARGET=$LIBFUZZ/analysis/libtiff/
 
@@ -29,10 +29,11 @@ echo "make 1"
 cd "$TARGET/repo"
 ./autogen.sh
 echo "./configure"
-# ./configure --disable-shared --prefix="$WORK"
 ./configure --disable-shared --prefix="$WORK" \
-                                CC=wllvm CXX=wllvm++ \
-                                CXXFLAGS="-g -O0" CFLAGS="-g -O0"
+                                CC=wllvm CXX=wllvm++
+# ./configure --disable-shared --prefix="$WORK" \
+#                                 CC=wllvm CXX=wllvm++ \
+#                                 CXXFLAGS="-g -O0" CFLAGS="-g -O0"
 
 # configure compiles some shits for testing, better remove it
 # rm $LIBFUZZ_LOG_PATH/apis.log
@@ -58,3 +59,6 @@ $LIBFUZZ/tool/misc/extract_included_functions.py -i "$WORK/include" \
                                                  -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
                                                  -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
                                                  -a "$LIBFUZZ_LOG_PATH/apis_clang.json"
+
+# TODO: this should get the list of apis, not a single functions
+$LIBFUZZ/condition_extractor/bin/extractor $WORK/lib/libtiff.a.bc -function TIFFClientOpen -output $LIBFUZZ_LOG_PATH/conditions.json -v -t json

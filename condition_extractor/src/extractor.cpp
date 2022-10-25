@@ -50,16 +50,27 @@ using namespace SVF;
 // std because stdout gives conflict
 enum OutType {txt, json, stdo};
 
+enum Verbosity {v0, v1, v2, v3};
+
 static llvm::cl::opt<std::string> InputFilename(cl::Positional,
         llvm::cl::desc("<input bitcode>"), llvm::cl::init("-"));
 static llvm::cl::opt<std::string> FunctionName("function",
         llvm::cl::desc("<function name>"));
 static llvm::cl::opt<std::string> LibInterface("interface",
         llvm::cl::desc("<library interface>"));
-static llvm::cl::opt<bool> Verbose("verbose",
-        llvm::cl::desc("<verbose>"));
-static llvm::cl::opt<bool> Verbose2("v",
-        llvm::cl::desc("<verbose>"), cl::Hidden);
+
+static llvm::cl::opt<Verbosity> Verbose("v",
+        llvm::cl::desc("<verbose>"), llvm::cl::init(v0),
+        llvm::cl::values(
+            clEnumVal(v0, "No verbose"),
+            clEnumVal(v1, "Report ICFG nodes"),
+            clEnumVal(v2, "Report Paths if <debug_condition> is met"),
+            clEnumVal(v3, "To implement, no effect atm")
+        ));
+
+static llvm::cl::opt<std::string> DebugCondition("debug_condition",
+        llvm::cl::desc("<debug_condition> in combination with v2"));
+
 static llvm::cl::opt<std::string> OutputFile("output",
         llvm::cl::desc("<output file>"), llvm::cl::init("conditions.json"));
 static llvm::cl::opt<OutType> OutputType("t", cl::desc("Output type:"), 
@@ -70,7 +81,7 @@ static llvm::cl::opt<OutType> OutputType("t", cl::desc("Output type:"),
             clEnumVal(stdo, "Standard output, no <output>")
         ));
 
-bool verbose;
+Verbosity verbose;
 
 // at1 over_dom at2 iif
 // for each i2 in at2 . exists i1 in at1 s.t. i1 dom i2
@@ -99,7 +110,7 @@ void pruneAccessTypes(Dominator* dom, AccessTypeSet ats_set) {
 
     for (auto at1: ats_set) {
         for (auto at2: ats_set) {
-            if (at1.equals(at2.toString()))
+            if (at1.equals(at2.toString(false)))
                 continue;
 
             if (at1.getFields() == at2.getFields()) {
@@ -114,8 +125,8 @@ void pruneAccessTypes(Dominator* dom, AccessTypeSet ats_set) {
 
     outs() << "I found these pairs:\n";
     for (auto px: pairs) {
-        outs() << px.first.toString() << "\n";
-        outs() << px.second.toString() << "\n";
+        outs() << px.first.toString(false) << "\n";
+        outs() << px.second.toString(false) << "\n";
         if (dominatesAccessType(dom, px.first, px.second))
             outs() << "write comes first!\n";
         if (dominatesAccessType(dom, px.second, px.first))
@@ -142,7 +153,11 @@ int main(int argc, char ** argv)
         function = FunctionName;
     }
 
-    verbose = Verbose2 || Verbose;
+    verbose = Verbose;
+    if (verbose >= Verbosity::v2) {
+        AccessTypeSet::debug = true;
+        AccessTypeSet::debug_condition = DebugCondition;
+    }
 
     std::vector<std::string> functions;
 
@@ -156,7 +171,7 @@ int main(int argc, char ** argv)
         functions.push_back(function);
     }
 
-    if (OutputType != OutType::stdo)
+    if (OutputType == OutType::stdo)
         outs() << "[WARNING] outputting in stdout, ignoring OutputFile\n";
 
     if (Options::WriteAnder == "ir_annotator")
@@ -173,8 +188,8 @@ int main(int argc, char ** argv)
     ICFG* icfg = pag->getICFG();
 
     /// Create Andersen's pointer analysis
-    Andersen* point_to_analysys = AndersenWaveDiff::createAndersenWaveDiff(pag);
-    // FlowSensitive* point_to_analysys = FlowSensitive::createFSWPA(pag);
+    // Andersen* point_to_analysys = AndersenWaveDiff::createAndersenWaveDiff(pag);
+    FlowSensitive* point_to_analysys = FlowSensitive::createFSWPA(pag);
     // AndersenSCD* point_to_analysys = AndersenSCD::createAndersenSCD(pag);
     // TypeAnalysis* point_to_analysys = new TypeAnalysis(pag);
     // point_to_analysys->analyze();
@@ -249,7 +264,7 @@ int main(int argc, char ** argv)
                         fun->getName() << "\n";
 
             for (auto const& p : x.second) {
-                if (verbose)
+                if (verbose >= Verbosity::v1)
                     outs() << "[INFO] param: " << p->toString() << "\n";
                 AccessTypeSet parameterAccessTypeSet = 
                     AccessTypeSet::extractParameterAccessType(
@@ -270,7 +285,7 @@ int main(int argc, char ** argv)
             }
 
             auto p = x.second;
-            if (verbose)
+            if (verbose >= Verbosity::v1)
                 outs() << "[INFO] return: " << p->toString();
             AccessTypeSet returnAccessTypeSet =
                 AccessTypeSet::extractReturnAccessType(svfg, p->getValue());
@@ -311,13 +326,15 @@ int main(int argc, char ** argv)
 
     if (OutputType == OutType::txt) {
         FunctionConditionsSet::storeIntoTextFile(
-            fun_cond_set, OutputFile, verbose);
+            fun_cond_set, OutputFile, verbose >= Verbosity::v1);
     } else if (OutputType == OutType::json) {
         FunctionConditionsSet::storeIntoJsonFile(
-            fun_cond_set, OutputFile, verbose);
+            fun_cond_set, OutputFile, verbose >= Verbosity::v1);
     } else if (OutputType == OutType::stdo) {
-        outs() << fun_cond_set.toString();
+        outs() << fun_cond_set.toString(verbose >= Verbosity::v1);
     }
+
+    outs() << fun_cond_set.getSummary();
 
     // clean up memory
     if (dom)
@@ -326,7 +343,8 @@ int main(int argc, char ** argv)
     AndersenWaveDiff::releaseAndersenWaveDiff();
     SVFIR::releaseSVFIR();
 
-    LLVMModuleSet::getLLVMModuleSet()->dumpModulesToFile(".svf.bc");
+    // I am not sure I need this
+    // LLVMModuleSet::getLLVMModuleSet()->dumpModulesToFile(".svf.bc");
     SVF::LLVMModuleSet::releaseLLVMModuleSet();
 
     llvm::llvm_shutdown();

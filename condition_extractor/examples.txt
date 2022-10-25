@@ -1,0 +1,22 @@
+./condition_extractor/bin/extractor ./analysis/libtiff_O3/work/lib/libtiff.a.bc  -function TIFFCleanup -output conditions_TIFFClep_old.json -t json -v v2 -debug_condition "(.66.0.0"
+
+./condition_extractor/bin/extractor ./analysis/libtiff_O3/work/lib/libtiff.a.bc  -function TIFFCleanup -output conditions_TIFFClep_old.json -t json -v v2 -debug_condition "(.66, write"
+
+
+./condition_extractor/bin/extractor ./analysis/libtiff_O3/work/lib/libtiff.a.bc  -function TIFFCleanup -output conditions_TIFFClep_old.json -t json -v v2 -debug_condition "(.66, none)"
+
+~/SVF/Release-build/bin/wpa -ander -svfg --dump-vfg ./analysis/libtiff_O3/work/lib/libtiff.a.bc
+
+
+./condition_extractor/bin/extractor ./analysis/libtiff_O3/work/lib/libtiff.a.bc  -function TIFFClient -output conditions_TIFFClep_old.json -t json
+
+# TIFFReadDirectory
+./condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFReadDirectory -output TIFFReadDirectory_O0.json -t json -v v1
+
+./condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff_O3/work/lib/libtiff.a.bc -function TIFFReadDirectory -output TIFFReadDirectory_O3.json -t json -v v1
+
+# TIFFCleanup
+./condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFCleanup -output TIFFCleanup_O0.json -t json -v v1
+
+./condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff_O3/work/lib/libtiff.a.bc -function TIFFCleanup -output TIFFCleanup_O3.json -t json -v v1
+

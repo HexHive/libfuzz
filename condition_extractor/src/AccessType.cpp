@@ -4,6 +4,10 @@
 
 #define MAX_STACKSIZE 20
 
+// static fields, mainly for debug
+bool AccessTypeSet::debug = false;
+std::string AccessTypeSet::debug_condition = "";
+
 bool areCompatible(FunctionType* caller,FunctionType* callee) {
 
     bool are_comp = false;
@@ -369,6 +373,8 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
 
     // std::set<std::string> visitedFunctions;
 
+    bool continue_debug = false;
+
     /// Traverse along VFG
     // while S is not empty do
     while (!worklist.empty())
@@ -382,35 +388,68 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
 
         // visitedFunctions.insert(vNode->getFun()->getName());
 
-        // if (p.getAccessType().getNumFields() >= 5) {
-        // if (p.getAccessType().equals("(.9.-1, read)")) {
-        //     outs() << "\n";
-        //     outs() << "[INFO] FOUND:\n";
-        //     for (auto h: p.getSteps()) {
-        //         outs() << h.first->toString() << "\n";
-        //         outs() << h.first->getFun()->getName() << "\n";
-        //         outs() << h.second.toString() << "\n";
-        //         outs() << "\n";
-        //     }
-        //     exit(1);
-        // }
+        if (AccessTypeSet::debug) {
 
-        // outs() << "\nWorking node:\n";
-        // outs() << "A.->" << vNode->toString() << "\n";
-        // outs() << "B.->" << vNode->getFun()->getName() << "\n";
-        // outs() << "Stack size: " << p.getStackSize() << "\n";
-        // outs() << "AT: " << acNode.toString() << "\n";
+            outs() << "\nWorking node:\n";
+            outs() << "A.->" << vNode->toString() << "\n";
+            outs() << "B.->" << vNode->getFun()->getName() << "\n";
+            // outs() << "Stack size: " << p.getStackSize() << "\n";
+            outs() << "AT: " << acNode.toString() << "\n";
 
-        // if (visited.size() > 100) {
-        //     exit(1);
-        // }
-            // break;
+            if (acNode.toString().rfind(AccessTypeSet::debug_condition, 0) 
+                == 0) {
+                outs() << "[STOP]\n";
+                for (auto h: p.getSteps()) {
+                    outs() << h.first->toString() << "\n";
+                    outs() << h.first->getFun()->getName() << "\n";
+                    outs() << h.second.toString() << "\n";
+                    outs() << "\n";
+                }
+
+                outs() << "-> last node <-\n";
+                outs() << vNode->toString() << "\n";
+                outs() << vNode->getFun()->getName() << "\n";
+                outs() << acNode.toString() << "\n\n";
+
+                outs() << "[IN EDGES]\n";
+                for (VFGNode::const_iterator it = vNode->InEdgeBegin(), eit =
+                            vNode->InEdgeEnd(); it != eit; ++it)
+                {
+                    VFGEdge* edge = *it;
+
+                    if (SVFUtil::isa<SVF::DirectSVFGEdge>(edge))
+                        outs() << "direct:\n";
+                    else
+                        outs() << "indirect:\n";
+
+                    VFGNode* succNode = edge->getSrcNode();
+                    outs() << succNode->toString() << "\n";
+                }
+
+                outs() << "[OUT EDGES]\n";
+                for (VFGNode::const_iterator it = vNode->OutEdgeBegin(), eit =
+                            vNode->OutEdgeEnd(); it != eit; ++it)
+                {
+                    VFGEdge* edge = *it;
+
+                    if (SVFUtil::isa<SVF::DirectSVFGEdge>(edge))
+                        outs() << "direct:\n";
+                    else
+                        outs() << "indirect:\n";
+
+                    VFGNode* succNode = edge->getDstNode();
+                    outs() << succNode->toString() << "\n";
+                }
+                
+                exit(1);
+            }
+        }
 
         // if v is not labeled as discovered then
         if (visited.find(p) == visited.end()) {
 
-            // outs() << "Process:\n";
-            // outs() << vNode->toString() << "\n";
+            outs() << "Process:\n";
+            outs() << vNode->toString() << "\n";
 
             // label v as discovered
             visited.insert(p);
@@ -426,19 +465,25 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                 const Value* prevValue = p.getPrevValue();
 
                 if (prevValue != nullptr) {
-
+                    outs() << "AAAA\n";
                     auto inst = (StoreInst *)vNode->getValue();
 
                     if (inst->getPointerOperand() == prevValue) {
                         acNode.setAccess(AccessType::Access::write);
                         ats.insert(acNode, vNode->getICFGNode());
+                        outs() << "WWWWWW\n";
                     } else if (inst->getValueOperand() == prevValue) {
                         acNode.setAccess(AccessType::Access::read);
                         ats.insert(acNode, vNode->getICFGNode());
+                        outs() << ats.toString() << "\n";
+                        outs() << "ZZZZZ\n";
+                    } else {
+                        outs() << "BAAAAH\n";
                     }
 
                 }
                 else {
+                    outs() << "BBBB\n";
                     skipNode = true;
                 }
 
@@ -498,8 +543,8 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
             }
 
             if (skipNode) {
-                // outs() << "I skip\n";
-                // outs() << vNode->toString() << "\n";
+                outs() << "I skip\n";
+                outs() << vNode->toString() << "\n";
                 continue;
             }
 
@@ -514,16 +559,21 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                 {
                     VFGEdge* edge = *it;
 
+                    VFGNode* succNode2 = edge->getDstNode();
+                    outs() << "INSPECT?: " << succNode2->toString() << "\n";
+
                     // follow indirect jumps if a store, probably add a flag
                     if (vNode->getNodeKind() != VFGNode::VFGNodeK::Store)
                         // try to follow only Direct Edges
-                        if (!SVFUtil::isa<SVF::DirectSVFGEdge>(edge))
+                        if (SVFUtil::isa<SVF::IndirectSVFGEdge>(edge)) {
+                            VFGNode* succNode2 = edge->getDstNode();
+                            outs() << "SKIP: " << succNode2->toString() << "\n";
                             continue;
+                        }
+
+                    outs() << "I PROCEED WITH THIS\n";
 
                     VFGNode* succNode = edge->getDstNode();
-                    
-                    // outs() << "1.-> " << succNode->toString() << "\n";
-                    // outs() << "2.-> " << succNode->getFun()->getName() << "\n";
 
                     Path p_succ = p;
                     p_succ.addStep(vNode->getICFGNode());
@@ -577,6 +627,8 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                     }
                     
                 }
+            } else {
+                outs() << "I HAVE NOT OUT EDGES!\n";
             }
         }
     } 
@@ -593,7 +645,7 @@ void FunctionConditionsSet::storeIntoJsonFile(
         FunctionConditionsSet fun_cond_set, 
         std::string filename, bool verbose) {
 
-    Json::Value jsonResult = fun_cond_set.toJson();
+    Json::Value jsonResult = fun_cond_set.toJson(verbose);
 
     std::ofstream jsonOutFile(filename);
     Json::StreamWriterBuilder jsonBuilder;
@@ -613,7 +665,7 @@ void FunctionConditionsSet::storeIntoTextFile(
         std::string filename, bool verbose) {
 
     std::ofstream txtOutFile(filename);
-    txtOutFile << fun_cond_set.toString();
+    txtOutFile << fun_cond_set.toString(verbose);
     txtOutFile.close();
     
 }

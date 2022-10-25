@@ -81,15 +81,21 @@ class AccessType {
             return access;
         }
 
-        bool equals(std::string s) {return s == toString();}
+        bool equals(std::string s) {return s == toString(false);}
 
-        void printICFGNodes() const {
+        std::string dumpICFGNodes() const {
+
+            std::string str;
+            raw_string_ostream rawstr(str);
+
             for (auto inst: getICFGNodes())
-                outs() << inst->toString() << "\n";
-            outs() << "\n";
+                rawstr << inst->toString() << "; \n";
+            rawstr << "\n";
+
+            return rawstr.str();
         }
 
-        std::string toString() {
+        std::string toString(bool verbose = false) {
 
             std::string str;
             raw_string_ostream rawstr(str);
@@ -123,10 +129,25 @@ class AccessType {
                 rawstr << "none";
             rawstr << ")";
 
+            if (verbose) {
+                rawstr << "\n";
+                rawstr << dumpICFGNodes();
+            }
+
             return rawstr.str();
         }
 
-        Json::Value toJson() {
+        Json::Value dumpICFGNodesJson() const {
+
+            Json::Value debugInfo(Json::arrayValue);
+
+            for (auto inst: getICFGNodes())
+                debugInfo.append(inst->toString());
+
+            return debugInfo;
+        }
+
+        Json::Value toJson(bool verbose) {
             Json::Value accessTypeJson;
 
             if (access == Access::read) 
@@ -144,9 +165,14 @@ class AccessType {
                 fieldsJson.append(field);
         
             accessTypeJson["fields"] = fieldsJson;
+
+            if (verbose)
+                accessTypeJson["debug"] = dumpICFGNodesJson();
+
             return accessTypeJson;
         }
 
+        // for std:set
         bool operator<(const AccessType& rhs) const {
             if (fields == rhs.fields)
                 return access < rhs.access;
@@ -195,20 +221,20 @@ class AccessTypeSet {
             return allNodes;
         }
 
-        Json::Value toJson() {
+        Json::Value toJson(bool verbose) {
             Json::Value result(Json::arrayValue);
 
             for (auto at: ats_set) 
-                result.append(at.toJson());
+                result.append(at.toJson(verbose));
 
             return result;
         }
 
-        std::string toString() {
+        std::string toString(bool verbose = false) {
             std::stringstream sstream;
 
             for (auto at: ats_set) 
-                sstream << at.toString() << std::endl;
+                sstream << at.toString(verbose) << std::endl;
 
             return sstream.str();
         }
@@ -227,7 +253,12 @@ class AccessTypeSet {
 
     
 
-    public: // static functions!
+    public: // static functions/data!
+
+        // handle debug information
+        static bool debug;
+        static std::string debug_condition;
+
         static AccessTypeSet extractParameterAccessType(
             const SVFG*, const Value*, Type* = nullptr);
         static AccessTypeSet extractReturnAccessType(
@@ -335,7 +366,8 @@ class Path {
             std::string str;
             raw_string_ostream rawstr(str);
 
-            rawstr << "<" << access_type.toString() << ", ";
+            // for future Flavio: probably you will need a verbose var
+            rawstr << "<" << access_type.toString(false) << ", ";
             rawstr << node->toString() << ">";
 
             return rawstr.str();
@@ -372,7 +404,7 @@ class FunctionConditions {
             return function_name < rhs.function_name;
         }
 
-        Json::Value toJson() {
+        Json::Value toJson(bool verbose) {
 
             Json::Value functionResult;
 
@@ -381,16 +413,16 @@ class FunctionConditions {
             int pn = 0;
             for (auto param: parameter_ats) {
                 auto param_key = "param_" + std::to_string(pn);
-                functionResult[param_key] = param.toJson();
+                functionResult[param_key] = param.toJson(verbose);
                 pn++;
             }
 
-            functionResult["return"] = return_ats.toJson();
+            functionResult["return"] = return_ats.toJson(verbose);
 
             return functionResult;
         }
 
-        std::string toString() {
+        std::string toString(bool verbose) {
 
             std::stringstream sstream;
 
@@ -399,12 +431,28 @@ class FunctionConditions {
             int pn = 0;
             for (auto param: parameter_ats) {
                 sstream << "param_" + std::to_string(pn) << ":\n";
-                sstream << param.toString();
+                sstream << param.toString(verbose);
                 pn++;
             }
 
             sstream << "return:\n";
-            sstream << return_ats.toString();
+            sstream << return_ats.toString(verbose);
+
+            return sstream.str();
+        }
+        std::string getSummary() {
+            std::stringstream sstream;
+
+            sstream << "[INFO] Summary " << function_name << ":\n";
+
+            int pn = 0;
+            for (auto param: parameter_ats) {
+                sstream << "param_" + std::to_string(pn) 
+                        << ": " << param.size() << " access types\n";
+                pn++;
+            }
+
+            sstream << "return: " << return_ats.size() << " access types\n";
 
             return sstream.str();
         }
@@ -421,21 +469,30 @@ class FunctionConditionsSet {
             );
         }
 
-        Json::Value toJson() {
+        Json::Value toJson(bool verbose) {
             Json::Value funCondJson(Json::arrayValue);
 
             for (auto fc: fun_cond_set)
-                funCondJson.append(fc.second.toJson());
+                funCondJson.append(fc.second.toJson(verbose));
 
             return funCondJson;
         }
 
-        std::string toString() {
+        std::string toString(bool verbose) {
 
             std::stringstream sstream;
 
             for (auto fc: fun_cond_set)
-                sstream << fc.second.toString();
+                sstream << fc.second.toString(verbose);
+
+            return sstream.str();
+        }
+
+        std::string getSummary() {
+            std::stringstream sstream;
+
+            for (auto fc: fun_cond_set)
+                sstream << fc.second.getSummary();
 
             return sstream.str();
         }

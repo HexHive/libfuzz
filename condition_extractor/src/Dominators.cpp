@@ -144,11 +144,14 @@ void Dominator::pruneUnreachableFunctions(Dominator *dom) {
 
                         ICFGEdge *edge_to_remove = nullptr;
 
-                        // have to select the callee node in ICFG, before it was the
-                        // calle in CF
-                        entry_called = dom->getICFG()->getFunEntryICFGNode(fun_called);
-                        ICFGNode::const_iterator it3 = entry_called->InEdgeBegin();
-                        ICFGNode::const_iterator eit3 = entry_called->InEdgeEnd();
+                        // have to select the callee node in ICFG, before it was
+                        // the calle in CF
+                        entry_called = dom->getICFG()
+                                        ->getFunEntryICFGNode(fun_called);
+                        ICFGNode::const_iterator it3 = 
+                                        entry_called->InEdgeBegin();
+                        ICFGNode::const_iterator eit3 = 
+                                        entry_called->InEdgeEnd();
                         if (entry_called->hasIncomingEdge()) {
                             for (; it3 != eit3; ++it3) {
                                 ICFGNode *src = (*it3)->getSrcNode();
