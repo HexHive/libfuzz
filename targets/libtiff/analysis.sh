@@ -29,11 +29,11 @@ echo "make 1"
 cd "$TARGET/repo"
 ./autogen.sh
 echo "./configure"
-./configure --disable-shared --prefix="$WORK" \
-                                CC=wllvm CXX=wllvm++
 # ./configure --disable-shared --prefix="$WORK" \
-#                                 CC=wllvm CXX=wllvm++ \
-#                                 CXXFLAGS="-g -O0" CFLAGS="-g -O0"
+#                                 CC=wllvm CXX=wllvm++
+./configure --disable-shared --prefix="$WORK" \
+                                CC=wllvm CXX=wllvm++ \
+                                CXXFLAGS="-g -O0" CFLAGS="-g -O0"
 
 # configure compiles some shits for testing, better remove it
 # rm $LIBFUZZ_LOG_PATH/apis.log

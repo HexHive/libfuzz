@@ -448,8 +448,8 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
         // if v is not labeled as discovered then
         if (visited.find(p) == visited.end()) {
 
-            outs() << "Process:\n";
-            outs() << vNode->toString() << "\n";
+            // outs() << "Process:\n";
+            // outs() << vNode->toString() << "\n";
 
             // label v as discovered
             visited.insert(p);
@@ -465,26 +465,16 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                 const Value* prevValue = p.getPrevValue();
 
                 if (prevValue != nullptr) {
-                    outs() << "AAAA\n";
                     auto inst = (StoreInst *)vNode->getValue();
 
                     if (inst->getPointerOperand() == prevValue) {
                         acNode.setAccess(AccessType::Access::write);
                         ats.insert(acNode, vNode->getICFGNode());
-                        outs() << "WWWWWW\n";
                     } else if (inst->getValueOperand() == prevValue) {
                         acNode.setAccess(AccessType::Access::read);
                         ats.insert(acNode, vNode->getICFGNode());
                         outs() << ats.toString() << "\n";
-                        outs() << "ZZZZZ\n";
-                    } else {
-                        outs() << "BAAAAH\n";
                     }
-
-                }
-                else {
-                    outs() << "BBBB\n";
-                    skipNode = true;
                 }
 
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Gep) {
@@ -543,8 +533,8 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
             }
 
             if (skipNode) {
-                outs() << "I skip\n";
-                outs() << vNode->toString() << "\n";
+                // outs() << "I skip\n";
+                // outs() << vNode->toString() << "\n";
                 continue;
             }
 
@@ -560,18 +550,18 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                     VFGEdge* edge = *it;
 
                     VFGNode* succNode2 = edge->getDstNode();
-                    outs() << "INSPECT?: " << succNode2->toString() << "\n";
+                    // outs() << "INSPECT?: " << succNode2->toString() << "\n";
 
                     // follow indirect jumps if a store, probably add a flag
                     if (vNode->getNodeKind() != VFGNode::VFGNodeK::Store)
                         // try to follow only Direct Edges
                         if (SVFUtil::isa<SVF::IndirectSVFGEdge>(edge)) {
-                            VFGNode* succNode2 = edge->getDstNode();
-                            outs() << "SKIP: " << succNode2->toString() << "\n";
+                            // VFGNode* succNode2 = edge->getDstNode();
+                            // outs() << "SKIP: " << succNode2->toString() << "\n";
                             continue;
                         }
 
-                    outs() << "I PROCEED WITH THIS\n";
+                    // outs() << "I PROCEED WITH THIS\n";
 
                     VFGNode* succNode = edge->getDstNode();
 
@@ -627,9 +617,10 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                     }
                     
                 }
-            } else {
-                outs() << "I HAVE NOT OUT EDGES!\n";
             }
+            // else {
+            //     outs() << "I HAVE NOT OUT EDGES!\n";
+            // }
         }
     } 
 
