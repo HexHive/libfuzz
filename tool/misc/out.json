@@ -1,0 +1,112 @@
+{
+    "functionName": "TIFFClientOpen",
+    "param_0": [
+        {
+            "access": "read",
+            "fields": [],
+            "field_name": "N/A"
+        }
+    ],
+    "param_1": [
+        {
+            "access": "read",
+            "fields": [],
+            "field_name": "N/A"
+        }
+    ],
+    "param_2": [
+        {
+            "access": "read",
+            "fields": [],
+            "field_name": "N/A"
+        }
+    ],
+    "param_3": [
+        {
+            "access": "read",
+            "fields": [],
+            "field_name": "N/A"
+        }
+    ],
+    "param_4": [
+        {
+            "access": "read",
+            "fields": [],
+            "field_name": "N/A"
+        }
+    ],
+    "param_5": [
+        {
+            "access": "read",
+            "fields": [],
+            "field_name": "N/A"
+        }
+    ],
+    "param_6": [
+        {
+            "access": "read",
+            "fields": [],
+            "field_name": "N/A"
+        }
+    ],
+    "param_7": [
+        {
+            "access": "read",
+            "fields": [],
+            "field_name": "N/A"
+        }
+    ],
+    "param_8": [
+        {
+            "access": "read",
+            "fields": [],
+            "field_name": "N/A"
+        }
+    ],
+    "param_9": [
+        {
+            "access": "read",
+            "fields": [],
+            "field_name": "N/A"
+        }
+    ],
+    "return": [
+        {
+            "access": "read",
+            "fields": [],
+            "field_name": "N/A"
+        },
+        {
+            "access": "write",
+            "fields": [],
+            "field_name": "N/A"
+        },
+        {
+            "access": "return",
+            "fields": [],
+            "field_name": "N/A"
+        },
+        {
+            "access": "read",
+            "fields": [
+                -1
+            ],
+            "field_name": "N/A"
+        },
+        {
+            "access": "read",
+            "fields": [
+                0
+            ],
+            "field_name": "tif_name"
+        },
+        {
+            "access": "read",
+            "fields": [
+                9,
+                3
+            ],
+            "field_name": "td_imagedepth"
+        }
+    ]
+}
