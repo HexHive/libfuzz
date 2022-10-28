@@ -20,3 +20,5 @@
 
 ./condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff_O3/work/lib/libtiff.a.bc -function TIFFCleanup -output TIFFCleanup_O3.json -t json -v v1
 
+./condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFGetField -output TIFFCleanup_O0.json -t json -v v1
+
