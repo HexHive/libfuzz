@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export LIBFUZZ=/workspaces/libfuzz/
-export TARGET=$LIBFUZZ/analysis/libtiff_O3/ 
+export TARGET=$LIBFUZZ/analysis/libtiff/ 
 # for test with WLLVM
 # export TARGET=$LIBFUZZ/analysis/libtiff/
 

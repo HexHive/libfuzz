@@ -8,7 +8,7 @@
     - add a check that data size is as long as excepted
 
 
-# driver generation framework
+# TODO driver generation framework
 - check poetry and documentation (pdoc3)
 - make the framework "only for generating drivers"
 - re-think shits and the role of any component
@@ -19,6 +19,7 @@
 - run condition-extractor for each function invoked indirectly (from previos point)
 - include "list of function" as parameter of condition_extractor + check the results match "single invokation"
 - add false positive analysis: does any field match the original source file?
+- heuristics to mark "source" and "sink" APIs
 
 # road map
 
