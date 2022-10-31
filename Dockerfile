@@ -15,15 +15,23 @@ RUN apt-get -q update && \
     nodejs npm graphviz libtinfo-dev libz-dev zip unzip libclang-12-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Clang dependencies
 RUN apt-get update && apt-get full-upgrade -y && \
     apt-get -y install --no-install-suggests --no-install-recommends  \
-    clang-12 clang-tools-12 lldb llvm gcc g++ libncurses5
+    clang-12 clang-tools-12 lldb llvm gcc g++ libncurses5 clang
 
+# LLVM from source code
+COPY ./LLVM /root/LLVM
+RUN cd /root/LLVM && ./fetch_repos.sh && ./build.sh
+ENV LLVM_DIR=/root/llvm-build/
+
+# SVF
 RUN git clone https://github.com/SVF-tools/SVF.git && \
     cd SVF && \ 
     git checkout 1c09651a6c4089402b1c072a1b0ab901bc963846 && \
     ./build.sh
 RUN cd SVF && ./setup.sh
+
 COPY ./requirements.txt /root/python/requirements.txt
 RUN cd /root/python && python3.9 -m pip install -r requirements.txt
 
