@@ -21,7 +21,7 @@ $(TARGET).o.ll: $(TARGET).o.bc
 
 run: $(TARGET).o.bc $(TARGET).o.ll
 	@echo "Running condition_extractor"
-#	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v2 -debug_condition "(.6, none"
+	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v1
 	$(WPA) -steens -svfg --dump-vfg  ./$(TARGET).o.bc
 #	$(WPA) -ander -svfg --dump-vfg  ./$(TARGET).o.bc
 

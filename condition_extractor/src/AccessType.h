@@ -366,8 +366,7 @@ class Path {
             std::string str;
             raw_string_ostream rawstr(str);
 
-            // for future Flavio: probably you will need a verbose var
-            rawstr << "<" << access_type.toString(false) << ", ";
+            rawstr << "<" << access_type.toString() << ", ";
             rawstr << node->toString() << ">";
 
             return rawstr.str();

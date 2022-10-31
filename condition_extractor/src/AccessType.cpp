@@ -193,8 +193,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
 
     // std::set<const VFGNode*> alloca_set;
     std::set<const Value*> allocainst_set;
-    std::set<const Value*> bitcastinst_set;
-    // std::set<const AllocaInst*> allocainst_set;
+    // std::set<const Value*> bitcastinst_set;
 
     // how many alloca?
     FunEntryICFGNode *entry_node = icfg->getFunEntryICFGNode(svfun);
@@ -239,7 +238,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                     // outs() << "[INFO] => type ok!\n";
                     // alloca_set.insert(vfgnode);
                     allocainst_set.insert(bitcastinst);
-                    bitcastinst_set.insert(bitcastinst);
+                    // bitcastinst_set.insert(bitcastinst);
                 }
             }
         } else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
@@ -290,7 +289,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
 
     }
 
-    outs() << "\n";
+    // outs() << "\n";
 
     AccessTypeSet ats;
     // std::map<const Instruction*, AccessTypeSet> all_ats;
@@ -299,10 +298,8 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
         // outs() << "[INFO] paraAT() " << *a << "\n";
         AccessTypeSet l_ats = AccessTypeSet::extractParameterAccessType(vfg, a, retType);
 
-        // for (auto at: l_ats) { 
-        //     outs() << at.toString() << "\n";
-        //     at.printICFGNodes();
-        // }
+        // outs() << "[STARTING POINT] " << *a << "\n";
+        // outs() << l_ats.toString(true) << "\n";
         // exit(1);
 
         bool do_not_return = true;
@@ -336,6 +333,10 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
             auto atsx_all_nodes = atsx.second.getAllICFGNodes();
             for (auto inst: atsx_all_nodes)
                 if (ats_all_nodes.find(inst) != ats_all_nodes.end()) {
+                    // I found something in common
+                    if (AccessTypeSet::debug) {
+                        outs() << "[MATCHING]" << inst->toString()  << "\n";
+                    }
                     for (auto atx:  atsx.second)
                         for (auto inst: atx.getICFGNodes())
                             ats.insert(atx, inst);
@@ -473,7 +474,6 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                     } else if (inst->getValueOperand() == prevValue) {
                         acNode.setAccess(AccessType::Access::read);
                         ats.insert(acNode, vNode->getICFGNode());
-                        outs() << ats.toString() << "\n";
                     }
                 }
 

@@ -1,4 +1,3 @@
-
 export CC = wllvm
 export CXX = wllvm++
 export LLVM_COMPILER = clang
@@ -9,8 +8,7 @@ EXTRACTOR = /workspaces/libfuzz/condition_extractor/bin/extractor
 LLVM_DIS = /root/SVF/llvm-13.0.0.obj/bin/llvm-dis
 WPA = /root/SVF/Release-build/bin/wpa
 EXTRACT_BC = extract-bc
-FUNCTION1 = api1
-FUNCTION2 = api2
+FUNCTION = api1
 
 $(TARGET).o: $(TARGET).c
 	$(CC) -O0 -g -c $<
@@ -23,9 +21,8 @@ $(TARGET).o.ll: $(TARGET).o.bc
 
 run: $(TARGET).o.bc $(TARGET).o.ll
 	@echo "Running condition_extractor"
-	$(EXTRACTOR) $< -function $(FUNCTION1) -t json -output $(FUNCTION1).json -v v1
-#	$(EXTRACTOR) $< -function $(FUNCTION2) -t json -output $(FUNCTION2).json -v v1
-#	$(WPA) -steens -svfg --dump-vfg  ./$(TARGET).o.bc
+#	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v2 -debug_condition "a"
+	$(WPA) -steens -svfg --dump-vfg  ./$(TARGET).o.bc
 #	$(WPA) -ander -svfg --dump-vfg  ./$(TARGET).o.bc
 
 clean:
