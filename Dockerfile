@@ -31,8 +31,6 @@ RUN git clone https://github.com/SVF-tools/SVF.git && \
     git checkout 1c09651a6c4089402b1c072a1b0ab901bc963846 && \
     ./build.sh
 RUN cd SVF && ./setup.sh
-# because SVF breaks $PATH
-# ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 COPY ./requirements.txt /root/python/requirements.txt
 RUN cd /root/python && python3.9 -m pip install -r requirements.txt

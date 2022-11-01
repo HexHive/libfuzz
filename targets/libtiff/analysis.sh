@@ -33,7 +33,8 @@ echo "./configure"
 #                                 CC=wllvm CXX=wllvm++
 ./configure --disable-shared --prefix="$WORK" \
                                 CC=wllvm CXX=wllvm++ \
-                                CXXFLAGS="-g -O0" CFLAGS="-g -O0"
+                                CXXFLAGS="-mllvm -get-api-pas -g -O0" \
+                                CFLAGS="-mllvm -get-api-pas-g -O0"
 
 # configure compiles some shits for testing, better remove it
 # rm $LIBFUZZ_LOG_PATH/apis.log
@@ -61,4 +62,4 @@ $LIBFUZZ/tool/misc/extract_included_functions.py -i "$WORK/include" \
                                                  -a "$LIBFUZZ_LOG_PATH/apis_clang.json"
 
 # TODO: this should get the list of apis, not a single functions
-$LIBFUZZ/condition_extractor/bin/extractor $WORK/lib/libtiff.a.bc -function TIFFClientOpen -output $LIBFUZZ_LOG_PATH/conditions.json -v -t json
+$LIBFUZZ/condition_extractor/bin/extractor $WORK/lib/libtiff.a.bc -function TIFFClientOpen -output $LIBFUZZ_LOG_PATH/conditions.json -v v0 -t json
