@@ -15,7 +15,7 @@ mkdir -p "$WORK/lib" "$WORK/include"
 export CC=wllvm
 export CXX=wllvm++
 export LLVM_COMPILER=clang
-export LLVM_COMPILER_PATH=/root/SVF/llvm-13.0.0.obj/bin
+export LLVM_COMPILER_PATH=$LLVM_DIR/bin
 
 # export CC=$LIBFUZZ/LLVM/build/bin/clang
 # export CXX=$LIBFUZZ/LLVM/build/bin/clang++

@@ -23,7 +23,7 @@ RUN apt-get update && apt-get full-upgrade -y && \
 # LLVM from source code
 COPY ./LLVM /root/LLVM
 RUN cd /root/LLVM && ./fetch_repos.sh && ./build.sh
-ENV LLVM_DIR=/root/llvm-build/
+ENV LLVM_DIR /root/llvm-build/
 
 # SVF
 RUN git clone https://github.com/SVF-tools/SVF.git && \
@@ -31,6 +31,8 @@ RUN git clone https://github.com/SVF-tools/SVF.git && \
     git checkout 1c09651a6c4089402b1c072a1b0ab901bc963846 && \
     ./build.sh
 RUN cd SVF && ./setup.sh
+# because SVF breaks $PATH
+# ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 COPY ./requirements.txt /root/python/requirements.txt
 RUN cd /root/python && python3.9 -m pip install -r requirements.txt
