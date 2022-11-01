@@ -3,18 +3,21 @@ from typing import List, Set, Dict, Tuple, Optional
 
 from grammar import Grammar, Terminal, NonTerminal
 from common import Utils, Api, Arg
-from . import Driver, Statement, ApiCall, BuffDecl, Type, PointerType, Variable, Context
+from driver import Driver, Context
+from driver.ir import Statement, ApiCall, BuffDecl, Type, PointerType, Variable
 
-class DriverGenerator:
+class OTFactory:
     concretization_logic: Dict[Terminal, ApiCall]
 
-    def __init__(self, api_list, driver_size, max_nonterminals = 3):
+    def __init__(self, api_list, driver_size,
+                    grammar: Grammar, max_nonterminals = 3):
         self.concretization_logic = self.load_concretization_logic(api_list)
         self.max_nonterminals = 3
         self.driver_size = driver_size
+        self.grammar = grammar
 
-    def create_random_driver(self, grammar: Grammar) -> Driver:
-        driver_context_free = self.generate_driver_context_free(grammar)
+    def create_random_driver(self) -> Driver:
+        driver_context_free = self.generate_driver_context_free(self.grammar)
         driver_second = self.generate_driver_context_aware(driver_context_free)
         return driver_second
 

@@ -1,4 +1,5 @@
-from driver import Driver, ApiCall, BuffDecl, BuffInit, Type, PointerType, Address, Variable, Statement, Value, NullConstant
+from driver import Driver
+from driver.ir import ApiCall, BuffDecl, BuffInit, Type, PointerType, Address, Variable, Statement, Value, NullConstant
 from backend import BackendDriver
 
 import random, string, os

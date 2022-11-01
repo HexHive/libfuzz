@@ -1,7 +1,7 @@
 from typing import List, Set, Dict, Tuple, Optional
 import random
 
-from . import Type, PointerType, Variable, BuffDecl, BuffInit, Statement, Value, NullConstant, Buffer
+from .ir import Type, PointerType, Variable, BuffDecl, BuffInit, Statement, Value, NullConstant, Buffer
 
 class Context:
     # trace the variable alives in this buffers within the context

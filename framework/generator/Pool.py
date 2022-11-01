@@ -28,3 +28,6 @@ class Pool:
 
     def pop(self):
         return self.pool.pop()
+
+    def __len__(self):
+        return len(self.pool)

@@ -1,22 +1,14 @@
 import sys, logging
-logger = logging.getLogger("dependency")
+logger = logging.getLogger("driver")
 for func in ('debug', 'info', 'warning', 'error', 'critical'):
     setattr(sys.modules[__name__], func, getattr(logger, func))
 
 from .Driver                import Driver
-from .Statement             import Statement
-from .Type                  import Type
-from .PointerType           import PointerType
-from .Value                 import Value
-from .Variable              import Variable
-from .Address               import Address
-from .NullConstant          import NullConstant
-from .ApiCall               import ApiCall
-from .BuffDecl              import BuffDecl
-from .BuffInit              import BuffInit
-from .Buffer                import Buffer
 from .Context               import Context
-from .DriverGenerator       import DriverGenerator
+
+import driver.ir
+import driver.factory
+
 
 # for grammar specialization
 # from .type.TypeDependencyGraphGenerator import TypeDependencyGraphGenerator

@@ -144,7 +144,10 @@ class Utils:
                     continue
                 if l.startswith("#"):
                     continue
-                api = json.loads(l)
+                try:
+                    api = json.loads(l)
+                except Exception as e: 
+                    from IPython import embed; embed(); exit()
                 function_name = api["function_name"]
                 if function_name in blacklist:
                     continue

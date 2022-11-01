@@ -1,30 +1,26 @@
 #!/usr/bin/env python3
 
 import argparse
-from framework import *
-from fuzzer import FuzzerSession, FuzzerConfig
+from framework import * 
+from generator import Generator, Configuration
 import logging
 
 logging.getLogger().setLevel(logging.WARN)
-logging.getLogger("statemanager").setLevel(logging.DEBUG)
-logging.getLogger("networkio").setLevel(logging.INFO)
-logging.getLogger("fuzzer").setLevel(logging.DEBUG)
+logging.getLogger("generator").setLevel(logging.DEBUG)
 
 
 def __main():
 
     # default_config = "./targets/simple_connection/fuzz.json"
-    default_config = "./targets/libtiff/fuzz.json"
+    default_config = "./targets/libtiff/generator.json"
 
     parser = argparse.ArgumentParser(description='Automatic Driver Generator')
     parser.add_argument('--config', type=str, help='The configuration', default=default_config)
 
     args = parser.parse_args()
 
-    config = args.config
-
-    config = FuzzerConfig(config)
-    sess = FuzzerSession(config)
+    config = Configuration(args.config)
+    sess = Generator(config)
     sess.run()
 
 if __name__ == "__main__":

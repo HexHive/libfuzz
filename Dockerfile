@@ -18,7 +18,8 @@ RUN apt-get -q update && \
 # Clang dependencies
 RUN apt-get update && apt-get full-upgrade -y && \
     apt-get -y install --no-install-suggests --no-install-recommends  \
-    clang-12 clang-tools-12 lldb llvm gcc g++ libncurses5 clang
+    clang-12 clang-tools-12 lldb llvm gcc g++ libncurses5 clang \
+    tree
 
 # LLVM from source code
 COPY ./LLVM /root/LLVM
@@ -34,5 +35,6 @@ RUN cd SVF && ./setup.sh
 
 COPY ./requirements.txt /root/python/requirements.txt
 RUN cd /root/python && python3.9 -m pip install -r requirements.txt
+RUN pip3 install ipython
 
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"

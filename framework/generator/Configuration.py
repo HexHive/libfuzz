@@ -7,26 +7,24 @@ from types import SimpleNamespace
 
 from dependency import DependencyGraphGenerator, TypeDependencyGraphGenerator
 from grammar import GrammarGenerator, NonTerminal, Terminal
-from driver import DriverGenerator
+from driver.factory import Factory
+from driver.factory.only_type import *
 from backend import BackendDriver, MockBackendDriver, LFBackendDriver
 from common import Utils
 
-from fuzzer import Pool, FuzzerWrapper
+from generator import Pool
 
-class FuzzerConfig:
+class Configuration:
     """
-    A parser for the JSON-formatted fuzzer configuration file.
+    A parser for the JSON-formatted configuration file.
 
     The file has the following structure:
     {
         "analysis": {
             "apis": "/path/to/apis.log",
             "coercemap": "/path/to/coercemap.txt",
-            "headers": "/path/to/headers/*.h"
+            "headers": "/path/to/headers/*.h{pp}"
         },
-        "fuzzer": {
-            "workdir": "/path/to/workdir",
-        }
     }
     """
     def __init__(self, config_path):
@@ -43,46 +41,20 @@ class FuzzerConfig:
     @cached_property
     def driver_size(self):
 
-        if not "fuzzer" in self._config:
-            raise Exception("'fuzzer' not defined")
+        if not "generator" in self._config:
+            raise Exception("'generator' not defined")
 
-        fuzzer = self._config["fuzzer"]
+        generator = self._config["generator"]
 
         # default value
-        if not "driver_size" in fuzzer:
+        if not "driver_size" in generator:
             return 10
 
-        return fuzzer["driver_size"]
-
-    @cached_property
-    def fuzzer_wrapper(self):
-
-        if not "fuzzer" in self._config:
-            raise Exception("'fuzzer' not defined")
-
-        fuzzer = self._config["fuzzer"]
-
-        # default value
-        if not "docker_path" in fuzzer:
-            raise Exception("'docker_path' not defined")
-        docker_path = fuzzer["docker_path"]
-
-        # default value
-        if not "context_path" in fuzzer:
-            raise Exception("'context_path' not defined")
-        context_path = fuzzer["context_path"]
-
-        # default value
-        if not "fuzzer_verbose" in fuzzer:
-            fuzzer_verbose = False
-        else:
-            fuzzer_verbose = fuzzer["fuzzer_verbose"]
-
-        return FuzzerWrapper(docker_path, context_path, fuzzer_verbose)
+        return generator["driver_size"]
 
     @cached_property
     def work_dir(self):
-        wd = self._config["fuzzer"]["workdir"]
+        wd = self._config["generator"]["workdir"]
         os.makedirs(wd, exist_ok=True)
         return wd
 
@@ -94,42 +66,16 @@ class FuzzerConfig:
 
     @cached_property
     def target_library(self):
-        if not "fuzzer" in self._config:
+        if not "generator" in self._config:
             raise Exception("'fuzzer' not defined")
 
-        fuzzer = self._config["fuzzer"]
+        generator = self._config["generator"]
 
         # default value
-        if not "target_library" in fuzzer:
+        if not "target_library" in generator:
             raise Exception("'target_library' not defined")
 
-        return fuzzer["target_library"]
-
-    @cached_property
-    def fuzzer_timeout(self):
-        if not "fuzzer" in self._config:
-            raise Exception("'fuzzer' not defined")
-
-        fuzzer = self._config["fuzzer"]
-
-        # default value
-        if not "fuzzer_timeout" in fuzzer:
-            raise Exception("'fuzzer_timeout' not defined")
-
-        return fuzzer["fuzzer_timeout"]
-
-    @cached_property
-    def fuzzer_nane(self):
-        if not "fuzzer" in self._config:
-            raise Exception("'fuzzer' not defined")
-
-        fuzzer = self._config["fuzzer"]
-
-        # default value
-        if not "fuzzer_nane" in fuzzer:
-            raise Exception("'fuzzer_nane' not defined")
-
-        return fuzzer["fuzzer_nane"]
+        return generator["target_library"]
 
     @cached_property
     def cache_dir(self):
@@ -169,39 +115,6 @@ class FuzzerConfig:
         return d
 
     @cached_property
-    def dependency_generator(self) -> DependencyGraphGenerator:
-
-        if not "analysis" in self._config:
-            raise Exception("'analysis' not defined")
-
-        analysis = self._config["analysis"]
-
-        # if not "apis" in analysis:
-        #     raise Exception("'apis' not defined")
-        
-        # if not "headers" in analysis:
-        #     raise Exception("'headers' not defined")
-
-        # if not "coercemap" in analysis:
-        #     raise Exception("'coercemap' not defined")
-
-        if not "dependency_policy" in analysis:
-            raise Exception("'dependency_policy' not defined")
-
-        # api_logs = analysis["apis"]
-        # hedader_folder = analysis["headers"]
-        # coerce_map = analysis["coercemap"]
-        dependency_policy = analysis["dependency_policy"]
-
-        if dependency_policy == "only_type":
-            return TypeDependencyGraphGenerator(self.api_list)
-
-        raise NotImplementedError
-    @cached_property
-    def grammar_generator(self):
-        return GrammarGenerator(self.start_term, self.end_term)
-
-    @cached_property
     def api_list(self):
 
         if not "analysis" in self._config:
@@ -232,32 +145,57 @@ class FuzzerConfig:
         return Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types)
 
     @cached_property
-    def driver_generator(self):
-        return DriverGenerator(self.api_list, self.driver_size)
+    def factory(self):
+
+        if not "generator" in self._config:
+            raise Exception("'generator' not defined")
+
+        generator = self._config["generator"]
+
+        if not "policy" in generator:
+            raise Exception("'policy' not defined")
+
+        policy = generator["policy"]
+
+        if policy == "only_type":
+            TDGG = TypeDependencyGraphGenerator(self.api_list)
+            DGraph = TDGG.create()
+
+            GG = GrammarGenerator(self.start_term, self.end_term)
+            InitGrammar = GG.create(DGraph)
+            
+            # InitGrammar.pprint()
+
+            return OTFactory(self.api_list, self.driver_size, InitGrammar)
+
+
+        # Factory is an ABC
+        # return Factory(self.api_list, self.driver_size)
+        raise NotImplementedError
         
     @cached_property
     def num_seeds(self):
-        if not "fuzzer" in self._config:
-            raise Exception("'fuzzer' not defined")
+        if not "generator" in self._config:
+            raise Exception("'generator' not defined")
 
-        fuzzer = self._config["fuzzer"]
+        generator = self._config["generator"]
 
-        if not "num_seeds" in fuzzer:
+        if not "num_seeds" in generator:
             raise Exception("'num_seeds' not defined")
 
-        return int(fuzzer["num_seeds"])
+        return int(generator["num_seeds"])
 
     @cached_property
     def backend(self) -> BackendDriver:
-        if not "fuzzer" in self._config:
-            raise Exception("'fuzzer' not defined")
+        if not "generator" in self._config:
+            raise Exception("'generator' not defined")
 
-        fuzzer = self._config["fuzzer"]
+        generator = self._config["generator"]
 
-        if not "backend" in fuzzer:
+        if not "backend" in generator:
             raise Exception("'backend_driver' not defined")
 
-        backend = fuzzer["backend"]
+        backend = generator["backend"]
         
         if backend == "mock":
             return MockBackendDriver(self.drivers_dir, self.seeds_dir, self.num_seeds)
@@ -271,10 +209,10 @@ class FuzzerConfig:
     def pool(self) -> Pool:
         # TODO: make pool_size in config
 
-        if not "fuzzer" in self._config:
+        if not "generator" in self._config:
             raise Exception("'fuzzer' not defined")
 
-        fuzzer = self._config["fuzzer"]
+        fuzzer = self._config["generator"]
 
         if not "pool_size" in fuzzer:
             raise Exception("'pool_size' not defined")
