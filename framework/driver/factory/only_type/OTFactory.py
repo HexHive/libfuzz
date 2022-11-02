@@ -2,7 +2,7 @@ import random, copy, re
 from typing import List, Set, Dict, Tuple, Optional
 
 from grammar import Grammar, Terminal, NonTerminal
-from common import Utils, Api, Arg
+from common import Api
 from driver import Driver, Context
 from driver.factory import Factory
 from driver.ir import Statement, ApiCall, BuffDecl, Type, PointerType, Variable
@@ -10,8 +10,8 @@ from driver.ir import Statement, ApiCall, BuffDecl, Type, PointerType, Variable
 class OTFactory(Factory):
     concretization_logic: Dict[Terminal, ApiCall]
 
-    def __init__(self, api_list, driver_size,
-                    grammar: Grammar, max_nonterminals = 3):
+    def __init__(self, api_list: List[Api], driver_size: int,
+                    grammar: Grammar, max_nonterminals: int = 3):
         self.concretization_logic = self.load_concretization_logic(api_list)
         self.max_nonterminals = max_nonterminals
         self.driver_size = driver_size
@@ -22,29 +22,13 @@ class OTFactory(Factory):
         driver_second = self.generate_driver_context_aware(driver_context_free)
         return driver_second
 
-    def load_concretization_logic(self, apis_list) -> Dict[Terminal, ApiCall]:
+    def load_concretization_logic(self, apis_list: List[Api]) -> Dict[Terminal, ApiCall]:
 
         concretization_logic = {}
 
         for api in apis_list:
-            function_name = api.function_name
-            return_info = api.return_info
-            arguments_info = api.arguments_info
-
-            arg_list_type = []
-            for e, arg in enumerate(arguments_info):
-                # NOTE: for simplicity, const type as arguments can be consider non-const, see `Driver_IR.md` for more info
-                the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, arg.is_type_incomplete, False)
-                arg_list_type += [the_type]
-
-            if return_info.size == 0:
-                ret_type = Factory.normalize_type('void', 0, "val", True, False)
-            else:
-                ret_type = Factory.normalize_type(return_info.type, return_info.size, return_info.flag, return_info.is_type_incomplete, return_info.is_const)
-            
-            stmt = ApiCall(function_name, arg_list_type, ret_type)
-            
-            concretization_logic[Terminal(function_name)] = stmt
+            stmt = Factory.api_to_apicall(api)            
+            concretization_logic[Terminal(api.function_name)] = stmt
             
         return concretization_logic
 

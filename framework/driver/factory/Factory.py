@@ -2,8 +2,10 @@ from abc import ABC, abstractmethod
 
 import copy, re
 
+from common import Api
+
 from driver import Driver
-from driver.ir import Type, PointerType
+from driver.ir import Type, PointerType, ApiCall
 
 class Factory(ABC):
 
@@ -14,6 +16,25 @@ class Factory(ABC):
     @abstractmethod
     def create_random_driver(self) -> Driver:
         pass
+
+    @staticmethod
+    def api_to_apicall(api: Api) -> ApiCall:
+        function_name = api.function_name
+        return_info = api.return_info
+        arguments_info = api.arguments_info
+
+        arg_list_type = []
+        for _, arg in enumerate(arguments_info):
+            # NOTE: for simplicity, const type as arguments can be consider non-const, see `Driver_IR.md` for more info
+            the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, arg.is_type_incomplete, False)
+            arg_list_type += [the_type]
+
+        if return_info.size == 0:
+            ret_type = Factory.normalize_type('void', 0, "val", True, False)
+        else:
+            ret_type = Factory.normalize_type(return_info.type, return_info.size, return_info.flag, return_info.is_type_incomplete, return_info.is_const)
+        
+        return ApiCall(function_name, arg_list_type, ret_type)
 
     @staticmethod
     def normalize_type(a_type, a_size, a_flag, a_is_incomplete, a_is_const) -> Type:
