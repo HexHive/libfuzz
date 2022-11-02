@@ -29,7 +29,7 @@ class AccessTypeSet:
         self.access_type_set = access_type_set
 
     def __len__(self):
-        return len(access_type_set)
+        return len(self.access_type_set)
 
     def __str__(self):
         return f"ATS(#access_type={len(self.access_type_set)})"
@@ -68,7 +68,7 @@ class FunctionConditionsSet:
         self.fun_cond_set[fun_cond.function_name] = fun_cond
 
     def get_function_conditions(self, fun_name: str):
-        return fun_cond_set[fun_name]
+        return self.fun_cond_set[fun_name]
 
     def __iter__(self):
         for k, v in self.fun_cond_set.items():
