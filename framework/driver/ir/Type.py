@@ -1,5 +1,3 @@
-from abc import abstractmethod
-
 class Type:
     token: str
     size: int

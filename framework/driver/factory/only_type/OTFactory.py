@@ -4,15 +4,16 @@ from typing import List, Set, Dict, Tuple, Optional
 from grammar import Grammar, Terminal, NonTerminal
 from common import Utils, Api, Arg
 from driver import Driver, Context
+from driver.factory import Factory
 from driver.ir import Statement, ApiCall, BuffDecl, Type, PointerType, Variable
 
-class OTFactory:
+class OTFactory(Factory):
     concretization_logic: Dict[Terminal, ApiCall]
 
     def __init__(self, api_list, driver_size,
                     grammar: Grammar, max_nonterminals = 3):
         self.concretization_logic = self.load_concretization_logic(api_list)
-        self.max_nonterminals = 3
+        self.max_nonterminals = max_nonterminals
         self.driver_size = driver_size
         self.grammar = grammar
 
@@ -20,54 +21,6 @@ class OTFactory:
         driver_context_free = self.generate_driver_context_free(self.grammar)
         driver_second = self.generate_driver_context_aware(driver_context_free)
         return driver_second
-
-    def normalize_type(self, a_type, a_size, a_flag, a_is_incomplete, a_is_const) -> Type:
-        
-        if a_flag == "ref" or a_flag == "ret":
-            if not re.search("\*$", a_type) and "*" in a_type:
-                raise Exception(f"Type '{a_type}' is not a valid pointer")
-        # elif a_flag == "fun" and "(" in a_type :
-        #     # FIXME: for the time being, function pointers become i8*
-        #     # FIXME: add casting in the backend, eventually (?)
-        #     a_type = "char*"
-        elif a_flag == "val":
-            if "*" in a_type:
-                raise Exception(f"Type '{a_type}' seems a pointer while expecting a 'val'")
-
-        pointer_level = a_type.count("*")
-        a_type_core = a_type.replace("*", "")
-
-        type_core = Type(a_type_core, a_size, a_is_incomplete, a_is_const)
-
-        # if a_type_core == "i8":
-        #     type_core = Type("char", a_size, a_is_incomplete)
-        # elif a_type_core == "i16":
-        #     type_core = Type("uint16_t", a_size, a_is_incomplete)
-        # elif a_type_core == "i32":
-        #     type_core = Type("uint32_t", a_size, a_is_incomplete)
-        # elif a_type_core == "i64":
-        #     type_core = Type("uint64_t", a_size, a_is_incomplete)
-        # elif a_type_core == "void":
-        #     type_core = Type("void", a_size, a_is_incomplete)
-        # elif a_type_core == "float":
-        #     type_core = Type("float", a_size, a_is_incomplete)
-        # elif a_type_core == "double":
-        #     type_core = Type("double", a_size, a_is_incomplete)
-        # elif a_type_core.startswith("%struct"):
-        #     # FIXME: this is very wrong! a_size should be according to the type, if it is a pointer, size will be 64 (or 32).
-        #     # TODO: buid a map that matches custom structures and real size, to extract from LLVM
-        #     type_core = Type(a_type_core[1:], a_size, a_is_incomplete)
-        # else:
-        #     raise Exception(f"Type '{a_type_core}' unknown")
-
-        return_type = type_core
-        for x in range(1, pointer_level + 1):
-            return_type = copy.deepcopy(PointerType( a_type_core + "*"*x , copy.deepcopy(return_type)))
-
-        if isinstance(return_type, PointerType):
-            return_type.to_function = a_flag == "fun" and "(" in a_type
-
-        return return_type
 
     def load_concretization_logic(self, apis_list) -> Dict[Terminal, ApiCall]:
 
@@ -80,15 +33,14 @@ class OTFactory:
 
             arg_list_type = []
             for e, arg in enumerate(arguments_info):
-                # the_type = self.normalize_type(arg.type, arg.size, arg.flag, arg.is_type_incomplete, arg.is_const)
                 # NOTE: for simplicity, const type as arguments can be consider non-const, see `Driver_IR.md` for more info
-                the_type = self.normalize_type(arg.type, arg.size, arg.flag, arg.is_type_incomplete, False)
+                the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, arg.is_type_incomplete, False)
                 arg_list_type += [the_type]
 
             if return_info.size == 0:
-                ret_type = self.normalize_type('void', 0, "val", True, False)
+                ret_type = Factory.normalize_type('void', 0, "val", True, False)
             else:
-                ret_type = self.normalize_type(return_info.type, return_info.size, return_info.flag, return_info.is_type_incomplete, return_info.is_const)
+                ret_type = Factory.normalize_type(return_info.type, return_info.size, return_info.flag, return_info.is_type_incomplete, return_info.is_const)
             
             stmt = ApiCall(function_name, arg_list_type, ret_type)
             

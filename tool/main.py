@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+PROJECT_FOLDER="/workspaces/libfuzz"
+
+import sys
+sys.path.append(PROJECT_FOLDER)
+
 import argparse
 from framework import * 
 from generator import Generator, Configuration
@@ -12,7 +17,7 @@ logging.getLogger("generator").setLevel(logging.DEBUG)
 def __main():
 
     # default_config = "./targets/simple_connection/fuzz.json"
-    default_config = "./targets/libtiff/generator.json"
+    default_config = PROJECT_FOLDER + "/targets/libtiff/generator.json"
 
     parser = argparse.ArgumentParser(description='Automatic Driver Generator')
     parser.add_argument('--config', type=str, help='The configuration', default=default_config)

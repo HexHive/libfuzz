@@ -30,7 +30,7 @@ class Configuration:
     def __init__(self, config_path):
         
         if not path.isfile(config_path):
-            raise(f"The configuration {config_path} is not valid")
+            raise Exception(f"The configuration {config_path} is not valid")
 
         with open(config_path, "rt") as f:
             self._config = json.load(f)
