@@ -162,10 +162,10 @@ class Configuration:
 
         if policy == "only_type":
             TDGG = TypeDependencyGraphGenerator(self.api_list)
-            DGraph = TDGG.create()
+            dep_graph = TDGG.create()
 
             GG = GrammarGenerator(self.start_term, self.end_term)
-            InitGrammar = GG.create(DGraph)
+            InitGrammar = GG.create(dep_graph)
             
             # InitGrammar.pprint()
 
@@ -173,13 +173,24 @@ class Configuration:
 
         if policy == "constraint_based":
             TDGG = TypeDependencyGraphGenerator(self.api_list)
-            DGraph = TDGG.create()
-            return CBFactory(self.api_list, self.driver_size, DGraph)
+            dep_graph = TDGG.create()
+            return CBFactory(self.api_list, self.driver_size, dep_graph, self.function_conditions)
 
-
-        # Factory is an ABC
-        # return Factory(self.api_list, self.driver_size)
         raise NotImplementedError
+
+    @cached_property
+    def function_conditions(self):
+        if not "analysis" in self._config:
+            raise Exception("'analysis' not defined")
+
+        analysis = self._config["analysis"]
+
+        if not "conditions" in analysis:
+            raise Exception("'conditions' not defined")
+
+        conditions_file = analysis["conditions"]
+        
+        return Utils.get_function_conditions(conditions_file)
         
     @cached_property
     def num_seeds(self):

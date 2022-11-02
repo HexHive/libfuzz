@@ -1,8 +1,9 @@
 
 import json, collections, copy
-from typing import List, Set, Dict, Tuple, Optional
+from typing import List #, Set, Dict, Tuple, Optional
 
 from .api import Api, Arg
+from .conditions import *
 
 class CoerceArgument:
     def __init__(self, original_type):
@@ -260,3 +261,52 @@ class Utils:
                 exported_functions |= { l_strip[:p_par] }
 
         return list(exported_functions)
+
+    @staticmethod
+    def get_access_type_set(ats_json) -> AccessTypeSet:
+        ats = set()
+        for at_json in ats_json:
+            access = None
+            if at_json["access"] == "read":
+                access = Access.READ
+            elif at_json["access"] == "write":
+                access = Access.WRITE
+            elif at_json["access"] == "return":
+                access = Access.RETURN
+            elif at_json["access"] == "none":
+                access = Access.NONE
+
+            fields = at_json["fields"]
+            
+            ats.add(AccessType(access, fields))
+
+        return AccessTypeSet(ats)
+
+    @staticmethod
+    def get_function_conditions(conditions_file) -> FunctionConditionsSet:
+
+        fcs = FunctionConditionsSet()
+
+        with open(conditions_file) as  f:
+            conditions = json.load(f)
+
+            for fc_json in conditions:
+
+                function_name = fc_json["functionName"]
+
+                params_at = []
+                p_idx = 0
+                while True:
+                    try:
+                        ats = Utils.get_access_type_set(fc_json[f"param_{p_idx}"])
+                        params_at += [ats]
+                    except KeyError as e:
+                        break
+                    p_idx += 1
+
+                return_at = Utils.get_access_type_set(fc_json[f"return"])
+
+                fc = FunctionConditions(function_name, params_at, return_at)
+                fcs.add_function_conditions(fc)
+
+        return fcs

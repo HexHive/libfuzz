@@ -4,11 +4,12 @@
         "apis_clang": "/workspaces/libfuzz/analysis/libtiff/work/apipass/apis_clang.json",
         "coercemap": "/workspaces/libfuzz/analysis/libtiff/work/apipass/coerce.log",
         "headers": "/workspaces/libfuzz/analysis/libtiff/work/apipass/exported_functions.txt",
-        "incomplete_types": "/workspaces/libfuzz/analysis/libtiff/work/apipass/incomplete_types.txt"
+        "incomplete_types": "/workspaces/libfuzz/analysis/libtiff/work/apipass/incomplete_types.txt",
+        "conditions": "/workspaces/libfuzz/analysis/libtiff/work/apipass/conditions.json"
     },
     "generator": {
         "workdir": "/workspaces/libfuzz/workdir/",
-        "policy": "only_type",
+        "policy": "constraint_based",
         "pool_size": 20,
         "driver_size": 30,
         "num_seeds": 20,
