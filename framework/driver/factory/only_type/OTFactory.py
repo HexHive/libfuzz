@@ -60,6 +60,9 @@ class OTFactory(Factory):
 
         symbols_only_terminal = []
         for s in symbols:
+            if s.name == "start":
+                continue
+
             if isinstance(s, Terminal):
                 symbols_only_terminal += [copy.deepcopy(s)]
             elif isinstance(s, NonTerminal):
