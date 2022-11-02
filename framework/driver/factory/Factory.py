@@ -34,7 +34,7 @@ class Factory(ABC):
         else:
             ret_type = Factory.normalize_type(return_info.type, return_info.size, return_info.flag, return_info.is_type_incomplete, return_info.is_const)
         
-        return ApiCall(function_name, arg_list_type, ret_type)
+        return ApiCall(api, function_name, arg_list_type, ret_type)
 
     @staticmethod
     def normalize_type(a_type, a_size, a_flag, a_is_incomplete, a_is_const) -> Type:

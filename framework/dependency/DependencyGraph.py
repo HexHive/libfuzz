@@ -1,9 +1,6 @@
-import json
-from abc import ABC, abstractmethod
-
 from common import Api
 
-class DependencyGraph(ABC):
+class DependencyGraph:
     def __init__(self):
         self.graph = {}
 
