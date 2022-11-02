@@ -7,10 +7,13 @@ from types import SimpleNamespace
 
 from dependency import DependencyGraphGenerator, TypeDependencyGraphGenerator
 from grammar import GrammarGenerator, NonTerminal, Terminal
-from driver.factory import Factory
-from driver.factory.only_type import *
+
 from backend import BackendDriver, MockBackendDriver, LFBackendDriver
 from common import Utils
+
+from driver.factory import Factory
+from driver.factory.only_type import *
+from driver.factory.constraint_based import *
 
 from generator import Pool
 
@@ -167,6 +170,11 @@ class Configuration:
             # InitGrammar.pprint()
 
             return OTFactory(self.api_list, self.driver_size, InitGrammar)
+
+        if policy == "constraint_based":
+            TDGG = TypeDependencyGraphGenerator(self.api_list)
+            DGraph = TDGG.create()
+            return CBFactory(self.api_list, self.driver_size, DGraph)
 
 
         # Factory is an ABC
