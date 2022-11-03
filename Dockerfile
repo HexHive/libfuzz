@@ -13,13 +13,13 @@ RUN apt-get -q update && \
     bash-completion less apt-utils apt-transport-https curl  \
     ca-certificates gnupg dialog libpixman-1-dev gnuplot-nox \
     nodejs npm graphviz libtinfo-dev libz-dev zip unzip libclang-12-dev \
+    tmux tree \
     && rm -rf /var/lib/apt/lists/*
 
 # Clang dependencies
 RUN apt-get update && apt-get full-upgrade -y && \
     apt-get -y install --no-install-suggests --no-install-recommends  \
-    clang-12 clang-tools-12 lldb llvm gcc g++ libncurses5 clang \
-    tree
+    clang-12 clang-tools-12 lldb llvm gcc g++ libncurses5 clang
 
 # LLVM from source code
 COPY ./LLVM /root/LLVM

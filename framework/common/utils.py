@@ -1,6 +1,6 @@
 
 import json, collections, copy
-from typing import List #, Set, Dict, Tuple, Optional
+from typing import List, Set #, Dict, Tuple, Optional
 
 from .api import Api, Arg
 from .conditions import *
@@ -127,7 +127,7 @@ class Utils:
         return apis_clang_list
 
     @staticmethod
-    def get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types) -> List[Api]:
+    def get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types) -> Set[Api]:
 
         coerce_info = Utils.read_coerce_log(coerce_map)
         included_functions = Utils.get_include_functions(hedader_folder)
@@ -138,7 +138,7 @@ class Utils:
 
         apis_clang_list = Utils.get_apis_clang_list(apis_clang)
 
-        apis_list = []
+        apis_list = set()
         with open(apis_llvm) as  f:
             for l in f:
                 if not l.strip():
@@ -154,7 +154,8 @@ class Utils:
                     continue
                 if not function_name in included_functions:
                     continue
-                apis_list += [Utils.normalize_coerce_args(api, apis_clang_list, coerce_info, incomplete_types_list)]
+                apis_list.add(Utils.normalize_coerce_args(api, apis_clang_list, 
+                                coerce_info, incomplete_types_list))
                 # print(apis_list)
                 # exit()
 
