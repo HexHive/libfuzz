@@ -163,8 +163,26 @@ int main(int argc, char ** argv)
 
     if (all_functions) {
         outs() << "[INFO] I analyze all the functions\n";
-        outs() << "[TODO] Read all the functions from LibInterface \n";
-        exit(1);
+
+        ifstream f(LibInterface);
+
+        Json::Value root;   
+        Json::Reader reader;
+
+        std::string line;
+        while (std::getline(f, line)) {
+            // outs() << line << "\n";
+            bool parsingSuccessful = reader.parse( line.c_str(), root );
+            if ( !parsingSuccessful )
+            {
+                outs() << "Failed to parse "
+                    << reader.getFormattedErrorMessages();
+                exit(1);
+            }
+            functions.push_back(root["function_name"].asString());
+        }
+
+        f.close();
     }
     else {
         outs() << "[INFO] analyzing function: " << function << "\n";
@@ -280,9 +298,8 @@ int main(int argc, char ** argv)
 
         for (auto const& x : funmap_ret) {
             const SVFFunction *fun = x.first;
-            if ( !all_functions && fun->getName() != function) {
+            if ( fun->getName() != f)
                 continue;
-            }
 
             auto p = x.second;
             if (verbose >= Verbosity::v1)

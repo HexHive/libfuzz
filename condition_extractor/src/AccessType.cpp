@@ -74,9 +74,9 @@ AccessTypeSet AccessTypeSet::extractRawPointerAccessType(
         }
     }
 
-    auto struct_offsets = seek_layout->getMemberOffsets();
+    auto struct_offsets = nullptr; //seek_layout->getMemberOffsets();
     // this conversion is slow, but then I can use find() from the vector
-    std::vector<uint64_t> struct_offsets_v = struct_offsets.vec();
+    std::vector<uint64_t> struct_offsets_v; //= struct_offsets.vec();
     // outs() << "[DEBUG] field -> offset (bytes?)\n";
     // int i = 0;
     // for (auto o: struct_offsets) {
