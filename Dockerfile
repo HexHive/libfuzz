@@ -23,7 +23,8 @@ RUN apt-get update && apt-get full-upgrade -y && \
 
 # LLVM from source code
 COPY ./LLVM /root/LLVM
-RUN cd /root/LLVM && ./fetch_repos.sh && ./build.sh
+RUN cd /root/LLVM && ./fetch_repos.sh
+RUN cd /root/LLVM && ./build.sh
 ENV LLVM_DIR /root/llvm-build/
 
 # SVF
