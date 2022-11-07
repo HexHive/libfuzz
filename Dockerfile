@@ -13,7 +13,7 @@ RUN apt-get -q update && \
     bash-completion less apt-utils apt-transport-https curl  \
     ca-certificates gnupg dialog libpixman-1-dev gnuplot-nox \
     nodejs npm graphviz libtinfo-dev libz-dev zip unzip libclang-12-dev \
-    tmux tree \
+    tmux tree gdb \
     && rm -rf /var/lib/apt/lists/*
 
 # Clang dependencies
