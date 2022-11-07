@@ -20,8 +20,10 @@ all:
 	  -DLLVM_USE_SPLIT_DWARF=ON \
 	  -DLLVM_OPTIMIZED_TABLEGEN=ON \
 	  -DBUILD_SHARED_LIBS=OFF \
+	  -DLLVM_USE_LINKER=gold \
+	  -DLLVM_ENABLE_BINDINGS=OFF \
 	${LLVM_DIR})
-	(ninja -C ${BUILD_DIR})
+	(ninja -C ${BUILD_DIR} -j4)
 
 # test:
 # 	(cd ${BUILD_DIR} && ninja check-asan)
