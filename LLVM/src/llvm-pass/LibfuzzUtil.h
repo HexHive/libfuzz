@@ -89,11 +89,17 @@ namespace libfuzz {
         str_ret += "\"name\": \"" + this->name + "\", ";
         str_ret += "\"flag\": \"" + this->flag + "\", ";
         str_ret += "\"size\": "  + std::to_string(this->size) + ", ";
-        str_ret += "\"type\": \"" + this->type + "\"";
+        str_ret += "\"type\": \"" + remove_quotes(this->type) + "\"";
         str_ret += "}";
 
         return str_ret;
       }
+
+      std::string remove_quotes(std::string s) {
+        s.erase(std::remove(s.begin(), s.end(), '\"' ), s.end());
+        return s;
+      }
+
   } argument_record;
 
   typedef struct {
