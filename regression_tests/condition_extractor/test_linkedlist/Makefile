@@ -28,4 +28,4 @@ run: $(TARGET).o.bc $(TARGET).o.ll
 #	$(WPA) -ander -svfg --dump-vfg  ./$(TARGET).o.bc
 
 clean:
-	rm -f $(TARGET).o $(TARGET).o.bc .$(TARGET).o.bc $(TARGET).o.svf.bc $(TARGET).o.ll 
+	rm -f $(TARGET).o $(TARGET).o.bc .$(TARGET).o.bc $(TARGET).o.svf.bc $(TARGET).o.ll apis_llvm.json

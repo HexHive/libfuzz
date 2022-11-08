@@ -12,6 +12,7 @@ EXTRACT_BC = extract-bc
 FUNCTION = api1
 
 $(TARGET).o: $(TARGET).c
+	rm -f apis_llvm.log
 	$(CC) -O0 -g -mllvm -get-api-pass -c $<
 
 $(TARGET).o.bc: $(TARGET).o
@@ -22,9 +23,9 @@ $(TARGET).o.ll: $(TARGET).o.bc
 
 run: $(TARGET).o.bc $(TARGET).o.ll
 	@echo "Running condition_extractor"
-#	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v2 -debug_condition "a"
+	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v1
 	$(WPA) -steens -svfg --dump-vfg  ./$(TARGET).o.bc
 #	$(WPA) -ander -svfg --dump-vfg  ./$(TARGET).o.bc
 
 clean:
-	rm -f $(TARGET).o $(TARGET).o.bc .$(TARGET).o.bc $(TARGET).o.svf.bc $(TARGET).o.ll 
+	rm -f $(TARGET).o $(TARGET).o.bc .$(TARGET).o.bc $(TARGET).o.svf.bc $(TARGET).o.ll apis_llvm.log apis_llvm.json
