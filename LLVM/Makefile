@@ -23,12 +23,15 @@ all:
 	  -DLLVM_USE_LINKER=gold \
 	  -DLLVM_ENABLE_BINDINGS=OFF \
 	${LLVM_DIR})
-	(ninja -C ${BUILD_DIR} -j4)
+	(ninja -C ${BUILD_DIR})
 
 # test:
 # 	(cd ${BUILD_DIR} && ninja check-asan)
 
+rebuild:
+	ninja -C ${BUILD_DIR}
+
 clean:
 	rm -rf ${BUILD_DIR}
 
-.PHONY: all test clean
+.PHONY: all test clean rebuild
