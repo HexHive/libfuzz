@@ -39,7 +39,7 @@ git clone --depth 1 git://sourceware.org/git/binutils-gdb.git binutils
 mkdir build
 cd build
 ../binutils/configure --enable-gold --enable-plugins --disable-werror --enable-debug
-make all-gold
+make all-gold -j
 cd ..
 fi
 echo "Done with LLVM gold"
