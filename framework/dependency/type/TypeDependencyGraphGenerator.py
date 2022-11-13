@@ -12,8 +12,8 @@ class TypeDependencyGraphGenerator(DependencyGraphGenerator):
         dependency_graph = DependencyGraph()
         for api_a in self.apis_list:
             for api_b in self.apis_list:
-                api_a_functionname = api_a.function_name
-                api_b_functionname = api_b.function_name
+                # api_a_functionname = api_a.function_name
+                # api_b_functionname = api_b.function_name
                 if self.dependency_on(api_a, api_b):
                     dependency_graph.add_edge(api_a, api_b)
                     # api_a_depdences = dependency_graph.get(api_a_functionname, [])
@@ -24,8 +24,8 @@ class TypeDependencyGraphGenerator(DependencyGraphGenerator):
 
     def dependency_on(self, api_a: Api, api_b: Api):
 
-        api_a_functionname = api_a.function_name
-        api_b_functionname = api_b.function_name
+        # api_a_functionname = api_a.function_name
+        # api_b_functionname = api_b.function_name
         input_a, output_a = self.get_input_output(api_a)
         input_b, output_b = self.get_input_output(api_b)
 

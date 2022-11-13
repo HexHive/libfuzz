@@ -17,7 +17,7 @@ logging.getLogger("generator").setLevel(logging.DEBUG)
 def __main():
 
     # default_config = "./targets/simple_connection/fuzz.json"
-    default_config = PROJECT_FOLDER + "/targets/libtiff/generator.json"
+    default_config = PROJECT_FOLDER + "/regression_tests/condition_extractor/test_simpleapi/generator.json"
 
     parser = argparse.ArgumentParser(description='Automatic Driver Generator')
     parser.add_argument('--config', type=str, help='The configuration', default=default_config)

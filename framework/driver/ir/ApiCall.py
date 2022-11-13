@@ -7,9 +7,9 @@ class ApiCall(Statement):
     original_api:   Api
     function_name:  str
     arg_types:      List[Type]
-    arg_vars:       List[Value]
+    arg_vars:       List[Optional[Value]]
     ret_type:       Type
-    ret_var:        Value
+    ret_var:        Optional[Value]
 
     def __init__(self, api, function_name, arg_types, ret_type):
         super().__init__()

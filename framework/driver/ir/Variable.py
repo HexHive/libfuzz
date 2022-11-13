@@ -46,7 +46,7 @@ class Variable(Value):
         # if the Variable is a pointer, I have to understand how many elements it is 
         # supposed to point to
         from . import PointerType
-        if isinstance(self.type, PointerType):
+        if isinstance(self.get_type(), PointerType):
             raise NotImplementedError
 
-        return self.type.get_size()
+        return self.get_type().get_size()

@@ -97,7 +97,6 @@ class Configuration:
         d = os.path.join(self.work_dir, "corpus")
         os.makedirs(d, exist_ok=True)
         return d
-    
 
     @cached_property
     def headers_dir(self):
