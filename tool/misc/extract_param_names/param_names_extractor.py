@@ -162,18 +162,20 @@ class ParamNamesExtractor:
                 access_param_names_list = []
                 fields = [field for field in access["fields"] if field != -1]
                 for field_idx in fields:
-                    prev_field_type = access_types_list[-1]
-                    if prev_field_type in ["other_type", "basic_type"]:
+                    try:
+                        prev_field_type = access_types_list[-1]
+                        if prev_field_type in ["other_type", "basic_type"]:
+                            continue
+                        if prev_field_type in self.field_names_and_types_map:
+                            access_types_list.append(self.field_names_and_types_map[prev_field_type][field_idx][0])
+                            access_param_names_list.append(self.field_names_and_types_map[prev_field_type][field_idx][1])
+                        else:
+                            succ, field_names_and_types = self._find_field_names_and_types(self.root, prev_field_type)
+                            self.field_names_and_types_map[prev_field_type] = field_names_and_types
+                            access_types_list.append(field_names_and_types[field_idx][0])
+                            access_param_names_list.append(field_names_and_types[field_idx][1])
+                    except:
                         continue
-                    if prev_field_type in self.field_names_and_types_map:
-                        access_types_list.append(self.field_names_and_types_map[prev_field_type][field_idx][0])
-                        access_param_names_list.append(self.field_names_and_types_map[prev_field_type][field_idx][1])
-                    else:
-                        succ, field_names_and_types = self._find_field_names_and_types(self.root, prev_field_type)
-                        self.field_names_and_types_map[prev_field_type] = field_names_and_types
-                        access_types_list.append(field_names_and_types[field_idx][0])
-                        access_param_names_list.append(field_names_and_types[field_idx][1])
-                
                 if access_param_names_list:
                     access["field_name"] = access_param_names_list
                 else:
