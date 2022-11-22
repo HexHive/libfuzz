@@ -95,45 +95,63 @@ class CBFactory(Factory):
 
         starting_api = list(self.get_starting_api())
 
+        # List[(ApiCall, RunningContext)]
+        drv = list()
+
         begin_api = random.choice(starting_api)
         begin_condition = get_cond(begin_api)
         call_begin = to_api(begin_api)
 
         rng_ctx_1, unsat_var_1 = self.try_to_instantiate_api_call(call_begin, begin_condition, rng_ctx)
 
-        for next_possible in self.dependency_graph[begin_api]:
-            next_condition = get_cond(next_possible)
-            call_next = to_api(next_possible)
+        if len(unsat_var_1) > 0:
+            print("[ERROR] Cannot instantiate the first function :(")
+            print(unsat_var_1)
+            exit(1)
 
-            rng_ctx_2, unsat_var_2 = self.try_to_instantiate_api_call(call_next, next_condition, rng_ctx_1)      # type: ignore
+        drv += [(call_begin, rng_ctx_1)]
 
-        from IPython import embed; embed(); exit()
+        api_n = begin_api
+        while len(drv) < 5: # self.driver_size
 
-        print("after loop, debug exit..")
-        exit()
+            # List[(ApiCall, RunningContext, Api)]
+            candidate_api = []
 
-        starting_api = self.get_starting_api()
-        # print(f"#APIs: {len(self.api_list)}")
-        # print(f"#APIs to start: {len(starting_api)}")
+            for next_possible in self.dependency_graph[api_n]:
+                print(f"[INFO] Trying: {next_possible}")
 
-        # print(starting_api)
+                next_condition = get_cond(next_possible)
+                call_next = to_api(next_possible)
 
-        begin_api = [a for a in starting_api if a.function_name=="TIFFClientOpen"][0]
+                rng_ctx_2, unsat_var_2 = self.try_to_instantiate_api_call(call_next, next_condition, rng_ctx_1)      # type: ignore
 
-        # print(begin_api)
-        # print("Which API I might start with?")
-        # for api in starting_api:
-        #     print(f"{api}")
+                l_unsat_var = len(unsat_var_2)
+                if l_unsat_var == 0:
+                    print("[INFO] This works!")
+                    candidate_api += [(call_next, rng_ctx_2, next_possible)]
+                else:
+                    print(f"[INFO] Unsat vars: {l_unsat_var}")
+                    for p, c in unsat_var_2:
+                        arg_type = call_next.arg_types[p]
+                        print(f" => arg{p}: {arg_type} -> {c}")
+                    print()
 
-        # begin_ret_info = begin_api.return_info.type
+            print(f"[INFO] Complete doable functions: {len(candidate_api)}")
 
-        # print("Candidate next:")
-        # for api in self.dependency_graph.graph[begin_api]:
-        #     if any(arg.type == begin_ret_info for arg in api.arguments_info):
-        #         print(api)
+            # (ApiCall, RunningContext, Api)
+            (api_call, rng_ctx_1, api_n) = random.choice(candidate_api)
 
-        # from IPython import embed; embed()
+            drv += [(api_call, rng_ctx_1)]
 
-        exit()
+        # print("after loop, debug exit..")
+        # exit()
 
-        return Driver([], context)
+        statements = [api_call for api_call, _ in drv]
+
+        statements_buffdecl = context.generate_buffer_decl()
+        statements_buffinit = context.generate_buffer_init()
+
+        # from IPython import embed; embed(); 
+        # exit()
+
+        return Driver(statements_buffdecl + statements_buffinit + statements, context)

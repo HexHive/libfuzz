@@ -10,7 +10,7 @@
     "generator": {
         "workdir": "/workspaces/libfuzz/regression_tests/condition_extractor/test_simpleapi/workdir/",
         "policy": "constraint_based",
-        "pool_size": 20,
+        "pool_size": 5,
         "driver_size": 30,
         "num_seeds": 20,
         "backend": "libfuzz"

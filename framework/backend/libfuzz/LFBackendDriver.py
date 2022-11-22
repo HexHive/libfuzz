@@ -13,7 +13,13 @@ class LFBackendDriver(BackendDriver):
         self.num_seeds = num_seeds
         self._idx = 0
 
-        self.headers = os.listdir(headers_dir)
+        self.headers = [] # os.listdir(headers_dir)
+        for root, _, f_names in os.walk(headers_dir):
+            for f in f_names:
+                if f.endswith(".h") or f.endswith(".hpp") or f.endswith(".hxx"):
+                    f_full = os.path.join(root, f)
+                    f_rel = os.path.relpath(f_full, headers_dir)
+                    self.headers.append(f_rel)
 
     def get_name(self) -> str:
         m_idx = self._idx 
@@ -142,6 +148,8 @@ class LFBackendDriver(BackendDriver):
 
         if isinstance(ret_var, Address):
             ret_var_type = ret_var.get_variable().get_type()
+        elif isinstance(ret_var, NullConstant):
+            ret_var_type = ret_var.type
         else:
             ret_var_type = ret_var.get_type()
 
