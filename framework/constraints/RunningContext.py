@@ -13,7 +13,7 @@ class RunningContext:
     context:            Context
 
     def __init__(self, context: Context):
-        self.context = context 
+        self.context = copy.deepcopy(context)
         self.variables_alive = []
         self.var_to_cond = {}
 
@@ -39,7 +39,8 @@ class RunningContext:
 
         return False
 
-    def get_value_that_satisfy(self, type: Type, cond: AccessTypeSet) -> Optional[Value]:
+    def get_value_that_satisfy(self, type: Type,
+            cond: AccessTypeSet) -> Optional[Value]:
 
         # print("Debug get_value_that_satisfy")
         # from IPython import embed; embed(); exit()
@@ -91,7 +92,8 @@ class RunningContext:
         else:
             self.var_to_cond[val].add_conditions(cond)
 
-    def try_to_get_var(self, type: Type, cond: AccessTypeSet, is_ret: bool = False) -> Value:
+    def try_to_get_var(self, type: Type, cond: AccessTypeSet,
+                        is_ret: bool = False) -> Value:
 
         # if I need a void for return, don't bother too much
         if type == self.context.stub_void and is_ret:
@@ -136,14 +138,6 @@ class RunningContext:
     def __copy__(self):
         raise Exception("__copy__ not implemented")
         
-    def __deepcopy__(self, memo):
-        new_rnnctx = RunningContext(self.context)
-
-        new_rnnctx.var_to_cond = copy.deepcopy(self.var_to_cond, memo)
-        new_rnnctx.variables_alive = copy.deepcopy(self.variables_alive, memo)
-
-        return new_rnnctx
-
 class ConditionUnsat(Exception):
     """ConditionUnsat, can't find a suitable variable in the RunningContext"""
     pass

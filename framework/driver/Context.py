@@ -1,5 +1,5 @@
 from typing import List, Set, Dict #, Tuple, Optional
-import random
+import random, copy
 
 from .ir import Type, PointerType, Variable, BuffDecl, BuffInit, Statement, Value, NullConstant, Buffer
 
