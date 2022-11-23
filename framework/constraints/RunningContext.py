@@ -7,13 +7,14 @@ from driver.ir import Variable, Type, Value, PointerType, Address, NullConstant
 from . import Conditions
 from common.conditions import *
 
-class RunningContext:
+class RunningContext(Context):
     variables_alive:    List[Variable]
     var_to_cond:        Dict[Variable, Conditions]
-    context:            Context
+    # context:            Context
 
-    def __init__(self, context: Context):
-        self.context = copy.deepcopy(context)
+    def __init__(self):
+        super().__init__()
+        # self.context = copy.deepcopy(context)
         self.variables_alive = []
         self.var_to_cond = {}
 
@@ -96,15 +97,15 @@ class RunningContext:
                         is_ret: bool = False) -> Value:
 
         # if I need a void for return, don't bother too much
-        if type == self.context.stub_void and is_ret:
-            return NullConstant(self.context.stub_void)
+        if type == self.stub_void and is_ret:
+            return NullConstant(self.stub_void)
 
         if self.has_var_type(type):
             val = self.get_value_that_satisfy(type, cond)
             if val is None:
                 if (Conditions.is_unconstraint(cond) and 
                     not type.is_incomplete):
-                    val = self.context.randomly_gimme_a_var(type, "", is_ret)
+                    val = self.randomly_gimme_a_var(type, "", is_ret)
                 else:
                     raise ConditionUnsat()
         else:
@@ -112,7 +113,7 @@ class RunningContext:
             if tt.is_incomplete and not is_ret:
                 raise ConditionUnsat()
             else:
-                val = self.context.randomly_gimme_a_var(type, "", is_ret)
+                val = self.randomly_gimme_a_var(type, "", is_ret)
 
         return val
 

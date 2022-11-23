@@ -51,17 +51,17 @@ class CBFactory(Factory):
 
         # I prefer to have a local one
         rng_ctx = copy.deepcopy(rng_ctx)
-        context = rng_ctx.context
+        # context = rng_ctx.context
 
         unsat_vars = set()
 
         for arg_pos, arg_type in api_call.get_pos_args_types():
             arg_ats = conditions.argument_at[arg_pos]
             try:
-                if context.is_void_ponter(arg_type):
-                    arg_var = rng_ctx.try_to_get_var(context.stub_char_array, arg_ats)
+                if rng_ctx.is_void_ponter(arg_type):
+                    arg_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, arg_ats)
                 elif isinstance(arg_type, PointerType) and arg_type.to_function:
-                    arg_var = context.get_null_constant()
+                    arg_var = rng_ctx.get_null_constant()
                 else:
                     arg_var = rng_ctx.try_to_get_var(arg_type, arg_ats)
                 api_call.set_pos_arg_var(arg_pos, arg_var)
@@ -72,10 +72,10 @@ class CBFactory(Factory):
         ret_ats = conditions.return_at
         ret_type = api_call.ret_type
         try:
-            if context.is_void_ponter(ret_type):
-                ret_var = rng_ctx.try_to_get_var(context.stub_char_array, ret_ats, True)
+            if rng_ctx.is_void_ponter(ret_type):
+                ret_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, ret_ats, True)
             elif isinstance(ret_type, PointerType) and ret_type.to_function:
-                ret_var = context.get_null_constant()
+                ret_var = rng_ctx.get_null_constant()
             else:
                 ret_var = rng_ctx.try_to_get_var(ret_type, ret_ats, True)
             api_call.set_ret_var(ret_var)
@@ -95,9 +95,9 @@ class CBFactory(Factory):
         return (rng_ctx, unsat_vars)
 
     def create_random_driver(self) -> Driver:
-        context = Context()
+        # context = Context()
 
-        rng_ctx = RunningContext(context)
+        rng_ctx = RunningContext()
 
         # foo = self.api_list.pop()
         # foo_condition = self.conditions.get_function_conditions(foo.function_name)
@@ -125,7 +125,7 @@ class CBFactory(Factory):
         drv += [(call_begin, rng_ctx_1)]
 
         api_n = begin_api
-        while len(drv) < 5: # self.driver_size
+        while len(drv) < self.driver_size:
 
             # List[(ApiCall, RunningContext, Api)]
             candidate_api = []
@@ -160,7 +160,7 @@ class CBFactory(Factory):
         # exit()
 
         # I want the last context from the RunningContext
-        context = [rng_ctx for _, rng_ctx in drv][-1].context
+        context = [rng_ctx for _, rng_ctx in drv][-1]
 
         statements_apicall = [api_call for api_call, _ in drv]
         statements_buffdecl = context.generate_buffer_decl()
