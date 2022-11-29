@@ -46,14 +46,24 @@ class CBFactory(Factory):
         return starting_api
 
     def try_to_instantiate_api_call(self, api_call: ApiCall,
-                        conditions: FunctionConditions, rng_ctx: RunningContext):
+                        conditions: FunctionConditions, 
+                        rng_ctx: RunningContext):
+
+        # I prefer to have a local one
+        rng_ctx = copy.deepcopy(rng_ctx)
+        # context = rng_ctx.context
 
         unsat_vars = set()
 
         for arg_pos, arg_type in api_call.get_pos_args_types():
             arg_ats = conditions.argument_at[arg_pos]
             try:
-                arg_var = rng_ctx.try_to_get_var(arg_type, arg_ats)
+                if rng_ctx.is_void_ponter(arg_type):
+                    arg_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, arg_ats)
+                elif isinstance(arg_type, PointerType) and arg_type.to_function:
+                    arg_var = rng_ctx.get_null_constant()
+                else:
+                    arg_var = rng_ctx.try_to_get_var(arg_type, arg_ats)
                 api_call.set_pos_arg_var(arg_pos, arg_var)
             except ConditionUnsat:
                 # print(f"got unsat, to handle 1!")
@@ -62,7 +72,12 @@ class CBFactory(Factory):
         ret_ats = conditions.return_at
         ret_type = api_call.ret_type
         try:
-            ret_var = rng_ctx.try_to_get_var(ret_type, ret_ats, True)
+            if rng_ctx.is_void_ponter(ret_type):
+                ret_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, ret_ats, True)
+            elif isinstance(ret_type, PointerType) and ret_type.to_function:
+                ret_var = rng_ctx.get_null_constant()
+            else:
+                ret_var = rng_ctx.try_to_get_var(ret_type, ret_ats, True)
             api_call.set_ret_var(ret_var)
         except ConditionUnsat:
             # print(f"got unsat, to handle 2!")
@@ -70,21 +85,19 @@ class CBFactory(Factory):
         
         if len(unsat_vars) != 0:
             return (None, unsat_vars)
-        
-        rng_ctx_new = copy.deepcopy(rng_ctx)
 
         for arg_pos, arg_type in api_call.get_pos_args_types():
             arg_ats = conditions.argument_at[arg_pos]
-            rng_ctx_new.update(api_call.arg_vars[arg_pos], arg_ats)
+            rng_ctx.update(api_call.arg_vars[arg_pos], arg_ats)
         if api_call.ret_var is not None:
-            rng_ctx_new.update(api_call.ret_var, ret_ats)
+            rng_ctx.update(api_call.ret_var, ret_ats)
 
-        return (rng_ctx_new, unsat_vars)
+        return (rng_ctx, unsat_vars)
 
     def create_random_driver(self) -> Driver:
-        context = Context()
+        # context = Context()
 
-        rng_ctx = RunningContext(context)
+        rng_ctx = RunningContext()
 
         # foo = self.api_list.pop()
         # foo_condition = self.conditions.get_function_conditions(foo.function_name)
@@ -112,7 +125,7 @@ class CBFactory(Factory):
         drv += [(call_begin, rng_ctx_1)]
 
         api_n = begin_api
-        while len(drv) < 5: # self.driver_size
+        while len(drv) < self.driver_size:
 
             # List[(ApiCall, RunningContext, Api)]
             candidate_api = []
@@ -146,12 +159,19 @@ class CBFactory(Factory):
         # print("after loop, debug exit..")
         # exit()
 
-        statements = [api_call for api_call, _ in drv]
+        # I want the last context from the RunningContext
+        context = [rng_ctx for _, rng_ctx in drv][-1]
 
+        statements_apicall = [api_call for api_call, _ in drv]
         statements_buffdecl = context.generate_buffer_decl()
         statements_buffinit = context.generate_buffer_init()
+
+        statements = []
+        statements += statements_buffdecl
+        statements += statements_buffinit
+        statements += statements_apicall 
 
         # from IPython import embed; embed(); 
         # exit()
 
-        return Driver(statements_buffdecl + statements_buffinit + statements, context)
+        return Driver(statements, context)

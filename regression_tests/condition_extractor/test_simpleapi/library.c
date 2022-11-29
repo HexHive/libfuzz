@@ -26,6 +26,10 @@ void second(my_struct *s, int b) {
 		s->field_b = b;
 }
 
+void third(void* b, my_struct *s) {
+	s->field_a = (int)b;
+}
+
 void close(my_struct *s) {
 	if (s != NULL)
 		free(s);

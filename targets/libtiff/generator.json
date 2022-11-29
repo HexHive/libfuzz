@@ -10,8 +10,8 @@
     "generator": {
         "workdir": "/workspaces/libfuzz/workdir/",
         "policy": "constraint_based",
-        "pool_size": 20,
-        "driver_size": 30,
+        "pool_size": 1,
+        "driver_size": 20,
         "num_seeds": 20,
         "backend": "libfuzz"
     },
