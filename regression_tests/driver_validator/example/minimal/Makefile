@@ -45,8 +45,7 @@ $(TARGET).o: $(TARGET).c
 
 compute: $(DRIVER).bc $(DRIVER)_shared.bc
 	@echo "Running condition_extractor"
-# $(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v0
-#	$(WPA) -steens -svfg --dump-vfg --dump-icfg -dump-callgraph ./$(TARGET).o.bc
+#$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v0
 	$(WPA) -ander --dump-icfg ./$(DRIVER).bc
 	dot -Tpdf icfg_initial.dot -o icfg_svf.pdf
 	$(WPA) -ander --dump-icfg ./$(DRIVER)_shared.bc

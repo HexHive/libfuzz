@@ -1,0 +1,5 @@
+init_special_struct
+write_name_in_file
+A: close
+B: write_name_in_file
+   close

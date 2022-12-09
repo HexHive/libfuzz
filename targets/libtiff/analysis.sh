@@ -62,4 +62,4 @@ $LIBFUZZ/tool/misc/extract_included_functions.py -i "$WORK/include" \
                                                  -a "$LIBFUZZ_LOG_PATH/apis_clang.json"
 
 # TODO: this should get the list of apis, not a single functions
-$LIBFUZZ/condition_extractor/bin/extractor $WORK/lib/libtiff.a.bc -function TIFFClientOpen -output $LIBFUZZ_LOG_PATH/conditions.json -v v0 -t json
+$LIBFUZZ/condition_extractor/bin/extractor $WORK/lib/libtiff.a.bc -output $LIBFUZZ_LOG_PATH/conditions.json -v v0 -t json
