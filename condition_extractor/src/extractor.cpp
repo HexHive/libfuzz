@@ -314,8 +314,8 @@ int main(int argc, char ** argv)
                 rawstr2 <<  "postdom_" << fun->getName();
                 pDom->dumpTransRed(rawstr2.str());
                 pDom->dumpDom(rawstr2.str());
-                outs() << "[INFO] exit(1) for debug\n";
-                exit(1);
+                // outs() << "[INFO] exit(1) for debug\n";
+                // exit(1);
 
                 // int num_param = fun_conds.getParameterAccessNum();
 
