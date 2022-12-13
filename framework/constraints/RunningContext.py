@@ -10,11 +10,9 @@ from common.conditions import *
 class RunningContext(Context):
     variables_alive:    List[Variable]
     var_to_cond:        Dict[Variable, Conditions]
-    # context:            Context
 
     def __init__(self):
         super().__init__()
-        # self.context = copy.deepcopy(context)
         self.variables_alive = []
         self.var_to_cond = {}
 

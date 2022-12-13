@@ -1,5 +1,0 @@
-{"function_name": "create", "return_info": {"const": false, "type_clang": "my_struct*"}, "arguments_info": [{"const": false, "type_clang": "int"}, {"const": false, "type_clang": "int"}]}
-{"function_name": "first", "return_info": {"const": false, "type_clang": "void"}, "arguments_info": [{"const": false, "type_clang": "my_struct*"}, {"const": false, "type_clang": "int"}]}
-{"function_name": "second", "return_info": {"const": false, "type_clang": "void"}, "arguments_info": [{"const": false, "type_clang": "my_struct*"}, {"const": false, "type_clang": "int"}]}
-{"function_name": "close", "return_info": {"const": false, "type_clang": "void"}, "arguments_info": [{"const": false, "type_clang": "my_struct*"}]}
-{"function_name": "third", "return_info": {"const": false, "type_clang": "void"}, "arguments_info": [{"const": false, "type_clang": "void*"}, {"const": false, "type_clang": "my_struct*"}]}

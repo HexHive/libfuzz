@@ -1,0 +1,18 @@
+{ "NodeID": 2, "PostDominator": [2, 3, 18, 19 ] }
+{ "NodeID": 1, "PostDominator": [2, 1, 3, 18, 19 ] }
+{ "NodeID": 3, "PostDominator": [3, 18, 19 ] }
+{ "NodeID": 5, "PostDominator": [2, 1, 3, 5, 6, 7, 8, 9, 10, 11, 18, 19 ] }
+{ "NodeID": 6, "PostDominator": [2, 1, 3, 6, 7, 8, 9, 10, 11, 18, 19 ] }
+{ "NodeID": 7, "PostDominator": [2, 1, 3, 7, 8, 9, 10, 11, 18, 19 ] }
+{ "NodeID": 8, "PostDominator": [2, 1, 3, 8, 9, 10, 11, 18, 19 ] }
+{ "NodeID": 9, "PostDominator": [2, 1, 3, 9, 10, 11, 18, 19 ] }
+{ "NodeID": 10, "PostDominator": [2, 1, 3, 10, 11, 18, 19 ] }
+{ "NodeID": 11, "PostDominator": [2, 1, 3, 11, 18, 19 ] }
+{ "NodeID": 12, "PostDominator": [2, 1, 3, 12, 13, 16, 18, 19 ] }
+{ "NodeID": 13, "PostDominator": [13, 16, 18, 19 ] }
+{ "NodeID": 14, "PostDominator": [2, 1, 3, 14, 15, 17, 18, 19 ] }
+{ "NodeID": 15, "PostDominator": [15, 17, 18, 19 ] }
+{ "NodeID": 16, "PostDominator": [16, 18, 19 ] }
+{ "NodeID": 17, "PostDominator": [17, 18, 19 ] }
+{ "NodeID": 18, "PostDominator": [18, 19 ] }
+{ "NodeID": 19, "PostDominator": [19 ] }

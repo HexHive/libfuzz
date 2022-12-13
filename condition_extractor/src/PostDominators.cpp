@@ -1,43 +1,48 @@
-#include "Dominators.h"
+#include "PostDominators.h"
 
-Dominator::ICFGNodeSet Dominator::ahead(ICFGEdge* edge) {
+PostDominator::ICFGNodeSet PostDominator::behind(ICFGEdge* edge) {
     ICFGNodeSet nodes;
 
+    // outs() << "1.a) Phi: " << sizePhi() << "\n";
+    // outs() << "1.a) Phi Inv: " << sizePhiInv() << "\n";
+
     // edge is not in R
-    if (R.find(edge) == R.end() ) {
-        // src node == HEAD
-        ICFGNode* head_e = edge->getSrcNode();
-        nodes.insert(head_e);
+    if (C.find(edge) == C.end() ) {
+        // src node == TAIL
+        ICFGNode* tail_e = edge->getDstNode();
+        nodes.insert(tail_e);
     }
     // edge is in R
     else {
-        // src node == HEAD
-        ICFGNode* head_e = edge->getSrcNode();
-        nodes.insert(head_e);
+        // src node == TAIL
+        ICFGNode* tail_e = edge->getDstNode();
+        nodes.insert(tail_e);
 
-        ICFGEdge* call_edge = phi_inv[(RetCFGEdge*)edge];
-        ICFGNode* head_e_inv = call_edge->getSrcNode();
-        nodes.insert(head_e_inv);
+        // ICFGEdge* call_edge = phi_inv[(RetCFGEdge*)edge];
+        ICFGEdge* call_edge = phi[(CallCFGEdge*)edge];
+
+        ICFGNode* tail_e_inv = call_edge->getDstNode();
+        nodes.insert(tail_e_inv);
     }
 
     return nodes;
 }
 
-void Dominator::buildDom() {
+void PostDominator::buildDom() {
 
     int tot_nodes = getTotRelevantNodes();
 
     ICFGNodeSet relevant_nodes = getRelevantNodes();
-    FunEntryICFGNode* entry_node = getEntryNode();
+    FunExitICFGNode* exit_node = getExitNode();
     ICFG* icfg = getICFG();
 
-    outs() << "[INFO] Building initial dom structure\n";
+    outs() << "[INFO] Building initial post-dom structure\n";
 
     // dominator of the start node is the start itself
     // Dom(n0) = {n0}
-    // dom[entry_node].insert(entry_node);
-    addDom(entry_node, entry_node);
-    // dom[entry_node].insert(entry_node);
+    // dom[exit_node].insert(exit_node);
+    addDom(exit_node, exit_node);
+    // dom[exit_node].insert(exit_node);
 
     int n_node = 0;
     double per_node;
@@ -47,7 +52,7 @@ void Dominator::buildDom() {
     for (auto node: relevant_nodes) {
 
         // ICFGNode* node = it->second;
-        if (node == entry_node)
+        if (node == exit_node)
             continue;
 
         n_node++;
@@ -62,10 +67,10 @@ void Dominator::buildDom() {
 
     outs() << "\n";
 
-    outs() << "[INFO] Running real dom computation\n";
+    outs() << "[INFO] Running real post-dom computation\n";
 
     ICFGNodeSet curr_inter; 
-    ICFGNodeSet all_doms_ahead;
+    ICFGNodeSet all_doms_behind;
     ICFGNodeSet last_inter;
     ICFGNodeSet new_dom;
 
@@ -80,80 +85,64 @@ void Dominator::buildDom() {
         // for (ICFG::iterator it = icfg->begin(); it != icfg->end(); it++) {
         for (auto node: relevant_nodes) {
             // ICFGNode* node = it->second;
-            if (node == entry_node)
+            if (node == exit_node)
                 continue;    
+
+            if (debug) {
+                outs() << "1) Phi: " << sizePhi() << "\n";
+                outs() << "1) Phi Inv: " << sizePhiInv() << "\n";
+            }
 
             // outs() << (node->toString()) << "\n";
 
-            // debug = node->getId() == 18;   
+            // debug = node->getId() == 20;   
 
-            if (debug) {
-                outs() << "Old DOM:\n";
-                for (auto n: getDom(node))
-                    outs() << n->getId() << " ";
-                outs() << "\n";
-                outs() << "Incoming edges: " << node->hasIncomingEdge() << "\n";
-                outs() << "\n";
-            }
-
-            if (node->hasIncomingEdge()) {
+            if (node->hasOutgoingEdge()) {
                 // ICFGNodeSet ahead_nodes;
 
-                ICFGNode::const_iterator it2 = node->InEdgeBegin();
-                ICFGNode::const_iterator eit2 = node->InEdgeEnd();
+                ICFGNode::const_iterator it2 = node->OutEdgeBegin();
+                ICFGNode::const_iterator eit2 = node->OutEdgeEnd();
 
                 bool first_intersect = true;
 
                 for (; it2 != eit2; ++it2) {
 
-                    // ICFGNode *ahead_node;
-
-                    for (auto n: ahead(*it2)) {
+                    for (auto n: behind(*it2)) {
                         ICFGNodeSet a_dom_set = getDom(n);
 
                         for (auto d: a_dom_set) 
                             if (isARelevantNode(d))
-                                all_doms_ahead.insert(d);
+                                all_doms_behind.insert(d);
                         
                         a_dom_set.clear();
                     }
 
-                    if (debug) {
-                        ICFGEdge* edge = *it2;
-                        outs() << "parent:\n";
-                        edge->getSrcNode()->dump();
-                        outs() << "all_doms_ahead\n";
-                        for (auto n: all_doms_ahead)
-                            outs() << n->getId() << " ";
-                        outs() << "\n";
-                    }
-
                     if (first_intersect) {
-                        last_inter = all_doms_ahead;
+                        last_inter = all_doms_behind;
                         first_intersect = false;
                     } else {
-                        // last_inter = all_doms_ahead;
+                        // last_inter = all_doms_behind;
                         std::set_intersection(
                             last_inter.begin(), last_inter.end(),
-                            all_doms_ahead.begin(), all_doms_ahead.end(), 
+                            all_doms_behind.begin(), all_doms_behind.end(), 
                             std::inserter(curr_inter, curr_inter.begin()));
                         std::swap(last_inter, curr_inter);
                         curr_inter.clear();
 
                     }
 
-                    all_doms_ahead.clear();
+                    all_doms_behind.clear();
                 }
 
                 new_dom = last_inter;
                 last_inter.clear();
 
-                if (debug) {
-                    outs() << "New DOM:\n";
-                    for (auto n: new_dom)
-                        outs() << n->getId() << " ";
-                    outs() << "\n";
-                }
+                // if (debug) {
+                //     outs() << "New Post-DOM:\n";
+                //     for (auto n: new_dom)
+                //         outs() << n->getId() << " ";
+                //     outs() << "\n";
+                // }
 
             }
             
@@ -165,7 +154,13 @@ void Dominator::buildDom() {
                 is_changed = true;
             }
 
+            if (debug) {
+                outs() << "2) Phi: " << sizePhi() << "\n";
+                outs() << "2) Phi Inv: " << sizePhiInv() << "\n";
+            }
+
             new_dom.clear();
         }
     }
+
 }

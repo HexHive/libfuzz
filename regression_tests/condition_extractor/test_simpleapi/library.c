@@ -12,13 +12,48 @@ struct a_struct {
     int field_b;
 };
 
+void bar() {
+	// return 1;
+}
+
+void foo(int a) {
+	int x = 0;
+	if (a > 0)
+		// x = 10;
+		bar();
+	else
+		// x = 11;
+		bar();
+	return;
+}
+
+void my_free(my_struct* s) {
+	free(s);
+}
+
 my_struct* create(int a, int b) {
 	my_struct *s = (my_struct*)malloc(sizeof(my_struct));
+
+	if (a == 0) {
+		my_free(s);
+		return 0;
+	}
+
+	if (b <= 0) {
+		my_free(s);
+		return 0;
+	}
+
+	s->field_a = a;
+	s->field_b = b;
+
 	return s;
 }
 
 void first(my_struct *s, int a) {
 	s->field_a = a;
+	if (s->field_a < 0)
+		s->field_a = -s->field_a;
 }
 
 void second(my_struct *s, int b) {
@@ -32,5 +67,5 @@ void third(void* b, my_struct *s) {
 
 void close(my_struct *s) {
 	if (s != NULL)
-		free(s);
+		my_free(s);
 }

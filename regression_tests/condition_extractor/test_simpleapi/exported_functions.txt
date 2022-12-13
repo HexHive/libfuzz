@@ -1,5 +1,0 @@
-create(int, int)
-first(my_struct *, int)
-second(my_struct *, int)
-close(my_struct *)
-third(void *, my_struct *)
