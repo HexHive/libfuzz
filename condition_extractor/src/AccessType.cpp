@@ -205,6 +205,8 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
     std::stack<ICFGEdge*> empty_stack;
     working.push(std::make_pair(entry_node, empty_stack));
 
+    AccessTypeSet ats;
+
     while(!working.empty()) {
 
         auto el = working.top();
@@ -242,6 +244,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                 }
             }
         } else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
+            std::string fun = SVFUtil::getCallee(call_node->getCallSite())->getName();
             auto inst = SVFUtil::dyn_cast<CallInst>(call_node->getCallSite());
             // outs() << "[INFO] callinst2 " << *inst << "\n";
             FunctionType *ftype = inst->getFunctionType();
@@ -249,6 +252,14 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                 // outs() << "[INFO] => type ok!\n";
                 // alloca_set.insert(vfgnode);
                 allocainst_set.insert(inst);
+            }
+
+            // TODO: add an allow-list
+            if (fun == "malloc") {
+                AccessType acNode;
+                // no need to set field, empty field set is what I need
+                acNode.setAccess(AccessType::Access::create);
+                ats.insert(acNode, node);
             }
         }  
 
@@ -289,9 +300,6 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
 
     }
 
-    // outs() << "\n";
-
-    AccessTypeSet ats;
     // std::map<const Instruction*, AccessTypeSet> all_ats;
     std::map<const Value*, AccessTypeSet> all_ats;
     for (auto a: allocainst_set) {
@@ -610,8 +618,8 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                         } else {
                             std::string fun = SVFUtil::getCallee(cs->getCallSite())->getName();
 
-                            outs() << "[DEBUG] I found this function: " 
-                                   << fun << "\n";
+                            // outs() << "[DEBUG] I found this function: " 
+                            //        << fun << "\n";
 
                             // TODO: add an allow-list
                             if (fun == "free") {

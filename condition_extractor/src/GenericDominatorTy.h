@@ -43,6 +43,8 @@ class GenericDominatorTy : public GenericGraph<DomNode,DomEdge> {
 
         ICFGNodeSet relevant_nodes;
 
+        bool is_created = false;
+
     public:
         GenericDominatorTy(BVDataPTAImpl*);
         bool dominates(ICFGNode*, ICFGNode*);
@@ -99,9 +101,16 @@ class GenericDominatorTy : public GenericGraph<DomNode,DomEdge> {
 
         virtual inline string getDomName() = 0;
 
+        void createDom();
+
     private:
+        void pruneUnreachableFunctions();
+        void buildPhiFun();
+        void inferSubGraph();
+        void buildR();
+        void restoreUnreachableFunctions();
+
         void buildTransientReduction();
-        
         int getLongestPath(int, int, int**, int);
         void topoSort(int, int*, stack<int>&, int**, int); 
 
@@ -112,14 +121,6 @@ class GenericDominatorTy : public GenericGraph<DomNode,DomEdge> {
         void printC();
 
         virtual void buildDom() = 0;
-
-    public: // static!!
-        static void createDom(GenericDominatorTy*);
-        static void pruneUnreachableFunctions(GenericDominatorTy*);
-        static void buildPhiFun(GenericDominatorTy*);
-        static void inferSubGraph(GenericDominatorTy*);
-        static void buildR(GenericDominatorTy*);
-        static void restoreUnreachableFunctions(GenericDominatorTy*);
 };
 
 typedef GenericEdge<DomNode> DomEdgeTy;

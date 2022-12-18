@@ -39,11 +39,6 @@ my_struct* create(int a, int b) {
 		return 0;
 	}
 
-	if (b <= 0) {
-		my_free(s);
-		return 0;
-	}
-
 	s->field_a = a;
 	s->field_b = b;
 

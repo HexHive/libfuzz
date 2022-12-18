@@ -9,7 +9,7 @@ EXTRACTOR = /workspaces/libfuzz/condition_extractor/bin/extractor
 LLVM_DIS = ${LLVM_DIR}/bin/llvm-dis
 WPA = /root/SVF/Release-build/bin/wpa
 EXTRACT_BC = extract-bc
-FUNCTION = foo
+FUNCTION = first
 INTERFACE = $(PWD)/apis_clang.json
 EXTR_INC_FUNC = /workspaces/libfuzz/tool/misc/extract_included_functions.py
 
@@ -26,12 +26,13 @@ $(TARGET).o.ll: $(TARGET).o.bc
 
 run: $(TARGET).o.bc $(TARGET).o.ll
 	@echo "Running condition_extractor"
-	$(WPA) -steens --dump-icfg  ./$(TARGET).o.bc
-	$(EXTR_INC_FUNC) -i $(PWD) -e "$(PWD)/exported_functions.txt" -t "$(PWD)/incomplete_types.txt" -a $(INTERFACE)
-	$(EXTRACTOR) $< -interface $(INTERFACE) -t json -output $(TARGET).json -v v1 -dom
-#	$(EXTRACTOR) $< -function $(FUNCTION) -t stdo -output $(TARGET).json -v v1 -dom
+#	$(WPA) -steens --dump-icfg  ./$(TARGET).o.bc
+#	$(EXTR_INC_FUNC) -i $(PWD) -e "$(PWD)/exported_functions.txt" -t "$(PWD)/incomplete_types.txt" -a $(INTERFACE)
+	$(EXTRACTOR) $< -interface $(INTERFACE) -t json -output $(TARGET).json -v v0 -dom
+# 	$(EXTRACTOR) $< -function $(FUNCTION) -t stdo -output $(TARGET).json -v v0 -dom
 #	$(WPA) -ander -svfg --dump-vfg  ./$(TARGET).o.bc
-	./convert_dot_pdf.sh
+# 	convert only if you --print_dom
+#	./convert_dot_pdf.sh
 
 clean:
 	rm -f $(TARGET).o $(TARGET).o.bc .$(TARGET).o.bc $(TARGET).o.svf.bc $(TARGET).o.ll apis_llvm.log apis_llvm.json *.pdf dom*.dot postdom*.dot dom*.txt postdom*.txt
