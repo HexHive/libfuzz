@@ -18,7 +18,7 @@ export LLVM_COMPILER_PATH=$LLVM_DIR/bin
 export LIBFUZZ_LOG_PATH=$WORK/apipass
 CFLAGS="-mllvm -get-api-pass"
 
-# mkdir -p "$LIBFUZZ_LOG_PATH"
+mkdir -p "$LIBFUZZ_LOG_PATH"
 
 # build the libpng library
 cd "$TARGET/repo"
