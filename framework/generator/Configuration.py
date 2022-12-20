@@ -1,17 +1,15 @@
-from functools    import cached_property
+from functools import cached_property
 
 import os
 from os import path
-import json
-from types import SimpleNamespace
+import tomli
 
-from dependency import DependencyGraphGenerator, TypeDependencyGraphGenerator
+from dependency import TypeDependencyGraphGenerator
 from grammar import GrammarGenerator, NonTerminal, Terminal
 
 from backend import BackendDriver, MockBackendDriver, LFBackendDriver
 from common import Utils
 
-from driver.factory import Factory
 from driver.factory.only_type import *
 from driver.factory.constraint_based import *
 
@@ -35,8 +33,8 @@ class Configuration:
         if not path.isfile(config_path):
             raise Exception(f"The configuration {config_path} is not valid")
 
-        with open(config_path, "rt") as f:
-            self._config = json.load(f)
+        with open(config_path, "rb") as f:
+            self._config = tomli.load(f)
 
         self.start_term = NonTerminal("start")
         self.end_term = Terminal("end")
