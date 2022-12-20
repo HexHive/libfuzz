@@ -36,8 +36,12 @@ def get_api(node):
     #           "arguments_info": [{"name": "tif", "flag": "ref", "size": 64, "type": "%struct.tiff*"}, {"name": "scheme", "flag": "val", "size": 32, "type": "i32"}]}
 
     api_obj = {}
-
-    function_name = node.displayname[:node.displayname.index("(")]
+    print(node.displayname)
+    try:
+        function_name = node.displayname[:node.displayname.index("(")]
+    except ValueError:
+        print(f"Cant find '(' in {node.displayname}")
+        return {}
     api_obj["function_name"] = function_name
 
     nt = node.type
