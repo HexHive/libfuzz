@@ -24,6 +24,7 @@ all:
 	  -DLLVM_ENABLE_BINDINGS=OFF \
 	${LLVM_DIR})
 	(ninja -C ${BUILD_DIR})
+	cd -
 
 # test:
 # 	(cd ${BUILD_DIR} && ninja check-asan)
