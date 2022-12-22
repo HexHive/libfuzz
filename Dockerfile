@@ -13,13 +13,20 @@ RUN apt-get -q update && \
     bash-completion less apt-utils apt-transport-https curl  \
     ca-certificates gnupg dialog libpixman-1-dev gnuplot-nox \
     nodejs npm graphviz libtinfo-dev libz-dev zip unzip libclang-12-dev \
-    tmux tree gdb \
+    tmux tree gdb software-properties-common \
     && rm -rf /var/lib/apt/lists/*
+RUN add-apt-repository ppa:deadsnakes/ppa -y
+RUN apt-get -q update && \
+    DEBIAN_FRONTEND="noninteractive" \ 
+    apt-get -y install --no-install-suggests --no-install-recommends \
+    python3.11 python3.11-distutils 
 
 # Clang dependencies
 RUN apt-get update && apt-get full-upgrade -y && \
     apt-get -y install --no-install-suggests --no-install-recommends  \
     clang-12 clang-tools-12 lldb llvm gcc g++ libncurses5 clang
+
+RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 # LLVM from source code
 COPY ./LLVM /root/LLVM
@@ -34,8 +41,9 @@ RUN git clone https://github.com/SVF-tools/SVF.git && \
     ./build.sh
 RUN cd SVF && ./setup.sh
 
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
 COPY ./requirements.txt /root/python/requirements.txt
-RUN cd /root/python && python3.9 -m pip install -r requirements.txt
+RUN cd /root/python && python3.11 -m pip install -r requirements.txt
 RUN pip3 install ipython
 
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
