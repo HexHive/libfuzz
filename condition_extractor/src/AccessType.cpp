@@ -361,6 +361,10 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
 
     PointerAnalysis* pta = vfg->getPTA(); 
 
+    // some types I might need later
+    LLVMContext &cxt = LLVMModuleSet::getLLVMModuleSet()->getContext();
+    auto i8ptr_typ = PointerType::getInt8PtrTy(cxt);
+
     PAGNode* pNode = pag->getGNode(pag->getValueNode(val));
     const VFGNode* vNode = vfg->getDefSVFGNode(pNode);
     // need a stack -> FILO
@@ -513,7 +517,8 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                 // being I just leave it.
 
                 if (auto bitcastinst = SVFUtil::dyn_cast<BitCastInst>(inst)) {
-                    if (bitcastinst->getDestTy() != seek_type) {
+                    auto dst_typ = bitcastinst->getDestTy();
+                    if (dst_typ != seek_type && dst_typ != i8ptr_typ) {
                         skipNode = true;
                     }
                 }
@@ -601,6 +606,19 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                         } else if (cs->isIndirectCall()) {
                             ok_continue = false;
                             // outs() << "[INFO] Indirect call, I stop!\n";
+                        // it is a direct call, check for stubs
+                        } else {
+                            std::string fun = SVFUtil::getCallee(cs->getCallSite())->getName();
+
+                            outs() << "[DEBUG] I found this function: " 
+                                   << fun << "\n";
+
+                            // TODO: add an allow-list
+                            if (fun == "free") {
+                                ok_continue = false;
+                                acNode.setAccess(AccessType::Access::del);
+                                ats.insert(acNode, vNode->getICFGNode());
+                            }
                         }
                     }
 

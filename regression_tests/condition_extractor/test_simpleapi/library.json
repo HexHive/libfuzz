@@ -7,11 +7,21 @@
 				"access" : "read",
 				"debug" : 
 				[
-					"IntraICFGNode56 {fun: close}\nStoreStmt: [Var105 <-- Var104]\t\n   store %struct.a_struct* %s, %struct.a_struct** %s.addr, align 8 ",
-					"IntraICFGNode57 {fun: close{ ln: 34  cl: 6  fl: library.c }}\nLoadStmt: [Var109 <-- Var105]\t\n   %0 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !22 { ln: 34  cl: 6  fl: library.c }",
-					"IntraICFGNode58 {fun: close{ ln: 34  cl: 8  fl: library.c }}\nCmpStmt: [Var110 <-- (Var109 predicate33 Var0)]\t\n   %cmp = icmp ne %struct.a_struct* %0, null, !dbg !24 { ln: 34  cl: 8  fl: library.c }",
-					"IntraICFGNode60 {fun: close{ ln: 35  cl: 8  fl: library.c }}\nLoadStmt: [Var112 <-- Var105]\t\n   %1 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !26 { ln: 35  cl: 8  fl: library.c }",
-					"IntraICFGNode62 {fun: close{ ln: 35  cl: 8  fl: library.c }}\nCopyStmt: [Var113 <-- Var112]\t\n   %2 = bitcast %struct.a_struct* %1 to i8*, !dbg !26 { ln: 35  cl: 8  fl: library.c }"
+					"IntraICFGNode22 {fun: my_free}\nStoreStmt: [Var41 <-- Var40]\t\n   store %struct.a_struct* %s, %struct.a_struct** %s.addr, align 8 ",
+					"IntraICFGNode23 {fun: my_free{ ln: 31  cl: 7  fl: library.c }}\nLoadStmt: [Var45 <-- Var41]\t\n   %0 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !22 { ln: 31  cl: 7  fl: library.c }",
+					"IntraICFGNode24 {fun: my_free{ ln: 31  cl: 7  fl: library.c }}\nCopyStmt: [Var46 <-- Var45]\t\n   %1 = bitcast %struct.a_struct* %0 to i8*, !dbg !22 { ln: 31  cl: 7  fl: library.c }",
+					"IntraICFGNode125 {fun: close}\nStoreStmt: [Var189 <-- Var188]\t\n   store %struct.a_struct* %s, %struct.a_struct** %s.addr, align 8 ",
+					"IntraICFGNode126 {fun: close{ ln: 69  cl: 6  fl: library.c }}\nLoadStmt: [Var193 <-- Var189]\t\n   %0 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !22 { ln: 69  cl: 6  fl: library.c }",
+					"IntraICFGNode127 {fun: close{ ln: 69  cl: 8  fl: library.c }}\nCmpStmt: [Var194 <-- (Var193 predicate33 Var0)]\t\n   %cmp = icmp ne %struct.a_struct* %0, null, !dbg !24 { ln: 69  cl: 8  fl: library.c }",
+					"IntraICFGNode129 {fun: close{ ln: 70  cl: 11  fl: library.c }}\nLoadStmt: [Var196 <-- Var189]\t\n   %1 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !26 { ln: 70  cl: 11  fl: library.c }"
+				],
+				"fields" : []
+			},
+			{
+				"access" : "delete",
+				"debug" : 
+				[
+					"IntraICFGNode24 {fun: my_free{ ln: 31  cl: 7  fl: library.c }}\nCopyStmt: [Var46 <-- Var45]\t\n   %1 = bitcast %struct.a_struct* %0 to i8*, !dbg !22 { ln: 31  cl: 7  fl: library.c }"
 				],
 				"fields" : []
 			}
@@ -26,7 +36,11 @@
 				"access" : "read",
 				"debug" : 
 				[
-					"IntraICFGNode5 {fun: create}\nStoreStmt: [Var9 <-- Var7]\t\n   store i32 %a, i32* %a.addr, align 4 "
+					"IntraICFGNode34 {fun: create}\nStoreStmt: [Var60 <-- Var56]\t\n   store i32 %a, i32* %a.addr, align 4 ",
+					"IntraICFGNode40 {fun: create{ ln: 37  cl: 6  fl: library.c }}\nLoadStmt: [Var78 <-- Var60]\t\n   %1 = load i32, i32* %a.addr, align 4, !dbg !28 { ln: 37  cl: 6  fl: library.c }",
+					"IntraICFGNode41 {fun: create{ ln: 37  cl: 8  fl: library.c }}\nCmpStmt: [Var79 <-- (Var78 predicate32 Var21)]\t\n   %cmp = icmp eq i32 %1, 0, !dbg !30 { ln: 37  cl: 8  fl: library.c }",
+					"IntraICFGNode52 {fun: create{ ln: 47  cl: 15  fl: library.c }}\nLoadStmt: [Var93 <-- Var60]\t\n   %5 = load i32, i32* %a.addr, align 4, !dbg !44 { ln: 47  cl: 15  fl: library.c }",
+					"IntraICFGNode62 {fun: create{ ln: 47  cl: 13  fl: library.c }}\nStoreStmt: [Var95 <-- Var93]\t\n   store i32 %5, i32* %field_a, align 4, !dbg !47 { ln: 47  cl: 13  fl: library.c }"
 				],
 				"fields" : []
 			}
@@ -37,7 +51,11 @@
 				"access" : "read",
 				"debug" : 
 				[
-					"IntraICFGNode6 {fun: create}\nStoreStmt: [Var12 <-- Var8]\t\n   store i32 %b, i32* %b.addr, align 4 "
+					"IntraICFGNode35 {fun: create}\nStoreStmt: [Var62 <-- Var57]\t\n   store i32 %b, i32* %b.addr, align 4 ",
+					"IntraICFGNode44 {fun: create{ ln: 42  cl: 6  fl: library.c }}\nLoadStmt: [Var86 <-- Var62]\t\n   %3 = load i32, i32* %b.addr, align 4, !dbg !36 { ln: 42  cl: 6  fl: library.c }",
+					"IntraICFGNode47 {fun: create{ ln: 42  cl: 8  fl: library.c }}\nCmpStmt: [Var87 <-- (Var86 predicate41 Var21)]\t\n   %cmp1 = icmp sle i32 %3, 0, !dbg !38 { ln: 42  cl: 8  fl: library.c }",
+					"IntraICFGNode63 {fun: create{ ln: 48  cl: 15  fl: library.c }}\nLoadStmt: [Var97 <-- Var62]\t\n   %7 = load i32, i32* %b.addr, align 4, !dbg !48 { ln: 48  cl: 15  fl: library.c }",
+					"IntraICFGNode66 {fun: create{ ln: 48  cl: 13  fl: library.c }}\nStoreStmt: [Var99 <-- Var97]\t\n   store i32 %7, i32* %field_b, align 4, !dbg !51 { ln: 48  cl: 13  fl: library.c }"
 				],
 				"fields" : []
 			}
@@ -48,8 +66,19 @@
 				"access" : "read",
 				"debug" : 
 				[
-					"IntraICFGNode11 {fun: create{ ln: 17  cl: 9  fl: library.c }}\nLoadStmt: [Var28 <-- Var14]\t\n   %1 = load %struct.a_struct*, %struct.a_struct** %s, align 8, !dbg !28 { ln: 17  cl: 9  fl: library.c }",
-					"FunExitICFGNode13 {fun: create{ ln: 15 fl: library.c }}\nPhiStmt: [Var6 <-- ([Var28, ICFGNode12],)]\t\n   ret %struct.a_struct* %1, !dbg !29 { ln: 17  cl: 2  fl: library.c }"
+					"IntraICFGNode22 {fun: my_free}\nStoreStmt: [Var41 <-- Var40]\t\n   store %struct.a_struct* %s, %struct.a_struct** %s.addr, align 8 ",
+					"IntraICFGNode23 {fun: my_free{ ln: 31  cl: 7  fl: library.c }}\nLoadStmt: [Var45 <-- Var41]\t\n   %0 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !22 { ln: 31  cl: 7  fl: library.c }",
+					"IntraICFGNode24 {fun: my_free{ ln: 31  cl: 7  fl: library.c }}\nCopyStmt: [Var46 <-- Var45]\t\n   %1 = bitcast %struct.a_struct* %0 to i8*, !dbg !22 { ln: 31  cl: 7  fl: library.c }",
+					"IntraICFGNode38 {fun: create{ ln: 35  cl: 17  fl: library.c }}\nCopyStmt: [Var76 <-- Var71]\t\n   %0 = bitcast i8* %call to %struct.a_struct*, !dbg !27 { ln: 35  cl: 17  fl: library.c }",
+					"IntraICFGNode39 {fun: create{ ln: 35  cl: 13  fl: library.c }}\nStoreStmt: [Var64 <-- Var76]\t\n   store %struct.a_struct* %0, %struct.a_struct** %s, align 8, !dbg !25 { ln: 35  cl: 13  fl: library.c }",
+					"IntraICFGNode43 {fun: create{ ln: 38  cl: 11  fl: library.c }}\nLoadStmt: [Var81 <-- Var64]\t\n   %2 = load %struct.a_struct*, %struct.a_struct** %s, align 8, !dbg !32 { ln: 38  cl: 11  fl: library.c }",
+					"IntraICFGNode51 {fun: create{ ln: 43  cl: 11  fl: library.c }}\nLoadStmt: [Var89 <-- Var64]\t\n   %4 = load %struct.a_struct*, %struct.a_struct** %s, align 8, !dbg !40 { ln: 43  cl: 11  fl: library.c }",
+					"IntraICFGNode53 {fun: create{ ln: 51  cl: 1  fl: library.c }}\nLoadStmt: [Var104 <-- Var58]\t\n   %10 = load %struct.a_struct*, %struct.a_struct** %retval, align 8, !dbg !54 { ln: 51  cl: 1  fl: library.c }",
+					"IntraICFGNode56 {fun: create{ ln: 47  cl: 2  fl: library.c }}\nLoadStmt: [Var94 <-- Var64]\t\n   %6 = load %struct.a_struct*, %struct.a_struct** %s, align 8, !dbg !45 { ln: 47  cl: 2  fl: library.c }",
+					"FunExitICFGNode60 {fun: create{ ln: 51  cl: 1  fl: library.c }}\nPhiStmt: [Var55 <-- ([Var104, ICFGNode57],)]\t\n   ret %struct.a_struct* %10, !dbg !54 { ln: 51  cl: 1  fl: library.c }",
+					"IntraICFGNode64 {fun: create{ ln: 48  cl: 2  fl: library.c }}\nLoadStmt: [Var98 <-- Var64]\t\n   %8 = load %struct.a_struct*, %struct.a_struct** %s, align 8, !dbg !49 { ln: 48  cl: 2  fl: library.c }",
+					"IntraICFGNode67 {fun: create{ ln: 50  cl: 9  fl: library.c }}\nLoadStmt: [Var101 <-- Var64]\t\n   %9 = load %struct.a_struct*, %struct.a_struct** %s, align 8, !dbg !52 { ln: 50  cl: 9  fl: library.c }",
+					"IntraICFGNode68 {fun: create{ ln: 50  cl: 2  fl: library.c }}\nStoreStmt: [Var58 <-- Var101]\t\n   store %struct.a_struct* %9, %struct.a_struct** %retval, align 8, !dbg !53 { ln: 50  cl: 2  fl: library.c }"
 				],
 				"fields" : []
 			},
@@ -57,8 +86,12 @@
 				"access" : "write",
 				"debug" : 
 				[
-					"IntraICFGNode10 {fun: create{ ln: 16  cl: 13  fl: library.c }}\nStoreStmt: [Var14 <-- Var26]\t\n   store %struct.a_struct* %0, %struct.a_struct** %s, align 8, !dbg !25 { ln: 16  cl: 13  fl: library.c }",
-					"FunExitICFGNode13 {fun: create{ ln: 15 fl: library.c }}\nPhiStmt: [Var6 <-- ([Var28, ICFGNode12],)]\t\n   ret %struct.a_struct* %1, !dbg !29 { ln: 17  cl: 2  fl: library.c }"
+					"IntraICFGNode22 {fun: my_free}\nStoreStmt: [Var41 <-- Var40]\t\n   store %struct.a_struct* %s, %struct.a_struct** %s.addr, align 8 ",
+					"IntraICFGNode39 {fun: create{ ln: 35  cl: 13  fl: library.c }}\nStoreStmt: [Var64 <-- Var76]\t\n   store %struct.a_struct* %0, %struct.a_struct** %s, align 8, !dbg !25 { ln: 35  cl: 13  fl: library.c }",
+					"IntraICFGNode48 {fun: create{ ln: 39  cl: 3  fl: library.c }}\nStoreStmt: [Var58 <-- Var0]\t\n   store %struct.a_struct* null, %struct.a_struct** %retval, align 8, !dbg !35 { ln: 39  cl: 3  fl: library.c }",
+					"IntraICFGNode58 {fun: create{ ln: 44  cl: 3  fl: library.c }}\nStoreStmt: [Var58 <-- Var0]\t\n   store %struct.a_struct* null, %struct.a_struct** %retval, align 8, !dbg !43 { ln: 44  cl: 3  fl: library.c }",
+					"FunExitICFGNode60 {fun: create{ ln: 51  cl: 1  fl: library.c }}\nPhiStmt: [Var55 <-- ([Var104, ICFGNode57],)]\t\n   ret %struct.a_struct* %10, !dbg !54 { ln: 51  cl: 1  fl: library.c }",
+					"IntraICFGNode68 {fun: create{ ln: 50  cl: 2  fl: library.c }}\nStoreStmt: [Var58 <-- Var101]\t\n   store %struct.a_struct* %9, %struct.a_struct** %retval, align 8, !dbg !53 { ln: 50  cl: 2  fl: library.c }"
 				],
 				"fields" : []
 			},
@@ -66,9 +99,51 @@
 				"access" : "return",
 				"debug" : 
 				[
-					"FunExitICFGNode13 {fun: create{ ln: 15 fl: library.c }}\nPhiStmt: [Var6 <-- ([Var28, ICFGNode12],)]\t\n   ret %struct.a_struct* %1, !dbg !29 { ln: 17  cl: 2  fl: library.c }"
+					"FunExitICFGNode60 {fun: create{ ln: 51  cl: 1  fl: library.c }}\nPhiStmt: [Var55 <-- ([Var104, ICFGNode57],)]\t\n   ret %struct.a_struct* %10, !dbg !54 { ln: 51  cl: 1  fl: library.c }"
 				],
 				"fields" : []
+			},
+			{
+				"access" : "delete",
+				"debug" : 
+				[
+					"IntraICFGNode24 {fun: my_free{ ln: 31  cl: 7  fl: library.c }}\nCopyStmt: [Var46 <-- Var45]\t\n   %1 = bitcast %struct.a_struct* %0 to i8*, !dbg !22 { ln: 31  cl: 7  fl: library.c }"
+				],
+				"fields" : []
+			},
+			{
+				"access" : "read",
+				"debug" : 
+				[
+					"IntraICFGNode59 {fun: create{ ln: 47  cl: 5  fl: library.c }}\nGepStmt: [Var95 <-- Var94]\t\n   %field_a = getelementptr inbounds %struct.a_struct, %struct.a_struct* %6, i32 0, i32 0, !dbg !46 { ln: 47  cl: 5  fl: library.c }",
+					"IntraICFGNode65 {fun: create{ ln: 48  cl: 5  fl: library.c }}\nGepStmt: [Var99 <-- Var98]\t\n   %field_b = getelementptr inbounds %struct.a_struct, %struct.a_struct* %8, i32 0, i32 1, !dbg !50 { ln: 48  cl: 5  fl: library.c }"
+				],
+				"fields" : 
+				[
+					-1
+				]
+			},
+			{
+				"access" : "write",
+				"debug" : 
+				[
+					"IntraICFGNode62 {fun: create{ ln: 47  cl: 13  fl: library.c }}\nStoreStmt: [Var95 <-- Var93]\t\n   store i32 %5, i32* %field_a, align 4, !dbg !47 { ln: 47  cl: 13  fl: library.c }"
+				],
+				"fields" : 
+				[
+					0
+				]
+			},
+			{
+				"access" : "write",
+				"debug" : 
+				[
+					"IntraICFGNode66 {fun: create{ ln: 48  cl: 13  fl: library.c }}\nStoreStmt: [Var99 <-- Var97]\t\n   store i32 %7, i32* %field_b, align 4, !dbg !51 { ln: 48  cl: 13  fl: library.c }"
+				],
+				"fields" : 
+				[
+					1
+				]
 			}
 		]
 	},
@@ -80,8 +155,11 @@
 				"access" : "read",
 				"debug" : 
 				[
-					"IntraICFGNode17 {fun: first}\nStoreStmt: [Var43 <-- Var41]\t\n   store %struct.a_struct* %s, %struct.a_struct** %s.addr, align 8 ",
-					"IntraICFGNode20 {fun: first{ ln: 21  cl: 2  fl: library.c }}\nLoadStmt: [Var52 <-- Var43]\t\n   %1 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !25 { ln: 21  cl: 2  fl: library.c }"
+					"IntraICFGNode73 {fun: first}\nStoreStmt: [Var113 <-- Var111]\t\n   store %struct.a_struct* %s, %struct.a_struct** %s.addr, align 8 ",
+					"IntraICFGNode76 {fun: first{ ln: 54  cl: 2  fl: library.c }}\nLoadStmt: [Var122 <-- Var113]\t\n   %1 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !25 { ln: 54  cl: 2  fl: library.c }",
+					"IntraICFGNode79 {fun: first{ ln: 55  cl: 6  fl: library.c }}\nLoadStmt: [Var125 <-- Var113]\t\n   %2 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !28 { ln: 55  cl: 6  fl: library.c }",
+					"IntraICFGNode84 {fun: first{ ln: 56  cl: 17  fl: library.c }}\nLoadStmt: [Var130 <-- Var113]\t\n   %4 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !33 { ln: 56  cl: 17  fl: library.c }",
+					"IntraICFGNode90 {fun: first{ ln: 56  cl: 3  fl: library.c }}\nLoadStmt: [Var134 <-- Var113]\t\n   %6 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !36 { ln: 56  cl: 3  fl: library.c }"
 				],
 				"fields" : []
 			},
@@ -89,7 +167,10 @@
 				"access" : "read",
 				"debug" : 
 				[
-					"IntraICFGNode21 {fun: first{ ln: 21  cl: 5  fl: library.c }}\nGepStmt: [Var53 <-- Var52]\t\n   %field_a = getelementptr inbounds %struct.a_struct, %struct.a_struct* %1, i32 0, i32 0, !dbg !26 { ln: 21  cl: 5  fl: library.c }"
+					"IntraICFGNode77 {fun: first{ ln: 54  cl: 5  fl: library.c }}\nGepStmt: [Var123 <-- Var122]\t\n   %field_a = getelementptr inbounds %struct.a_struct, %struct.a_struct* %1, i32 0, i32 0, !dbg !26 { ln: 54  cl: 5  fl: library.c }",
+					"IntraICFGNode80 {fun: first{ ln: 55  cl: 9  fl: library.c }}\nGepStmt: [Var126 <-- Var125]\t\n   %field_a1 = getelementptr inbounds %struct.a_struct, %struct.a_struct* %2, i32 0, i32 0, !dbg !30 { ln: 55  cl: 9  fl: library.c }",
+					"IntraICFGNode86 {fun: first{ ln: 56  cl: 20  fl: library.c }}\nGepStmt: [Var131 <-- Var130]\t\n   %field_a2 = getelementptr inbounds %struct.a_struct, %struct.a_struct* %4, i32 0, i32 0, !dbg !34 { ln: 56  cl: 20  fl: library.c }",
+					"IntraICFGNode91 {fun: first{ ln: 56  cl: 6  fl: library.c }}\nGepStmt: [Var135 <-- Var134]\t\n   %field_a3 = getelementptr inbounds %struct.a_struct, %struct.a_struct* %6, i32 0, i32 0, !dbg !37 { ln: 56  cl: 6  fl: library.c }"
 				],
 				"fields" : 
 				[
@@ -97,10 +178,25 @@
 				]
 			},
 			{
+				"access" : "read",
+				"debug" : 
+				[
+					"IntraICFGNode81 {fun: first{ ln: 55  cl: 9  fl: library.c }}\nLoadStmt: [Var127 <-- Var126]\t\n   %3 = load i32, i32* %field_a1, align 4, !dbg !30 { ln: 55  cl: 9  fl: library.c }",
+					"IntraICFGNode82 {fun: first{ ln: 55  cl: 17  fl: library.c }}\nCmpStmt: [Var128 <-- (Var127 predicate40 Var21)]\t\n   %cmp = icmp slt i32 %3, 0, !dbg !31 { ln: 55  cl: 17  fl: library.c }",
+					"IntraICFGNode88 {fun: first{ ln: 56  cl: 20  fl: library.c }}\nLoadStmt: [Var132 <-- Var131]\t\n   %5 = load i32, i32* %field_a2, align 4, !dbg !34 { ln: 56  cl: 20  fl: library.c }",
+					"IntraICFGNode89 {fun: first{ ln: 56  cl: 16  fl: library.c }}\nBinaryOPStmt: [Var133 <-- (Var21 opcode15 Var132)]\t\n   %sub = sub nsw i32 0, %5, !dbg !35 { ln: 56  cl: 16  fl: library.c }"
+				],
+				"fields" : 
+				[
+					0
+				]
+			},
+			{
 				"access" : "write",
 				"debug" : 
 				[
-					"IntraICFGNode22 {fun: first{ ln: 21  cl: 13  fl: library.c }}\nStoreStmt: [Var53 <-- Var51]\t\n   store i32 %0, i32* %field_a, align 4, !dbg !27 { ln: 21  cl: 13  fl: library.c }"
+					"IntraICFGNode78 {fun: first{ ln: 54  cl: 13  fl: library.c }}\nStoreStmt: [Var123 <-- Var121]\t\n   store i32 %0, i32* %field_a, align 4, !dbg !27 { ln: 54  cl: 13  fl: library.c }",
+					"IntraICFGNode92 {fun: first{ ln: 56  cl: 14  fl: library.c }}\nStoreStmt: [Var135 <-- Var133]\t\n   store i32 %sub, i32* %field_a3, align 4, !dbg !38 { ln: 56  cl: 14  fl: library.c }"
 				],
 				"fields" : 
 				[
@@ -114,9 +210,26 @@
 				"access" : "read",
 				"debug" : 
 				[
-					"IntraICFGNode18 {fun: first}\nStoreStmt: [Var45 <-- Var42]\t\n   store i32 %a, i32* %a.addr, align 4 ",
-					"IntraICFGNode19 {fun: first{ ln: 21  cl: 15  fl: library.c }}\nLoadStmt: [Var51 <-- Var45]\t\n   %0 = load i32, i32* %a.addr, align 4, !dbg !24 { ln: 21  cl: 15  fl: library.c }",
-					"IntraICFGNode22 {fun: first{ ln: 21  cl: 13  fl: library.c }}\nStoreStmt: [Var53 <-- Var51]\t\n   store i32 %0, i32* %field_a, align 4, !dbg !27 { ln: 21  cl: 13  fl: library.c }"
+					"IntraICFGNode74 {fun: first}\nStoreStmt: [Var115 <-- Var112]\t\n   store i32 %a, i32* %a.addr, align 4 ",
+					"IntraICFGNode75 {fun: first{ ln: 54  cl: 15  fl: library.c }}\nLoadStmt: [Var121 <-- Var115]\t\n   %0 = load i32, i32* %a.addr, align 4, !dbg !24 { ln: 54  cl: 15  fl: library.c }",
+					"IntraICFGNode78 {fun: first{ ln: 54  cl: 13  fl: library.c }}\nStoreStmt: [Var123 <-- Var121]\t\n   store i32 %0, i32* %field_a, align 4, !dbg !27 { ln: 54  cl: 13  fl: library.c }"
+				],
+				"fields" : []
+			}
+		],
+		"return" : []
+	},
+	{
+		"functionName" : "foo",
+		"param_0" : 
+		[
+			{
+				"access" : "read",
+				"debug" : 
+				[
+					"IntraICFGNode7 {fun: foo}\nStoreStmt: [Var12 <-- Var11]\t\n   store i32 %a, i32* %a.addr, align 4 ",
+					"IntraICFGNode9 {fun: foo{ ln: 21  cl: 6  fl: library.c }}\nLoadStmt: [Var22 <-- Var12]\t\n   %0 = load i32, i32* %a.addr, align 4, !dbg !24 { ln: 21  cl: 6  fl: library.c }",
+					"IntraICFGNode10 {fun: foo{ ln: 21  cl: 8  fl: library.c }}\nCmpStmt: [Var23 <-- (Var22 predicate38 Var21)]\t\n   %cmp = icmp sgt i32 %0, 0, !dbg !26 { ln: 21  cl: 8  fl: library.c }"
 				],
 				"fields" : []
 			}
@@ -131,9 +244,9 @@
 				"access" : "read",
 				"debug" : 
 				[
-					"IntraICFGNode28 {fun: second}\nStoreStmt: [Var61 <-- Var59]\t\n   store %struct.a_struct* %s, %struct.a_struct** %s.addr, align 8 ",
-					"IntraICFGNode30 {fun: second{ ln: 25  cl: 6  fl: library.c }}\nLoadStmt: [Var69 <-- Var61]\t\n   %0 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !24 { ln: 25  cl: 6  fl: library.c }",
-					"IntraICFGNode37 {fun: second{ ln: 26  cl: 3  fl: library.c }}\nLoadStmt: [Var76 <-- Var61]\t\n   %3 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !30 { ln: 26  cl: 3  fl: library.c }"
+					"IntraICFGNode97 {fun: second}\nStoreStmt: [Var145 <-- Var143]\t\n   store %struct.a_struct* %s, %struct.a_struct** %s.addr, align 8 ",
+					"IntraICFGNode99 {fun: second{ ln: 60  cl: 6  fl: library.c }}\nLoadStmt: [Var153 <-- Var145]\t\n   %0 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !24 { ln: 60  cl: 6  fl: library.c }",
+					"IntraICFGNode106 {fun: second{ ln: 61  cl: 3  fl: library.c }}\nLoadStmt: [Var160 <-- Var145]\t\n   %3 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !30 { ln: 61  cl: 3  fl: library.c }"
 				],
 				"fields" : []
 			},
@@ -141,8 +254,8 @@
 				"access" : "read",
 				"debug" : 
 				[
-					"IntraICFGNode31 {fun: second{ ln: 25  cl: 9  fl: library.c }}\nGepStmt: [Var70 <-- Var69]\t\n   %field_a = getelementptr inbounds %struct.a_struct, %struct.a_struct* %0, i32 0, i32 0, !dbg !26 { ln: 25  cl: 9  fl: library.c }",
-					"IntraICFGNode39 {fun: second{ ln: 26  cl: 6  fl: library.c }}\nGepStmt: [Var77 <-- Var76]\t\n   %field_b = getelementptr inbounds %struct.a_struct, %struct.a_struct* %3, i32 0, i32 1, !dbg !31 { ln: 26  cl: 6  fl: library.c }"
+					"IntraICFGNode100 {fun: second{ ln: 60  cl: 9  fl: library.c }}\nGepStmt: [Var154 <-- Var153]\t\n   %field_a = getelementptr inbounds %struct.a_struct, %struct.a_struct* %0, i32 0, i32 0, !dbg !26 { ln: 60  cl: 9  fl: library.c }",
+					"IntraICFGNode108 {fun: second{ ln: 61  cl: 6  fl: library.c }}\nGepStmt: [Var161 <-- Var160]\t\n   %field_b = getelementptr inbounds %struct.a_struct, %struct.a_struct* %3, i32 0, i32 1, !dbg !31 { ln: 61  cl: 6  fl: library.c }"
 				],
 				"fields" : 
 				[
@@ -153,8 +266,8 @@
 				"access" : "read",
 				"debug" : 
 				[
-					"IntraICFGNode32 {fun: second{ ln: 25  cl: 9  fl: library.c }}\nLoadStmt: [Var71 <-- Var70]\t\n   %1 = load i32, i32* %field_a, align 4, !dbg !26 { ln: 25  cl: 9  fl: library.c }",
-					"IntraICFGNode33 {fun: second{ ln: 25  cl: 17  fl: library.c }}\nCmpStmt: [Var72 <-- (Var71 predicate38 Var73)]\t\n   %cmp = icmp sgt i32 %1, 10, !dbg !27 { ln: 25  cl: 17  fl: library.c }"
+					"IntraICFGNode101 {fun: second{ ln: 60  cl: 9  fl: library.c }}\nLoadStmt: [Var155 <-- Var154]\t\n   %1 = load i32, i32* %field_a, align 4, !dbg !26 { ln: 60  cl: 9  fl: library.c }",
+					"IntraICFGNode102 {fun: second{ ln: 60  cl: 17  fl: library.c }}\nCmpStmt: [Var156 <-- (Var155 predicate38 Var157)]\t\n   %cmp = icmp sgt i32 %1, 10, !dbg !27 { ln: 60  cl: 17  fl: library.c }"
 				],
 				"fields" : 
 				[
@@ -165,7 +278,7 @@
 				"access" : "write",
 				"debug" : 
 				[
-					"IntraICFGNode40 {fun: second{ ln: 26  cl: 14  fl: library.c }}\nStoreStmt: [Var77 <-- Var75]\t\n   store i32 %2, i32* %field_b, align 4, !dbg !32 { ln: 26  cl: 14  fl: library.c }"
+					"IntraICFGNode109 {fun: second{ ln: 61  cl: 14  fl: library.c }}\nStoreStmt: [Var161 <-- Var159]\t\n   store i32 %2, i32* %field_b, align 4, !dbg !32 { ln: 61  cl: 14  fl: library.c }"
 				],
 				"fields" : 
 				[
@@ -179,9 +292,9 @@
 				"access" : "read",
 				"debug" : 
 				[
-					"IntraICFGNode29 {fun: second}\nStoreStmt: [Var63 <-- Var60]\t\n   store i32 %b, i32* %b.addr, align 4 ",
-					"IntraICFGNode35 {fun: second{ ln: 26  cl: 16  fl: library.c }}\nLoadStmt: [Var75 <-- Var63]\t\n   %2 = load i32, i32* %b.addr, align 4, !dbg !29 { ln: 26  cl: 16  fl: library.c }",
-					"IntraICFGNode40 {fun: second{ ln: 26  cl: 14  fl: library.c }}\nStoreStmt: [Var77 <-- Var75]\t\n   store i32 %2, i32* %field_b, align 4, !dbg !32 { ln: 26  cl: 14  fl: library.c }"
+					"IntraICFGNode98 {fun: second}\nStoreStmt: [Var147 <-- Var144]\t\n   store i32 %b, i32* %b.addr, align 4 ",
+					"IntraICFGNode104 {fun: second{ ln: 61  cl: 16  fl: library.c }}\nLoadStmt: [Var159 <-- Var147]\t\n   %2 = load i32, i32* %b.addr, align 4, !dbg !29 { ln: 61  cl: 16  fl: library.c }",
+					"IntraICFGNode109 {fun: second{ ln: 61  cl: 14  fl: library.c }}\nStoreStmt: [Var161 <-- Var159]\t\n   store i32 %2, i32* %field_b, align 4, !dbg !32 { ln: 61  cl: 14  fl: library.c }"
 				],
 				"fields" : []
 			}
@@ -196,10 +309,10 @@
 				"access" : "read",
 				"debug" : 
 				[
-					"IntraICFGNode45 {fun: third}\nStoreStmt: [Var87 <-- Var85]\t\n   store i8* %b, i8** %b.addr, align 8 ",
-					"IntraICFGNode47 {fun: third{ ln: 30  cl: 20  fl: library.c }}\nLoadStmt: [Var95 <-- Var87]\t\n   %0 = load i8*, i8** %b.addr, align 8, !dbg !24 { ln: 30  cl: 20  fl: library.c }",
-					"IntraICFGNode48 {fun: third{ ln: 30  cl: 15  fl: library.c }}\nCopyStmt: [Var96 <-- Var95]\t\n   %1 = ptrtoint i8* %0 to i32, !dbg !25 { ln: 30  cl: 15  fl: library.c }",
-					"IntraICFGNode51 {fun: third{ ln: 30  cl: 13  fl: library.c }}\nStoreStmt: [Var98 <-- Var96]\t\n   store i32 %1, i32* %field_a, align 4, !dbg !28 { ln: 30  cl: 13  fl: library.c }"
+					"IntraICFGNode114 {fun: third}\nStoreStmt: [Var171 <-- Var169]\t\n   store i8* %b, i8** %b.addr, align 8 ",
+					"IntraICFGNode116 {fun: third{ ln: 65  cl: 20  fl: library.c }}\nLoadStmt: [Var179 <-- Var171]\t\n   %0 = load i8*, i8** %b.addr, align 8, !dbg !24 { ln: 65  cl: 20  fl: library.c }",
+					"IntraICFGNode117 {fun: third{ ln: 65  cl: 15  fl: library.c }}\nCopyStmt: [Var180 <-- Var179]\t\n   %1 = ptrtoint i8* %0 to i32, !dbg !25 { ln: 65  cl: 15  fl: library.c }",
+					"IntraICFGNode120 {fun: third{ ln: 65  cl: 13  fl: library.c }}\nStoreStmt: [Var182 <-- Var180]\t\n   store i32 %1, i32* %field_a, align 4, !dbg !28 { ln: 65  cl: 13  fl: library.c }"
 				],
 				"fields" : []
 			}
@@ -210,8 +323,8 @@
 				"access" : "read",
 				"debug" : 
 				[
-					"IntraICFGNode46 {fun: third}\nStoreStmt: [Var89 <-- Var86]\t\n   store %struct.a_struct* %s, %struct.a_struct** %s.addr, align 8 ",
-					"IntraICFGNode49 {fun: third{ ln: 30  cl: 2  fl: library.c }}\nLoadStmt: [Var97 <-- Var89]\t\n   %2 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !26 { ln: 30  cl: 2  fl: library.c }"
+					"IntraICFGNode115 {fun: third}\nStoreStmt: [Var173 <-- Var170]\t\n   store %struct.a_struct* %s, %struct.a_struct** %s.addr, align 8 ",
+					"IntraICFGNode118 {fun: third{ ln: 65  cl: 2  fl: library.c }}\nLoadStmt: [Var181 <-- Var173]\t\n   %2 = load %struct.a_struct*, %struct.a_struct** %s.addr, align 8, !dbg !26 { ln: 65  cl: 2  fl: library.c }"
 				],
 				"fields" : []
 			},
@@ -219,7 +332,7 @@
 				"access" : "read",
 				"debug" : 
 				[
-					"IntraICFGNode50 {fun: third{ ln: 30  cl: 5  fl: library.c }}\nGepStmt: [Var98 <-- Var97]\t\n   %field_a = getelementptr inbounds %struct.a_struct, %struct.a_struct* %2, i32 0, i32 0, !dbg !27 { ln: 30  cl: 5  fl: library.c }"
+					"IntraICFGNode119 {fun: third{ ln: 65  cl: 5  fl: library.c }}\nGepStmt: [Var182 <-- Var181]\t\n   %field_a = getelementptr inbounds %struct.a_struct, %struct.a_struct* %2, i32 0, i32 0, !dbg !27 { ln: 65  cl: 5  fl: library.c }"
 				],
 				"fields" : 
 				[
@@ -230,7 +343,7 @@
 				"access" : "write",
 				"debug" : 
 				[
-					"IntraICFGNode51 {fun: third{ ln: 30  cl: 13  fl: library.c }}\nStoreStmt: [Var98 <-- Var96]\t\n   store i32 %1, i32* %field_a, align 4, !dbg !28 { ln: 30  cl: 13  fl: library.c }"
+					"IntraICFGNode120 {fun: third{ ln: 65  cl: 13  fl: library.c }}\nStoreStmt: [Var182 <-- Var180]\t\n   store i32 %1, i32* %field_a, align 4, !dbg !28 { ln: 65  cl: 13  fl: library.c }"
 				],
 				"fields" : 
 				[

@@ -17,7 +17,7 @@ using namespace std;
 class AccessType {
     public:
         typedef enum _access { read, write, 
-                               ret, none } Access;
+                               ret, del, none } Access;
 
 
     private:
@@ -127,6 +127,12 @@ class AccessType {
                 rawstr << "return";
             else if (access == Access::none)
                 rawstr << "none";
+            else if (access == Access::del)
+                rawstr << "delete";
+            else {
+                outs() << "[ERROR] Access:: " << access << " unknown!!\n";
+                exit(1);
+            }
             rawstr << ")";
 
             if (verbose) {
@@ -156,8 +162,14 @@ class AccessType {
                 accessTypeJson["access"] = "write";
             else if (access == Access::ret)
                 accessTypeJson["access"] = "return";
-            else
+            else  if (access == Access::none)
                 accessTypeJson["access"] = "none";
+            else if (access == Access::del)
+                accessTypeJson["access"] = "delete";
+            else {
+                outs() << "[ERROR] Access:: " << access << " unknown!!\n";
+                exit(1);
+            }
 
             Json::Value fieldsJson(Json::arrayValue);
 
@@ -205,6 +217,13 @@ class AccessTypeSet {
             }
         }
 
+        void remove(AccessType at) {
+            auto at_iter = ats_set.find(at);
+            if (at_iter != ats_set.end()) {
+                ats_set.erase(*at_iter);
+            }
+        }
+
         size_t size() const {
             return ats_set.size();
         }
@@ -249,9 +268,7 @@ class AccessTypeSet {
 
         bool operator<(const AccessTypeSet& rhs) const {
             return ats_set < rhs.ats_set;
-        }
-
-    
+        }    
 
     public: // static functions/data!
 
@@ -385,6 +402,12 @@ class FunctionConditions {
 
         void addParameterAccessTypeSet(AccessTypeSet par) {
             parameter_ats.push_back(par);
+        }
+
+        int getParameterAccessNum() {return parameter_ats.size();}
+
+        void replacedParameterAccessTypeSet(int parm, AccessTypeSet new_ats) {
+            parameter_ats[parm] = new_ats;
         }
 
         AccessTypeSet getParameterAccessTypeSet(int idx) {

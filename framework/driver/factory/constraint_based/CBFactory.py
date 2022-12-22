@@ -95,7 +95,6 @@ class CBFactory(Factory):
         return (rng_ctx, unsat_vars)
 
     def create_random_driver(self) -> Driver:
-        # context = Context()
 
         rng_ctx = RunningContext()
 
@@ -159,16 +158,13 @@ class CBFactory(Factory):
         # print("after loop, debug exit..")
         # exit()
 
-        # I want the last context from the RunningContext
+        # I want the last RunningContext
         context = [rng_ctx for _, rng_ctx in drv][-1]
-
         statements_apicall = [api_call for api_call, _ in drv]
-        statements_buffdecl = context.generate_buffer_decl()
-        statements_buffinit = context.generate_buffer_init()
 
         statements = []
-        statements += statements_buffdecl
-        statements += statements_buffinit
+        statements += context.generate_buffer_decl()
+        statements += context.generate_buffer_init()
         statements += statements_apicall 
 
         # from IPython import embed; embed(); 

@@ -34,7 +34,9 @@
 #include "SVF-FE/SVFIRBuilder.h"
 #include "Util/Options.h"
 
+#include "GenericDominatorTy.h"
 #include "Dominators.h"
+#include "PostDominators.h"
 #include "AccessType.h"
 #include "PhiFunction.h"
 
@@ -81,6 +83,9 @@ static llvm::cl::opt<OutType> OutputType("t", cl::desc("Output type:"),
             clEnumVal(stdo, "Standard output, no <output>")
         ));
 
+static llvm::cl::opt<bool> useDominator("dom",
+        llvm::cl::desc("Use Dominators"), llvm::cl::init(false));
+
 Verbosity verbose;
 
 // at1 over_dom at2 iif
@@ -104,34 +109,37 @@ bool dominatesAccessType(Dominator *dom, AccessType at1, AccessType at2) {
 
 }
 
-void pruneAccessTypes(Dominator* dom, AccessTypeSet ats_set) {
+void pruneAccessTypes(Dominator* dom, AccessTypeSet *ats_set) {
 
-    std::set<std::pair<AccessType, AccessType>> pairs;
+    // the pair is meant to be <WRITE, READ>, not the other way around
+    std::set<std::pair<AccessType, AccessType>> pairs_write_read;
 
-    for (auto at1: ats_set) {
-        for (auto at2: ats_set) {
-            if (at1.equals(at2.toString(false)))
+    for (auto at1: *ats_set) {
+        if (at1.getAccess() == AccessType::Access::write ||
+            at1.getAccess() == AccessType::Access::read)
+            continue;
+
+        for (auto at2: *ats_set) {
+            if (at2.getAccess() == AccessType::Access::write ||
+                at2.getAccess() == AccessType::Access::read)
+            continue;
+
+            if (at1.equals(at2.toString()))
                 continue;
 
             if (at1.getFields() == at2.getFields()) {
+                // be sure write comes first
                 if (at1.getAccess() == AccessType::Access::write)
-                    pairs.insert(std::make_pair(at1,at2));
-                else if (at1.getAccess() == AccessType::Access::read)
-                    pairs.insert(std::make_pair(at2,at1));
+                    pairs_write_read.insert(std::make_pair(at1, at2));
             }
 
         }
     }
 
-    outs() << "I found these pairs:\n";
-    for (auto px: pairs) {
-        outs() << px.first.toString(false) << "\n";
-        outs() << px.second.toString(false) << "\n";
-        if (dominatesAccessType(dom, px.first, px.second))
-            outs() << "write comes first!\n";
-        if (dominatesAccessType(dom, px.second, px.first))
-            outs() << "read comes first!\n";
-        outs() << "=====\n";
+    for (auto px: pairs_write_read) {
+        if (dominatesAccessType(dom, px.first, px.second)) {
+            ats_set->remove(px.second);
+        }
     }
 
 }
@@ -213,39 +221,7 @@ int main(int argc, char ** argv)
     // point_to_analysys->analyze();
 
     Dominator *dom = nullptr;
-
-    // // TEST FOR DOMINATORS!! DO NOT REMOVE
-    // SVF::SVFModule::llvm_iterator it = svfModule->llvmFunBegin();
-    // SVF::SVFModule::llvm_iterator eit = svfModule->llvmFunEnd();
-
-    // outs() << "[INFO] running analysis...\n";
-    // for (;it != eit; ++it) {
-    //     const SVFFunction *fun = svfModule->getSVFFunction(*it);
-        
-    //     if ( !all_functions && fun->getName() != function)
-    //         continue;
-
-    //     outs() << fun->getName() << "\n";
-
-    //     ICFGEdge* edge;
-    //     ICFGNode* node;
-    //     ICFGNode::const_iterator it2, eit2;
-
-    //     std::set<const BasicBlock*> bbl_callsite, bbl_returnsite;
-
-    //     FunEntryICFGNode *fun_entry = icfg->getFunEntryICFGNode(fun);
-
-    //     dom = Dominator::createDom(point_to_analysys, fun_entry);
-    //     // outs() << "[INFO] dumping dominators...\n";
-    //     // std::string str;
-    //     // raw_string_ostream rawstr(str);
-    //     // rawstr <<  "dom_" << fun->getName();
-    //     // // dom->dumpTransRed(rawstr.str());
-    //     // dom->dumpDom(rawstr.str());
-
-    //     // delete dom;
-    // }
-    // // TEST FOR DOMINATORS!! DO NOT REMOVE -- END
+    PostDominator *pDom = nullptr;
 
     PAG::FunToArgsListMap funmap_par = pag->getFunArgsMap();
     PAG::FunToRetMap funmap_ret = pag->getFunRets();
@@ -267,10 +243,6 @@ int main(int argc, char ** argv)
 
         FunctionConditions fun_conds;
 
-        // Json::Value jsonResult(Json::arrayValue);
-
-        // Json::Value functionResult;
-        // functionResult["functionName"] = f;
         fun_conds.setFunctionName(f);
 
         for (auto const& x : funmap_par) {
@@ -312,34 +284,61 @@ int main(int argc, char ** argv)
             fun_conds.setReturnAccessTypeSet(returnAccessTypeSet);
         }
 
+        if (useDominator) {
+            SVF::SVFModule::llvm_iterator it = svfModule->llvmFunBegin();
+            SVF::SVFModule::llvm_iterator eit = svfModule->llvmFunEnd();
+            for (;it != eit; ++it) {
+                const SVFFunction *fun = svfModule->getSVFFunction(*it);
+                if ( fun->getName() != f)
+                    continue;
+
+                outs()  << "[INFO] computing dominators for: " <<
+                            fun->getName() << "\n";
+
+                FunEntryICFGNode *fun_entry = icfg->getFunEntryICFGNode(fun);
+                FunExitICFGNode *fun_exit = icfg->getFunExitICFGNode(fun);
+
+                dom = new Dominator(point_to_analysys, fun_entry);
+                GenericDominatorTy::createDom(dom);
+                pDom = new PostDominator(point_to_analysys, fun_entry, fun_exit);
+                GenericDominatorTy::createDom(pDom);
+
+                outs() << "[INFO] dumping dominators...\n";
+                std::string str1, str2;
+                raw_string_ostream rawstr(str1);
+                rawstr <<  "dom_" << fun->getName();
+                dom->dumpTransRed(rawstr.str());
+                dom->dumpDom(rawstr.str());
+
+                raw_string_ostream rawstr2(str2);
+                rawstr2 <<  "postdom_" << fun->getName();
+                pDom->dumpTransRed(rawstr2.str());
+                pDom->dumpDom(rawstr2.str());
+                // outs() << "[INFO] exit(1) for debug\n";
+                // exit(1);
+
+                // int num_param = fun_conds.getParameterAccessNum();
+
+                // for (int p = 0; p < num_param; p++) {
+                //     AccessTypeSet ats = fun_conds.getParameterAccessTypeSet(p);
+                //     pruneAccessTypes(dom, &ats);
+                //     fun_conds.replacedParameterAccessTypeSet(p, ats);
+                // }
+
+                // AccessTypeSet ats = fun_conds.getReturnAccessTypeSet();
+                // pruneAccessTypes(dom, &ats);
+                // fun_conds.setReturnAccessTypeSet(ats);
+
+                delete dom;
+                dom = nullptr;
+                delete pDom;
+                pDom = nullptr;
+            }
+        }
+
         fun_cond_set.addFunctionConditions(fun_conds);
 
     }
-
-    
-
-    // outs() << "[INFO] print results...\n";
-    // for (auto const& p: param_access) {
-
-    //     // pruneAccessTypes(dom, p.second);
-
-    //     outs() << "For param:\n";
-    //     outs() << p.first->toString() << "\n";
-    //     outs() << "Collected " << p.second.size() << " access type:\n";
-    //     for (auto at: p.second) {
-    //         outs() << at.toString() << "\n";
-    //         if (verbose)
-    //             at.printICFGNodes();
-    //     } 
-    //     outs() << "\n";
-    // }
-
-
-    // TEST FOR ACCESS TYPE!! DO NOT REMOVE -- END
-
-    // example of access type domination
-    // bool wDomR = dominatesAccessType(dom, atW_set, atR_set);
-    // bool rDomW = dominatesAccessType(dom, atR_set, atW_set);
 
     if (OutputType == OutType::txt) {
         FunctionConditionsSet::storeIntoTextFile(
@@ -356,6 +355,9 @@ int main(int argc, char ** argv)
     // clean up memory
     if (dom)
         delete dom;
+
+    if (pDom)
+        delete pDom;
 
     AndersenWaveDiff::releaseAndersenWaveDiff();
     SVFIR::releaseSVFIR();

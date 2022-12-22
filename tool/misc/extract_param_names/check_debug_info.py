@@ -116,10 +116,6 @@ def _main():
 
     print(f"Correct count: {CORRECT_COUNT}")
     print(f"Missing count: {MISSING_COUNT}")
+
 if __name__ == "__main__":
     _main()
-    # with open("/workspaces/libfuzz/condition_extractor/TIFFClientOpen.json", 'r') as f:
-        #  extractor_data = json.load(f)
-    # res = extract_file_name_and_line_numbers(extractor_data[0])
-    # res = extract_file_nama_and_lines_from_log("IntraICFGNode93764 {fun: TIFFClientOpen{ ln: 132  cl: 7  fl: tif_open.c }}\nLoadStmt: [Var110298 <-- Var110168]\t\n   %30 = load i64 (i8*, i8*, i64)*, i64 (i8*, i8*, i64)** %readproc.addr, align 8, !dbg !11655 { ln: 132  cl: 7  fl: tif_open.c }")
-    # print(res)
