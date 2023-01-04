@@ -526,8 +526,7 @@ void GenericDominatorTy::buildTransientReduction() {
             nodeN1 = getGNode(n1_id);
         }
         else {
-            nodeN1 = new DomNode(n1_id);
-            nodeN1->setICFGNode(n1);
+            nodeN1 = new DomNode(n1);
             addGNode(n1_id, nodeN1);
         }
 
@@ -544,8 +543,7 @@ void GenericDominatorTy::buildTransientReduction() {
                     nodeN2 = getGNode(n2_id);
                 }
                 else {
-                    nodeN2 = new DomNode(n2_id);
-                    nodeN2->setICFGNode(n2);
+                    nodeN2 = new DomNode(n2);
                     addGNode(n2_id, nodeN2);
                 }
 

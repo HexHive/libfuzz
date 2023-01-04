@@ -198,12 +198,7 @@ public:
 
 public:
     /// Constructor
-    DomNode(NodeID i) : DomNodeTy(i, DomNodeK::DomeNode)
-    {
-        node = nullptr;
-    }
-
-    void setICFGNode(ICFGNode *n)
+    DomNode(ICFGNode *n) : DomNodeTy(n->getId(), DomNodeK::DomeNode)
     {
         node = n;
     }
