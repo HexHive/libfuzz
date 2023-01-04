@@ -244,7 +244,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                 }
             }
         } else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
-            std::string fun = SVFUtil::getCallee(call_node->getCallSite())->getName();
+            auto callee = SVFUtil::getCallee(call_node->getCallSite());
             auto inst = SVFUtil::dyn_cast<CallInst>(call_node->getCallSite());
             // outs() << "[INFO] callinst2 " << *inst << "\n";
             FunctionType *ftype = inst->getFunctionType();
@@ -254,12 +254,15 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                 allocainst_set.insert(inst);
             }
 
-            // TODO: add an allow-list
-            if (fun == "malloc") {
-                AccessType acNode;
-                // no need to set field, empty field set is what I need
-                acNode.setAccess(AccessType::Access::create);
-                ats.insert(acNode, node);
+            if (callee != nullptr) {
+                std::string fun = callee->getName();
+                // TODO: add an allow-list
+                if (fun == "malloc") {
+                    AccessType acNode;
+                    // no need to set field, empty field set is what I need
+                    acNode.setAccess(AccessType::Access::create);
+                    ats.insert(acNode, node);
+                }
             }
         }  
 

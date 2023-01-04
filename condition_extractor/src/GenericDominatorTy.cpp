@@ -279,9 +279,19 @@ void GenericDominatorTy::inferSubGraph() {
                 else if(auto call_edge = SVFUtil::dyn_cast<CallCFGEdge>(edge)) {
                     ICFGEdge *next_ret = this->getPhi(call_edge);
                     ICFGNode *dst_r = next_ret->getDstNode();
-                    
-                    working.push(dst);
-                    working.push(dst_r);
+
+                    ICFGNode *src = edge->getSrcNode();
+                    bool is_call_indirect = false;
+                    if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(src))
+                        is_call_indirect = call_node->isIndirectCall();
+
+                    if (is_call_indirect) {
+                        working.push(dst_r);
+                        visited.insert(dst_r);
+                    } else {
+                        working.push(dst);
+                        working.push(dst_r);
+                    }
                     visited.insert(dst);
                 }
                  else {
@@ -298,8 +308,10 @@ void GenericDominatorTy::inferSubGraph() {
     // outs() << "[INFO] Interesting nodes " << this->getTotRelevantNodes() << "\n";
     // ICFG* icfg = this->getICFG();
     // outs() << "[INFO] All nodes " << icfg->getTotalNodeNum() << "\n";
-    // for (auto n: visited)
+    // for (auto n: visited) {
     //     outs() << n->toString() << "\n";
+    //     outs() << n->getNodeKind() << "\n";
+    // }
 
     // outs() << "Exit for debug\n";
     // exit(1);
@@ -338,7 +350,7 @@ void GenericDominatorTy::dumpTransRed(const std::string& file, bool simple)
 
     outs() << "[INFO] Dom covering " << getTotRelevantNodes() << "\n";
     outs() << "[INFO] Running transient reduction...\n";
-    outs() << "[INFO] This might thake a while..." 
+    outs() << "[INFO] This might take a while..." 
             << "if too long, kill the process\n";
 
     buildTransientReduction();
@@ -353,29 +365,86 @@ void GenericDominatorTy::dumpDom(const std::string& file)
     }
 
     outs() << "[INFO] Dom covering " << getTotRelevantNodes() << "\n";
-    outs() << "[INFO] This might thake a while..." 
+    outs() << "[INFO] This might take a while..." 
             << "if too long, kill the process\n";
 
     ofstream dump_file;
-    dump_file.open (file + ".txt");
+    dump_file.open (file);
     for (auto d: relevant_nodes) {
-        dump_file << "{ \"NodeID\": " << d->getId() 
-                  << ", \"" << getDomName() <<"\": [";
+        dump_file << d->getId() << " ";
 
-        int n_dom = dom[d].size();
+        int n_dom = dom_v[d].size();
         int j = 0;
 
-        for (auto n: dom[d]) {
+        for (auto n: dom_v[d]) {
             dump_file << n->getId();
             if (j < n_dom - 1)
-                dump_file << ", ";
+                dump_file << " ";
             j++;
         }
 
-        dump_file << " ] }\n";
+        dump_file << "\n";
     }
     dump_file.close();
 
+}
+
+void GenericDominatorTy::loadDom(const std::string &file) {
+    if (is_created) {
+        outs() << "[ERROR] " << getDomName() << " is already created!\n";
+        exit(1);
+    }
+
+    outs() << "[INFO] Loading " << file << "\n";
+    outs() << "[INFO] This might take a while..." 
+            << "if too long, kill the process\n";
+
+    outs() << "[INFO] Running pruneUnreachableFunctions()\n";
+    this->pruneUnreachableFunctions();
+    outs() << "[INFO] Running buildPhiFun()\n";
+    this->buildPhiFun();
+    outs() << "[INFO] Running inferSubGraph()\n";
+    this->inferSubGraph();
+    outs() << "[INFO] Running buildR()\n";
+    this->buildR();
+
+    ifstream dump_file;
+    dump_file.open (file);
+    std::string line;
+    while (std::getline(dump_file, line))
+    {
+        std::istringstream iss(line);
+        int node_id;
+        iss >> node_id;
+
+        ICFGNode *node = this->getNode(node_id);
+
+        while (iss >> node_id) {
+            // outs() << "node_id " << node->getId() << "\n";
+            // outs() << "dom_id " << node_id << "\n";
+            // outs() << "before update: " << this->getDom(node).size() << "\n";
+            this->addDom(node, this->getNode(node_id));
+            // outs() << "after update: " << this->getDom(node).size() << "\n";
+        }
+    }
+    dump_file.close();
+    outs() << "[INFO] Dom loaded correctly\n";
+
+    outs() << "[INFO] Running restoreUnreachableFunctions()\n";
+    this->restoreUnreachableFunctions();
+
+    is_created = true;
+}
+
+ICFGNode *GenericDominatorTy::getNode(int node_id) {
+
+    for (auto node: getRelevantNodes()) {
+        if (node->getId() == node_id)
+            return node;
+    }
+    outs() << "[ERROR] Node " << node_id << " not found, abort!\n";
+    exit(1);
+    // return nullptr;
 }
 
 void GenericDominatorTy::buildTransientReduction() {

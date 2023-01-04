@@ -12,18 +12,23 @@ struct a_struct {
     int field_b;
 };
 
-void bar() {
+void bar1() {
 	// return 1;
 }
+
+void bar2() {
+	// return 1;
+}
+
 
 void foo(int a) {
 	int x = 0;
 	if (a > 0)
 		// x = 10;
-		bar();
+		bar1();
 	else
 		// x = 11;
-		bar();
+		bar1();
 	return;
 }
 
@@ -31,8 +36,35 @@ void my_free(my_struct* s) {
 	free(s);
 }
 
+void* my_malloc(size_t s) {
+	if (s == 0)
+		return NULL;
+
+	return malloc(s);
+}
+
+void indirect_test(my_struct *s, int a) {
+
+	void (*fun_ptr)(my_struct*,int) = NULL;
+	if (a > 0)
+		fun_ptr = &first;
+	else 
+		fun_ptr = &second;
+
+	fun_ptr(s, a);
+
+	s->field_a = 10;
+	s->field_b = 11;
+
+	my_free(s);
+}
+
 my_struct* create(int a, int b) {
-	my_struct *s = (my_struct*)malloc(sizeof(my_struct));
+	my_struct *s = my_malloc(sizeof(my_struct));
+
+	if (s == NULL) {
+		return NULL;
+	}
 
 	if (a == 0) {
 		my_free(s);
