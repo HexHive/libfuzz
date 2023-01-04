@@ -1,6 +1,3 @@
-from generator import Configuration, Pool
-from driver import Driver        
-
 class Generator:
     def __init__(self, config):
 

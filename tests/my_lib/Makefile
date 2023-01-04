@@ -1,5 +1,5 @@
-CC=/workspace/libfuzz/LLVM/build/bin/clang
-CXX=/workspace/libfuzz/LLVM/build/bin/clang++
+CC=/workspaces/libfuzz/LLVM/build/bin/clang
+CXX=/workspaces/libfuzz/LLVM/build/bin/clang++
 
 LIB_LIBRARY=lib
 
