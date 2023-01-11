@@ -43,6 +43,8 @@
 #include "json/json.h"
 #include <fstream> 
 
+#include "md5/md5.h"
+
 
 using namespace llvm;
 using namespace std;
@@ -84,13 +86,18 @@ static llvm::cl::opt<OutType> OutputType("t", cl::desc("Output type:"),
         ));
 
 static llvm::cl::opt<bool> useDominator("dom",
-        llvm::cl::desc("Use Dominators"), llvm::cl::init(false));
+        llvm::cl::desc("Use Post/Dominators"), llvm::cl::init(false));
+static llvm::cl::opt<bool> printDominator("print_dom",
+        llvm::cl::desc("Print Post/Dominators"), llvm::cl::init(false));
+
+static llvm::cl::opt<std::string> cacheFolder("cache_folder",
+        llvm::cl::desc("Folder for cache"), llvm::cl::init(""));
 
 Verbosity verbose;
 
 // at1 over_dom at2 iif
 // for each i2 in at2 . exists i1 in at1 s.t. i1 dom i2
-bool dominatesAccessType(Dominator *dom, AccessType at1, AccessType at2) {
+bool dominatesAccessType(GenericDominatorTy *dom, AccessType at1, AccessType at2) {
 
     uint n_instr_dominated = 0;
     bool is_dominated;
@@ -109,40 +116,120 @@ bool dominatesAccessType(Dominator *dom, AccessType at1, AccessType at2) {
 
 }
 
-void pruneAccessTypes(Dominator* dom, AccessTypeSet *ats_set) {
+void pruneAccessTypes(Dominator* dom, PostDominator* pDom, AccessTypeSet *ats_set) {
 
-    // the pair is meant to be <WRITE, READ>, not the other way around
-    std::set<std::pair<AccessType, AccessType>> pairs_write_read;
-
+    // the pair is meant to be <CREATE, DELETE>, not the other way around
+    std::set<std::pair<AccessType, AccessType>> pairs_create_delete;
     for (auto at1: *ats_set) {
-        if (at1.getAccess() == AccessType::Access::write ||
-            at1.getAccess() == AccessType::Access::read)
+        if (at1.getAccess() != AccessType::Access::create &&
+            at1.getAccess() != AccessType::Access::del)
             continue;
 
         for (auto at2: *ats_set) {
-            if (at2.getAccess() == AccessType::Access::write ||
-                at2.getAccess() == AccessType::Access::read)
+            if (at2.getAccess() != AccessType::Access::create &&
+                at2.getAccess() != AccessType::Access::del)
             continue;
 
-            if (at1.equals(at2.toString()))
+            if (at1 == at2)
                 continue;
 
-            if (at1.getFields() == at2.getFields()) {
+            if (at1.getFields() == at2.getFields())
+                // be sure create comes first
+                if (at1.getAccess() == AccessType::Access::create)
+                    pairs_create_delete.insert(std::make_pair(at1, at2));
+
+        }
+    }
+
+    for (auto px: pairs_create_delete)
+        // (delete, X) PostDom (create, X) => None *remove both*
+        if (dominatesAccessType(pDom, px.second, px.first)) {
+            ats_set->remove(px.first);
+            ats_set->remove(px.second);
+        // (create, X) Dom (delete, X) => (create, X)
+        } else if (dominatesAccessType(dom, px.first, px.second))
+            ats_set->remove(px.second);
+
+    // the pair is meant to be <WRITE, READ>, not the other way around
+    std::set<std::pair<AccessType, AccessType>> pairs_write_read;
+    for (auto at1: *ats_set) {
+        if (at1.getAccess() != AccessType::Access::write &&
+            at1.getAccess() != AccessType::Access::read)
+            continue;
+
+        for (auto at2: *ats_set) {
+            if (at2.getAccess() != AccessType::Access::write &&
+                at2.getAccess() != AccessType::Access::read)
+            continue;
+
+            if (at1 == at2)
+                continue;
+
+            if (at1.getFields() == at2.getFields())
                 // be sure write comes first
                 if (at1.getAccess() == AccessType::Access::write)
                     pairs_write_read.insert(std::make_pair(at1, at2));
-            }
-
         }
     }
 
-    for (auto px: pairs_write_read) {
-        if (dominatesAccessType(dom, px.first, px.second)) {
+    for (auto px: pairs_write_read)
+        // (write, X) Dom (read, X) => (write, X) 
+        if (dominatesAccessType(dom, px.first, px.second))
             ats_set->remove(px.second);
-        }
-    }
 
 }
+
+std::string computeHash(std::string file_path) {
+    md5::MD5 md5stream;
+
+    std::ifstream a_file;
+    a_file.open(file_path);
+
+    //get length of file
+    a_file.seekg(0, std::ios::end);
+    size_t length = a_file.tellg();
+    a_file.seekg(0, std::ios::beg);
+
+    char *buffer = (char*) malloc(length);
+
+    //read file
+    a_file.read(buffer, length);
+    md5stream.add(buffer, length);
+
+    free(buffer);
+    buffer = NULL;
+    
+    a_file.close();
+    return md5stream.getHash();
+}
+
+inline bool doesFileExists(const std::string& name) {
+    // outs() << "does it exists?\n";
+    // outs() << name << "\n";
+    // exit(1);
+    ifstream myfile;
+    myfile.open(name);
+    if(myfile) {
+        myfile.close();
+        return true;
+    } else {
+        return false;
+    }
+}
+
+std::string getCacheDomFile(std::string fun_name) {
+    return cacheFolder + "/" + computeHash(InputFilename) + "_" + fun_name + "_dom.txt";
+}
+
+std::string getCachePostDomFile(std::string fun_name) {
+    return cacheFolder + "/" + computeHash(InputFilename) + "_" + fun_name + "_postdom.txt";
+}
+
+// bool thereIsCache(std::string fun_name) {
+//     std::string cache_dom = getCacheDomFile(fun_name);
+//     std::string cache_postdom = getCachePostDomFile(fun_name);
+//     return exists_file(cache_dom) && exists_file(cache_postdom);
+// }
 
 int main(int argc, char ** argv)
 {
@@ -292,42 +379,58 @@ int main(int argc, char ** argv)
                 if ( fun->getName() != f)
                     continue;
 
+                std::string fun_name = fun->getName();
+
                 outs()  << "[INFO] computing dominators for: " <<
-                            fun->getName() << "\n";
+                            fun_name << "\n";
 
                 FunEntryICFGNode *fun_entry = icfg->getFunEntryICFGNode(fun);
                 FunExitICFGNode *fun_exit = icfg->getFunExitICFGNode(fun);
 
+                std::string dom_cache_file = getCacheDomFile(fun_name);
+                std::string postdom_cache_file = getCachePostDomFile(fun_name);
+
                 dom = new Dominator(point_to_analysys, fun_entry);
-                GenericDominatorTy::createDom(dom);
+                if (cacheFolder != "" && doesFileExists(dom_cache_file)) {
+                    outs() << "[INFO] There is DOM cache, loading it\n";
+                    dom->loadDom(dom_cache_file);
+                } else {
+                    outs() << "[INFO] No DOM cache, computing from scratch and save\n";
+                    dom->createDom();
+                    dom->dumpDom(dom_cache_file);
+                }
+
                 pDom = new PostDominator(point_to_analysys, fun_entry, fun_exit);
-                GenericDominatorTy::createDom(pDom);
+                if (cacheFolder != "" && doesFileExists(postdom_cache_file)) {
+                    pDom->loadDom(postdom_cache_file);
+                } else {
+                    pDom->createDom();
+                    pDom->dumpDom(postdom_cache_file);
+                }
 
-                outs() << "[INFO] dumping dominators...\n";
-                std::string str1, str2;
-                raw_string_ostream rawstr(str1);
-                rawstr <<  "dom_" << fun->getName();
-                dom->dumpTransRed(rawstr.str());
-                dom->dumpDom(rawstr.str());
+                if (printDominator) {
+                    outs() << "[INFO] dumping dominators...\n";
+                    std::string str1, str2;
+                    if (dom) {
+                        dom->dumpTransRed(dom_cache_file);
+                    }
 
-                raw_string_ostream rawstr2(str2);
-                rawstr2 <<  "postdom_" << fun->getName();
-                pDom->dumpTransRed(rawstr2.str());
-                pDom->dumpDom(rawstr2.str());
-                // outs() << "[INFO] exit(1) for debug\n";
-                // exit(1);
+                    if (pDom) {
+                        pDom->dumpTransRed(postdom_cache_file);
+                    }
+                }
 
-                // int num_param = fun_conds.getParameterAccessNum();
+                int num_param = fun_conds.getParameterAccessNum();
 
-                // for (int p = 0; p < num_param; p++) {
-                //     AccessTypeSet ats = fun_conds.getParameterAccessTypeSet(p);
-                //     pruneAccessTypes(dom, &ats);
-                //     fun_conds.replacedParameterAccessTypeSet(p, ats);
-                // }
+                for (int p = 0; p < num_param; p++) {
+                    AccessTypeSet ats = fun_conds.getParameterAccessTypeSet(p);
+                    pruneAccessTypes(dom, pDom, &ats);
+                    fun_conds.replacedParameterAccessTypeSet(p, ats);
+                }
 
-                // AccessTypeSet ats = fun_conds.getReturnAccessTypeSet();
-                // pruneAccessTypes(dom, &ats);
-                // fun_conds.setReturnAccessTypeSet(ats);
+                AccessTypeSet ats = fun_conds.getReturnAccessTypeSet();
+                pruneAccessTypes(dom, pDom, &ats);
+                fun_conds.setReturnAccessTypeSet(ats);
 
                 delete dom;
                 dom = nullptr;

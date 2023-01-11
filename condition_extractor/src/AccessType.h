@@ -16,8 +16,8 @@ using namespace std;
 
 class AccessType {
     public:
-        typedef enum _access { read, write, 
-                               ret, del, none } Access;
+        typedef enum _access { read, write, ret, 
+                                del, create, none } Access;
 
 
     private:
@@ -81,7 +81,17 @@ class AccessType {
             return access;
         }
 
-        bool equals(std::string s) {return s == toString(false);}
+        bool equals(std::string s) {
+            return s == toString(false);
+        }
+
+        bool operator==(const AccessType& other) const {
+            if (other.fields != fields)
+                return false;
+            if (other.access != access)
+                return false;
+            return true;
+        }
 
         std::string dumpICFGNodes() const {
 
@@ -129,6 +139,8 @@ class AccessType {
                 rawstr << "none";
             else if (access == Access::del)
                 rawstr << "delete";
+            else if (access == Access::create)
+                rawstr << "create";
             else {
                 outs() << "[ERROR] Access:: " << access << " unknown!!\n";
                 exit(1);
@@ -166,6 +178,8 @@ class AccessType {
                 accessTypeJson["access"] = "none";
             else if (access == Access::del)
                 accessTypeJson["access"] = "delete";
+            else if (access == Access::create)
+                accessTypeJson["access"] = "create";
             else {
                 outs() << "[ERROR] Access:: " << access << " unknown!!\n";
                 exit(1);

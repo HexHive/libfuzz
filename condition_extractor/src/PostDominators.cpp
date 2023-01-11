@@ -74,6 +74,8 @@ void PostDominator::buildDom() {
     ICFGNodeSet last_inter;
     ICFGNodeSet new_dom;
 
+    int n_iteration = 1;
+
     bool debug = false;
     bool is_changed = true;
     // iteratively eliminate nodes that are not dominators
@@ -81,9 +83,22 @@ void PostDominator::buildDom() {
     while (is_changed) {
         is_changed = false;
 
+        outs() << "[DOING] Iteration " << n_iteration << "\n";
+        n_iteration++;
+
+        n_node = 1;
+
+        std::set<ICFGNode*>::reverse_iterator rit;
+
         // for each n in N - {n0}:
-        // for (ICFG::iterator it = icfg->begin(); it != icfg->end(); it++) {
-        for (auto node: relevant_nodes) {
+        for (rit = relevant_nodes.rbegin(); rit != relevant_nodes.rend(); rit++) {
+            auto node = *rit;
+        
+            per_node = ((double)n_node/(double)tot_nodes) * 100;
+            outs() << "[DOING] " << n_node << "/" << tot_nodes << 
+                    " (" << per_node  << ")% \r";
+            n_node++;
+
             // ICFGNode* node = it->second;
             if (node == exit_node)
                 continue;    
@@ -161,6 +176,8 @@ void PostDominator::buildDom() {
 
             new_dom.clear();
         }
+
+        outs() << "\n";
     }
 
 }
