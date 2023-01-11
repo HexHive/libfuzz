@@ -121,6 +121,7 @@ def validate_driver(driver_graph: nx.DiGraph, config: Configuration) -> bool:
     if typing.assert_type(factory, CBFactory):
         cbfactory = cast(CBFactory, factory)
         running_context: RunningContext = RunningContext()
+        # TODO proper graph traversal
         for node in driver_graph:
             my_logger.debug("Validating node: " + node.api_call.function_name)
             rc = validate_node(
@@ -136,6 +137,17 @@ def validate_driver(driver_graph: nx.DiGraph, config: Configuration) -> bool:
             my_logger.debug("Node validated")
     return True
 
+def read_graph(config: Configuration) -> nx.DiGraph:
+    """ Read driver API graph from file
+
+    Args:
+        config (Configuration): the current analysis configuration
+
+    Returns:
+        nx.DiGraph: A graph object with each node being an API call and each edge a possible transition
+    """
+    # TODO read graph
+    pass
 
 def driver_graph_init(config: Configuration) -> nx.DiGraph:
     """Dummy driver graph initilialization for testing
@@ -170,7 +182,7 @@ def driver_graph_init(config: Configuration) -> nx.DiGraph:
 
 def __main():
     # default_config = "./targets/simple_connection/fuzz.json"
-    default_config = PROJECT_FOLDER + "/targets/libtiff/generator.json"
+    default_config = PROJECT_FOLDER + "/targets/libtiff/generator.toml"
 
     parser = argparse.ArgumentParser(description="Automatic Driver Generator")
     parser.add_argument(

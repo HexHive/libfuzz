@@ -45,5 +45,3 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
 COPY ./requirements.txt /root/python/requirements.txt
 RUN cd /root/python && python3.11 -m pip install -r requirements.txt
 RUN pip3 install ipython
-
-RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"

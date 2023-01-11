@@ -26,6 +26,7 @@ $(TARGET).o.ll: $(TARGET).o.bc
 
 run: $(TARGET).o.bc $(TARGET).o.ll
 	@echo "Running condition_extractor"
+	$(WPA) -ander -svfg --dump-vfg  ./$(TARGET).o.bc
 	$(WPA) -steens --dump-icfg  ./$(TARGET).o.bc
 	$(EXTR_INC_FUNC) -i $(PWD) -e "$(PWD)/exported_functions.txt" -t "$(PWD)/incomplete_types.txt" -a $(INTERFACE)
 	$(EXTRACTOR) $< -interface $(INTERFACE) -t json -output $(TARGET).json -v v1 -dom
