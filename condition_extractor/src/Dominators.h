@@ -6,13 +6,14 @@
 
 class Dominator : public GenericDominatorTy {
     private:
-        ICFGNodeSet ahead(ICFGEdge*);
+        IBBGraph::IBBNodeSet ahead(IBBEdge* edge);
         void buildDom();
         inline string getDomName() {return "Dominator";}
 
     public:
-        Dominator(BVDataPTAImpl* pt, FunEntryICFGNode *fun_entry)
-         : GenericDominatorTy(pt) {
+        Dominator(BVDataPTAImpl* pt, FunEntryICFGNode *fun_entry, 
+                bool do_indirect_jumps)
+         : GenericDominatorTy(pt, do_indirect_jumps) {
             setEntryNode(fun_entry);
         }
 

@@ -1,22 +1,22 @@
 #include "Dominators.h"
 
-Dominator::ICFGNodeSet Dominator::ahead(ICFGEdge* edge) {
-    ICFGNodeSet nodes;
+IBBGraph::IBBNodeSet Dominator::ahead(IBBEdge* edge) {
+    IBBGraph::IBBNodeSet nodes;
 
     // edge is not in R
-    if (R.find(edge) == R.end() ) {
+    if (R_ibbg.find(edge) == R_ibbg.end() ) {
         // src node == HEAD
-        ICFGNode* head_e = edge->getSrcNode();
+        IBBNode* head_e = edge->getSrcNode();
         nodes.insert(head_e);
     }
     // edge is in R
     else {
         // src node == HEAD
-        ICFGNode* head_e = edge->getSrcNode();
+        IBBNode* head_e = edge->getSrcNode();
         nodes.insert(head_e);
 
-        ICFGEdge* call_edge = phi_inv[(RetCFGEdge*)edge];
-        ICFGNode* head_e_inv = call_edge->getSrcNode();
+        IBBEdge* call_edge = phi_inv_ibb[edge];
+        IBBNode* head_e_inv = call_edge->getSrcNode();
         nodes.insert(head_e_inv);
     }
 
@@ -27,17 +27,17 @@ void Dominator::buildDom() {
 
     int tot_nodes = getTotRelevantNodes();
 
-    ICFGNodeSet relevant_nodes = getRelevantNodes();
-    FunEntryICFGNode* entry_node = getEntryNode();
     ICFG* icfg = getICFG();
+
+    // ICFGNodeSet relevant_nodes = getRelevantNodes();
+    IBBGraph::IBBNodeSet relevant_nodes = ibbg->getNodeAllocated();
+    FunEntryICFGNode* entry_node = getEntryNode();
+    IBBNode *entry_node_ibb = ibbg->getIBBNode(entry_node->getId());
 
     outs() << "[INFO] Building initial dom structure\n";
 
     // dominator of the start node is the start itself
-    // Dom(n0) = {n0}
-    // dom[entry_node].insert(entry_node);
-    addDom(entry_node, entry_node);
-    // dom[entry_node].insert(entry_node);
+    addDom(entry_node_ibb, entry_node_ibb);
 
     int n_node = 0;
     double per_node;
@@ -46,8 +46,7 @@ void Dominator::buildDom() {
     // for each n in N - {n0}
     for (auto node: relevant_nodes) {
 
-        // ICFGNode* node = it->second;
-        if (node == entry_node)
+        if (node == entry_node_ibb)
             continue;
 
         n_node++;
@@ -63,11 +62,11 @@ void Dominator::buildDom() {
     outs() << "\n";
 
     outs() << "[INFO] Running real dom computation\n";
-
-    ICFGNodeSet curr_inter; 
-    ICFGNodeSet all_doms_ahead;
-    ICFGNodeSet last_inter;
-    ICFGNodeSet new_dom;
+    
+    IBBGraph::IBBNodeSet curr_inter; 
+    IBBGraph::IBBNodeSet all_doms_ahead;
+    IBBGraph::IBBNodeSet last_inter;
+    IBBGraph::IBBNodeSet new_dom;
 
     int n_iteration = 1;
 
@@ -93,7 +92,7 @@ void Dominator::buildDom() {
             n_node++;
 
             // ICFGNode* node = it->second;
-            if (node == entry_node)
+            if (node == entry_node_ibb)
                 continue;    
 
             // outs() << (node->toString()) << "\n";
@@ -110,10 +109,9 @@ void Dominator::buildDom() {
             }
 
             if (node->hasIncomingEdge()) {
-                // ICFGNodeSet ahead_nodes;
 
-                ICFGNode::const_iterator it2 = node->InEdgeBegin();
-                ICFGNode::const_iterator eit2 = node->InEdgeEnd();
+                IBBNode::const_iterator it2 = node->InEdgeBegin();
+                IBBNode::const_iterator eit2 = node->InEdgeEnd();
 
                 bool first_intersect = true;
 
@@ -122,9 +120,10 @@ void Dominator::buildDom() {
                     // ICFGNode *ahead_node;
 
                     for (auto n: ahead(*it2)) {
-                        ICFGNodeSet a_dom_set = getDom(n);
+                        IBBGraph::IBBNodeSet a_dom_set = getDom(n);
 
                         for (auto d: a_dom_set) 
+                            // DOUBLE CHECK!
                             if (isARelevantNode(d))
                                 all_doms_ahead.insert(d);
                         
@@ -132,9 +131,9 @@ void Dominator::buildDom() {
                     }
 
                     if (debug) {
-                        ICFGEdge* edge = *it2;
+                        IBBEdge* edge = *it2;
                         outs() << "parent:\n";
-                        edge->getSrcNode()->dump();
+                        outs() << edge->getSrcNode()->toString();
                         outs() << "all_doms_ahead\n";
                         for (auto n: all_doms_ahead)
                             outs() << n->getId() << " ";

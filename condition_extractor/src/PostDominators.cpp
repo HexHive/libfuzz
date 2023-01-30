@@ -1,27 +1,26 @@
 #include "PostDominators.h"
 
-PostDominator::ICFGNodeSet PostDominator::behind(ICFGEdge* edge) {
-    ICFGNodeSet nodes;
+IBBGraph::IBBNodeSet PostDominator::behind(IBBEdge* edge) {
+    IBBGraph::IBBNodeSet nodes;
 
     // outs() << "1.a) Phi: " << sizePhi() << "\n";
     // outs() << "1.a) Phi Inv: " << sizePhiInv() << "\n";
 
     // edge is not in R
-    if (C.find(edge) == C.end() ) {
+    if (C_ibbg.find(edge) == C_ibbg.end() ) {
         // src node == TAIL
-        ICFGNode* tail_e = edge->getDstNode();
+        IBBNode* tail_e = edge->getDstNode();
         nodes.insert(tail_e);
     }
     // edge is in R
     else {
         // src node == TAIL
-        ICFGNode* tail_e = edge->getDstNode();
+        IBBNode* tail_e = edge->getDstNode();
         nodes.insert(tail_e);
 
         // ICFGEdge* call_edge = phi_inv[(RetCFGEdge*)edge];
-        ICFGEdge* call_edge = phi[(CallCFGEdge*)edge];
-
-        ICFGNode* tail_e_inv = call_edge->getDstNode();
+        IBBEdge* call_edge = phi_ibb[edge];
+        IBBNode* tail_e_inv = call_edge->getDstNode();
         nodes.insert(tail_e_inv);
     }
 
@@ -32,16 +31,19 @@ void PostDominator::buildDom() {
 
     int tot_nodes = getTotRelevantNodes();
 
-    ICFGNodeSet relevant_nodes = getRelevantNodes();
-    FunExitICFGNode* exit_node = getExitNode();
     ICFG* icfg = getICFG();
+
+    // ICFGNodeSet relevant_nodes = getRelevantNodes();
+    IBBGraph::IBBNodeSet relevant_nodes = ibbg->getNodeAllocated();
+    FunExitICFGNode* exit_node = getExitNode();
+    IBBNode *exit_node_ibb = ibbg->getIBBNode(exit_node->getId());
 
     outs() << "[INFO] Building initial post-dom structure\n";
 
     // dominator of the start node is the start itself
     // Dom(n0) = {n0}
     // dom[exit_node].insert(exit_node);
-    addDom(exit_node, exit_node);
+    addDom(exit_node_ibb, exit_node_ibb);
     // dom[exit_node].insert(exit_node);
 
     int n_node = 0;
@@ -52,7 +54,7 @@ void PostDominator::buildDom() {
     for (auto node: relevant_nodes) {
 
         // ICFGNode* node = it->second;
-        if (node == exit_node)
+        if (node == exit_node_ibb)
             continue;
 
         n_node++;
@@ -69,10 +71,10 @@ void PostDominator::buildDom() {
 
     outs() << "[INFO] Running real post-dom computation\n";
 
-    ICFGNodeSet curr_inter; 
-    ICFGNodeSet all_doms_behind;
-    ICFGNodeSet last_inter;
-    ICFGNodeSet new_dom;
+    IBBGraph::IBBNodeSet curr_inter; 
+    IBBGraph::IBBNodeSet all_doms_behind;
+    IBBGraph::IBBNodeSet last_inter;
+    IBBGraph::IBBNodeSet new_dom;
 
     int n_iteration = 1;
 
@@ -88,7 +90,7 @@ void PostDominator::buildDom() {
 
         n_node = 1;
 
-        std::set<ICFGNode*>::reverse_iterator rit;
+        std::set<IBBNode*>::reverse_iterator rit;
 
         // for each n in N - {n0}:
         for (rit = relevant_nodes.rbegin(); rit != relevant_nodes.rend(); rit++) {
@@ -100,7 +102,7 @@ void PostDominator::buildDom() {
             n_node++;
 
             // ICFGNode* node = it->second;
-            if (node == exit_node)
+            if (node == exit_node_ibb)
                 continue;    
 
             if (debug) {
@@ -115,17 +117,18 @@ void PostDominator::buildDom() {
             if (node->hasOutgoingEdge()) {
                 // ICFGNodeSet ahead_nodes;
 
-                ICFGNode::const_iterator it2 = node->OutEdgeBegin();
-                ICFGNode::const_iterator eit2 = node->OutEdgeEnd();
+                IBBNode::const_iterator it2 = node->OutEdgeBegin();
+                IBBNode::const_iterator eit2 = node->OutEdgeEnd();
 
                 bool first_intersect = true;
 
                 for (; it2 != eit2; ++it2) {
 
                     for (auto n: behind(*it2)) {
-                        ICFGNodeSet a_dom_set = getDom(n);
+                        IBBGraph::IBBNodeSet a_dom_set = getDom(n);
 
                         for (auto d: a_dom_set) 
+                            // DOUBLE CHECK!
                             if (isARelevantNode(d))
                                 all_doms_behind.insert(d);
                         

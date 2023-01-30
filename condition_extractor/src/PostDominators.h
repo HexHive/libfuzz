@@ -8,14 +8,14 @@
 class PostDominator : public GenericDominatorTy {
     protected:
         FunExitICFGNode* exit_node;
-        ICFGNodeSet behind(ICFGEdge*);
+        IBBGraph::IBBNodeSet behind(IBBEdge*);
         void buildDom();
         inline string getDomName() {return "PostDominator";}
 
     public:
-        PostDominator(BVDataPTAImpl* pt,
-                        FunEntryICFGNode* fun_entry,
-                        FunExitICFGNode* fun_exit): GenericDominatorTy(pt) {
+        PostDominator(BVDataPTAImpl* pt, FunEntryICFGNode* fun_entry,
+                        FunExitICFGNode* fun_exit, bool do_indirect_jumps): 
+                        GenericDominatorTy(pt, do_indirect_jumps) {
             setEntryNode(fun_entry);
             setExitNode(fun_exit);
         }

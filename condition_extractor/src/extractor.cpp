@@ -39,6 +39,12 @@
 #include "PostDominators.h"
 #include "AccessType.h"
 #include "PhiFunction.h"
+#include "IBBG.h"
+
+// for random sampling
+#include <random>
+#include <algorithm>
+#include <iterator>
 
 #include "json/json.h"
 #include <fstream> 
@@ -92,6 +98,10 @@ static llvm::cl::opt<bool> printDominator("print_dom",
 
 static llvm::cl::opt<std::string> cacheFolder("cache_folder",
         llvm::cl::desc("Folder for cache"), llvm::cl::init(""));
+
+static llvm::cl::opt<bool> doIndJump("do_indirect_jumps",
+        llvm::cl::desc("Include indirect jumps in the analysis"), 
+        llvm::cl::init(false));
 
 Verbosity verbose;
 
@@ -229,6 +239,109 @@ std::string getCachePostDomFile(std::string fun_name) {
 //     std::string cache_dom = getCacheDomFile(fun_name);
 //     std::string cache_postdom = getCachePostDomFile(fun_name);
 //     return exists_file(cache_dom) && exists_file(cache_postdom);
+// }
+
+// OLD TEST -- KEPT FOR REFERENCE
+// void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
+
+//     std::set<const ICFGNode*> cond_nodes;
+
+//     int num_param = fun_conds->getParameterAccessNum();
+
+//     for (int p = 0; p < num_param; p++) {
+//         AccessTypeSet ats = fun_conds->getParameterAccessTypeSet(p);
+//         for (auto i: ats.getAllICFGNodes())
+//             cond_nodes.insert(i);
+//     }
+
+//     AccessTypeSet ats = fun_conds->getReturnAccessTypeSet();
+//     for (auto i: ats.getAllICFGNodes())
+//             cond_nodes.insert(i);
+
+//     outs() << "[DEBUG] All nodes from ATS: " << cond_nodes.size() << "\n";
+
+//     std::set<const ICFGNode*> not_found;
+//     for (auto i: cond_nodes) {
+//         if (ibbg->getIBBNode(i->getId()) == nullptr)
+//             not_found.insert(i);
+//     }
+
+//     outs() << "[DEBUG] Not found " << not_found.size() << "\n";
+//     std::set<const SVFFunction*> funs;
+//     for (auto i: not_found) {
+//         // outs() << i->toString() << "\n";
+//         funs.insert(i->getFun());
+//     }
+
+//     for (auto f: funs)
+//         outs() << f->getName() << "\n";
+//     exit(1);
+// }
+
+// OLD TEST -- KEPT FOR REFERENCE
+// void testDom(Dominator* dom, IBBGraph* ibbg) {
+
+//     // diff between dom and ibbg nodes
+
+//     // print the diff
+
+//     // find common subset (if any) and check if the 2 doms are coherent
+
+//     outs() << "[DOING DOM TESTING]\n";
+
+//     // std::set<ICFGNode*> all_nodes = dom->getRelevantNodes();
+//     IBBGraph::NodeIDSet all_nodes_id = ibbg->getNodeIdAllocated();
+//     std::set<ICFGNode*> all_nodes;
+//     for (auto i: all_nodes_id)
+//         all_nodes.insert(ibbg->getICFG()->getICFGNode(i));
+
+//     unsigned ok_nodes = 0;
+
+//     srand (time(NULL));
+
+//     unsigned MAX_TEST = 10000;
+//     for (int i = 0; i < MAX_TEST; i++) {
+//         auto n = rand() % all_nodes.size(); 
+//         auto it = std::begin(all_nodes);
+//         std::advance(it,n);
+//         auto node1 = *it;
+
+//         n = rand() % all_nodes.size(); 
+//         it = std::begin(all_nodes);
+//         std::advance(it,n);
+//         auto node2 = *it;
+
+//         if (SVFUtil::isa<FunEntryICFGNode>(node1) ||
+//             SVFUtil::isa<FunEntryICFGNode>(node2))
+//             continue;
+
+//         outs() << "[INFO] TEST " << i << "/" << MAX_TEST << ")\r";
+
+//         bool n1_d_n2_a = dom->dominates(node1, node2);
+//         bool n2_d_n1_a = dom->dominates(node2, node1);
+//         bool n1_d_n2_b = ibbg->dominates(node1, node2);
+//         bool n2_d_n1_b = ibbg->dominates(node2, node1);
+
+//         if (n1_d_n2_a == n1_d_n2_b && n2_d_n1_a == n2_d_n1_b)
+//             ok_nodes++;
+//         else {
+//             outs() << "\n";
+//             outs() << "Node1: " << node1->toString() << "\n";
+//             outs() << "Node2: " << node2->toString() << "\n";
+//             outs() << "n1_d_n2_a" << n1_d_n2_a << "\n";
+//             outs() << "n2_d_n1_a" << n2_d_n1_a << "\n";
+//             outs() << "n1_d_n2_b" << n1_d_n2_b << "\n";
+//             outs() << "n2_d_n1_b" << n2_d_n1_b << "\n";
+//             outs() << "early stop!\n";
+//             exit(1);
+        
+//         }
+//     }
+
+//     outs() << "\n";
+//     outs() << "OK nodes: " << ok_nodes << "\n";
+//     outs() << "exit for debug\n";
+//     exit(1);
 // }
 
 int main(int argc, char ** argv)
@@ -390,33 +503,52 @@ int main(int argc, char ** argv)
                 std::string dom_cache_file = getCacheDomFile(fun_name);
                 std::string postdom_cache_file = getCachePostDomFile(fun_name);
 
-                dom = new Dominator(point_to_analysys, fun_entry);
+                dom = new Dominator(point_to_analysys, fun_entry, doIndJump);
                 if (cacheFolder != "" && doesFileExists(dom_cache_file)) {
                     outs() << "[INFO] There is DOM cache, loading it\n";
                     dom->loadDom(dom_cache_file);
                 } else {
                     outs() << "[INFO] No DOM cache, computing from scratch and save\n";
+                    auto begin = chrono::high_resolution_clock::now();    
                     dom->createDom();
-                    dom->dumpDom(dom_cache_file);
+                    auto end = chrono::high_resolution_clock::now();    
+                    auto dur = end - begin;
+                    auto min = std::chrono::duration_cast<std::chrono::minutes>(dur).count();
+                    outs() << "[TIME] Dom: " << min << "min\n";
+                    // dom->saveIBBGraph("ibbgraph_2");
+                    
+                    if (cacheFolder != "")
+                        dom->dumpDom(dom_cache_file);
                 }
 
-                pDom = new PostDominator(point_to_analysys, fun_entry, fun_exit);
+                pDom = new PostDominator(point_to_analysys, fun_entry, 
+                                        fun_exit, doIndJump);
                 if (cacheFolder != "" && doesFileExists(postdom_cache_file)) {
+                    outs() << "[INFO] There is POSTDOM cache, loading it\n";
                     pDom->loadDom(postdom_cache_file);
                 } else {
+                    outs() << "[INFO] No POSTDOM cache, computing from scratch and save\n";
+                    auto begin = chrono::high_resolution_clock::now();    
                     pDom->createDom();
-                    pDom->dumpDom(postdom_cache_file);
+                    auto end = chrono::high_resolution_clock::now();    
+                    auto dur = end - begin;
+                    auto min = std::chrono::duration_cast<std::chrono::minutes>(dur).count();
+                    outs() << "[TIME] Postdom: " << min << "min\n";
+                    // pDom->saveIBBGraph("ibbgraph_3");
+
+                    if (cacheFolder != "")
+                        pDom->dumpDom(postdom_cache_file);
                 }
 
                 if (printDominator) {
                     outs() << "[INFO] dumping dominators...\n";
                     std::string str1, str2;
                     if (dom) {
-                        dom->dumpTransRed(dom_cache_file);
+                        dom->dumpTransRed("./" + dom_cache_file);
                     }
 
                     if (pDom) {
-                        pDom->dumpTransRed(postdom_cache_file);
+                        pDom->dumpTransRed("./" + postdom_cache_file);
                     }
                 }
 
@@ -431,6 +563,10 @@ int main(int argc, char ** argv)
                 AccessTypeSet ats = fun_conds.getReturnAccessTypeSet();
                 pruneAccessTypes(dom, pDom, &ats);
                 fun_conds.setReturnAccessTypeSet(ats);
+
+                // FOR TESTING DOM CORRECTNESS
+                // testDom2(&fun_conds, ibb_graph);
+                // testDom(dom, ibb_graph);
 
                 delete dom;
                 dom = nullptr;

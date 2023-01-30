@@ -73,6 +73,16 @@ my_struct* create(int a, int b) {
 
 	s->field_a = a;
 	s->field_b = b;
+	
+	my_struct *s1 = my_malloc(sizeof(my_struct));
+
+	// int xx[10];
+	// for (int i = 0; i < 10; i++) {
+	// 	if (i > 5)
+	// 		xx[i] = i + 1;
+	// 	else 
+	// 		xx[i] = i * 2;
+	// }
 
 	return s;
 }
