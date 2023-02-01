@@ -29,14 +29,14 @@ IBBGraph::IBBNodeSet PostDominator::behind(IBBEdge* edge) {
 
 void PostDominator::buildDom() {
 
-    int tot_nodes = getTotRelevantNodes();
-
     ICFG* icfg = getICFG();
 
     // ICFGNodeSet relevant_nodes = getRelevantNodes();
     IBBGraph::IBBNodeSet relevant_nodes = ibbg->getNodeAllocated();
     FunExitICFGNode* exit_node = getExitNode();
     IBBNode *exit_node_ibb = ibbg->getIBBNode(exit_node->getId());
+
+    int tot_nodes = relevant_nodes.size();
 
     outs() << "[INFO] Building initial post-dom structure\n";
 
@@ -129,7 +129,7 @@ void PostDominator::buildDom() {
 
                         for (auto d: a_dom_set) 
                             // DOUBLE CHECK!
-                            if (isARelevantNode(d))
+                            // if (isARelevantNode(d))
                                 all_doms_behind.insert(d);
                         
                         a_dom_set.clear();

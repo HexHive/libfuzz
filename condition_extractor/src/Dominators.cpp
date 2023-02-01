@@ -25,14 +25,14 @@ IBBGraph::IBBNodeSet Dominator::ahead(IBBEdge* edge) {
 
 void Dominator::buildDom() {
 
-    int tot_nodes = getTotRelevantNodes();
-
     ICFG* icfg = getICFG();
 
     // ICFGNodeSet relevant_nodes = getRelevantNodes();
     IBBGraph::IBBNodeSet relevant_nodes = ibbg->getNodeAllocated();
     FunEntryICFGNode* entry_node = getEntryNode();
     IBBNode *entry_node_ibb = ibbg->getIBBNode(entry_node->getId());
+
+    int tot_nodes = relevant_nodes.size();
 
     outs() << "[INFO] Building initial dom structure\n";
 
@@ -124,7 +124,7 @@ void Dominator::buildDom() {
 
                         for (auto d: a_dom_set) 
                             // DOUBLE CHECK!
-                            if (isARelevantNode(d))
+                            // if (isARelevantNode(d))
                                 all_doms_ahead.insert(d);
                         
                         a_dom_set.clear();
