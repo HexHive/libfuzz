@@ -690,41 +690,6 @@ GenericDominatorTy::GenericDominatorTy(BVDataPTAImpl* a_point_to,
     ibbg = new IBBGraph();
 }
 
-bool GenericDominatorTy::dominates(ICFGNode *a, ICFGNode *b) {
-    if (!is_created) {
-        outs() << "[ERROR] " << getDomName() << " not created yet!\n";
-        exit(1);
-    }
-
-    if (a == b)
-        return true;
-
-    // ICFGNodeSet dominators_b = getDom(b);
-    // return dominators_b.find(a) != dominators_b.end();
-    
-    auto bb_a = ibbg->getIBBNode(a->getId());
-    auto bb_b = ibbg->getIBBNode(b->getId());
-
-    if (bb_a == bb_b) {
-
-        for (auto n: bb_a->getICFGNodes()) {
-            if (n == a)
-                return true;
-            if (n == b)
-                return false;
-        }
-
-        assert(false && "Did not found either a nor b!");
-
-    } else {
-        IBBGraph::IBBNodeSet dominators_b = getDom(bb_b);
-        return dominators_b.find(bb_a) != dominators_b.end();
-    }
-
-    // this to ensure a return point
-    return false;
-}
-
 /*!
  * Dump DOMINATOR graph!
  */

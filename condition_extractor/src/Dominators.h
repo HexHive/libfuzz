@@ -8,7 +8,6 @@ class Dominator : public GenericDominatorTy {
     private:
         IBBGraph::IBBNodeSet ahead(IBBEdge* edge);
         void buildDom();
-        inline string getDomName() {return "Dominator";}
 
     public:
         Dominator(BVDataPTAImpl* pt, FunEntryICFGNode *fun_entry, 
@@ -16,6 +15,9 @@ class Dominator : public GenericDominatorTy {
          : GenericDominatorTy(pt, do_indirect_jumps) {
             setEntryNode(fun_entry);
         }
+
+        inline string getDomName() {return "Dominator";}
+        bool dominates(ICFGNode*, ICFGNode*);
 
 };
 

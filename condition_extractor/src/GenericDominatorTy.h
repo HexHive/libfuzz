@@ -72,8 +72,6 @@ public:
     ~GenericDominatorTy() {
         delete ibbg;
     }
-    bool dominates(ICFGNode *, ICFGNode *);
-
     // Dump graph somehow
     void dumpTransRed(const std::string &file, bool simple = false);
     void dumpDom(const std::string &file);
@@ -155,6 +153,7 @@ public:
     }
     
     virtual inline string getDomName() = 0;
+    virtual bool dominates(ICFGNode *, ICFGNode *) = 0;
 
     void createDom();
 

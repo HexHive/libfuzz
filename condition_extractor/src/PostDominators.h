@@ -10,7 +10,6 @@ class PostDominator : public GenericDominatorTy {
         FunExitICFGNode* exit_node;
         IBBGraph::IBBNodeSet behind(IBBEdge*);
         void buildDom();
-        inline string getDomName() {return "PostDominator";}
 
     public:
         PostDominator(BVDataPTAImpl* pt, FunEntryICFGNode* fun_entry,
@@ -22,6 +21,9 @@ class PostDominator : public GenericDominatorTy {
 
         inline void setExitNode(FunExitICFGNode* fun_exit) {exit_node = fun_exit;}
         inline FunExitICFGNode* getExitNode() {return exit_node;}
+
+        inline string getDomName() {return "PostDominator";}
+        bool dominates(ICFGNode*, ICFGNode*);
 };
     
 

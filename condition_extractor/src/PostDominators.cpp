@@ -184,3 +184,44 @@ void PostDominator::buildDom() {
     }
 
 }
+
+bool PostDominator::dominates(ICFGNode *a, ICFGNode *b) {
+    if (!is_created) {
+        outs() << "[ERROR] " << getDomName() << " not created yet!\n";
+        exit(1);
+    }
+
+    if (a == b)
+        return true;
+
+    // ICFGNodeSet dominators_b = getDom(b);
+    // return dominators_b.find(a) != dominators_b.end();
+    
+    auto bb_a = ibbg->getIBBNode(a->getId());
+    auto bb_b = ibbg->getIBBNode(b->getId());
+
+    if (bb_a == bb_b) {
+
+        IBBNode::ICFGNodeList list = bb_a->getICFGNodes();
+        IBBNode::ICFGNodeList::reverse_iterator rit;
+        
+        // for each n in N - {n0}:
+        for (rit = list.rbegin(); rit != list.rend(); rit++) {
+        // for (auto n: bb_a->getICFGNodes()) {
+            auto n = *rit;
+            if (n == a)
+                return true;
+            if (n == b)
+                return false;
+        }
+
+        assert(false && "Did not found either a nor b!");
+
+    } else {
+        IBBGraph::IBBNodeSet dominators_b = getDom(bb_b);
+        return dominators_b.find(bb_a) != dominators_b.end();
+    }
+
+    // this to ensure a return point
+    return false;
+}
