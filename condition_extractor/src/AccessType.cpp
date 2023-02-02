@@ -624,6 +624,7 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                             ok_continue = false;
                             outs() << "[INFO] Stack size too big!\n";
                         } else if (cs->isIndirectCall()) {
+                            // TODO: handle indirect calls!
                             ok_continue = false;
                             // outs() << "[INFO] Indirect call, I stop!\n";
                         // it is a direct call, check for stubs
