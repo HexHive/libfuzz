@@ -3,13 +3,14 @@ import json, os
 from common import Utils, Api, Arg
 from dependency import DependencyGraphGenerator, DependencyGraph
 
-class TypeDependencyGraphGenerator(DependencyGraphGenerator):
+class UndefDependencyGraphGenerator(DependencyGraphGenerator):
     def __init__(self, api_list):
         super().__init__()
         self.apis_list = api_list
 
     def create(self) -> DependencyGraph:
         dependency_graph = DependencyGraph()
+
         for api_a in self.apis_list:
             for api_b in self.apis_list:
                 # api_a_functionname = api_a.function_name
@@ -22,7 +23,7 @@ class TypeDependencyGraphGenerator(DependencyGraphGenerator):
 
         # sum_dep_nodes = 0
         # num_dep_nodes = 0
-        # with open("type.log", "w") as l:
+        # with open("undef.log", "w") as l:
         #     for k, v in dependency_graph.graph.items():
         #         sum_dep_nodes += len(v)
         #         num_dep_nodes += 1
@@ -31,6 +32,9 @@ class TypeDependencyGraphGenerator(DependencyGraphGenerator):
         # avg_dep_nodes = sum_dep_nodes/num_dep_nodes
         # print(f"Average dependencies: {avg_dep_nodes}")
         # print(f"Num. keys: {len(dependency_graph.keys())}")
+
+        # from IPython import embed; embed(); exit(1);
+
         # exit(1)
 
         return dependency_graph
@@ -64,13 +68,18 @@ class TypeDependencyGraphGenerator(DependencyGraphGenerator):
     
     def get_input_output(self, api: Api):
         input_a = []
-        output_a = [api.return_info]
+        output_a = []
+
+        if api.return_info.is_type_incomplete:
+            output_a += [api.return_info]
+
         # print(api.arguments_info)
         for arg in api.arguments_info:
-            if arg.flag == "ref":
-                output_a += [arg]
-            
-            input_a += [arg]
+            if arg.is_type_incomplete:
+                if arg.flag == "ref":
+                    output_a += [arg]
+                
+                input_a += [arg]
 
         return input_a, output_a
 

@@ -5,6 +5,7 @@ from os import path
 import tomli
 
 from dependency import TypeDependencyGraphGenerator
+from dependency import UndefDependencyGraphGenerator
 from grammar import GrammarGenerator, NonTerminal, Terminal
 
 from backend import BackendDriver, MockBackendDriver, LFBackendDriver
@@ -134,15 +135,42 @@ class Configuration:
         if not "coercemap" in analysis:
             raise Exception("'coercemap' not defined")
 
+        if not "minimum_apis" in analysis:
+            raise Exception("'minimum_apis' not defined")
+
         apis_llvm = analysis["apis_llvm"]
         apis_clang = analysis["apis_clang"]
         hedader_folder = analysis["headers"]
         coerce_map = analysis["coercemap"]
         incomplete_types = analysis["incomplete_types"]
+        minimum_apis = analysis["minimum_apis"]
 
         # t = Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types)
         # from IPython import embed; embed(); exit()
-        return Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types)
+        return Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types, minimum_apis)
+
+    @cached_property
+    def dependency_graph(self):
+
+        if not "generator" in self._config:
+            raise Exception("'generator' not defined")
+
+        generator = self._config["generator"]
+
+        if not "dep_graph" in generator:
+            raise Exception("'dep_graph' not defined")
+
+        dep_graph_policy = generator["dep_graph"]
+
+        if dep_graph_policy == "type":
+            TDGG = TypeDependencyGraphGenerator(self.api_list)
+            dep_graph = TDGG.create()
+        elif dep_graph_policy == "undef":
+            UDGG = UndefDependencyGraphGenerator(self.api_list)
+            dep_graph = UDGG.create()
+
+        return dep_graph
+
 
     @cached_property
     def factory(self):
@@ -158,9 +186,7 @@ class Configuration:
         policy = generator["policy"]
 
         if policy == "only_type":
-            TDGG = TypeDependencyGraphGenerator(self.api_list)
-            dep_graph = TDGG.create()
-
+            dep_graph = self.dependency_graph
             GG = GrammarGenerator(self.start_term, self.end_term)
             InitGrammar = GG.create(dep_graph)
             
@@ -169,8 +195,7 @@ class Configuration:
             return OTFactory(self.api_list, self.driver_size, InitGrammar)
 
         if policy == "constraint_based":
-            TDGG = TypeDependencyGraphGenerator(self.api_list)
-            dep_graph = TDGG.create()
+            dep_graph = self.dependency_graph
             return CBFactory(self.api_list, self.driver_size, dep_graph, self.function_conditions)
 
         raise NotImplementedError

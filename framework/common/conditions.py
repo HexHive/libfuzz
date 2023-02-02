@@ -5,7 +5,9 @@ class Access(Enum):
     READ = 1
     WRITE = 2
     RETURN = 3
-    NONE = 4
+    CREATE = 4
+    DELETE = 5
+    NONE = 6
 
 class AccessType:
     access: Access

@@ -7,3 +7,4 @@ from .DependencyGraphGenerator  import DependencyGraphGenerator
 from .DependencyGraph  import DependencyGraph
 
 from .type.TypeDependencyGraphGenerator import TypeDependencyGraphGenerator
+from .undef.UndefDependencyGraphGenerator import UndefDependencyGraphGenerator

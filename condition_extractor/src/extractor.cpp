@@ -486,8 +486,8 @@ int main(int argc, char ** argv)
 
     }
 
-    outs() << " === EXIT FOR DEBUG ===\n";
-    exit(1);
+    // outs() << " === EXIT FOR DEBUG ===\n";
+    // exit(1);
 
     FunctionConditionsSet fun_cond_set;
 

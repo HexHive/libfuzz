@@ -119,6 +119,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -163,6 +167,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -226,6 +234,12 @@
                 "access": "read",
                 "fields": [
                     -1
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    0
                 ]
             },
             {
@@ -2756,6 +2770,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -5173,6 +5191,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    2
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     2
@@ -6827,9 +6851,21 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    13
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     13
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    14
                 ]
             },
             {
@@ -6839,9 +6875,21 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    15
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     15
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    16
                 ]
             },
             {
@@ -6923,9 +6971,21 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    23
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     23
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    24
                 ]
             },
             {
@@ -6935,9 +6995,21 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    25
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     25
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    26
                 ]
             },
             {
@@ -6947,9 +7019,21 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    27
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     27
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    28
                 ]
             },
             {
@@ -6959,9 +7043,21 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    29
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     29
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    30
                 ]
             },
             {
@@ -7007,9 +7103,21 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    37
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     37
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    38
                 ]
             },
             {
@@ -7019,7 +7127,7 @@
                 ]
             },
             {
-                "access": "write",
+                "access": "read",
                 "fields": [
                     39
                 ]
@@ -7027,7 +7135,25 @@
             {
                 "access": "write",
                 "fields": [
+                    39
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
                     40
+                ]
+            },
+            {
+                "access": "write",
+                "fields": [
+                    40
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    41
                 ]
             },
             {
@@ -7073,9 +7199,21 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    46
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     46
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    47
                 ]
             },
             {
@@ -7085,9 +7223,21 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    48
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     48
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    49
                 ]
             },
             {
@@ -7163,7 +7313,7 @@
                 ]
             },
             {
-                "access": "write",
+                "access": "read",
                 "fields": [
                     56
                 ]
@@ -7171,7 +7321,25 @@
             {
                 "access": "write",
                 "fields": [
+                    56
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
                     57
+                ]
+            },
+            {
+                "access": "write",
+                "fields": [
+                    57
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    58
                 ]
             },
             {
@@ -7184,6 +7352,12 @@
                 "access": "write",
                 "fields": [
                     59
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    60
                 ]
             },
             {
@@ -10088,6 +10262,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -10198,6 +10376,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -15432,6 +15614,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -15670,6 +15856,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -15751,6 +15941,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -19447,6 +19641,10 @@
         "functionName": "TIFFGetConfiguredCODECs",
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -19572,6 +19770,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -19868,6 +20070,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -21765,6 +21971,13 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    67,
+                    3
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     67,
@@ -21945,6 +22158,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -22016,6 +22233,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -22116,6 +22337,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -23178,9 +23403,21 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    2
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     2
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    3
                 ]
             },
             {
@@ -23277,6 +23514,12 @@
                 "access": "delete",
                 "fields": [
                     13
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    14
                 ]
             },
             {
@@ -23378,10 +23621,24 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    19,
+                    1
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     19,
                     1
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    19,
+                    2
                 ]
             },
             {
@@ -23392,7 +23649,7 @@
                 ]
             },
             {
-                "access": "write",
+                "access": "read",
                 "fields": [
                     19,
                     3
@@ -23402,7 +23659,28 @@
                 "access": "write",
                 "fields": [
                     19,
+                    3
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    19,
                     4
+                ]
+            },
+            {
+                "access": "write",
+                "fields": [
+                    19,
+                    4
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    19,
+                    5
                 ]
             },
             {
@@ -23435,6 +23713,13 @@
                 "fields": [
                     20,
                     -1
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    20,
+                    0
                 ]
             },
             {
@@ -24697,6 +24982,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -25000,6 +25289,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -25309,6 +25602,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -25369,6 +25666,12 @@
                 "access": "delete",
                 "fields": [
                     45
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    46
                 ]
             },
             {
@@ -25434,6 +25737,12 @@
                 "access": "read",
                 "fields": [
                     3
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    4
                 ]
             },
             {
@@ -25971,6 +26280,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    64
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     64
@@ -26106,6 +26421,12 @@
                 "access": "write",
                 "fields": [
                     3
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    4
                 ]
             },
             {
@@ -28074,6 +28395,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    4
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     4
@@ -28605,6 +28932,12 @@
                 "access": "write",
                 "fields": [
                     63
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    64
                 ]
             },
             {
@@ -29312,6 +29645,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -29995,6 +30332,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -30349,6 +30690,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    48
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     48
@@ -30490,6 +30837,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -30526,6 +30877,12 @@
                 "access": "read",
                 "fields": [
                     3
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    4
                 ]
             },
             {
@@ -31060,6 +31417,12 @@
                 "access": "write",
                 "fields": [
                     63
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    64
                 ]
             },
             {
@@ -34448,6 +34811,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    50
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     50
@@ -35303,6 +35672,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    2
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     2
@@ -35321,6 +35696,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    1
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     1
@@ -35334,9 +35715,22 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    1,
+                    2
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     1,
+                    2
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
                     2
                 ]
             },
@@ -35377,6 +35771,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    0
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     0
@@ -35405,6 +35805,14 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    0,
+                    0,
+                    1
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     0,
@@ -35422,7 +35830,7 @@
                 ]
             },
             {
-                "access": "write",
+                "access": "read",
                 "fields": [
                     0,
                     0,
@@ -35435,7 +35843,31 @@
                 "fields": [
                     0,
                     0,
+                    1,
                     2
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    0,
+                    0,
+                    2
+                ]
+            },
+            {
+                "access": "write",
+                "fields": [
+                    0,
+                    0,
+                    2
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    0,
+                    1
                 ]
             },
             {
@@ -35454,7 +35886,7 @@
                 ]
             },
             {
-                "access": "write",
+                "access": "read",
                 "fields": [
                     0,
                     1,
@@ -35465,7 +35897,28 @@
                 "access": "write",
                 "fields": [
                     0,
+                    1,
                     2
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    0,
+                    2
+                ]
+            },
+            {
+                "access": "write",
+                "fields": [
+                    0,
+                    2
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    1
                 ]
             },
             {
@@ -35482,9 +35935,22 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    1,
+                    2
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     1,
+                    2
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
                     2
                 ]
             },
@@ -38391,6 +38857,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -38489,6 +38959,12 @@
                 "access": "write",
                 "fields": [
                     7
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    8
                 ]
             },
             {
@@ -39851,6 +40327,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    14
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     14
@@ -40393,6 +40875,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -40411,6 +40897,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -40520,6 +41010,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -40568,6 +41062,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -40618,6 +41116,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -40667,6 +41169,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -40714,6 +41220,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    4
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     4
@@ -40723,6 +41235,12 @@
                 "access": "return",
                 "fields": [
                     4
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    5
                 ]
             },
             {
@@ -40753,6 +41271,12 @@
                 "access": "write",
                 "fields": [
                     7
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    8
                 ]
             },
             {
@@ -42649,6 +43173,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -42668,6 +43196,10 @@
         ],
         "return": [
             {
+                "access": "read",
+                "fields": []
+            },
+            {
                 "access": "write",
                 "fields": []
             },
@@ -42686,6 +43218,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -42879,6 +43415,13 @@
                 "fields": [
                     9,
                     34
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    9,
+                    35
                 ]
             },
             {
@@ -48919,6 +49462,13 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    9,
+                    36
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     9,
@@ -49101,6 +49651,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    22
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     22
@@ -49110,6 +49666,12 @@
                 "access": "read",
                 "fields": [
                     42
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    43
                 ]
             },
             {
@@ -53930,6 +54492,13 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    9,
+                    36
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     9,
@@ -54112,6 +54681,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    13
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     13
@@ -54178,6 +54753,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    43
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     43
@@ -54217,6 +54798,12 @@
                 "access": "write",
                 "fields": [
                     49
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    50
                 ]
             },
             {
@@ -54346,6 +54933,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -54681,6 +55272,13 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    9,
+                    36
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     9,
@@ -54863,6 +55461,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    13
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     13
@@ -54935,6 +55539,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    43
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     43
@@ -54974,6 +55584,12 @@
                 "access": "write",
                 "fields": [
                     49
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    50
                 ]
             },
             {
@@ -55103,6 +55719,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -55438,6 +56058,13 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    9,
+                    36
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     9,
@@ -55620,6 +56247,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    13
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     13
@@ -55644,6 +56277,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    22
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     22
@@ -55653,6 +56292,12 @@
                 "access": "read",
                 "fields": [
                     42
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    43
                 ]
             },
             {
@@ -55776,6 +56421,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -56111,6 +56760,13 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    9,
+                    36
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     9,
@@ -56311,6 +56967,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    22
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     22
@@ -56320,6 +56982,12 @@
                 "access": "read",
                 "fields": [
                     42
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    43
                 ]
             },
             {
@@ -56443,6 +57111,10 @@
             }
         ],
         "return": [
+            {
+                "access": "read",
+                "fields": []
+            },
             {
                 "access": "write",
                 "fields": []
@@ -56782,6 +57454,13 @@
                 "fields": [
                     9,
                     35
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    9,
+                    36
                 ]
             },
             {
@@ -57570,6 +58249,13 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    9,
+                    36
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     9,
@@ -57752,6 +58438,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    13
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     13
@@ -57824,6 +58516,12 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    43
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     43
@@ -57863,6 +58561,12 @@
                 "access": "write",
                 "fields": [
                     49
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    50
                 ]
             },
             {
@@ -58229,9 +58933,21 @@
                 ]
             },
             {
+                "access": "read",
+                "fields": [
+                    1
+                ]
+            },
+            {
                 "access": "write",
                 "fields": [
                     1
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    2
                 ]
             },
             {
@@ -58241,7 +58957,7 @@
                 ]
             },
             {
-                "access": "write",
+                "access": "read",
                 "fields": [
                     3
                 ]
@@ -58249,7 +58965,25 @@
             {
                 "access": "write",
                 "fields": [
+                    3
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
                     4
+                ]
+            },
+            {
+                "access": "write",
+                "fields": [
+                    4
+                ]
+            },
+            {
+                "access": "read",
+                "fields": [
+                    5
                 ]
             },
             {

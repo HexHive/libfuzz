@@ -116,6 +116,16 @@ class CBFactory(Factory):
 
         rng_ctx_1, unsat_var_1 = self.try_to_instantiate_api_call(call_begin, begin_condition, rng_ctx)
 
+        # [next_possible] = [x for x in self.dependency_graph[begin_api] if x.function_name == "TIFFReadRGBAImage"]
+
+        # next_condition = get_cond(next_possible)
+        # call_next = to_api(next_possible)
+
+        # rng_ctx_2, unsat_var_2 = self.try_to_instantiate_api_call(call_next, next_condition, rng_ctx_1) 
+
+        # print("TOO LATE")
+        # from IPython import embed; embed(); exit(1)
+
         if len(unsat_var_1) > 0:
             print("[ERROR] Cannot instantiate the first function :(")
             print(unsat_var_1)
@@ -149,6 +159,9 @@ class CBFactory(Factory):
                     print()
 
             print(f"[INFO] Complete doable functions: {len(candidate_api)}")
+
+            if not candidate_api:
+                from IPython import embed; embed(); exit(1)
 
             # (ApiCall, RunningContext, Api)
             (api_call, rng_ctx_1, api_n) = random.choice(candidate_api)
