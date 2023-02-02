@@ -87,6 +87,7 @@ public:
     inline PTACallGraph *getPTACallGraph() { return point_to->getPTACallGraph(); }
     inline ICFG *getICFG() { return point_to->getICFG(); }
     inline PTACallGraph *getCallGraph() { return point_to->getPTACallGraph(); }
+    inline IBBGraph *getIBBGraph() {return ibbg;}
     inline void addDumpedEdge(ICFGEdge *edge) { dumped_edges.insert(edge); }
     inline ICFGEdgeSet &getDumpedEdge() { return dumped_edges; }
 
@@ -157,10 +158,14 @@ public:
 
     void createDom();
 
-private:
     void pruneUnreachableFunctions();
     void buildPhiFun();
     void inferSubGraph();
+
+private:
+    // void pruneUnreachableFunctions();
+    // void buildPhiFun();
+    // void inferSubGraph();
     // void buildR();
     void restoreUnreachableFunctions();
 

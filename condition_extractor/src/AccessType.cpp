@@ -192,7 +192,8 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
     getPhiFunction(svfModule, icfg, &phi, &phi_inv);  
 
     // std::set<const VFGNode*> alloca_set;
-    std::set<const Value*> allocainst_set;
+    // std::set<const Value*> allocainst_set;
+    std::set<const Instruction*> allocainst_set;
     // std::set<const Value*> bitcastinst_set;
 
     // how many alloca?
@@ -244,6 +245,10 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                 }
             }
         } else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
+
+            if (call_node->isIndirectCall())
+                continue;
+
             auto callee = SVFUtil::getCallee(call_node->getCallSite());
             auto inst = SVFUtil::dyn_cast<CallInst>(call_node->getCallSite());
             // outs() << "[INFO] callinst2 " << *inst << "\n";
@@ -306,7 +311,8 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
     // std::map<const Instruction*, AccessTypeSet> all_ats;
     std::map<const Value*, AccessTypeSet> all_ats;
     for (auto a: allocainst_set) {
-        // outs() << "[INFO] paraAT() " << *a << "\n";
+        // outs() << "[INFO] paraAT() " << *a << " -- ";
+        // outs() << a->getFunction()->getName().str() << "\n";
         AccessTypeSet l_ats = AccessTypeSet::extractParameterAccessType(vfg, a, retType);
 
         // outs() << "[STARTING POINT] " << *a << "\n";
@@ -330,6 +336,9 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
         if (do_not_return)
             all_ats[a] = l_ats;
     }
+
+    // outs() << "LET'S SEE WHAT FUNCTIONS WE HAVE HERE!!!\n";
+    // exit(1);
 
     // MERGE traces that lead to a return value (and ignoring the others)
     bool ast_is_changed = true;
