@@ -7,6 +7,7 @@
 // static fields, mainly for debug
 bool AccessTypeSet::debug = false;
 std::string AccessTypeSet::debug_condition = "";
+bool AccessTypeSet::consider_indirect_calls = false;
 
 bool areCompatible(FunctionType* caller,FunctionType* callee) {
 
@@ -246,8 +247,8 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
             }
         } else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
 
-            if (call_node->isIndirectCall())
-                continue;
+            if (!consider_indirect_calls && call_node->isIndirectCall())
+                    continue;
 
             auto callee = SVFUtil::getCallee(call_node->getCallSite());
             auto inst = SVFUtil::dyn_cast<CallInst>(call_node->getCallSite());
@@ -623,22 +624,26 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                         if (p_succ.getStackSize() >= MAX_STACKSIZE) {
                             ok_continue = false;
                             outs() << "[INFO] Stack size too big!\n";
-                        } else if (cs->isIndirectCall()) {
-                            // TODO: handle indirect calls!
+                        } 
+                        else if (!consider_indirect_calls && 
+                                cs->isIndirectCall()) {
                             ok_continue = false;
                             // outs() << "[INFO] Indirect call, I stop!\n";
                         // it is a direct call, check for stubs
-                        } else {
-                            std::string fun = SVFUtil::getCallee(cs->getCallSite())->getName();
+                        } 
+                        else {
+                            if (!cs->isIndirectCall()) {
+                                std::string fun = SVFUtil::getCallee(cs->getCallSite())->getName();
 
-                            // outs() << "[DEBUG] I found this function: " 
-                            //        << fun << "\n";
+                                // outs() << "[DEBUG] I found this function: " 
+                                //        << fun << "\n";
 
-                            // TODO: add an allow-list
-                            if (fun == "free") {
-                                ok_continue = false;
-                                acNode.setAccess(AccessType::Access::del);
-                                ats.insert(acNode, vNode->getICFGNode());
+                                // TODO: add an allow-list
+                                if (fun == "free") {
+                                    ok_continue = false;
+                                    acNode.setAccess(AccessType::Access::del);
+                                    ats.insert(acNode, vNode->getICFGNode());
+                                }
                             }
                         }
                     }

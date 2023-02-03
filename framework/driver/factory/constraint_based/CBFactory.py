@@ -161,7 +161,7 @@ class CBFactory(Factory):
             print(f"[INFO] Complete doable functions: {len(candidate_api)}")
 
             if not candidate_api:
-                from IPython import embed; embed(); exit(1)
+                break
 
             # (ApiCall, RunningContext, Api)
             (api_call, rng_ctx_1, api_n) = random.choice(candidate_api)

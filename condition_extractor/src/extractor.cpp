@@ -370,6 +370,8 @@ int main(int argc, char ** argv)
         AccessTypeSet::debug_condition = DebugCondition;
     }
 
+    AccessTypeSet::consider_indirect_calls = doIndJump;
+
     // std::vector<std::string> functions;
     std::set<std::string> functions;
 

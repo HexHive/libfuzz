@@ -1,0 +1,25 @@
+/workspaces/libfuzz/condition_extractor/bin/extractor library.o.bc -interface /workspaces/libfuzz/regression_tests/condition_extractor/test_simpleapi/apis_clang.json -t json -output library.json -v v1 -dom
+
+
+/workspaces/libfuzz/condition_extractor/bin/extractor library.o.bc -function create -t json -output library.json -v v1 -dom  -print_dom
+
+/workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFClientOpen -output /workspaces/libfuzz/analysis/libtiff/work/apipass/conditions.json -v v0 -t json -dom -print_dom -cache_folder /workspaces/libfuzz/analysis/libtiff/work/apipass
+
+
+/workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFClientOpen -output /workspaces/libfuzz/condition_extractor/conditions-tmp.json -v v0 -t json -dom
+
+/workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFClientOpen -output /workspaces/libfuzz/condition_extractor/conditions-tmp.json -v v1 -t json -dom
+
+
+/workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -interface /workspaces/libfuzz/analysis/libtiff/work/apipass/apis_clang.json -output /workspaces/libfuzz/condition_extractor/conditions-tmp.json -v v0 -t json -dom -cache_folder /workspaces/libfuzz/analysis/libtiff/work/domcache/
+
+
+/workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -interface /workspaces/libfuzz/analysis/libtiff/work/apipass/apis_clang.json -output /workspaces/libfuzz/condition_extractor/conditions-tmp.json -v v0 -t json -dom -cache_folder /workspaces/libfuzz/analysis/libtiff/work/domcache/ -minimize_api ./apis_minimized.txt
+
+/workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFReadRGBAImage  -output /workspaces/libfuzz/condition_extractor/conditions-debug.json -v v1 -t json
+
+
+/workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFClientOpen -output /workspaces/libfuzz/condition_extractor/conditions-tmp-ic.json -v v0 -t json
+
+
+/workspaces/libfuzz/regression_tests/condition_extractor/test_simpleapi/library.o.bc -function indirect_test -t json -output indirect_test.json -v v1

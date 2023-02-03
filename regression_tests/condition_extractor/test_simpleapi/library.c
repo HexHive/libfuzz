@@ -10,6 +10,8 @@
 struct a_struct {
     int field_a;
     int field_b;
+	int field_c;
+	int field_d;
 };
 
 void bar1() {
@@ -88,14 +90,14 @@ my_struct* create(int a, int b) {
 }
 
 void first(my_struct *s, int a) {
-	s->field_a = a;
-	if (s->field_a < 0)
-		s->field_a = -s->field_a;
+	s->field_b = a;
+	if (s->field_c < 0)
+		s->field_c = -s->field_c;
 }
 
 void second(my_struct *s, int b) {
 	if (s->field_a > 10)
-		s->field_b = b;
+		s->field_d = b;
 }
 
 void third(void* b, my_struct *s) {

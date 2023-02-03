@@ -289,6 +289,7 @@ class AccessTypeSet {
         // handle debug information
         static bool debug;
         static std::string debug_condition;
+        static bool consider_indirect_calls;
 
         static AccessTypeSet extractParameterAccessType(
             const SVFG*, const Value*, Type* = nullptr);

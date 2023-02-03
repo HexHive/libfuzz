@@ -22,7 +22,8 @@ class Conditions:
 
     def are_compatible_with(self, r_ats: AccessTypeSet) -> bool:
 
-        r_requirements = set([at for at in r_ats if at.access == Access.READ])
+        # r_requirements = set([at for at in r_ats if at.access == Access.READ])
+        r_requirements = set([at for at in r_ats if at.access == Access.WRITE])
         # holding_condition = set([at for at in self.ats if at.access in [Access.WRITE, Access.RETURN]])
 
         matching_requirements = 0
@@ -39,7 +40,7 @@ class Conditions:
                 unmatching_requirements.add(r)
 
 
-        matching_requirements2 = set()
+        real_unmatched = set()
 
         for u in unmatching_requirements:
             f_prev = u.fields[:-1]
@@ -60,18 +61,18 @@ class Conditions:
                             break
                         else:
                             # print(f"break1 {u}")
-                            matching_requirements2.add(u)
+                            real_unmatched.add(u)
                             break
                     elif f_prev_len == 0:
                         # print(f"break2 {u}")
-                        matching_requirements2.add(u)
+                        real_unmatched.add(u)
                         break
                     else:
                         # print(f_prev)
                         f_prev = f_prev[:-1]
                         f_prev_len = len(f_prev)
 
-        # if len(r_requirements) == 41:
+        # if matching_requirements != len(r_requirements):
         #     print("OK FINE")
         #     from IPython import embed; embed(); exit(1)
 
