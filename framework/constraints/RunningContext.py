@@ -19,7 +19,7 @@ class RunningContext(Context):
     def has_var_type(self, type: Type) -> bool:
 
         # FLAVIO: I think this should be like that!
-        # TODO: Extract "base" type with a dedicatd method?
+        # TODO: Extract "base" type with a dedicated method?
         tt = None
         if isinstance(type, PointerType):
             if type.get_pointee_type().is_incomplete:
@@ -58,9 +58,6 @@ class RunningContext(Context):
 
         vars = set()
 
-        # print("Debug get_value_that_satisfy (2)")
-        # from IPython import embed; embed(); exit()
-
         for v in self.variables_alive:
             if v.get_type() == tt:
                 if self.var_to_cond[v].are_compatible_with(cond):
@@ -73,7 +70,29 @@ class RunningContext(Context):
             if isinstance(type, PointerType):
                 return var.get_address()
             return var
-    
+
+    def get_value_that_strictly_satisfy(self, type: Type,
+            cond: AccessTypeSet) -> Optional[Value]:
+
+        # print("Debug get_value_that_strictly_satisfy")
+        # from IPython import embed; embed(); exit()
+
+        vars = set()
+
+        for v in self.variables_alive:
+            if v.get_type() == type:
+                if self.var_to_cond[v].are_compatible_with(cond):
+                    vars.add(v)
+
+        if len(vars) == 0:
+            return None
+        else:
+            var = random.choice(list(vars))
+            if isinstance(type, PointerType):
+                return var.get_address()
+            return var
+
+
     def add_variable(self, val: Value, cond: AccessTypeSet):
 
         if not isinstance(val, Variable):
@@ -94,11 +113,29 @@ class RunningContext(Context):
     def try_to_get_var(self, type: Type, cond: AccessTypeSet,
                         is_ret: bool = False) -> Value:
 
-        # if I need a void for return, don't bother too much
-        if type == self.stub_void and is_ret:
-            return NullConstant(self.stub_void)
+        is_sink = self.is_sink(cond)
 
-        if self.has_var_type(type):
+        val = None
+
+        # for variables used in ret -> I take any compatible type and overwrite
+        # their conditions
+        if is_ret:
+
+            # if I need a void for return, don't bother too much
+            if type == self.stub_void:
+                val = NullConstant(self.stub_void)
+            else:
+                val = self.randomly_gimme_a_var(type, "", is_ret)
+
+        elif is_sink:
+            val = self.get_value_that_strictly_satisfy(type, cond)
+            if val is None:
+                if (Conditions.is_unconstraint(cond) and 
+                    not type.is_incomplete):
+                    val = self.randomly_gimme_a_var(type, "", is_ret)
+                else:
+                    raise ConditionUnsat()
+        elif self.has_var_type(type):
             val = self.get_value_that_satisfy(type, cond)
             if val is None:
                 if (Conditions.is_unconstraint(cond) and 
@@ -107,32 +144,65 @@ class RunningContext(Context):
                 else:
                     raise ConditionUnsat()
         else:
-            tt = type.get_pointee_type() if isinstance(type, PointerType) else type
+            if isinstance(type, PointerType):
+                tt = type.get_pointee_type()  
+            else:
+                tt = type
             if tt.is_incomplete and not is_ret:
                 raise ConditionUnsat()
             else:
                 val = self.randomly_gimme_a_var(type, "", is_ret)
 
+        if val == None:
+            raise Exception("Val unset")
+
         return val
 
-    def update(self, val: Optional[Value], cond: AccessTypeSet):
+    def update(self, val: Optional[Value], cond: AccessTypeSet, is_ret: bool = False):
+
+        if isinstance(val, NullConstant):
+            # NullConstant does not have conditions
+            return
+
+        var = None
         if isinstance(val, Variable):
             # I am not sure it should be done here!
             x = AccessType(Access.WRITE, [])
             x2 = AccessTypeSet(set([x]))
             cond2 = cond.union(x2)
-            self.add_variable(val, cond2)
+            var = val
         elif isinstance(val, Address):
             x = AccessType(Access.WRITE, [-1])
             x2 = AccessTypeSet(set([x]))
             cond2 = cond.union(x2)
             var = val.get_variable()
-            self.add_variable(var, cond2)
-        elif isinstance(val, NullConstant):
-            # NullConstant does not have conditions
-            pass
         else:
             raise Exception(f"I don't know this val: {val}")
+            
+        is_sink = self.is_sink(cond)
+
+        if is_ret and var in self.variables_alive:
+                del self.var_to_cond[var]
+                self.variables_alive.remove(var)
+
+        already_present = var in self.var_to_cond
+        self.add_variable(var, cond)
+
+        if already_present and is_sink:
+            del self.var_to_cond[var]
+            self.variables_alive.remove(var)
+
+            # from IPython import embed; embed(); exit(1);
+            # import pdb; pdb.set_trace(); exit(1);
+
+    # NOTE: this oracle infers if the variable with the access types (cond) can
+    # be considered a sink
+    def is_sink(self, cond: AccessTypeSet):
+        deletes_root = any([c.access == Access.DELETE and c.fields == [] 
+                            for c in cond])
+        creates_root = any([c.access == Access.CREATE and c.fields == [] 
+                            for c in cond])
+        return deletes_root and not creates_root
 
     def __copy__(self):
         raise Exception("__copy__ not implemented")

@@ -10,6 +10,9 @@ class TypeDependencyGraphGenerator(DependencyGraphGenerator):
 
     def create(self) -> DependencyGraph:
         dependency_graph = DependencyGraph()
+
+        # from IPython import embed; embed(); exit(1)
+
         for api_a in self.apis_list:
             for api_b in self.apis_list:
                 # api_a_functionname = api_a.function_name
@@ -64,13 +67,16 @@ class TypeDependencyGraphGenerator(DependencyGraphGenerator):
     
     def get_input_output(self, api: Api):
         input_a = []
-        output_a = [api.return_info]
-        # print(api.arguments_info)
+        output_a = []
+        
+        if api.return_info.type != "void":
+            output_a += [api.return_info]
+
         for arg in api.arguments_info:
-            if arg.flag == "ref":
-                output_a += [arg]
-            
-            input_a += [arg]
+            if arg.type != "void":
+                if arg.flag == "ref":
+                    output_a += [arg]
+                input_a += [arg]
 
         return input_a, output_a
 

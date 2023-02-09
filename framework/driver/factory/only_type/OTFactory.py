@@ -83,7 +83,7 @@ class OTFactory(Factory):
         for statement in statements:
             if isinstance(statement, ApiCall):
                 for arg_pos, arg_type in statement.get_pos_args_types():
-                    if context.is_void_ponter(arg_type):
+                    if context.is_void_pointer(arg_type):
                         arg_var = context.randomly_gimme_a_var(context.stub_char_array, statement.function_name)
                     elif isinstance(arg_type, PointerType) and arg_type.to_function:
                         arg_var = context.get_null_constant()
@@ -95,7 +95,7 @@ class OTFactory(Factory):
                 #     from IPython import embed; embed(); exit()
                 #     ret_var = self.context.randomly_gimme_a_var(self.context.stub_void, statement.function_name, True)
                 # else:
-                if context.is_void_ponter(statement.ret_type):
+                if context.is_void_pointer(statement.ret_type):
                     ret_var = context.randomly_gimme_a_var(copy.deepcopy(context.stub_char_array), statement.function_name, True)
                 elif isinstance(statement.ret_type, PointerType) and statement.ret_type.to_function:
                     ret_var = context.randomly_gimme_a_var(context.stub_void, statement.function_name, True)

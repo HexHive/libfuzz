@@ -137,8 +137,9 @@ class Utils:
         if os.path.isfile(minimum_apis):
             with open(minimum_apis) as f:
                 for l in f:
-                    if l.strip():
-                        minimum_apis_list += [l[:-1]]
+                    l = l.strip()
+                    if l:
+                        minimum_apis_list += [l]
         else:
             print("WARNING, minimum_apis not found, considering all APIs")
 
