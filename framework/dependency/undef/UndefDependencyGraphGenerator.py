@@ -70,12 +70,12 @@ class UndefDependencyGraphGenerator(DependencyGraphGenerator):
         input_a = []
         output_a = []
 
-        if api.return_info.is_type_incomplete:
+        if api.return_info.type != "void" and api.return_info.is_type_incomplete:
             output_a += [api.return_info]
 
         # print(api.arguments_info)
         for arg in api.arguments_info:
-            if arg.is_type_incomplete:
+            if  arg.type != "void" and arg.is_type_incomplete:
                 if arg.flag == "ref":
                     output_a += [arg]
                 
