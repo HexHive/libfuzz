@@ -17,7 +17,8 @@ using namespace std;
 class AccessType {
     public:
         typedef enum _access { read, write, ret, 
-                                del, create, none } Access;
+                                del, create, none, 
+                                file, input_stream, output_stream } Access;
 
 
     private:

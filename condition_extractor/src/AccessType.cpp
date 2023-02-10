@@ -268,7 +268,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                 }
             }
         } else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
-
+            // Handling calls
             if (!consider_indirect_calls && call_node->isIndirectCall())
                     continue;
 
@@ -290,6 +290,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
             }
         }  
 
+        // We'll go throught the children and add unknown ones to our work list.
         if (node->hasOutgoingEdge()) {
             ICFGNode::const_iterator it = node->OutEdgeBegin();
             ICFGNode::const_iterator eit = node->OutEdgeEnd();
@@ -298,8 +299,10 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                 ICFGEdge *edge = *it;
                 ICFGNode *dst = edge->getDstNode();
 
-                if (visited.find(dst) != visited.end()) 
+                if (visited.find(dst) != visited.end()) {
+                    // We've seen it already
                     continue;
+                }
                 
                 if(auto ret_edge = SVFUtil::dyn_cast<RetCFGEdge>(edge)) {
 
@@ -326,6 +329,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
         }
 
     }
+    // We have visited all the nodes
 
     // std::map<const Instruction*, AccessTypeSet> all_ats;
     std::map<const Value*, AccessTypeSet> all_ats;
@@ -339,10 +343,10 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
         // exit(1);
 
         bool do_not_return = true;
-        for (auto at: l_ats)
+        for (auto at: l_ats) {
             if (at.getAccess() == AccessType::Access::ret) {
                 auto l_ats_all_nodes = at.getICFGNodes();
-                for (auto inst: l_ats_all_nodes)
+                for (auto inst: l_ats_all_nodes) {
                     if (inst == fun_exit) {
                         for (auto at2: l_ats)
                             for (auto inst2:  at.getICFGNodes())
@@ -350,8 +354,9 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                         do_not_return = false;
                         break;
                     }
+                }
             }
-
+        }   
         if (do_not_return)
             all_ats[a] = l_ats;
     }
@@ -370,7 +375,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
         for (auto atsx: all_ats) {
             auto ats_all_nodes = ats_all_nodes_before;
             auto atsx_all_nodes = atsx.second.getAllICFGNodes();
-            for (auto inst: atsx_all_nodes)
+            for (auto inst: atsx_all_nodes) {
                 if (ats_all_nodes.find(inst) != ats_all_nodes.end()) {
                     // I found something in common
                     if (AccessTypeSet::debug) {
@@ -381,6 +386,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                             ats.insert(atx, inst);
                     break;
                 }
+            }
         }
 
         auto ats_all_nodes_merged = ats.getAllICFGNodes();
@@ -552,8 +558,8 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                 acNode.setAccess(AccessType::Access::read);
                 ats.insert(acNode, vNode->getICFGNode());
 
-                // XXX: casting operations complitate things a lot. For the time
-                // being I just leave it.
+                // XXX: casting operations complicate things a lot. For the time
+                // being I just skip it.
 
                 if (auto bitcastinst = SVFUtil::dyn_cast<BitCastInst>(inst)) {
                     auto dst_typ = bitcastinst->getDestTy();
