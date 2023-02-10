@@ -1,4 +1,5 @@
 #include "AccessType.h"
+#include "AccessTypeHandler.h"
 
 #include "SVF-FE/LLVMUtil.h"
 
@@ -8,6 +9,16 @@
 bool AccessTypeSet::debug = false;
 std::string AccessTypeSet::debug_condition = "";
 bool AccessTypeSet::consider_indirect_calls = false;
+
+bool predefined_access_type_dispatcher(AccessTypeSet ats, std::string fun, const ICFGNode * node) {
+    // TODO move this line to the .h file
+    auto pos = accessTypeHandlers.find(fun);
+    if (pos != accessTypeHandlers.end()) {
+        // call the specific handler
+        return pos->second(ats, fun, node);
+    }
+    return false;
+}
 
 bool areCompatible(FunctionType* caller,FunctionType* callee) {
 
@@ -263,12 +274,8 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
             if (callee != nullptr) {
                 std::string fun = callee->getName();
                 // TODO: add an allow-list
-                if (fun == "malloc") {
-                    AccessType acNode;
-                    // no need to set field, empty field set is what I need
-                    acNode.setAccess(AccessType::Access::create);
-                    ats.insert(acNode, node);
-                }
+                // malloc handler
+                bool _ignored = predefined_access_type_dispatcher(ats, fun, node);
             }
         }  
 
@@ -579,14 +586,14 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                     // outs() << "INSPECT?: " << succNode2->toString() << "\n";
 
                     // follow indirect jumps if a store, probably add a flag
-                    if (vNode->getNodeKind() != VFGNode::VFGNodeK::Store)
+                    if (vNode->getNodeKind() != VFGNode::VFGNodeK::Store) {
                         // try to follow only Direct Edges
                         if (SVFUtil::isa<SVF::IndirectSVFGEdge>(edge)) {
                             // VFGNode* succNode2 = edge->getDstNode();
                             // outs() << "SKIP: " << succNode2->toString() << "\n";
                             continue;
                         }
-
+                    }
                     // outs() << "I PROCEED WITH THIS\n";
 
                     VFGNode* succNode = edge->getDstNode();
@@ -624,14 +631,11 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                         if (p_succ.getStackSize() >= MAX_STACKSIZE) {
                             ok_continue = false;
                             outs() << "[INFO] Stack size too big!\n";
-                        } 
-                        else if (!consider_indirect_calls && 
-                                cs->isIndirectCall()) {
-                            ok_continue = false;
+                        } else if (cs->isIndirectCall()) {
+                            ok_continue = false; // TODO CHECK WITH FLAVIO is is a stop flag to no go into children?
                             // outs() << "[INFO] Indirect call, I stop!\n";
                         // it is a direct call, check for stubs
-                        } 
-                        else {
+                        } else {
                             if (!cs->isIndirectCall()) {
                                 std::string fun = SVFUtil::getCallee(cs->getCallSite())->getName();
 
@@ -639,11 +643,9 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                                 //        << fun << "\n";
 
                                 // TODO: add an allow-list
-                                if (fun == "free") {
-                                    ok_continue = false;
-                                    acNode.setAccess(AccessType::Access::del);
-                                    ats.insert(acNode, vNode->getICFGNode());
-                                }
+                                // free handler
+                                ok_continue = predefined_access_type_dispatcher(ats, fun, vNode->getICFGNode());
+
                             }
                         }
                     }
