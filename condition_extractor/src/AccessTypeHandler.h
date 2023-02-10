@@ -4,6 +4,13 @@
 #include <map>
 #include "AccessType.h"
 #include <unordered_map>
+
+/**
+See explanation in AccessType.cpp function: predefined_access_type_dispatcher
+
+You can define handlers for specific functions that will manually update the access type set.
+*/
+
 typedef bool (*Handler)(AccessTypeSet, std::string, const ICFGNode *);
 typedef std::map<std::string, Handler> AccessTypeHandler_map;
 

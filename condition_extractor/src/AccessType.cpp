@@ -10,6 +10,17 @@ bool AccessTypeSet::debug = false;
 std::string AccessTypeSet::debug_condition = "";
 bool AccessTypeSet::consider_indirect_calls = false;
 
+/**
+If exists, call the predefined handler for function fun.
+
+@param: ats: the access type set to be updated by the handler
+@param: fun: the name of the function
+@param: node: the node currently analyzed
+
+@return: boolean value indicating if the analysis should continue on the subfield.
+         For example, it might be false for a cast to indicate we do not try to follow further child of the node.
+         default true.
+*/
 bool predefined_access_type_dispatcher(AccessTypeSet ats, std::string fun, const ICFGNode * node) {
     // TODO move this line to the .h file
     auto pos = accessTypeHandlers.find(fun);
@@ -17,7 +28,7 @@ bool predefined_access_type_dispatcher(AccessTypeSet ats, std::string fun, const
         // call the specific handler
         return pos->second(ats, fun, node);
     }
-    return false;
+    return true;
 }
 
 bool areCompatible(FunctionType* caller,FunctionType* callee) {
