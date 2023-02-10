@@ -10,6 +10,9 @@ class TypeDependencyGraphGenerator(DependencyGraphGenerator):
 
     def create(self) -> DependencyGraph:
         dependency_graph = DependencyGraph()
+
+        # from IPython import embed; embed(); exit(1)
+
         for api_a in self.apis_list:
             for api_b in self.apis_list:
                 # api_a_functionname = api_a.function_name
@@ -19,6 +22,19 @@ class TypeDependencyGraphGenerator(DependencyGraphGenerator):
                     # api_a_depdences = dependency_graph.get(api_a_functionname, [])
                     # api_a_depdences += [api_b_functionname]
                     # dependency_graph[api_a_functionname] = api_a_depdences
+
+        # sum_dep_nodes = 0
+        # num_dep_nodes = 0
+        # with open("type.log", "w") as l:
+        #     for k, v in dependency_graph.graph.items():
+        #         sum_dep_nodes += len(v)
+        #         num_dep_nodes += 1
+        #         l.write(f"{k.function_name} {len(v)}\n")
+
+        # avg_dep_nodes = sum_dep_nodes/num_dep_nodes
+        # print(f"Average dependencies: {avg_dep_nodes}")
+        # print(f"Num. keys: {len(dependency_graph.keys())}")
+        # exit(1)
 
         return dependency_graph
 
@@ -51,13 +67,16 @@ class TypeDependencyGraphGenerator(DependencyGraphGenerator):
     
     def get_input_output(self, api: Api):
         input_a = []
-        output_a = [api.return_info]
-        # print(api.arguments_info)
+        output_a = []
+        
+        if api.return_info.type != "void":
+            output_a += [api.return_info]
+
         for arg in api.arguments_info:
-            if arg.flag == "ref":
-                output_a += [arg]
-            
-            input_a += [arg]
+            if arg.type != "void":
+                if arg.flag == "ref":
+                    output_a += [arg]
+                input_a += [arg]
 
         return input_a, output_a
 

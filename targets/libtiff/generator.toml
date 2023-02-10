@@ -4,14 +4,23 @@ apis_clang = "/workspaces/libfuzz/analysis/libtiff/work/apipass/apis_clang.json"
 coercemap = "/workspaces/libfuzz/analysis/libtiff/work/apipass/coerce.log"
 headers = "/workspaces/libfuzz/analysis/libtiff/work/apipass/exported_functions.txt"
 incomplete_types = "/workspaces/libfuzz/analysis/libtiff/work/apipass/incomplete_types.txt"
-conditions = "/workspaces/libfuzz/analysis/libtiff/work/apipass/conditions.json"
+# conditions = "/workspaces/libfuzz/analysis/libtiff/work/apipass/conditions.json"
+# conditions = "/workspaces/libfuzz/condition_extractor/conditions-tmp.json"
+# conditions = "/workspaces/libfuzz/condition_extractor/conditions1-tmp.json"
+conditions = "/workspaces/libfuzz/condition_extractor/conditions-tmp-ic.json"
+# minimum_apis = "/workspaces/libfuzz/analysis/libtiff/work/apipass/apis_minimized.txt"
+# minimum_apis = "/workspaces/libfuzz/analysis/libtiff/work/apipass/apis_minimized_2.txt"
+minimum_apis = ""
+
 
 [generator]
 workdir = "/workspaces/libfuzz/workdir/"
 policy = "constraint_based"
+dep_graph = "type"
+# dep_graph = "undef"
 pool_size = 1
-driver_size = 20
-num_seeds = 20
+driver_size = 10
+num_seeds = 1
 backend = "libfuzz"
 
 [backend]

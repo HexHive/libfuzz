@@ -1,5 +1,5 @@
 
-import json, collections, copy
+import json, collections, copy, os
 from typing import List, Set #, Dict, Tuple, Optional
 
 from .api import Api, Arg
@@ -127,11 +127,24 @@ class Utils:
         return apis_clang_list
 
     @staticmethod
-    def get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types) -> Set[Api]:
+    def get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types, minimum_apis) -> Set[Api]:
 
         coerce_info = Utils.read_coerce_log(coerce_map)
         included_functions = Utils.get_include_functions(hedader_folder)
         incomplete_types_list = Utils.get_incomplete_types_list(incomplete_types)
+
+        minimum_apis_list = []
+        if os.path.isfile(minimum_apis):
+            with open(minimum_apis) as f:
+                for l in f:
+                    l = l.strip()
+                    if l:
+                        minimum_apis_list += [l]
+        else:
+            print("WARNING, minimum_apis not found, considering all APIs")
+
+        if len(minimum_apis_list) != 0:
+            included_functions = minimum_apis_list
 
         # TODO: make a white list form the original header
         blacklist = ["__cxx_global_var_init", "_GLOBAL__sub_I_network_lib.cpp"]
@@ -274,8 +287,16 @@ class Utils:
                 access = Access.WRITE
             elif at_json["access"] == "return":
                 access = Access.RETURN
+            elif at_json["access"] == "create":
+                access = Access.CREATE
+            elif at_json["access"] == "delete":
+                access = Access.DELETE
             elif at_json["access"] == "none":
                 access = Access.NONE
+
+            if access == None:
+                print("'access' is None, what should I do?")
+                exit(1)
 
             fields = at_json["fields"]
             

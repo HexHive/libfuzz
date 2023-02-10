@@ -10,6 +10,8 @@
 struct a_struct {
     int field_a;
     int field_b;
+	int field_c;
+	int field_d;
 };
 
 void bar1() {
@@ -73,19 +75,29 @@ my_struct* create(int a, int b) {
 
 	s->field_a = a;
 	s->field_b = b;
+	
+	my_struct *s1 = my_malloc(sizeof(my_struct));
+
+	// int xx[10];
+	// for (int i = 0; i < 10; i++) {
+	// 	if (i > 5)
+	// 		xx[i] = i + 1;
+	// 	else 
+	// 		xx[i] = i * 2;
+	// }
 
 	return s;
 }
 
 void first(my_struct *s, int a) {
-	s->field_a = a;
-	if (s->field_a < 0)
-		s->field_a = -s->field_a;
+	s->field_b = a;
+	if (s->field_c < 0)
+		s->field_c = -s->field_c;
 }
 
 void second(my_struct *s, int b) {
 	if (s->field_a > 10)
-		s->field_b = b;
+		s->field_d = b;
 }
 
 void third(void* b, my_struct *s) {

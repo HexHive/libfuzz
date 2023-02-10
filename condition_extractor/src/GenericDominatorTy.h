@@ -7,6 +7,7 @@
 #include "WPA/Andersen.h"
 
 #include "PhiFunction.h"
+#include "IBBG.h"
 
 using namespace SVF;
 using namespace llvm;
@@ -27,48 +28,66 @@ public:
     typedef std::map<ICFGNode *, ICFGNodeVec> ICFGNodeMapV;
 
 protected:
-    ICFG *icfg;
     BVDataPTAImpl *point_to;
     FunEntryICFGNode *entry_node;
-    // dom works for Dominator and
+    // dom works for Dominator and Postdominator
     // ICFGNodeMap dom;
-    ICFGNodeMapV dom_v;
-    // std::map<ICFGNode*, bool> dom_init;
+    // ICFGNodeMapV dom_v;
+    IBBGraph::IBBNodeMap dom;
+
     // PHIFun: C -> R
     PHIFun phi;
     // PHIFunInv: R -> C
     PHIFunInv phi_inv;
-    // R: return edge set
-    ICFGEdgeSet R;
+    // // R: return edge set
+    // ICFGEdgeSet R;
+    // // C: call edge set
+    // ICFGEdgeSet C;
+
+    // PHIFun: C -> R for IBB
+    IBBGraph::PHIFunIBB phi_ibb;
+    // PHIFunInv: R -> C for IBB
+    IBBGraph::PHIFunIBB phi_inv_ibb;
+
+    // PHIFun: C -> R for IBB
+    IBBGraph::IBBEdgeSet R_ibbg;
     // C: call edge set
-    ICFGEdgeSet C;
+    IBBGraph::IBBEdgeSet C_ibbg;
+
+    // real graph where the dominator operates to
+    IBBGraph *ibbg;
 
     // dumped edges from alternative entry points
     ICFGEdgeSet dumped_edges;
 
-    ICFGNodeSet relevant_nodes;
+    // ICFGNodeSet relevant_nodes;
     // ICFGNodeSet default_nodes;
 
     bool is_created = false;
 
-public:
-    GenericDominatorTy(BVDataPTAImpl *);
-    bool dominates(ICFGNode *, ICFGNode *);
+    bool include_indirect_jumps = false;
 
+public:
+    GenericDominatorTy(BVDataPTAImpl*, bool);
+    ~GenericDominatorTy() {
+        delete ibbg;
+    }
     // Dump graph somehow
     void dumpTransRed(const std::string &file, bool simple = false);
     void dumpDom(const std::string &file);
     // Load the graph somehow
     void loadDom(const std::string &file);
 
-    ICFGNode * getNode(int node_id);
+    IBBNode * getNode(int node_id);
 
     inline FunEntryICFGNode *getEntryNode() { return entry_node; }
     inline void setEntryNode(FunEntryICFGNode *node) { entry_node = node; }
     inline BVDataPTAImpl *getPointToAnalysis() { return point_to; }
     inline SVFModule *getModule() { return point_to->getModule(); }
     inline PTACallGraph *getPTACallGraph() { return point_to->getPTACallGraph(); }
-    inline ICFG *getICFG() { return icfg; }
+    inline ICFG *getICFG() { return point_to->getICFG(); }
+    inline PTACallGraph *getCallGraph() { return point_to->getPTACallGraph(); }
+    inline IBBGraph *getIBBGraph() {return ibbg;}
     inline void addDumpedEdge(ICFGEdge *edge) { dumped_edges.insert(edge); }
     inline ICFGEdgeSet &getDumpedEdge() { return dumped_edges; }
 
@@ -89,73 +108,65 @@ public:
         return phi_inv[ret_edge];
     }
 
-    inline void setRelevantNodes(ICFGNodeSet nodes)
-    {
-        relevant_nodes = nodes;
-    }
+    // inline void setRelevantNodes(ICFGNodeSet nodes)
+    // {
+    //     relevant_nodes = nodes;
+    // }
     inline unsigned int getTotRelevantNodes()
     {
-        return relevant_nodes.size();
+        return ibbg->getNodeIdAllocated().size();
     }
-    inline bool isARelevantNode(ICFGNode *node)
+    inline bool isARelevantNode(IBBNode *node)
     {
+        IBBGraph::IBBNodeSet relevant_nodes = ibbg->getNodeAllocated();
         return relevant_nodes.find(node) != relevant_nodes.end();
     }
-    inline ICFGNodeSet &getRelevantNodes() { return relevant_nodes; }
+    inline  IBBGraph::IBBNodeSet getRelevantNodes() { 
+        return ibbg->getNodeAllocated();
+    }
 
-    inline void addR(RetCFGEdge *ret_edge) { R.insert(ret_edge); }
-    inline void addC(CallCFGEdge *call_edge) { C.insert(call_edge); }
+    // inline void addR(RetCFGEdge *ret_edge) { R.insert(ret_edge); }
+    // inline void addC(CallCFGEdge *call_edge) { C.insert(call_edge); }
+
+    inline void addRIBBG(IBBEdge *ret_edge) { R_ibbg.insert(ret_edge); }
+    inline void addCIBBG(IBBEdge *call_edge) { C_ibbg.insert(call_edge); }
 
     // dom set/get
-    inline void addDom(ICFGNode *node, ICFGNode *dom_node)
+    inline void addDom(IBBNode *node, IBBNode *dom_node)
     {
-        // dom[node].insert(dom_node);
+        dom[node].insert(dom_node);
+    }
+    inline void setDom(IBBNode *node, IBBGraph::IBBNodeSet dom_nodes)
+    {
+        dom[node] = dom_nodes;
+    }
+    inline void clearDom(IBBNode *node)
+    {
+        dom[node].clear();
+    }
+    inline IBBGraph::IBBNodeSet getDom(IBBNode *node)
+    {
+        return dom[node];
+    }
 
-        // if (std::count(dom_v[node].begin(), dom_v[node].end(), dom_node) == 0)
-            dom_v[node].push_back(dom_node);
+    inline void saveIBBGraph(std::string filename) {
+        GraphPrinter::WriteGraphToFile(SVFUtil::outs(), filename, ibbg, false);
     }
-    inline void setDom(ICFGNode *node, ICFGNodeSet dom_nodes)
-    {
-        dom_v[node].clear();
-        dom_v[node].resize(dom_nodes.size());
-        std::copy(dom_nodes.begin(), dom_nodes.end(), dom_v[node].begin());
-        // if (dom_init[node] && dom_nodes == getAllDefault())
-        //     return;
-        // dom[node] = dom_nodes;
-        // dom_init[node] = false;
-    }
-    // inline void initDom(ICFGNode* node) {
-    //     dom_init[node] = true;
-    // }
-    inline void clearDom(ICFGNode *node)
-    {
-        // dom_init[node] = false;
-        dom_v[node].clear();
-    }
-    inline ICFGNodeSet getDom(ICFGNode *node)
-    {
-        // if (dom_init[node]) {
-        //     dom[node] = getAllDefault();
-        //     dom_init[node] = false;
-        // }
-        ICFGNodeSet dom_set;
-        std::copy(dom_v[node].begin(), dom_v[node].end(),
-                  inserter(dom_set, dom_set.begin()));
-        return dom_set;
-        // return dom[node];
-    }
-    // inline void setAllDefault(ICFGNodeSet nodes) {default_nodes = nodes;}
-    // inline ICFGNodeSet getAllDefault() {return default_nodes;}
-
+    
     virtual inline string getDomName() = 0;
+    virtual bool dominates(ICFGNode *, ICFGNode *) = 0;
 
     void createDom();
 
-private:
     void pruneUnreachableFunctions();
     void buildPhiFun();
     void inferSubGraph();
-    void buildR();
+
+private:
+    // void pruneUnreachableFunctions();
+    // void buildPhiFun();
+    // void inferSubGraph();
+    // void buildR();
     void restoreUnreachableFunctions();
 
     void buildTransientReduction();
@@ -165,8 +176,8 @@ private:
     // debug functions
     void printPhiFunction();
     void printPhiInvFunction();
-    void printR();
-    void printC();
+    // void printR();
+    // void printC();
 
     virtual void buildDom() = 0;
 };
@@ -180,9 +191,6 @@ public:
     DomEdge(DomNode *s, DomNode *d) : DomEdgeTy(s, d, 0)
     {
     }
-
-    typedef GenericNode<DomNode, DomEdge>::GEdgeSetTy DomEdgeSetTy;
-    typedef DomEdgeSetTy SVFGEdgeSetTy;
 };
 
 typedef GenericNode<DomNode, DomEdge> DomNodeTy;
@@ -198,12 +206,12 @@ public:
 
 public:
     /// Constructor
-    DomNode(ICFGNode *n) : DomNodeTy(n->getId(), DomNodeK::DomeNode)
+    DomNode(IBBNode *n) : DomNodeTy(n->getId(), DomNodeK::DomeNode)
     {
         node = n;
     }
 
-    ICFGNode *getICFGNode()
+    IBBNode *getIBBNode()
     {
         return node;
     }
@@ -222,7 +230,7 @@ public:
     }
 
 private:
-    ICFGNode *node;
+    IBBNode *node;
 };
 
 namespace llvm
@@ -266,34 +274,60 @@ namespace llvm
             std::string str;
             raw_string_ostream rawstr(str);
 
-            ICFGNode *in_node = node->getICFGNode();
+            IBBNode *in_node = node->getIBBNode();
 
-            if (SVFUtil::isa<IntraICFGNode>(in_node))
-            {
-                rawstr << "color=black";
+            ICFGNode *first_node = in_node->getFirstNode();
+            ICFGNode *last_node = in_node->getLastNode();
+            unsigned int n_node = in_node->getNumberNodes();
+
+            if (n_node == 1) {
+                if (SVFUtil::isa<IntraICFGNode>(first_node))
+                {
+                    rawstr << "color=black";
+                } 
+                else if (SVFUtil::isa<CallICFGNode>(first_node))
+                {
+                    rawstr << "color=red";
+                }
+                else if (SVFUtil::isa<RetICFGNode>(first_node))
+                {
+                    rawstr << "color=blue";
+                }
+            } else {
+
+                bool has_intra = false;
+                has_intra |= SVFUtil::isa<IntraICFGNode>(first_node);
+                has_intra |= SVFUtil::isa<IntraICFGNode>(last_node);
+                has_intra |= SVFUtil::isa<FunEntryICFGNode>(first_node);
+                has_intra |= SVFUtil::isa<FunEntryICFGNode>(last_node);
+                has_intra |= SVFUtil::isa<FunExitICFGNode>(first_node);
+                has_intra |= SVFUtil::isa<FunExitICFGNode>(last_node);
+
+                bool has_call = SVFUtil::isa<CallICFGNode>(last_node);
+                bool has_ret = SVFUtil::isa<RetICFGNode>(first_node);
+
+                if (has_intra && !has_call && !has_ret)
+                {
+                    rawstr << "color=black";
+                }
+                else if (has_intra && has_call && !has_ret)
+                {
+                    rawstr << "color=red";
+                }
+                else if (has_intra && !has_call && has_ret)
+                {
+                    rawstr << "color=blue";
+                }
+                else if (!has_intra && has_call && has_ret)
+                {
+                    rawstr << "color=purple";
+                }
+                else {
+                    outs() << node->toString() << "\n";
+                    assert(false && "not sure how to color this node!");
+                }
+                
             }
-            else if (SVFUtil::isa<FunEntryICFGNode>(in_node))
-            {
-                rawstr << "color=yellow";
-            }
-            else if (SVFUtil::isa<FunExitICFGNode>(in_node))
-            {
-                rawstr << "color=green";
-            }
-            else if (SVFUtil::isa<CallICFGNode>(in_node))
-            {
-                rawstr << "color=red";
-            }
-            else if (SVFUtil::isa<RetICFGNode>(in_node))
-            {
-                rawstr << "color=blue";
-            }
-            else if (SVFUtil::isa<GlobalICFGNode>(in_node))
-            {
-                rawstr << "color=purple";
-            }
-            else
-                assert(false && "no such kind of node!!");
 
             rawstr << "";
 

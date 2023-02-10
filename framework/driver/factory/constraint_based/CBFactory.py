@@ -36,12 +36,21 @@ class CBFactory(Factory):
                 inv_dep_graph[dep].add(api)
         self.dependency_graph = inv_dep_graph
 
+        # print("dep graph?")
+        # from IPython import embed; embed(); exit(1)
+
     def get_starting_api(self) -> Set[Api]:
+
         starting_api = set()
         for api in self.api_list:
-            if (not any(arg.is_type_incomplete for arg in api.arguments_info) and
-                api.return_info.is_type_incomplete):
+            if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
+                and api.return_info.is_type_incomplete):
                 starting_api.add(api)
+            if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
+                and api.return_info.type == "void*"):
+                starting_api.add(api)
+
+        # from IPython import embed; embed(); exit(1)
 
         return starting_api
 
@@ -58,7 +67,7 @@ class CBFactory(Factory):
         for arg_pos, arg_type in api_call.get_pos_args_types():
             arg_ats = conditions.argument_at[arg_pos]
             try:
-                if rng_ctx.is_void_ponter(arg_type):
+                if rng_ctx.is_void_pointer(arg_type):
                     arg_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, arg_ats)
                 elif isinstance(arg_type, PointerType) and arg_type.to_function:
                     arg_var = rng_ctx.get_null_constant()
@@ -72,7 +81,7 @@ class CBFactory(Factory):
         ret_ats = conditions.return_at
         ret_type = api_call.ret_type
         try:
-            if rng_ctx.is_void_ponter(ret_type):
+            if rng_ctx.is_void_pointer(ret_type):
                 ret_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, ret_ats, True)
             elif isinstance(ret_type, PointerType) and ret_type.to_function:
                 ret_var = rng_ctx.get_null_constant()
@@ -80,7 +89,6 @@ class CBFactory(Factory):
                 ret_var = rng_ctx.try_to_get_var(ret_type, ret_ats, True)
             api_call.set_ret_var(ret_var)
         except ConditionUnsat:
-            # print(f"got unsat, to handle 2!")
             unsat_vars.add((-1, ret_ats))
         
         if len(unsat_vars) != 0:
@@ -90,7 +98,10 @@ class CBFactory(Factory):
             arg_ats = conditions.argument_at[arg_pos]
             rng_ctx.update(api_call.arg_vars[arg_pos], arg_ats)
         if api_call.ret_var is not None:
-            rng_ctx.update(api_call.ret_var, ret_ats)
+            rng_ctx.update(api_call.ret_var, ret_ats,  True)
+
+        # if api_call.function_name == "_TIFFfree":
+        #     from IPython import embed; embed(); exit(1)
 
         return (rng_ctx, unsat_vars)
 
@@ -114,13 +125,15 @@ class CBFactory(Factory):
         begin_condition = get_cond(begin_api)
         call_begin = to_api(begin_api)
 
-        rng_ctx_1, unsat_var_1 = self.try_to_instantiate_api_call(call_begin, begin_condition, rng_ctx)
+        rng_ctx_1, unsat_var_1 = self.try_to_instantiate_api_call(
+            call_begin, begin_condition, rng_ctx)
 
         if len(unsat_var_1) > 0:
             print("[ERROR] Cannot instantiate the first function :(")
             print(unsat_var_1)
             exit(1)
 
+        print(f"[INFO] starting with {call_begin.function_name}")
         drv += [(call_begin, rng_ctx_1)]
 
         api_n = begin_api
@@ -150,10 +163,30 @@ class CBFactory(Factory):
 
             print(f"[INFO] Complete doable functions: {len(candidate_api)}")
 
-            # (ApiCall, RunningContext, Api)
-            (api_call, rng_ctx_1, api_n) = random.choice(candidate_api)
+            # if api_n.function_name == "TIFFClose":
+            #     print("next to close?")
+            #     from IPython import embed; embed(); exit(1)
 
-            drv += [(api_call, rng_ctx_1)]
+            if candidate_api:
+                # (ApiCall, RunningContext, Api)
+                (api_call, rng_ctx_1, api_n) = random.choice(candidate_api)
+                print(f"[INFO] choose {api_call.function_name}")
+                drv += [(api_call, rng_ctx_1)]
+            else:
+                api_n = random.choice(starting_api)
+                begin_condition = get_cond(api_n)
+                call_begin = to_api(api_n)
+
+                print(f"[INFO] starting new chain with {api_n.function_name}")
+
+                rng_ctx_1, unsat_var_1 = self.try_to_instantiate_api_call(call_begin, begin_condition, rng_ctx_1)
+
+                if len(unsat_var_1) > 0:
+                    print("[ERROR] Cannot instantiate the first function :(")
+                    print(unsat_var_1)
+                    exit(1)
+
+                drv += [(call_begin, rng_ctx_1)]
 
         # print("after loop, debug exit..")
         # exit()

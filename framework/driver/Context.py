@@ -33,7 +33,7 @@ class Context:
         # TODO: map buffer and input
         # self.buffer_map = {}
 
-    def is_void_ponter(self, arg):
+    def is_void_pointer(self, arg):
         return isinstance(arg, PointerType) and arg.get_pointee_type() == self.stub_void
 
     def get_null_constant(self):

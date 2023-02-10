@@ -8,6 +8,7 @@
 // static fields, mainly for debug
 bool AccessTypeSet::debug = false;
 std::string AccessTypeSet::debug_condition = "";
+bool AccessTypeSet::consider_indirect_calls = false;
 
 bool predefined_access_type_dispatcher(AccessTypeSet ats, std::string fun, const ICFGNode * node) {
     // TODO move this line to the .h file
@@ -203,7 +204,8 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
     getPhiFunction(svfModule, icfg, &phi, &phi_inv);  
 
     // std::set<const VFGNode*> alloca_set;
-    std::set<const Value*> allocainst_set;
+    // std::set<const Value*> allocainst_set;
+    std::set<const Instruction*> allocainst_set;
     // std::set<const Value*> bitcastinst_set;
 
     // how many alloca?
@@ -255,6 +257,10 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                 }
             }
         } else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
+
+            if (!consider_indirect_calls && call_node->isIndirectCall())
+                    continue;
+
             auto callee = SVFUtil::getCallee(call_node->getCallSite());
             auto inst = SVFUtil::dyn_cast<CallInst>(call_node->getCallSite());
             // outs() << "[INFO] callinst2 " << *inst << "\n";
@@ -313,7 +319,8 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
     // std::map<const Instruction*, AccessTypeSet> all_ats;
     std::map<const Value*, AccessTypeSet> all_ats;
     for (auto a: allocainst_set) {
-        // outs() << "[INFO] paraAT() " << *a << "\n";
+        // outs() << "[INFO] paraAT() " << *a << " -- ";
+        // outs() << a->getFunction()->getName().str() << "\n";
         AccessTypeSet l_ats = AccessTypeSet::extractParameterAccessType(vfg, a, retType);
 
         // outs() << "[STARTING POINT] " << *a << "\n";
@@ -337,6 +344,9 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
         if (do_not_return)
             all_ats[a] = l_ats;
     }
+
+    // outs() << "LET'S SEE WHAT FUNCTIONS WE HAVE HERE!!!\n";
+    // exit(1);
 
     // MERGE traces that lead to a return value (and ignoring the others)
     bool ast_is_changed = true;
@@ -621,28 +631,30 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                         if (p_succ.getStackSize() >= MAX_STACKSIZE) {
                             ok_continue = false;
                             outs() << "[INFO] Stack size too big!\n";
-                        } else if (cs->isIndirectCall()) {
-                            ok_continue = false; // TODO CHECK WITH FLAVIO is is a stop flag to no go into children?
+                        } else if (!consider_indirect_calls && 
+                                cs->isIndirectCall()) {
+                            ok_continue = false;
                             // outs() << "[INFO] Indirect call, I stop!\n";
                         // it is a direct call, check for stubs
                         } else {
-                            std::string fun = SVFUtil::getCallee(cs->getCallSite())->getName();
+                            if (!cs->isIndirectCall()) {
+                                std::string fun = SVFUtil::getCallee(cs->getCallSite())->getName();
 
-                            // outs() << "[DEBUG] I found this function: " 
-                            //        << fun << "\n";
+                                // outs() << "[DEBUG] I found this function: " 
+                                //        << fun << "\n";
 
-                            // free handler
-                            ok_continue = predefined_access_type_dispatcher(ats, fun, vNode->getICFGNode());
-
-                            // TODO: add an allow-list
+                                // TODO: add an allow-list
+                                ok_continue = predefined_access_type_dispatcher(ats, fun, vNode->getICFGNode());
+                            }
                         }
                     }
 
                     // aka is a ret
                     if (cs && !isACall) {
                         ok_continue = p_succ.isCorrect(cs);
-                        if (ok_continue)
+                        if (ok_continue) {
                             p_succ.popFrame();
+                        }
                     }
 
                     if (ok_continue) {

@@ -9,6 +9,8 @@ LLVM/llvm-build
 *.ll
 *.dot
 
+condition_extractor/src_bkp/*
+condition_extractor/src_bkp/**/*
 
 ## C gitignore
 # Prerequisites
