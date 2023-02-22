@@ -1,0 +1,14 @@
+Function: do_casting
+param_0:
+((0),., read, %struct.a_struct*)
+((., read, %struct.a_struct*),.*, read, %struct.a_struct*)
+((., read, %struct.a_struct*),.4, read, i8*)
+((., read, %struct.a_struct*),.4, read, %struct.sub_struct1*)
+((., read, %struct.a_struct*),.4, read, %struct.sub_struct2*)
+((.4, read, %struct.sub_struct1*),.4.*, read, %struct.sub_struct1*)
+((.4, read, %struct.sub_struct2*),.4.*, read, %struct.sub_struct2*)
+((.4, read, %struct.sub_struct2*),.4.0, write, double)
+((.4, read, %struct.sub_struct1*),.4.0, write, i32)
+param_1:
+((0),., read, i16)
+return:

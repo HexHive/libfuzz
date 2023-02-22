@@ -29,138 +29,6 @@ bool areCompatible(FunctionType* caller,FunctionType* callee) {
     return are_comp;
 }
 
-AccessTypeSet AccessTypeSet::extractRawPointerAccessType(
-    const SVFG* vfg, const Value* val, Type* seek_type) {
-
-    AccessTypeSet ats;
-
-    // 0.A) only with BitCastInst
-    assert(SVFUtil::isa<BitCastInst>(val) && "val must be a BitCastInt!");
-
-    const BitCastInst* bitcast_inst = SVFUtil::dyn_cast<BitCastInst>(val);
-    // 0.B) the BitCastInst must cast from my known type!
-    assert(bitcast_inst->getDestTy() == seek_type && "val must cast from seek_type!");
-
-    StructType* st = (StructType*)seek_type;
-
-    SVFIR* pag = SVFIR::getPAG();
-
-
-    LLVMModuleSet *llvmModuleSet = SVF::LLVMModuleSet::getLLVMModuleSet();
-    PAGNode* pNode = pag->getGNode(pag->getValueNode(val));
-    const VFGNode* vNode = vfg->getDefSVFGNode(pNode);
-
-    const Type *seek_origin;
-    if (SVFUtil::isa<PointerType>(seek_type)) {
-        seek_origin = seek_type->getPointerElementType();
-    } else {
-        seek_origin = seek_type;
-    }
-
-    assert(SVFUtil::isa<StructType>(seek_origin) && 
-            "I need a pointer to a struct!");
-    
-    const StructType *seek_struct = SVFUtil::dyn_cast<StructType>(seek_origin);
-
-    const StructLayout *seek_layout;
-
-    for (int i = 0; i < llvmModuleSet->getModuleNum(); i++) {
-        Module *llvmModule = llvmModuleSet->getModule(i);
-        DataLayout *datalayout = SVF::LLVMUtil::getDataLayout(llvmModule);
-        if (datalayout->getStructLayout( 
-                const_cast<StructType*>(seek_struct))) {
-            seek_layout = datalayout->getStructLayout(
-                const_cast<StructType*>(seek_struct));
-            break;
-        }
-    }
-
-    auto struct_offsets = nullptr; //seek_layout->getMemberOffsets();
-    // this conversion is slow, but then I can use find() from the vector
-    std::vector<uint64_t> struct_offsets_v; //= struct_offsets.vec();
-    // outs() << "[DEBUG] field -> offset (bytes?)\n";
-    // int i = 0;
-    // for (auto o: struct_offsets) {
-    //     outs() << " -> " << i << ": " << o << "\n";
-    //     i++;
-    // }
-    // outs() << "\n";
-
-    std::set<VFGNode*> generation_nodes;
-    std::set<VFGNode*> gep_nodes;
-
-    // 1) find the declartion: alloca or i8* return function
-    for (VFGNode::const_iterator it = vNode->InEdgeBegin(), 
-        eit = vNode->InEdgeEnd(); it != eit; ++it) {
-        VFGEdge* edge = *it;
-
-        // try to follow only Direct Edges
-        if (SVFUtil::isa<SVF::DirectSVFGEdge>(edge)) {
-            VFGNode* node = edge->getSrcNode();
-
-            if (auto call = SVFUtil::dyn_cast<ActualRetVFGNode>(node)) {
-                generation_nodes.insert(node);
-            } else if (auto addr = SVFUtil::dyn_cast<AddrVFGNode>(node)) {
-                generation_nodes.insert(node);
-            }
-        }
-    }
-
-    outs() << "[INFO] found these generators:\n";
-    for (auto gn: generation_nodes) {
-        outs() << " -> " << gn->toString() << "\n";
-    }
-
-    for (auto gn: generation_nodes) {
-        for (VFGNode::const_iterator it = gn->OutEdgeBegin(), 
-            eit = gn->OutEdgeEnd(); it != eit; ++it) {
-
-            VFGEdge* edge = *it;
-
-            if (!SVFUtil::isa<SVF::DirectSVFGEdge>(edge))
-                continue;
-
-            VFGNode* node = edge->getDstNode();
-
-            if (auto gep = SVFUtil::dyn_cast<GetElementPtrInst>
-                (node->getValue())) {
-                gep_nodes.insert(node);
-            }
-        
-        }
-    }
-
-    outs() << "[INFO] found these GEPs:\n";
-    for (auto gep: gep_nodes) {
-        auto inst = SVFUtil::dyn_cast<GetElementPtrInst>(gep->getValue());
-        if (inst->hasAllConstantIndices() &&
-            inst->getNumIndices() == 1) {
-            outs() << " -> " << gep->toString() << "\n";
-
-            ConstantInt *CI=dyn_cast<ConstantInt>(inst->getOperand(1));
-            uint64_t idx = CI->getZExtValue();
-
-            outs() << " -> offset: " << idx << "\n";
-
-            auto idx_iterator = std::find(struct_offsets_v.begin(), 
-                                            struct_offsets_v.end(), idx);
-            if (idx_iterator != struct_offsets_v.end()) {
-                unsigned int field = idx_iterator - struct_offsets_v.begin();
-                outs() << " -> field: " << field << "\n";
-            } else {
-                outs() << " -> field not found :(\n";
-            }
-
-            outs() << "\n";
-        }
-    }
-
-    exit(1);
-
-    return ats;
-
-}
-
 AccessTypeSet AccessTypeSet::extractReturnAccessType(
     const SVFG* vfg, const Value* val) {
 
@@ -264,7 +132,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                 std::string fun = callee->getName();
                 // TODO: add an allow-list
                 if (fun == "malloc") {
-                    AccessType acNode;
+                    AccessType acNode(retType);
                     // no need to set field, empty field set is what I need
                     acNode.setAccess(AccessType::Access::create);
                     ats.insert(acNode, node);
@@ -388,12 +256,20 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
 
     PAGNode* pNode = pag->getGNode(pag->getValueNode(val));
     const VFGNode* vNode = vfg->getDefSVFGNode(pNode);
+
+
     // need a stack -> FILO
     // let S be a stack
     std::vector<Path> worklist;
     std::set<Path> visited;
     // S.push(v)
-    worklist.push_back(Path(vNode));
+    // worklist.push_back(Path(vNode));
+    worklist.push_back(Path(vNode, val, seek_type));
+
+    // if (seek_type)
+    //     outs() << "DEBUG: seek_type: " << *seek_type << "\n";
+
+    // outs() << "DEBUG: val: " << *val << "\n";
 
     AccessTypeSet ats;
 
@@ -490,8 +366,10 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
 
                 const Value* prevValue = p.getPrevValue();
 
-                if (prevValue != nullptr) {
-                    auto inst = (StoreInst *)vNode->getValue();
+                if (prevValue != nullptr &&
+                    SVFUtil::isa<StoreInst>(vNode->getValue())) {
+                        
+                    auto inst = SVFUtil::dyn_cast<StoreInst>(vNode->getValue());
 
                     if (inst->getPointerOperand() == prevValue) {
                         acNode.setAccess(AccessType::Access::write);
@@ -502,13 +380,41 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                     }
                 }
 
-            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Gep) {
-                auto inst = (GetElementPtrInst *)vNode->getValue();
+            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Gep &&
+                      SVFUtil::isa<GetElementPtrInst>(vNode->getValue())) {
+                
+                // auto inst = (GetElementPtrInst *)vNode->getValue();
+                auto inst = SVFUtil::dyn_cast<GetElementPtrInst>(vNode->getValue());
+
+                // outs() << "[DEBUG] GEP under analysis:\n";
+                // outs() << *inst << "\n";
+                // outs() << vNode->toString() << "\n";
+
                 auto sType = inst->getSourceElementType();
+                auto dType = inst->getResultElementType();
+                auto pType = inst->getPointerOperandType();
+
+                // outs() << "[DEBUG]\n";
+
+                // outs() << "sType:\n";
+                // outs() << *sType << "\n";
+
+                // outs() << "dType:\n";
+                // outs() << *dType << "\n";
+
+                // outs() << "pType:\n";
+                // outs() << *pType << "\n";
+
+                // outs() << "acNode.getType():\n";
+                // outs() << *acNode.getType() << "\n";
+
+                // outs() << "[DEBUG END]\n";
 
                 // this avoids us to move into strange pointer-offset opreations
                 // that look like field access
-                if (SVFUtil::isa<llvm::StructType>(sType)) {
+                // if (SVFUtil::isa<llvm::StructType>(sType) && 
+                //  AccessTypeSet::isSameType(pType, acNode.getType()) ) {
+                if (TypeMatcher::compare_types(pType, acNode.getType())) {
                     if (inst->hasAllConstantIndices()) {
 
                         for (int pos = 1; pos <= inst->getNumIndices(); pos++) {
@@ -523,25 +429,56 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                                             inst->getOperand(pos));
                                 uint64_t idx = CI->getZExtValue();
                                 acNode.addField(idx);
+                                acNode.setType(dType);
                             }
 
                         }
                     }
                 }
-            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Copy) {
-                auto inst = (Instruction*)vNode->getValue();
+                // else {
+                //     outs() << "[DEBUG] GEP incoherent: \n";
+
+                //     outs() << "instruction:\n";
+                //     outs() << vNode->toString() << "\n";
+
+                //     outs() << "sType:\n";
+                //     outs() << *sType << "\n";
+
+                //     outs() << "dType:\n";
+                //     outs() << *dType << "\n";
+
+                //     outs() << "pType:\n";
+                //     outs() << *pType << "\n";
+
+                //     outs() << "acNode.getType():\n";
+                //     outs() << *acNode.getType() << "\n";
+                //     outs() << "\n";
+                //     exit(1);
+                // }
+            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Copy &&
+                    SVFUtil::isa<Instruction>(vNode->getValue())) {
+                auto inst = SVFUtil::dyn_cast<Instruction>(vNode->getValue());
 
                 acNode.setAccess(AccessType::Access::read);
                 ats.insert(acNode, vNode->getICFGNode());
 
-                // XXX: casting operations complitate things a lot. For the time
-                // being I just leave it.
-
                 if (auto bitcastinst = SVFUtil::dyn_cast<BitCastInst>(inst)) {
                     auto dst_typ = bitcastinst->getDestTy();
-                    if (dst_typ != seek_type && dst_typ != i8ptr_typ) {
-                        skipNode = true;
+                    auto src_typ = bitcastinst->getSrcTy();
+
+                    // if (acNode.getNumFields() != 0 &&                        
+                    //     TypeMatcher::compare_types(src_typ, acNode.getType())) {
+                    if (TypeMatcher::compare_types(src_typ, acNode.getType())) {
+                        acNode.setType(dst_typ);
+                        ats.insert(acNode, vNode->getICFGNode());
                     }
+                    else {
+                        skipNode = true;    
+                    }
+
+                    // if (dst_typ != seek_type && dst_typ != i8ptr_typ) {
+                    //     skipNode = true;
+                    // }
                 }
                 // if (Instruction::isCast(inst->getOpcode()))
                 //     skipNode = true;

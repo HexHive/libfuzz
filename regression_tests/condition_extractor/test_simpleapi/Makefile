@@ -9,7 +9,8 @@ EXTRACTOR = /workspaces/libfuzz/condition_extractor/bin/extractor
 LLVM_DIS = ${LLVM_DIR}/bin/llvm-dis
 WPA = /root/SVF/Release-build/bin/wpa
 EXTRACT_BC = extract-bc
-FUNCTION = indirect_test
+FUNCTION = do_casting
+# FUNCTION = indirect_test
 # FUNCTION = first
 # FUNCTION = foo
 # FUNCTION = create
@@ -34,10 +35,11 @@ run: $(TARGET).o.bc $(TARGET).o.ll
 #	$(EXTRACTOR) $< -interface $(INTERFACE) -t json -output $(TARGET).json -v v0 -dom
 #	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v1 -dom -print_dom -cache_folder $(CACHE_FOLDER)
 #	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v1 -dom  -print_dom
-	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v1 -do_indirect_jumps
+#	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v0 -do_indirect_jumps
+	$(EXTRACTOR) $< -function $(FUNCTION) -t txt -output $(TARGET).txt -v v0 -do_indirect_jumps
 #	$(WPA) -ander -svfg --dump-vfg  ./$(TARGET).o.bc
 # 	convert only if you --print_dom
-	# ./convert_dot_pdf.sh
+#	./convert_dot_pdf.sh
 
 clean:
 	rm -f $(TARGET).o $(TARGET).o.bc .$(TARGET).o.bc $(TARGET).o.svf.bc $(TARGET).o.ll apis_llvm.log apis_llvm.json *.pdf dom*.dot postdom*.dot dom*.txt postdom*.txt

@@ -5,12 +5,11 @@ coercemap = "/workspaces/libfuzz/analysis/libtiff/work/apipass/coerce.log"
 headers = "/workspaces/libfuzz/analysis/libtiff/work/apipass/exported_functions.txt"
 incomplete_types = "/workspaces/libfuzz/analysis/libtiff/work/apipass/incomplete_types.txt"
 # conditions = "/workspaces/libfuzz/analysis/libtiff/work/apipass/conditions.json"
-# conditions = "/workspaces/libfuzz/condition_extractor/conditions-tmp.json"
-# conditions = "/workspaces/libfuzz/condition_extractor/conditions1-tmp.json"
-conditions = "/workspaces/libfuzz/condition_extractor/conditions-tmp-ic.json"
+# conditions = "/workspaces/libfuzz/condition_extractor/conditions-tmp-ic.json"
+conditions = "/workspaces/libfuzz/condition_extractor/conditions-tmp-icpt1.json"
 # minimum_apis = "/workspaces/libfuzz/analysis/libtiff/work/apipass/apis_minimized.txt"
-# minimum_apis = "/workspaces/libfuzz/analysis/libtiff/work/apipass/apis_minimized_2.txt"
-minimum_apis = ""
+minimum_apis = "/workspaces/libfuzz/analysis/libtiff/work/apipass/apis_minimized_2.txt"
+# minimum_apis = ""
 
 
 [generator]

@@ -5,8 +5,10 @@
 #include <Graphs/SVFG.h>
 #include <Graphs/GenericGraph.h>
 #include "WPA/Andersen.h"
+#include <llvm/Support/raw_ostream.h>
 
 #include "PhiFunction.h"
+#include "TypeMatcher.h"
 #include "json/json.h"
 #include <fstream> 
 
@@ -24,10 +26,32 @@ class AccessType {
         std::set<const ICFGNode*> icfg_set;
         std::vector<int> fields;
         Access access;
+        llvm::Type* type;
+
+        // fake parent
+        bool has_parent;
+        std::vector<int> p_fields;
+        Access p_access;
+        llvm::Type* p_type;
+        
+
+        static std::string type_to_string(llvm::Type* typ) {
+            std::string str;
+            llvm::raw_string_ostream(str) << *typ;
+            return str;
+        }
+
+        static std::string type_to_hash(llvm::Type* typ) {
+            return TypeMatcher::compute_hash(typ);
+        }
 
     public:
-        AccessType() {
+        AccessType(llvm::Type* t) {
             access = none;
+            p_access = none;
+            has_parent = false;
+            type = t;
+            p_type = nullptr;
         }
         ~AccessType() {fields.clear();}
 
@@ -35,8 +59,16 @@ class AccessType {
         AccessType& operator=(const AccessType &rhs) {
             this->fields = rhs.fields;
             this->access = rhs.access;
+            this->type = rhs.type;
+
             // hope this does not make a mess!
             this->icfg_set = rhs.icfg_set;
+
+            // parent
+            this->has_parent = rhs.has_parent;
+            this->p_fields = rhs.p_fields;
+            this->p_access = rhs.p_access;
+            this->p_type = rhs.p_type;
 
             return *this;
         };
@@ -50,6 +82,11 @@ class AccessType {
         }
 
         void addField(int a_field) {
+            // fake father? find better way to do so
+            p_fields = fields;
+            p_access = access;
+            p_type = type;
+            has_parent = true;
             fields.push_back(a_field);
         }
 
@@ -81,6 +118,20 @@ class AccessType {
             return access;
         }
 
+        void setType(llvm::Type* typ) {
+            type = typ;
+        }
+
+        llvm::Type* getType() {
+            return type;
+        }
+
+        // void clone() {
+        //     unsigned int new_ID = ++global_object_id;
+        //     parent_ID = ID;
+        //     ID = new_ID;
+        // }
+
         bool equals(std::string s) {
             return s == toString(false);
         }
@@ -89,6 +140,8 @@ class AccessType {
             if (other.fields != fields)
                 return false;
             if (other.access != access)
+                return false;
+            if (other.type != type)
                 return false;
             return true;
         }
@@ -105,8 +158,7 @@ class AccessType {
             return rawstr.str();
         }
 
-        std::string toString(bool verbose = false) {
-
+        std::string toStringParent() {
             std::string str;
             raw_string_ostream rawstr(str);
 
@@ -145,7 +197,67 @@ class AccessType {
                 outs() << "[ERROR] Access:: " << access << " unknown!!\n";
                 exit(1);
             }
-            rawstr << ")";
+            rawstr << ", " << type_to_string(type);
+            rawstr << ", " << type_to_hash(type) << ")";
+
+            return rawstr.str();
+        }
+
+        std::string toString(bool verbose = false) {
+
+            std::string str;
+            raw_string_ostream rawstr(str);
+
+            // example of output:
+            // (., write) -> write the whole pointer (all the fields)
+            // (.1, read) -> read field in position 1
+            // (.0.1, write) -> write subfield 1 of the field 0
+
+            rawstr << "(";
+
+            if (has_parent) {
+                AccessType p(p_type);
+                // AccessType p;
+                // p.setType(p_type);
+                p.setAccess(p_access);
+                for (auto f: p_fields)
+                    p.addField(f);
+                rawstr << p.toStringParent() << ",";
+            } else 
+                rawstr << "(0),";
+
+            rawstr  << ".";
+            int max_fields = getNumFields();
+            int i = 0;
+            for (int f: getFields()) {
+                if (f == -1)
+                    rawstr << "*";
+                else 
+                    rawstr << f;
+                if (i < max_fields - 1)
+                    rawstr << ".";
+                i++;
+            }
+
+            rawstr << ", ";
+            if (access == Access::read) 
+                rawstr << "read";
+            else if (access == Access::write)
+                rawstr << "write";
+            else if (access == Access::ret)
+                rawstr << "return";
+            else if (access == Access::none)
+                rawstr << "none";
+            else if (access == Access::del)
+                rawstr << "delete";
+            else if (access == Access::create)
+                rawstr << "create";
+            else {
+                outs() << "[ERROR] Access:: " << access << " unknown!!\n";
+                exit(1);
+            }
+            rawstr << ", " << type_to_string(type);
+            rawstr << ", " << type_to_hash(type) << ")";
 
             if (verbose) {
                 rawstr << "\n";
@@ -165,7 +277,7 @@ class AccessType {
             return debugInfo;
         }
 
-        Json::Value toJson(bool verbose) {
+        Json::Value toJsonParent() {
             Json::Value accessTypeJson;
 
             if (access == Access::read) 
@@ -191,6 +303,51 @@ class AccessType {
                 fieldsJson.append(field);
         
             accessTypeJson["fields"] = fieldsJson;
+            accessTypeJson["type"] = type_to_hash(type);
+            accessTypeJson["type_string"] = type_to_string(type);
+
+            return accessTypeJson;
+        }
+
+        Json::Value toJson(bool verbose) {
+            Json::Value accessTypeJson;
+
+            if (has_parent) {
+                AccessType p(p_type);
+                // AccessType p;
+                // p.setType(p_type);
+                p.setAccess(p_access);
+                for (auto f: p_fields)
+                    p.addField(f);
+                accessTypeJson["parent"] = p.toJsonParent();
+            } else 
+                accessTypeJson["parent"] = 0;
+
+            if (access == Access::read) 
+                accessTypeJson["access"] = "read";
+            else if (access == Access::write)
+                accessTypeJson["access"] = "write";
+            else if (access == Access::ret)
+                accessTypeJson["access"] = "return";
+            else  if (access == Access::none)
+                accessTypeJson["access"] = "none";
+            else if (access == Access::del)
+                accessTypeJson["access"] = "delete";
+            else if (access == Access::create)
+                accessTypeJson["access"] = "create";
+            else {
+                outs() << "[ERROR] Access:: " << access << " unknown!!\n";
+                exit(1);
+            }
+
+            Json::Value fieldsJson(Json::arrayValue);
+
+            for (auto field: fields)
+                fieldsJson.append(field);
+        
+            accessTypeJson["fields"] = fieldsJson;
+            accessTypeJson["type"] = type_to_hash(type);
+            accessTypeJson["type_string"] = type_to_string(type);
 
             if (verbose)
                 accessTypeJson["debug"] = dumpICFGNodesJson();
@@ -200,8 +357,12 @@ class AccessType {
 
         // for std:set
         bool operator<(const AccessType& rhs) const {
-            if (fields == rhs.fields)
-                return access < rhs.access;
+            if (fields == rhs.fields) {
+                if (access == rhs.access)
+                    return type < rhs.type;
+                else
+                    return access < rhs.access;
+            }
             
             return fields < rhs.fields;
         }
@@ -292,11 +453,9 @@ class AccessTypeSet {
         static bool consider_indirect_calls;
 
         static AccessTypeSet extractParameterAccessType(
-            const SVFG*, const Value*, Type* = nullptr);
+            const SVFG*, const Value*, Type*);
         static AccessTypeSet extractReturnAccessType(
             const SVFG*, const Value*);
-        static AccessTypeSet extractRawPointerAccessType(
-            const SVFG*, const Value*, Type*);
 
 };
 
@@ -309,9 +468,16 @@ class Path {
         std::vector<std::pair<const ICFGNode*, AccessType>> history;
 
     public:
-        Path(const VFGNode* p_node) {
+        // Path(const VFGNode* p_node) {
+        //     node = p_node;
+        //     prevValue = nullptr;
+        // }
+
+        Path(const VFGNode* p_node, const llvm::Value* val, llvm::Type* type) :
+            access_type(type) {
             node = p_node;
             prevValue = nullptr;
+            // access_type.setType(val->getType());
         }
 
         void addStep(const ICFGNode* node) {

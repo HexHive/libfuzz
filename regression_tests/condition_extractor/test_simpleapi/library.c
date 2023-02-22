@@ -9,9 +9,15 @@
 
 struct a_struct {
     int field_a;
-    int field_b;
-	int field_c;
-	int field_d;
+	void* generic_data; // cast to sub_struct1* or sub_struct2*
+};
+
+struct sub_struct1 {
+	int field_sa;
+};
+
+struct sub_struct2 {
+	double field_sb;
 };
 
 void bar1() {
@@ -20,6 +26,17 @@ void bar1() {
 
 void bar2() {
 	// return 1;
+}
+
+void do_casting(my_struct* s, short flag) {
+	
+	if (flag) {
+		my_sub_struct1 *ss = (my_sub_struct1*) s->generic_data;
+		ss->field_sa = 10;
+	} else {
+		my_sub_struct2 *ss = (my_sub_struct2*) s->generic_data;
+		ss->field_sb = 5.2;
+	}
 }
 
 

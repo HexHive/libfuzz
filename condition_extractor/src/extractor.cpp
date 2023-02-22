@@ -40,6 +40,7 @@
 #include "AccessType.h"
 #include "PhiFunction.h"
 #include "IBBG.h"
+#include "TypeMatcher.h"
 
 // for random sampling
 #include <random>
@@ -393,7 +394,7 @@ int main(int argc, char ** argv)
                     << reader.getFormattedErrorMessages();
                 exit(1);
             }
-            // functions.push_back(root["function_name"].asString());
+            // functions.push_back(root["funcompareTypes(t1, t2)ction_name"].asString());
             functions.insert(root["function_name"].asString());
         }
 
@@ -511,9 +512,12 @@ int main(int argc, char ** argv)
             for (auto const& p : x.second) {
                 if (verbose >= Verbosity::v1)
                     outs() << "[INFO] param: " << p->toString() << "\n";
+
+                auto val = p->getValue();
+                auto seek_type = val->getType();
                 AccessTypeSet parameterAccessTypeSet = 
                     AccessTypeSet::extractParameterAccessType(
-                    svfg, p->getValue());
+                        svfg, val, seek_type);
 
                 // auto param_key = "param_" + std::to_string(pn);
                 // functionResult[param_key] = parameterAccessTypeSet.toJson();
