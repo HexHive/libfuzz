@@ -1,14 +1,32 @@
 Function: do_casting
 param_0:
-((0),., read, %struct.a_struct*)
-((., read, %struct.a_struct*),.*, read, %struct.a_struct*)
-((., read, %struct.a_struct*),.4, read, i8*)
-((., read, %struct.a_struct*),.4, read, %struct.sub_struct1*)
-((., read, %struct.a_struct*),.4, read, %struct.sub_struct2*)
-((.4, read, %struct.sub_struct1*),.4.*, read, %struct.sub_struct1*)
-((.4, read, %struct.sub_struct2*),.4.*, read, %struct.sub_struct2*)
-((.4, read, %struct.sub_struct2*),.4.0, write, double)
-((.4, read, %struct.sub_struct1*),.4.0, write, i32)
+is_array: 0
+is_malloc_size: 0
+is_file_path: 0
+len_depends_on: 
+accesstypeset:
+((0),., read, %struct.a_struct*, 2490a93bb5164f6a31f3502838a6040c)
+((., read, %struct.a_struct*, 2490a93bb5164f6a31f3502838a6040c),.*, read, %struct.a_struct*, 2490a93bb5164f6a31f3502838a6040c)
+((., read, %struct.a_struct*, 2490a93bb5164f6a31f3502838a6040c),.1, read, i8*, 18b89c5f007a284357aa3c461c3c31b1)
+((., read, %struct.a_struct*, 2490a93bb5164f6a31f3502838a6040c),.1, read, %struct.sub_struct1*, 8085ebca07ff666f05213008e6afd141)
+((., read, %struct.a_struct*, 2490a93bb5164f6a31f3502838a6040c),.1, read, %struct.sub_struct2*, 83a5157e9eb1705024febdc526ba8c5d)
+((.1, read, %struct.sub_struct1*, 8085ebca07ff666f05213008e6afd141),.1.*, read, %struct.sub_struct1*, 8085ebca07ff666f05213008e6afd141)
+((.1, read, %struct.sub_struct2*, 83a5157e9eb1705024febdc526ba8c5d),.1.*, read, %struct.sub_struct2*, 83a5157e9eb1705024febdc526ba8c5d)
+((.1, read, %struct.sub_struct2*, 83a5157e9eb1705024febdc526ba8c5d),.1.0, write, double, c23fa9996925b610710d93e28c59a3e2)
+((.1, read, %struct.sub_struct1*, 8085ebca07ff666f05213008e6afd141),.1.0, write, i32, c86ee0d9d7ed3e7b4fdbf486fa6c0ebb)
+
 param_1:
-((0),., read, i16)
+is_array: 0
+is_malloc_size: 0
+is_file_path: 0
+len_depends_on: 
+accesstypeset:
+((0),., read, i16, c86ee0d9d7ed3e7b4fdbf486fa6c0ebb)
+
 return:
+is_array: 0
+is_malloc_size: 0
+is_file_path: 0
+len_depends_on: 
+accesstypeset:
+

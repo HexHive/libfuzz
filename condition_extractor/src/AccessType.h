@@ -6,6 +6,8 @@
 #include <Graphs/GenericGraph.h>
 #include "WPA/Andersen.h"
 #include <llvm/Support/raw_ostream.h>
+#include <llvm/Analysis/LoopInfo.h>
+#include <llvm/IR/Dominators.h>
 
 #include "PhiFunction.h"
 #include "TypeMatcher.h"
@@ -445,18 +447,6 @@ class AccessTypeSet {
             return ats_set < rhs.ats_set;
         }    
 
-    public: // static functions/data!
-
-        // handle debug information
-        static bool debug;
-        static std::string debug_condition;
-        static bool consider_indirect_calls;
-
-        static AccessTypeSet extractParameterAccessType(
-            const SVFG*, const Value*, Type*);
-        static AccessTypeSet extractReturnAccessType(
-            const SVFG*, const Value*);
-
 };
 
 class Path {
@@ -571,35 +561,129 @@ class Path {
         }
 };
 
+class ValueMetadata {
+    AccessTypeSet ats;
+    bool is_array;
+    bool is_malloc_size;
+    bool is_file_path;
+    std::string len_depends_on;
+
+    const llvm::Value* val;
+    std::vector<llvm::Value*> indexes;
+
+    public: 
+        ValueMetadata() {
+            val = nullptr;
+            is_array = false;
+            is_malloc_size = false;
+            is_file_path = false;
+            len_depends_on = "";
+        }
+
+        void setValue(const llvm::Value* p_val) {val = p_val;}
+        const llvm::Value* getValue() {return val;}
+
+        void addIndex(const llvm::Value* idx) {
+            indexes.push_back(const_cast<llvm::Value*>(idx));
+        }
+        std::vector<llvm::Value*> getIndexes() {return indexes;}
+
+        void setAccessTypeSet(AccessTypeSet p_ats) {ats = p_ats;}
+        AccessTypeSet getAccessTypeSet() {return ats;}
+        int getAccessNum() {return ats.size();}
+
+        void setIsArray(bool p_is_array) {is_array = p_is_array;}
+        bool isArray() {return is_array;}
+
+        void setMallocSize(bool p_malloc_size) {is_malloc_size = p_malloc_size;}
+        bool isMallocSize() {return is_malloc_size;}
+
+        void setIsFilePath(bool p_is_file_path) {is_file_path = p_is_file_path;}
+        bool isFilePath() {return is_file_path;}
+
+        void setLenDependency(std::string p_dep) {len_depends_on = p_dep;}
+        std::string getLenDependency() {return len_depends_on;}
+
+
+        Json::Value toJson(bool verbose) {
+
+            Json::Value medataResult;
+
+            medataResult["access_type_set"] = ats.toJson(verbose);
+            medataResult["is_array"] = is_array;
+            medataResult["is_malloc_size"] = is_malloc_size;
+            medataResult["is_file_path"] = is_file_path;
+            medataResult["len_depends_on"] = len_depends_on;
+
+            return medataResult;
+        }
+
+        std::string toString(bool verbose) {
+
+            std::stringstream sstream;
+
+            sstream << "is_array: " << std::to_string(is_array) << "\n";
+            sstream << "is_malloc_size: " 
+                    << std::to_string(is_malloc_size) << "\n";
+            sstream << "is_file_path: " 
+                    << std::to_string(is_file_path) << "\n";
+            sstream << "len_depends_on: " << len_depends_on << "\n";
+            sstream << "access_type_set:\n" << ats.toString(verbose) << "\n";
+
+            return sstream.str();
+        }
+
+    private:
+        // XXX: test, to move/refactor later
+        static bool areConnected(const VFGNode*, const VFGNode*);
+        static std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
+
+    public: // static functions/data!
+
+        // handle debug information
+        static bool debug;
+        static std::string debug_condition;
+        static bool consider_indirect_calls;
+
+        static ValueMetadata extractParameterMetadata(
+            const SVFG*, const Value*, Type*);
+        static ValueMetadata extractReturnMetadata(
+            const SVFG*, const Value*);
+        static std::string extractDependentParameter(
+            ValueMetadata*, SVF::SVFG*, const SVFFunction*);
+};
+
 class FunctionConditions {
     private:
-        std::vector<AccessTypeSet> parameter_ats;
-        AccessTypeSet return_ats;
+        // std::vector<AccessTypeSet> parameter_ats;
+        // AccessTypeSet return_ats;
+        std::vector<ValueMetadata> parameter_metadata;
+        ValueMetadata return_metadata;
         std::string function_name;
 
     public:
         void setFunctionName(std::string f) {function_name = f;}
         std::string getFunctionName() {return function_name;}
 
-        void addParameterAccessTypeSet(AccessTypeSet par) {
-            parameter_ats.push_back(par);
+        void addParameterMetadata(ValueMetadata par) {
+            parameter_metadata.push_back(par);
         }
 
-        int getParameterAccessNum() {return parameter_ats.size();}
+        int getParameterNum() {return parameter_metadata.size();}
 
-        void replacedParameterAccessTypeSet(int parm, AccessTypeSet new_ats) {
-            parameter_ats[parm] = new_ats;
+        void replaceParameterMetadata(int parm, ValueMetadata new_par) {
+            parameter_metadata[parm] = new_par;
         }
 
-        AccessTypeSet getParameterAccessTypeSet(int idx) {
-            if (idx < 0 || idx >= parameter_ats.size())
+        ValueMetadata getParameterMetadata(int idx) {
+            if (idx < 0 || idx >= parameter_metadata.size())
                 assert("idx out of bounds!");
 
-            return parameter_ats[idx];
+            return parameter_metadata[idx];
         }
 
-        void setReturnAccessTypeSet(AccessTypeSet ret) {return_ats = ret;}
-        AccessTypeSet getReturnAccessTypeSet() {return return_ats;}
+        void setReturnMetadata(ValueMetadata ret) {return_metadata = ret;}
+        ValueMetadata getReturnMetadata() {return return_metadata;}
 
         // for using it in std::set
         bool operator<(const FunctionConditions& rhs) const 
@@ -611,16 +695,17 @@ class FunctionConditions {
 
             Json::Value functionResult;
 
-            functionResult["functionName"] = function_name;
+            functionResult["function_name"] = function_name;
 
             int pn = 0;
-            for (auto param: parameter_ats) {
+            for (auto param: parameter_metadata) {
                 auto param_key = "param_" + std::to_string(pn);
                 functionResult[param_key] = param.toJson(verbose);
                 pn++;
+        std::vector<ValueMetadata> parameter_metadata;
             }
 
-            functionResult["return"] = return_ats.toJson(verbose);
+            functionResult["return"] = return_metadata.toJson(verbose);
 
             return functionResult;
         }
@@ -632,14 +717,14 @@ class FunctionConditions {
             sstream << "Function: " << function_name << "\n";
 
             int pn = 0;
-            for (auto param: parameter_ats) {
+            for (auto param: parameter_metadata) {
                 sstream << "param_" + std::to_string(pn) << ":\n";
                 sstream << param.toString(verbose);
                 pn++;
             }
 
             sstream << "return:\n";
-            sstream << return_ats.toString(verbose);
+            sstream << return_metadata.toString(verbose);
 
             return sstream.str();
         }
@@ -649,13 +734,14 @@ class FunctionConditions {
             sstream << "[INFO] Summary " << function_name << ":\n";
 
             int pn = 0;
-            for (auto param: parameter_ats) {
+            for (auto param: parameter_metadata) {
                 sstream << "param_" + std::to_string(pn) 
-                        << ": " << param.size() << " access types\n";
+                        << ": " << param.getAccessNum() << " access types\n";
                 pn++;
             }
 
-            sstream << "return: " << return_ats.size() << " access types\n";
+            sstream << "return: " << return_metadata.getAccessNum()
+                    << " access types\n";
 
             return sstream.str();
         }

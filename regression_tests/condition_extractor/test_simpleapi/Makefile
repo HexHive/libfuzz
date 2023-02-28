@@ -9,7 +9,9 @@ EXTRACTOR = /workspaces/libfuzz/condition_extractor/bin/extractor
 LLVM_DIS = ${LLVM_DIR}/bin/llvm-dis
 WPA = /root/SVF/Release-build/bin/wpa
 EXTRACT_BC = extract-bc
-FUNCTION = do_casting
+FUNCTION = needs_array
+# FUNCTION = needs_array_1
+# FUNCTION = do_casting
 # FUNCTION = indirect_test
 # FUNCTION = first
 # FUNCTION = foo
@@ -30,14 +32,15 @@ $(TARGET).o.ll: $(TARGET).o.bc
 
 run: $(TARGET).o.bc $(TARGET).o.ll
 	@echo "Running condition_extractor"
-	$(WPA) -steens --dump-icfg  ./$(TARGET).o.bc
+#	$(WPA) -steens --dump-icfg  ./$(TARGET).o.bc
 #	$(EXTR_INC_FUNC) -i $(PWD) -e "$(PWD)/exported_functions.txt" -t "$(PWD)/incomplete_types.txt" -a $(INTERFACE)
 #	$(EXTRACTOR) $< -interface $(INTERFACE) -t json -output $(TARGET).json -v v0 -dom
 #	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v1 -dom -print_dom -cache_folder $(CACHE_FOLDER)
 #	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v1 -dom  -print_dom
-#	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v0 -do_indirect_jumps
-	$(EXTRACTOR) $< -function $(FUNCTION) -t txt -output $(TARGET).txt -v v0 -do_indirect_jumps
+	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v0 -do_indirect_jumps
+#	$(EXTRACTOR) $< -function $(FUNCTION) -t txt -output $(TARGET).txt -v v0 -do_indirect_jumps
 #	$(WPA) -ander -svfg --dump-vfg  ./$(TARGET).o.bc
+#	$(WPA) -ander -dump-pag ./$(TARGET).o.bc
 # 	convert only if you --print_dom
 #	./convert_dot_pdf.sh
 

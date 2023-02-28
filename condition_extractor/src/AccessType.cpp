@@ -5,9 +5,9 @@
 #define MAX_STACKSIZE 20
 
 // static fields, mainly for debug
-bool AccessTypeSet::debug = false;
-std::string AccessTypeSet::debug_condition = "";
-bool AccessTypeSet::consider_indirect_calls = false;
+bool ValueMetadata::debug = false;
+std::string ValueMetadata::debug_condition = "";
+bool ValueMetadata::consider_indirect_calls = false;
 
 bool areCompatible(FunctionType* caller,FunctionType* callee) {
 
@@ -29,7 +29,7 @@ bool areCompatible(FunctionType* caller,FunctionType* callee) {
     return are_comp;
 }
 
-AccessTypeSet AccessTypeSet::extractReturnAccessType(
+ValueMetadata ValueMetadata::extractReturnMetadata(
     const SVFG* vfg, const Value* val) {
 
     SVFIR* pag = SVFIR::getPAG();
@@ -178,23 +178,23 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
     }
 
     // std::map<const Instruction*, AccessTypeSet> all_ats;
-    std::map<const Value*, AccessTypeSet> all_ats;
+    std::map<const Value*, ValueMetadata> all_ats;
     for (auto a: allocainst_set) {
         // outs() << "[INFO] paraAT() " << *a << " -- ";
         // outs() << a->getFunction()->getName().str() << "\n";
-        AccessTypeSet l_ats = AccessTypeSet::extractParameterAccessType(vfg, a, retType);
+        ValueMetadata l_ats = ValueMetadata::extractParameterMetadata(vfg, a, retType);
 
         // outs() << "[STARTING POINT] " << *a << "\n";
         // outs() << l_ats.toString(true) << "\n";
         // exit(1);
 
         bool do_not_return = true;
-        for (auto at: l_ats)
+        for (auto at: l_ats.getAccessTypeSet())
             if (at.getAccess() == AccessType::Access::ret) {
                 auto l_ats_all_nodes = at.getICFGNodes();
                 for (auto inst: l_ats_all_nodes)
                     if (inst == fun_exit) {
-                        for (auto at2: l_ats)
+                        for (auto at2: l_ats.getAccessTypeSet())
                             for (auto inst2:  at.getICFGNodes())
                                 ats.insert(at2, inst2);
                         do_not_return = false;
@@ -219,14 +219,15 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
 
         for (auto atsx: all_ats) {
             auto ats_all_nodes = ats_all_nodes_before;
-            auto atsx_all_nodes = atsx.second.getAllICFGNodes();
+            auto atsx_all_nodes = atsx.second.getAccessTypeSet().       
+                                              getAllICFGNodes();
             for (auto inst: atsx_all_nodes)
                 if (ats_all_nodes.find(inst) != ats_all_nodes.end()) {
                     // I found something in common
-                    if (AccessTypeSet::debug) {
+                    if (ValueMetadata::debug) {
                         outs() << "[MATCHING]" << inst->toString()  << "\n";
                     }
-                    for (auto atx:  atsx.second)
+                    for (auto atx:  atsx.second.getAccessTypeSet())
                         for (auto inst: atx.getICFGNodes())
                             ats.insert(atx, inst);
                     break;
@@ -239,11 +240,153 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
 
     }
 
-    return ats;
+    ValueMetadata mdata;
+    mdata.setValue(val);
+    mdata.setAccessTypeSet(ats);
+
+    return mdata;
 
 }
 
-AccessTypeSet AccessTypeSet::extractParameterAccessType(
+std::string ValueMetadata::extractDependentParameter(
+    ValueMetadata* mdata, SVF::SVFG* svfg, const SVFFunction* fun) {
+
+    std::string dependent_param = "";
+
+    SVFIR* pag = SVFIR::getPAG();
+
+    // DominatorTree dom_tree(*fun->getLLVMFun());
+    // LoopInfo loop_info(dom_tree);
+
+    PAG::FunToArgsListMap funmap_par = pag->getFunArgsMap();
+    PAG::SVFVarList fun_params = funmap_par[fun];    
+
+    // use this to find loops faster
+    //  Loop* loop_info->getLoopFor(const BasicBlock *BB) const
+
+    for (auto i: mdata->getIndexes()) {
+        // outs() << "I: " << *i << "\n";
+
+        llvm:: Instruction *ii = SVFUtil::dyn_cast<llvm::Instruction>(i);
+
+        // just in case
+        if (ii == nullptr)
+            continue;
+
+        DominatorTree dom_tree(*ii->getFunction());
+        LoopInfo loop_info(dom_tree);
+        Loop* l = loop_info.getLoopFor(ii->getParent());
+
+        if (l == nullptr) {
+            continue;
+        }
+
+        SmallVector<llvm::BasicBlock*> exits;
+	    l->getExitingBlocks(exits);
+        for (auto e: exits) {
+            auto v = &e->back();
+            // outs() << "V: " << *v << "\n";
+
+            PAGNode* pV = pag->getGNode(pag->getValueNode(v));
+            const VFGNode* vV = svfg->getDefSVFGNode(pV);
+            PAGNode* pI = nullptr;
+            PAGNode* pP = nullptr;
+
+            bool index_control_loop = false;
+            bool param_control_loop = false;
+            for (auto i: mdata->getIndexes()) {
+                pI = pag->getGNode(pag->getValueNode(i));
+                const VFGNode* vI = svfg->getDefSVFGNode(pI);
+
+                if (areConnected(vI,vV)) {
+                    // outs() << "Index control Loop\n";
+                    index_control_loop = true;
+                    break;
+                }
+            }
+
+            int p_idx = 0;
+            for (auto p: fun_params) {
+                // pP = const_cast<llvm::Value*>(p->getValue());
+                pP = pag->getGNode(pag->getValueNode(p->getValue()));
+                const VFGNode* vP = svfg->getDefSVFGNode(pP);
+                // const_cast<llvm::Value*>(p->getValue());
+                // outs() << "P: " << pP->toString() << "\n";
+                if (areConnected(vP,vV)) {
+                    // outs() << "Param control Loop\n";
+                    param_control_loop = true;
+                    break;
+                } 
+                p_idx++;
+                // else
+                //     outs() << "no control!\n";
+            }
+
+            if (param_control_loop && index_control_loop) {
+                // outs() << "Index: " << pI->toString() << "\n";
+                // outs() << "Param: " << pP->toString() << "\n";
+                dependent_param = "param_" + std::to_string(p_idx);
+            }
+        }
+
+    }
+
+    return dependent_param;
+}
+
+std::set<const VFGNode*> ValueMetadata::getDefinitionSet(const VFGNode *n) {
+
+    std::set<const VFGNode*> definitions;
+
+    std::set<const VFGNode*> visited;
+    std::vector<const VFGNode*> worklist;
+
+    worklist.push_back(n);
+    while(!worklist.empty()) {
+        auto n = worklist.back();
+        worklist.pop_back();
+        if (visited.find(n) != visited.end())
+            continue;
+        int n_parents = 0;
+        for(auto in: n->getInEdges()) {
+            auto pn = in->getSrcNode();
+            worklist.push_back(pn);
+            n_parents++;
+            
+        }
+        // Maybe select some classes, e.g., alloca, param
+        if (n_parents == 0) 
+            definitions.insert(n);
+        visited.insert(n);
+    }
+
+    return definitions;
+}
+
+bool ValueMetadata::areConnected(const VFGNode *a, const VFGNode *b) {
+
+    std::set<const VFGNode*> defA = getDefinitionSet(a);
+    std::set<const VFGNode*> defB = getDefinitionSet(b);
+    std::set<const VFGNode*> intersection;
+
+    // outs() << "DefA:" << a->toString() << "\n";
+    // for (auto e: defA)
+    //     outs() << e->toString() << "\n";
+    // outs() << "DefB:" << b->toString() << "\n";
+    // for (auto e: defB)
+    //     outs() << e->toString() << "\n";
+
+    std::set_intersection(
+        defA.begin(), defA.end(),
+        defB.begin(), defB.end(), 
+        std::inserter(intersection, intersection.begin()));
+
+    return !intersection.empty();
+
+}
+
+
+ValueMetadata ValueMetadata::extractParameterMetadata(
     const SVFG* vfg, const Value* val, Type *seek_type)
 {
     SVFIR* pag = SVFIR::getPAG();
@@ -257,6 +400,8 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
     PAGNode* pNode = pag->getGNode(pag->getValueNode(val));
     const VFGNode* vNode = vfg->getDefSVFGNode(pNode);
 
+    ValueMetadata mdata;
+    mdata.setValue(val);
 
     // need a stack -> FILO
     // let S be a stack
@@ -272,6 +417,7 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
     // outs() << "DEBUG: val: " << *val << "\n";
 
     AccessTypeSet ats;
+    bool is_array;
 
     // std::set<std::string> visitedFunctions;
 
@@ -290,7 +436,7 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
 
         // visitedFunctions.insert(vNode->getFun()->getName());
 
-        if (AccessTypeSet::debug) {
+        if (ValueMetadata::debug) {
 
             outs() << "\nWorking node:\n";
             outs() << "A.->" << vNode->toString() << "\n";
@@ -298,7 +444,7 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
             // outs() << "Stack size: " << p.getStackSize() << "\n";
             outs() << "AT: " << acNode.toString() << "\n";
 
-            if (acNode.toString().rfind(AccessTypeSet::debug_condition, 0) 
+            if (acNode.toString().rfind(ValueMetadata::debug_condition, 0) 
                 == 0) {
                 outs() << "[STOP]\n";
                 for (auto h: p.getSteps()) {
@@ -433,6 +579,15 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                             }
 
                         }
+                    } else if (acNode.getNumFields() == 0) {
+
+                        is_array = !SVFUtil::isa<ConstantInt>(
+                            inst->getOperand(1));
+                        if (is_array) {
+                            auto d = inst->getOperand(1);
+                            mdata.addIndex(d);
+                        }
+
                     }
                 }
                 // else {
@@ -610,7 +765,10 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
     //     outs() << x << "\n";
     // }
 
-    return ats;
+    mdata.setIsArray(is_array);
+    mdata.setAccessTypeSet(ats);
+
+    return mdata;
 }
 
 void FunctionConditionsSet::storeIntoJsonFile(

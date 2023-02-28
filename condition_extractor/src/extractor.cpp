@@ -130,16 +130,17 @@ bool dominatesAccessType(GenericDominatorTy *dom, AccessType at1, AccessType at2
 
 }
 
-void pruneAccessTypes(Dominator* dom, PostDominator* pDom, AccessTypeSet *ats_set) {
+void pruneAccessTypes(Dominator* dom, PostDominator* pDom, 
+                        ValueMetadata *meta) {
 
     // the pair is meant to be <CREATE, DELETE>, not the other way around
     std::set<std::pair<AccessType, AccessType>> pairs_create_delete;
-    for (auto at1: *ats_set) {
+    for (auto at1: meta->getAccessTypeSet()) {
         if (at1.getAccess() != AccessType::Access::create &&
             at1.getAccess() != AccessType::Access::del)
             continue;
 
-        for (auto at2: *ats_set) {
+        for (auto at2: meta->getAccessTypeSet()) {
             if (at2.getAccess() != AccessType::Access::create &&
                 at2.getAccess() != AccessType::Access::del)
             continue;
@@ -158,20 +159,20 @@ void pruneAccessTypes(Dominator* dom, PostDominator* pDom, AccessTypeSet *ats_se
     for (auto px: pairs_create_delete)
         // (delete, X) PostDom (create, X) => None *remove both*
         if (dominatesAccessType(pDom, px.second, px.first)) {
-            ats_set->remove(px.first);
-            ats_set->remove(px.second);
+            meta->getAccessTypeSet().remove(px.first);
+            meta->getAccessTypeSet().remove(px.second);
         // (create, X) Dom (delete, X) => (create, X)
         } else if (dominatesAccessType(dom, px.first, px.second))
-            ats_set->remove(px.second);
+            meta->getAccessTypeSet().remove(px.second);
 
     // the pair is meant to be <WRITE, READ>, not the other way around
     std::set<std::pair<AccessType, AccessType>> pairs_write_read;
-    for (auto at1: *ats_set) {
+    for (auto at1: meta->getAccessTypeSet()) {
         if (at1.getAccess() != AccessType::Access::write &&
             at1.getAccess() != AccessType::Access::read)
             continue;
 
-        for (auto at2: *ats_set) {
+        for (auto at2: meta->getAccessTypeSet()) {
             if (at2.getAccess() != AccessType::Access::write &&
                 at2.getAccess() != AccessType::Access::read)
             continue;
@@ -189,7 +190,7 @@ void pruneAccessTypes(Dominator* dom, PostDominator* pDom, AccessTypeSet *ats_se
     for (auto px: pairs_write_read)
         // (write, X) Dom (read, X) => (write, X) 
         if (dominatesAccessType(dom, px.first, px.second))
-            ats_set->remove(px.second);
+            meta->getAccessTypeSet().remove(px.second);
 
 }
 
@@ -250,16 +251,16 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
 
     std::set<const ICFGNode*> cond_nodes;
 
-    int num_param = fun_conds->getParameterAccessNum();
+    int num_param = fun_conds->getParameterNum();
 
     for (int p = 0; p < num_param; p++) {
-        AccessTypeSet ats = fun_conds->getParameterAccessTypeSet(p);
-        for (auto i: ats.getAllICFGNodes())
+        ValueMetadata meta = fun_conds->getParameterMetadata(p);
+        for (auto i: meta.getAccessTypeSet().getAllICFGNodes())
             cond_nodes.insert(i);
     }
 
-    AccessTypeSet ats = fun_conds->getReturnAccessTypeSet();
-    for (auto i: ats.getAllICFGNodes())
+    ValueMetadata meta = fun_conds->getReturnMetadata();
+    for (auto i: meta.getAccessTypeSet().getAllICFGNodes())
             cond_nodes.insert(i);
 
     outs() << "[DEBUG] All nodes from ATS: " << cond_nodes.size() << "\n";
@@ -367,11 +368,11 @@ int main(int argc, char ** argv)
 
     verbose = Verbose;
     if (verbose >= Verbosity::v2) {
-        AccessTypeSet::debug = true;
-        AccessTypeSet::debug_condition = DebugCondition;
+        ValueMetadata::debug = true;
+        ValueMetadata::debug_condition = DebugCondition;
     }
 
-    AccessTypeSet::consider_indirect_calls = doIndJump;
+    ValueMetadata::consider_indirect_calls = doIndJump;
 
     // std::vector<std::string> functions;
     std::set<std::string> functions;
@@ -508,21 +509,29 @@ int main(int argc, char ** argv)
 
             outs() << "[INFO] processing params for: " << 
                         fun->getName() << "\n";
-
+                        
             for (auto const& p : x.second) {
                 if (verbose >= Verbosity::v1)
                     outs() << "[INFO] param: " << p->toString() << "\n";
 
                 auto val = p->getValue();
                 auto seek_type = val->getType();
-                AccessTypeSet parameterAccessTypeSet = 
-                    AccessTypeSet::extractParameterAccessType(
+                ValueMetadata paramMetadata = 
+                    ValueMetadata::extractParameterMetadata(
                         svfg, val, seek_type);
 
                 // auto param_key = "param_" + std::to_string(pn);
-                // functionResult[param_key] = parameterAccessTypeSet.toJson();
+                // functionResult[param_key] = paramMetadata.toJson();
 
-                fun_conds.addParameterAccessTypeSet(parameterAccessTypeSet);
+                if (paramMetadata.isArray()) {
+                    auto depends_on = ValueMetadata::extractDependentParameter(
+                        &paramMetadata, svfg, fun);
+
+                    if (depends_on != "")
+                        paramMetadata.setLenDependency(depends_on);
+                }
+
+                fun_conds.addParameterMetadata(paramMetadata);
 
             }
         }
@@ -535,12 +544,12 @@ int main(int argc, char ** argv)
             auto p = x.second;
             if (verbose >= Verbosity::v1)
                 outs() << "[INFO] return: " << p->toString();
-            AccessTypeSet returnAccessTypeSet =
-                AccessTypeSet::extractReturnAccessType(svfg, p->getValue());
+            ValueMetadata returnMetadata =
+                ValueMetadata::extractReturnMetadata(svfg, p->getValue());
 
             // functionResult["return"] = returnAccessTypeSet.toJson();
             // jsonResult.append(functionResult);
-            fun_conds.setReturnAccessTypeSet(returnAccessTypeSet);
+            fun_conds.setReturnMetadata(returnMetadata);
         }
 
         if (useDominator) {
@@ -621,17 +630,17 @@ int main(int argc, char ** argv)
                 testDom2(&fun_conds, dom->getIBBGraph());
                 // testDom(dom, ibb_graph);
 
-                int num_param = fun_conds.getParameterAccessNum();
+                int num_param = fun_conds.getParameterNum();
 
                 for (int p = 0; p < num_param; p++) {
-                    AccessTypeSet ats = fun_conds.getParameterAccessTypeSet(p);
-                    pruneAccessTypes(dom, pDom, &ats);
-                    fun_conds.replacedParameterAccessTypeSet(p, ats);
+                    ValueMetadata meta = fun_conds.getParameterMetadata(p);
+                    pruneAccessTypes(dom, pDom, &meta);
+                    fun_conds.replaceParameterMetadata(p, meta);
                 }
 
-                AccessTypeSet ats = fun_conds.getReturnAccessTypeSet();
-                pruneAccessTypes(dom, pDom, &ats);
-                fun_conds.setReturnAccessTypeSet(ats);
+                ValueMetadata meta = fun_conds.getReturnMetadata();
+                pruneAccessTypes(dom, pDom, &meta);
+                fun_conds.setReturnMetadata(meta);
 
                 delete dom;
                 dom = nullptr;
