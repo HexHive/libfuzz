@@ -633,11 +633,6 @@ class ValueMetadata {
             return sstream.str();
         }
 
-    private:
-        // XXX: test, to move/refactor later
-        static bool areConnected(const VFGNode*, const VFGNode*);
-        static std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
-
     public: // static functions/data!
 
         // handle debug information

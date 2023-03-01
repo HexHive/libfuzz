@@ -9,6 +9,12 @@ bool ValueMetadata::debug = false;
 std::string ValueMetadata::debug_condition = "";
 bool ValueMetadata::consider_indirect_calls = false;
 
+// NOT EXPOSED FUNCTIONS -- THESE FUNCTIONS ARE MEANT FOR ONLY INTERNAL USAGE!
+bool areConnected(const VFGNode*, const VFGNode*);
+std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
+bool areCompatible(FunctionType*,FunctionType*);
+// NOT EXPOSED FUNCTIONS -- END!
+
 bool areCompatible(FunctionType* caller,FunctionType* callee) {
 
     bool are_comp = false;
@@ -334,7 +340,8 @@ std::string ValueMetadata::extractDependentParameter(
     return dependent_param;
 }
 
-std::set<const VFGNode*> ValueMetadata::getDefinitionSet(const VFGNode *n) {
+// std::set<const VFGNode*> ValueMetadata::getDefinitionSet(const VFGNode *n) {
+std::set<const VFGNode*> getDefinitionSet(const VFGNode *n) {
 
     std::set<const VFGNode*> definitions;
 
@@ -363,7 +370,8 @@ std::set<const VFGNode*> ValueMetadata::getDefinitionSet(const VFGNode *n) {
     return definitions;
 }
 
-bool ValueMetadata::areConnected(const VFGNode *a, const VFGNode *b) {
+// bool ValueMetadata::areConnected(const VFGNode *a, const VFGNode *b) {
+bool areConnected(const VFGNode *a, const VFGNode *b) {
 
     std::set<const VFGNode*> defA = getDefinitionSet(a);
     std::set<const VFGNode*> defB = getDefinitionSet(b);
