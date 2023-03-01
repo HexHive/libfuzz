@@ -590,7 +590,7 @@ class ValueMetadata {
         std::vector<llvm::Value*> getIndexes() {return indexes;}
 
         void setAccessTypeSet(AccessTypeSet p_ats) {ats = p_ats;}
-        AccessTypeSet getAccessTypeSet() {return ats;}
+        AccessTypeSet* getAccessTypeSet() {return &ats;}
         int getAccessNum() {return ats.size();}
 
         void setIsArray(bool p_is_array) {is_array = p_is_array;}

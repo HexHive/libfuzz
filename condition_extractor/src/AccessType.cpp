@@ -10,6 +10,15 @@ bool ValueMetadata::debug = false;
 std::string ValueMetadata::debug_condition = "";
 bool ValueMetadata::consider_indirect_calls = false;
 
+
+// NOT EXPOSED FUNCTIONS -- THESE FUNCTIONS ARE MEANT FOR ONLY INTERNAL USAGE!
+bool areConnected(const VFGNode*, const VFGNode*);
+std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
+bool areCompatible(FunctionType*,FunctionType*);
+bool predefinedAccessTypeDispatcher(ValueMetadata*, std::string fun,
+    const VFGNode*, AccessType);
+// NOT EXPOSED FUNCTIONS -- END!
+
 /**
 If exists, call the predefined handler for function fun.
 
@@ -21,21 +30,16 @@ If exists, call the predefined handler for function fun.
          For example, it might be false for a cast to indicate we do not try to follow further child of the node.
          default true.
 */
-bool predefined_access_type_dispatcher(AccessTypeSet ats, std::string fun, const ICFGNode * node) {
+bool predefinedAccessTypeDispatcher(ValueMetadata *mdata,
+    std::string fun, const VFGNode * node, AccessType at) {
     // TODO move this line to the .h file
     auto pos = accessTypeHandlers.find(fun);
     if (pos != accessTypeHandlers.end()) {
         // call the specific handler
-        return pos->second(ats, fun, node);
+        return pos->second(mdata, fun, node, at);
     }
     return true;
 }
-
-// NOT EXPOSED FUNCTIONS -- THESE FUNCTIONS ARE MEANT FOR ONLY INTERNAL USAGE!
-bool areConnected(const VFGNode*, const VFGNode*);
-std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
-bool areCompatible(FunctionType*,FunctionType*);
-// NOT EXPOSED FUNCTIONS -- END!
 
 bool areCompatible(FunctionType* caller,FunctionType* callee) {
 
@@ -73,6 +77,9 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
     // S.push(v)
     // worklist.push_back(Path(vNode));
 
+    ValueMetadata mdata;
+    mdata.setValue(val);
+
     SVFModule *svfModule = pag->getModule();
 
     ICFG* icfg = pag->getICFG();
@@ -97,22 +104,13 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
     FunEntryICFGNode *entry_node = icfg->getFunEntryICFGNode(svfun);
 
     std::stack<std::pair<ICFGNode*,std::stack<ICFGEdge*>>> working;
-bool ValueMetadata::debug = false;
-std::string ValueMetadata::debug_condition = "";
-bool ValueMetadata::consider_indirect_calls = false;
-
-// NOT EXPOSED FUNCTIONS -- THESE FUNCTIONS ARE MEANT FOR ONLY INTERNAL USAGE!
-bool areConnected(const VFGNode*, const VFGNode*);
-std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
-bool areCompatible(FunctionType*,FunctionType*);
-// NOT EXPOSED FUNCTIONS -- END!
 
     std::set<ICFGNode*> visited;
 
     std::stack<ICFGEdge*> empty_stack;
     working.push(std::make_pair(entry_node, empty_stack));
 
-    AccessTypeSet ats;
+    AccessTypeSet *ats = mdata.getAccessTypeSet();
 
     while(!working.empty()) {
 
@@ -168,12 +166,14 @@ bool areCompatible(FunctionType*,FunctionType*);
             if (callee != nullptr) {
                 std::string fun = callee->getName();
                 // TODO: add an allow-list
-                if (fun == "malloc") {
-                    AccessType acNode;
-                    // no need to set field, empty field set is what I need
-                    acNode.setAccess(AccessType::Access::create);
-                    ats.insert(acNode, node);
-                }
+                // malloc handler
+                // bool _ignored = 
+                //     predefinedAccessTypeDispatcher(&mdata, fun, nullptr);
+                // OLD STUFF
+                // AccessType acNode(retType);
+                //     // no need to set field, empty field set is what I need
+                //     acNode.setAccess(AccessType::Access::create);
+                //     ats.insert(acNode, node);
             }
         }  
 
@@ -230,14 +230,14 @@ bool areCompatible(FunctionType*,FunctionType*);
         // exit(1);
 
         bool do_not_return = true;
-        for (auto at: l_ats)
+        for (auto at: *l_ats.getAccessTypeSet()) {
             if (at.getAccess() == AccessType::Access::ret) {
                 auto l_ats_all_nodes = at.getICFGNodes();
                 for (auto inst: l_ats_all_nodes) {
                     if (inst == fun_exit) {
-                        for (auto at2: l_ats.getAccessTypeSet())
+                        for (auto at2: *l_ats.getAccessTypeSet())
                             for (auto inst2:  at.getICFGNodes())
-                                ats.insert(at2, inst2);
+                                ats->insert(at2, inst2);
                         do_not_return = false;
                         break;
                     }
@@ -257,34 +257,32 @@ bool areCompatible(FunctionType*,FunctionType*);
 
         ast_is_changed = false;
 
-        auto ats_all_nodes_before = ats.getAllICFGNodes();
+        auto ats_all_nodes_before = ats->getAllICFGNodes();
 
         for (auto atsx: all_ats) {
             auto ats_all_nodes = ats_all_nodes_before;
-            auto atsx_all_nodes = atsx.second.getAllICFGNodes();
-            for (auto inst: atsx_all_nodes)
+            auto atsx_all_nodes = atsx.second
+                                        .getAccessTypeSet()
+                                        ->getAllICFGNodes();
+            for (auto inst: atsx_all_nodes) {
                 if (ats_all_nodes.find(inst) != ats_all_nodes.end()) {
                     // I found something in common
                     if (ValueMetadata::debug) {
                         outs() << "[MATCHING]" << inst->toString()  << "\n";
                     }
-                    for (auto atx:  atsx.second.getAccessTypeSet())
+                    for (auto atx:  *atsx.second.getAccessTypeSet())
                         for (auto inst: atx.getICFGNodes())
-                            ats.insert(atx, inst);
+                            ats->insert(atx, inst);
                     break;
                 }
             }
         }
 
-        auto ats_all_nodes_merged = ats.getAllICFGNodes();
+        auto ats_all_nodes_merged = ats->getAllICFGNodes();
 
         ast_is_changed = ats_all_nodes_merged != ats_all_nodes_before;
 
     }
-
-    ValueMetadata mdata;
-    mdata.setValue(val);
-    mdata.setAccessTypeSet(ats);
 
     return mdata;
 
@@ -460,7 +458,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
 
     // outs() << "DEBUG: val: " << *val << "\n";
 
-    AccessTypeSet ats;
+    AccessTypeSet *ats = mdata.getAccessTypeSet();
     bool is_array;
 
     // std::set<std::string> visitedFunctions;
@@ -551,7 +549,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
             // process the node!
             if (vNode->getNodeKind() == VFGNode::VFGNodeK::Load) {
                 acNode.setAccess(AccessType::Access::read);
-                ats.insert(acNode, vNode->getICFGNode());
+                ats->insert(acNode, vNode->getICFGNode());
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Store) {
 
                 const Value* prevValue = p.getPrevValue();
@@ -563,10 +561,10 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
 
                     if (inst->getPointerOperand() == prevValue) {
                         acNode.setAccess(AccessType::Access::write);
-                        ats.insert(acNode, vNode->getICFGNode());
+                        ats->insert(acNode, vNode->getICFGNode());
                     } else if (inst->getValueOperand() == prevValue) {
                         acNode.setAccess(AccessType::Access::read);
-                        ats.insert(acNode, vNode->getICFGNode());
+                        ats->insert(acNode, vNode->getICFGNode());
                     }
                 }
 
@@ -613,7 +611,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                                 AccessType tmpAcNode = acNode;
                                 tmpAcNode.addField(-1);
                                 tmpAcNode.setAccess(AccessType::Access::read);
-                                ats.insert(tmpAcNode, vNode->getICFGNode());
+                                ats->insert(tmpAcNode, vNode->getICFGNode());
                             } else {
                                 ConstantInt *CI=dyn_cast<ConstantInt>(
                                             inst->getOperand(pos));
@@ -659,7 +657,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                 auto inst = SVFUtil::dyn_cast<Instruction>(vNode->getValue());
 
                 acNode.setAccess(AccessType::Access::read);
-                ats.insert(acNode, vNode->getICFGNode());
+                ats->insert(acNode, vNode->getICFGNode());
 
                 // XXX: casting operations complitate things a lot. For the time
                 // being I just leave it.
@@ -672,7 +670,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                     //     TypeMatcher::compare_types(src_typ, acNode.getType())) {
                     if (TypeMatcher::compare_types(src_typ, acNode.getType())) {
                         acNode.setType(dst_typ);
-                        ats.insert(acNode, vNode->getICFGNode());
+                        ats->insert(acNode, vNode->getICFGNode());
                     }
                     else {
                         skipNode = true;    
@@ -686,15 +684,15 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                 //     skipNode = true;
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Cmp) {
                 acNode.setAccess(AccessType::Access::read);
-                ats.insert(acNode, vNode->getICFGNode());
+                ats->insert(acNode, vNode->getICFGNode());
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::BinaryOp) {
                 acNode.setAccess(AccessType::Access::read);
-                ats.insert(acNode, vNode->getICFGNode());
+                ats->insert(acNode, vNode->getICFGNode());
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::FRet) {
                 // outs() << "[INFO] I found a FormalRet\n";
                 // outs() << vNode->toString() << "\n";
                 acNode.setAccess(AccessType::Access::ret);
-                ats.insert(acNode, vNode->getICFGNode());
+                ats->insert(acNode, vNode->getICFGNode());
             }
 
             if (skipNode) {
@@ -774,9 +772,15 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                                 // outs() << "[DEBUG] I found this function: " 
                                 //        << fun << "\n";
 
-                                // TODO: add an allow-list
-                                // free handler
-                                ok_continue = predefined_access_type_dispatcher(ats, fun, vNode->getICFGNode());
+                                ok_continue = predefinedAccessTypeDispatcher(
+                                    &mdata, fun, vNode, acNode);
+
+                                // OLD
+                                // if (fun == "free") {
+                                //     ok_continue = false;
+                                //     acNode.setAccess(AccessType::Access::del);
+                                //     ats.insert(acNode, vNode->getICFGNode());
+                                // }
 
                             }
                         }
@@ -808,7 +812,6 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
     // }
 
     mdata.setIsArray(is_array);
-    mdata.setAccessTypeSet(ats);
 
     return mdata;
 }

@@ -9,6 +9,7 @@
 
 struct a_struct {
     int field_a;
+	int field_b;
 	void* generic_data; // cast to sub_struct1* or sub_struct2*
 };
 
@@ -97,16 +98,16 @@ void needs_array_1(my_struct** s, int n_struct) {
 
 }
 
-// void my_free(my_struct* s) {
-// 	free(s);
-// }
+void my_free(my_struct* s) {
+	free(s);
+}
 
-// void* my_malloc(size_t s) {
-// 	if (s == 0)
-// 		return NULL;
+void* my_malloc(size_t s) {
+	if (s == 0)
+		return NULL;
 
-// 	return malloc(s);
-// }
+	return malloc(s);
+}
 
 // void indirect_test(my_struct *s, int a) {
 
@@ -124,33 +125,33 @@ void needs_array_1(my_struct** s, int n_struct) {
 // 	my_free(s);
 // }
 
-// my_struct* create(int a, int b) {
-// 	my_struct *s = my_malloc(sizeof(my_struct));
+my_struct* create(int a, int b) {
+	my_struct *s = my_malloc(sizeof(my_struct));
 
-// 	if (s == NULL) {
-// 		return NULL;
-// 	}
+	if (s == NULL) {
+		return NULL;
+	}
 
-// 	if (a == 0) {
-// 		my_free(s);
-// 		return 0;
-// 	}
+	if (a == 0) {
+		my_free(s);
+		return 0;
+	}
 
-// 	s->field_a = a;
-// 	s->field_b = b;
+	s->field_a = a;
+	s->field_b = b;
 	
-// 	my_struct *s1 = my_malloc(sizeof(my_struct));
+	my_struct *s1 = my_malloc(sizeof(my_struct));
 
-// 	// int xx[10];
-// 	// for (int i = 0; i < 10; i++) {
-// 	// 	if (i > 5)
-// 	// 		xx[i] = i + 1;
-// 	// 	else 
-// 	// 		xx[i] = i * 2;
-// 	// }
+	// int xx[10];
+	// for (int i = 0; i < 10; i++) {
+	// 	if (i > 5)
+	// 		xx[i] = i + 1;
+	// 	else 
+	// 		xx[i] = i * 2;
+	// }
 
-// 	return s;
-// }
+	return s;
+}
 
 // void first(my_struct *s, int a) {
 // 	s->field_b = a;

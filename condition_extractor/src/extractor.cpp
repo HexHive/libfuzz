@@ -135,12 +135,12 @@ void pruneAccessTypes(Dominator* dom, PostDominator* pDom,
 
     // the pair is meant to be <CREATE, DELETE>, not the other way around
     std::set<std::pair<AccessType, AccessType>> pairs_create_delete;
-    for (auto at1: meta->getAccessTypeSet()) {
+    for (auto at1: *meta->getAccessTypeSet()) {
         if (at1.getAccess() != AccessType::Access::create &&
             at1.getAccess() != AccessType::Access::del)
             continue;
 
-        for (auto at2: meta->getAccessTypeSet()) {
+        for (auto at2: *meta->getAccessTypeSet()) {
             if (at2.getAccess() != AccessType::Access::create &&
                 at2.getAccess() != AccessType::Access::del)
             continue;
@@ -159,20 +159,20 @@ void pruneAccessTypes(Dominator* dom, PostDominator* pDom,
     for (auto px: pairs_create_delete)
         // (delete, X) PostDom (create, X) => None *remove both*
         if (dominatesAccessType(pDom, px.second, px.first)) {
-            meta->getAccessTypeSet().remove(px.first);
-            meta->getAccessTypeSet().remove(px.second);
+            meta->getAccessTypeSet()->remove(px.first);
+            meta->getAccessTypeSet()->remove(px.second);
         // (create, X) Dom (delete, X) => (create, X)
         } else if (dominatesAccessType(dom, px.first, px.second))
-            meta->getAccessTypeSet().remove(px.second);
+            meta->getAccessTypeSet()->remove(px.second);
 
     // the pair is meant to be <WRITE, READ>, not the other way around
     std::set<std::pair<AccessType, AccessType>> pairs_write_read;
-    for (auto at1: meta->getAccessTypeSet()) {
+    for (auto at1: *meta->getAccessTypeSet()) {
         if (at1.getAccess() != AccessType::Access::write &&
             at1.getAccess() != AccessType::Access::read)
             continue;
 
-        for (auto at2: meta->getAccessTypeSet()) {
+        for (auto at2: *meta->getAccessTypeSet()) {
             if (at2.getAccess() != AccessType::Access::write &&
                 at2.getAccess() != AccessType::Access::read)
             continue;
@@ -190,7 +190,7 @@ void pruneAccessTypes(Dominator* dom, PostDominator* pDom,
     for (auto px: pairs_write_read)
         // (write, X) Dom (read, X) => (write, X) 
         if (dominatesAccessType(dom, px.first, px.second))
-            meta->getAccessTypeSet().remove(px.second);
+            meta->getAccessTypeSet()->remove(px.second);
 
 }
 
@@ -255,12 +255,12 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
 
     for (int p = 0; p < num_param; p++) {
         ValueMetadata meta = fun_conds->getParameterMetadata(p);
-        for (auto i: meta.getAccessTypeSet().getAllICFGNodes())
+        for (auto i: meta.getAccessTypeSet()->getAllICFGNodes())
             cond_nodes.insert(i);
     }
 
     ValueMetadata meta = fun_conds->getReturnMetadata();
-    for (auto i: meta.getAccessTypeSet().getAllICFGNodes())
+    for (auto i: meta.getAccessTypeSet()->getAllICFGNodes())
             cond_nodes.insert(i);
 
     outs() << "[DEBUG] All nodes from ATS: " << cond_nodes.size() << "\n";
