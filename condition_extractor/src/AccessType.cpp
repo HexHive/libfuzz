@@ -1,4 +1,5 @@
 #include "AccessType.h"
+#include "AccessTypeHandler.h"
 
 #include "SVF-FE/LLVMUtil.h"
 
@@ -8,6 +9,27 @@
 bool ValueMetadata::debug = false;
 std::string ValueMetadata::debug_condition = "";
 bool ValueMetadata::consider_indirect_calls = false;
+
+/**
+If exists, call the predefined handler for function fun.
+
+@param: ats: the access type set to be updated by the handler
+@param: fun: the name of the function
+@param: node: the node currently analyzed
+
+@return: boolean value indicating if the analysis should continue on the subfield.
+         For example, it might be false for a cast to indicate we do not try to follow further child of the node.
+         default true.
+*/
+bool predefined_access_type_dispatcher(AccessTypeSet ats, std::string fun, const ICFGNode * node) {
+    // TODO move this line to the .h file
+    auto pos = accessTypeHandlers.find(fun);
+    if (pos != accessTypeHandlers.end()) {
+        // call the specific handler
+        return pos->second(ats, fun, node);
+    }
+    return true;
+}
 
 // NOT EXPOSED FUNCTIONS -- THESE FUNCTIONS ARE MEANT FOR ONLY INTERNAL USAGE!
 bool areConnected(const VFGNode*, const VFGNode*);
@@ -75,6 +97,15 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
     FunEntryICFGNode *entry_node = icfg->getFunEntryICFGNode(svfun);
 
     std::stack<std::pair<ICFGNode*,std::stack<ICFGEdge*>>> working;
+bool ValueMetadata::debug = false;
+std::string ValueMetadata::debug_condition = "";
+bool ValueMetadata::consider_indirect_calls = false;
+
+// NOT EXPOSED FUNCTIONS -- THESE FUNCTIONS ARE MEANT FOR ONLY INTERNAL USAGE!
+bool areConnected(const VFGNode*, const VFGNode*);
+std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
+bool areCompatible(FunctionType*,FunctionType*);
+// NOT EXPOSED FUNCTIONS -- END!
 
     std::set<ICFGNode*> visited;
 
@@ -120,7 +151,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                 }
             }
         } else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
-
+            // Handling calls
             if (!consider_indirect_calls && call_node->isIndirectCall())
                     continue;
 
@@ -138,7 +169,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                 std::string fun = callee->getName();
                 // TODO: add an allow-list
                 if (fun == "malloc") {
-                    AccessType acNode(retType);
+                    AccessType acNode;
                     // no need to set field, empty field set is what I need
                     acNode.setAccess(AccessType::Access::create);
                     ats.insert(acNode, node);
@@ -146,6 +177,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
             }
         }  
 
+        // We'll go throught the children and add unknown ones to our work list.
         if (node->hasOutgoingEdge()) {
             ICFGNode::const_iterator it = node->OutEdgeBegin();
             ICFGNode::const_iterator eit = node->OutEdgeEnd();
@@ -154,8 +186,10 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                 ICFGEdge *edge = *it;
                 ICFGNode *dst = edge->getDstNode();
 
-                if (visited.find(dst) != visited.end()) 
+                if (visited.find(dst) != visited.end()) {
+                    // We've seen it already
                     continue;
+                }
                 
                 if(auto ret_edge = SVFUtil::dyn_cast<RetCFGEdge>(edge)) {
 
@@ -182,6 +216,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
         }
 
     }
+    // We have visited all the nodes
 
     // std::map<const Instruction*, AccessTypeSet> all_ats;
     std::map<const Value*, ValueMetadata> all_ats;
@@ -195,10 +230,10 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
         // exit(1);
 
         bool do_not_return = true;
-        for (auto at: l_ats.getAccessTypeSet())
+        for (auto at: l_ats)
             if (at.getAccess() == AccessType::Access::ret) {
                 auto l_ats_all_nodes = at.getICFGNodes();
-                for (auto inst: l_ats_all_nodes)
+                for (auto inst: l_ats_all_nodes) {
                     if (inst == fun_exit) {
                         for (auto at2: l_ats.getAccessTypeSet())
                             for (auto inst2:  at.getICFGNodes())
@@ -206,8 +241,9 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                         do_not_return = false;
                         break;
                     }
+                }
             }
-
+        }   
         if (do_not_return)
             all_ats[a] = l_ats;
     }
@@ -225,8 +261,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
 
         for (auto atsx: all_ats) {
             auto ats_all_nodes = ats_all_nodes_before;
-            auto atsx_all_nodes = atsx.second.getAccessTypeSet().       
-                                              getAllICFGNodes();
+            auto atsx_all_nodes = atsx.second.getAllICFGNodes();
             for (auto inst: atsx_all_nodes)
                 if (ats_all_nodes.find(inst) != ats_all_nodes.end()) {
                     // I found something in common
@@ -238,6 +273,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                             ats.insert(atx, inst);
                     break;
                 }
+            }
         }
 
         auto ats_all_nodes_merged = ats.getAllICFGNodes();
@@ -625,6 +661,9 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                 acNode.setAccess(AccessType::Access::read);
                 ats.insert(acNode, vNode->getICFGNode());
 
+                // XXX: casting operations complitate things a lot. For the time
+                // being I just leave it.
+
                 if (auto bitcastinst = SVFUtil::dyn_cast<BitCastInst>(inst)) {
                     auto dst_typ = bitcastinst->getDestTy();
                     auto src_typ = bitcastinst->getSrcTy();
@@ -679,14 +718,14 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                     // outs() << "INSPECT?: " << succNode2->toString() << "\n";
 
                     // follow indirect jumps if a store, probably add a flag
-                    if (vNode->getNodeKind() != VFGNode::VFGNodeK::Store)
+                    if (vNode->getNodeKind() != VFGNode::VFGNodeK::Store) {
                         // try to follow only Direct Edges
                         if (SVFUtil::isa<SVF::IndirectSVFGEdge>(edge)) {
                             // VFGNode* succNode2 = edge->getDstNode();
                             // outs() << "SKIP: " << succNode2->toString() << "\n";
                             continue;
                         }
-
+                    }
                     // outs() << "I PROCEED WITH THIS\n";
 
                     VFGNode* succNode = edge->getDstNode();
@@ -724,14 +763,11 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                         if (p_succ.getStackSize() >= MAX_STACKSIZE) {
                             ok_continue = false;
                             outs() << "[INFO] Stack size too big!\n";
-                        } 
-                        else if (!consider_indirect_calls && 
-                                cs->isIndirectCall()) {
-                            ok_continue = false;
+                        } else if (cs->isIndirectCall()) {
+                            ok_continue = false; // TODO CHECK WITH FLAVIO is is a stop flag to no go into children?
                             // outs() << "[INFO] Indirect call, I stop!\n";
                         // it is a direct call, check for stubs
-                        } 
-                        else {
+                        } else {
                             if (!cs->isIndirectCall()) {
                                 std::string fun = SVFUtil::getCallee(cs->getCallSite())->getName();
 
@@ -739,11 +775,9 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                                 //        << fun << "\n";
 
                                 // TODO: add an allow-list
-                                if (fun == "free") {
-                                    ok_continue = false;
-                                    acNode.setAccess(AccessType::Access::del);
-                                    ats.insert(acNode, vNode->getICFGNode());
-                                }
+                                // free handler
+                                ok_continue = predefined_access_type_dispatcher(ats, fun, vNode->getICFGNode());
+
                             }
                         }
                     }
