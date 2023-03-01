@@ -15,8 +15,8 @@ bool ValueMetadata::consider_indirect_calls = false;
 bool areConnected(const VFGNode*, const VFGNode*);
 std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
 bool areCompatible(FunctionType*,FunctionType*);
-bool predefinedAccessTypeDispatcher(ValueMetadata*, std::string fun,
-    const VFGNode*, AccessType);
+bool handlerDispatcher(ValueMetadata*, std::string,
+    const ICFGNode*, int, AccessType);
 // NOT EXPOSED FUNCTIONS -- END!
 
 /**
@@ -30,13 +30,14 @@ If exists, call the predefined handler for function fun.
          For example, it might be false for a cast to indicate we do not try to follow further child of the node.
          default true.
 */
-bool predefinedAccessTypeDispatcher(ValueMetadata *mdata,
-    std::string fun, const VFGNode * node, AccessType at) {
+bool handlerDispatcher(ValueMetadata *mdata,
+    std::string fun, const ICFGNode * icfgNode, int param_num,
+    AccessType atNode) {
     // TODO move this line to the .h file
     auto pos = accessTypeHandlers.find(fun);
     if (pos != accessTypeHandlers.end()) {
         // call the specific handler
-        return pos->second(mdata, fun, node, at);
+        return pos->second(mdata, fun, icfgNode, param_num, atNode);
     }
     return true;
 }
@@ -165,15 +166,9 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
 
             if (callee != nullptr) {
                 std::string fun = callee->getName();
-                // TODO: add an allow-list
                 // malloc handler
-                // bool _ignored = 
-                //     predefinedAccessTypeDispatcher(&mdata, fun, nullptr);
-                // OLD STUFF
-                // AccessType acNode(retType);
-                //     // no need to set field, empty field set is what I need
-                //     acNode.setAccess(AccessType::Access::create);
-                //     ats.insert(acNode, node);
+                AccessType acNode(retType);
+                bool _ = handlerDispatcher(&mdata, fun, node, -1, acNode);
             }
         }  
 
@@ -219,23 +214,24 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
     // We have visited all the nodes
 
     // std::map<const Instruction*, AccessTypeSet> all_ats;
-    std::map<const Value*, ValueMetadata> all_ats;
+    std::map<const Instruction*, ValueMetadata> all_ats;
     for (auto a: allocainst_set) {
         // outs() << "[INFO] paraAT() " << *a << " -- ";
         // outs() << a->getFunction()->getName().str() << "\n";
-        ValueMetadata l_ats = ValueMetadata::extractParameterMetadata(vfg, a, retType);
+        ValueMetadata mdata = ValueMetadata::extractParameterMetadata(
+            vfg, a, retType);
 
         // outs() << "[STARTING POINT] " << *a << "\n";
-        // outs() << l_ats.toString(true) << "\n";
-        // exit(1);
+        // outs() << " result -> " << mdata.getAccessNum() << "AT\n";
+        // // exit(1);
 
         bool do_not_return = true;
-        for (auto at: *l_ats.getAccessTypeSet()) {
+        for (auto at: *mdata.getAccessTypeSet()) {
             if (at.getAccess() == AccessType::Access::ret) {
                 auto l_ats_all_nodes = at.getICFGNodes();
                 for (auto inst: l_ats_all_nodes) {
                     if (inst == fun_exit) {
-                        for (auto at2: *l_ats.getAccessTypeSet())
+                        for (auto at2: *mdata.getAccessTypeSet())
                             for (auto inst2:  at.getICFGNodes())
                                 ats->insert(at2, inst2);
                         do_not_return = false;
@@ -245,43 +241,17 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
             }
         }   
         if (do_not_return)
-            all_ats[a] = l_ats;
+            all_ats[a] = mdata;
     }
 
-    // outs() << "LET'S SEE WHAT FUNCTIONS WE HAVE HERE!!!\n";
-    // exit(1);
-
-    // MERGE traces that lead to a return value (and ignoring the others)
-    bool ast_is_changed = true;
-    while (ast_is_changed) {
-
-        ast_is_changed = false;
-
-        auto ats_all_nodes_before = ats->getAllICFGNodes();
-
-        for (auto atsx: all_ats) {
-            auto ats_all_nodes = ats_all_nodes_before;
-            auto atsx_all_nodes = atsx.second
-                                        .getAccessTypeSet()
-                                        ->getAllICFGNodes();
-            for (auto inst: atsx_all_nodes) {
-                if (ats_all_nodes.find(inst) != ats_all_nodes.end()) {
-                    // I found something in common
-                    if (ValueMetadata::debug) {
-                        outs() << "[MATCHING]" << inst->toString()  << "\n";
-                    }
-                    for (auto atx:  *atsx.second.getAccessTypeSet())
-                        for (auto inst: atx.getICFGNodes())
-                            ats->insert(atx, inst);
-                    break;
-                }
-            }
-        }
-
-        auto ats_all_nodes_merged = ats->getAllICFGNodes();
-
-        ast_is_changed = ats_all_nodes_merged != ats_all_nodes_before;
-
+    // outs() << "Get Summary:\n";
+    // I just merge all!
+    for (auto el: all_ats) {
+        // outs() << el.first->getFunction()->getName().str() << " ";
+        // outs() << el.second.getSummary();
+         for (auto atx:  *el.second.getAccessTypeSet())
+            for (auto inst: atx.getICFGNodes())
+                ats->insert(atx, inst);
     }
 
     return mdata;
@@ -459,7 +429,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
     // outs() << "DEBUG: val: " << *val << "\n";
 
     AccessTypeSet *ats = mdata.getAccessTypeSet();
-    bool is_array;
+    bool is_array = false;
 
     // std::set<std::string> visitedFunctions;
 
@@ -761,8 +731,9 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                         if (p_succ.getStackSize() >= MAX_STACKSIZE) {
                             ok_continue = false;
                             outs() << "[INFO] Stack size too big!\n";
-                        } else if (cs->isIndirectCall()) {
-                            ok_continue = false; // TODO CHECK WITH FLAVIO is is a stop flag to no go into children?
+                        } else if (!consider_indirect_calls && 
+                            cs->isIndirectCall()) {
+                            ok_continue = false;
                             // outs() << "[INFO] Indirect call, I stop!\n";
                         // it is a direct call, check for stubs
                         } else {
@@ -772,16 +743,44 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                                 // outs() << "[DEBUG] I found this function: " 
                                 //        << fun << "\n";
 
-                                ok_continue = predefinedAccessTypeDispatcher(
-                                    &mdata, fun, vNode, acNode);
+                                bool can_handle_parameter = false;
 
-                                // OLD
-                                // if (fun == "free") {
-                                //     ok_continue = false;
-                                //     acNode.setAccess(AccessType::Access::del);
-                                //     ats.insert(acNode, vNode->getICFGNode());
-                                // }
+                                SVF::PAGNode* param = nullptr;
+                                if (auto call_node =
+                                    SVFUtil::dyn_cast<ActualParmVFGNode>(
+                                        succNode)) {
+                                    param = const_cast<SVF::PAGNode*>( 
+                                        call_node->getParam());
+                                    can_handle_parameter = true;
+                                }
+                                else if (auto call_node =
+                                    SVFUtil::dyn_cast<FormalParmVFGNode>(
+                                        succNode)) {
+                                    param = const_cast<SVF::PAGNode*>(
+                                        call_node->getParam());
+                                    can_handle_parameter = true;
+                                // } else {
+                                //     outs() << "it is none!!\n";
+                                }
 
+                                // outs() << "succ node:\n";
+                                // outs() << succNode->toString() << "\n";
+
+
+                                if (can_handle_parameter) {
+                                    assert(param && "Param not found!\n");
+
+                                    int n_param = 0;
+                                    for  (auto p: cs->getActualParms()) {
+                                        if (p == param) 
+                                            break;
+                                        n_param++;
+                                    }
+
+                                    ok_continue = handlerDispatcher(
+                                        &mdata, fun, vNode->getICFGNode(),
+                                        n_param, acNode);
+                                }
                             }
                         }
                     }

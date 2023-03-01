@@ -39,10 +39,10 @@ run: $(TARGET).o.bc $(TARGET).o.ll
 #	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v1 -dom  -print_dom
 	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v0 -do_indirect_jumps
 #	$(EXTRACTOR) $< -function $(FUNCTION) -t txt -output $(TARGET).txt -v v0 -do_indirect_jumps
-#	$(WPA) -ander -svfg --dump-vfg  ./$(TARGET).o.bc
+# 	$(WPA) -ander -svfg --dump-vfg  ./$(TARGET).o.bc
 #	$(WPA) -ander -dump-pag ./$(TARGET).o.bc
 # 	convert only if you --print_dom
-#	./convert_dot_pdf.sh
+# 	./convert_dot_pdf.sh
 
 clean:
 	rm -f $(TARGET).o $(TARGET).o.bc .$(TARGET).o.bc $(TARGET).o.svf.bc $(TARGET).o.ll apis_llvm.log apis_llvm.json *.pdf dom*.dot postdom*.dot dom*.txt postdom*.txt

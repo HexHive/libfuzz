@@ -39,6 +39,10 @@
 
 /workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFClientOpen -output /workspaces/libfuzz/condition_extractor/conditions-TIFFClientOpen.json -v v0 -t json -do_indirect_jumps
 
+/workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFOpen -output /workspaces/libfuzz/condition_extractor/conditions-TIFFOpen.json -v v0 -t json -do_indirect_jumps
+
+/workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFFdOpen -output /workspaces/libfuzz/condition_extractor/conditions-TIFFFdOpen.json -v v0 -t json -do_indirect_jumps
+
 /workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -interface /workspaces/libfuzz/analysis/libtiff/work/apipass/apis_clang.json -output /workspaces/libfuzz/condition_extractor/conditions-tmp-icpt.json -v v0 -t json -do_indirect_jumps
 
 /workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -interface /workspaces/libfuzz/analysis/libtiff/work/apipass/apis_clang.json -output /workspaces/libfuzz/condition_extractor/conditions-tmp-icpt1.json -v v0 -t json -do_indirect_jumps

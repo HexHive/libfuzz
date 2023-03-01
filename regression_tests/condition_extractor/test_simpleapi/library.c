@@ -98,7 +98,7 @@ void needs_array_1(my_struct** s, int n_struct) {
 
 }
 
-void my_free(my_struct* s) {
+void my_free(int xx, my_struct* s) {
 	free(s);
 }
 
@@ -125,7 +125,7 @@ void* my_malloc(size_t s) {
 // 	my_free(s);
 // }
 
-my_struct* create(int a, int b) {
+my_struct* create(int a, int b, char* file_path) {
 	my_struct *s = my_malloc(sizeof(my_struct));
 
 	if (s == NULL) {
@@ -133,12 +133,14 @@ my_struct* create(int a, int b) {
 	}
 
 	if (a == 0) {
-		my_free(s);
+		my_free(0, s);
 		return 0;
 	}
 
 	s->field_a = a;
 	s->field_b = b;
+
+	open(file_path, "r");
 	
 	my_struct *s1 = my_malloc(sizeof(my_struct));
 

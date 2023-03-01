@@ -634,6 +634,19 @@ class ValueMetadata {
             return sstream.str();
         }
 
+        std::string getSummary() {
+
+            std::stringstream sstream;
+
+            sstream << "ATS " << ats.size() << ", ";
+            sstream << "array " << std::to_string(is_array) << ", ";
+            sstream << "malloc " << std::to_string(is_malloc_size) << ", ";
+            sstream << "path " << std::to_string(is_file_path) << ", ";
+            sstream << "depends '" << len_depends_on << "'\n";
+
+            return sstream.str();
+        }
+
     public: // static functions/data!
 
         // handle debug information
