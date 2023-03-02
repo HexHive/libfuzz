@@ -275,6 +275,17 @@ class Utils:
                 exported_functions |= { l_strip[:p_par] }
 
         return list(exported_functions)
+        
+    @staticmethod
+    def get_value_metadata(mdata_json) -> ValueMetadata:
+        ats = Utils.get_access_type_set(mdata_json["access_type_set"])
+        is_array = mdata_json["is_array"]
+        is_file_path = mdata_json["is_file_path"]
+        is_malloc_size = mdata_json["is_malloc_size"]
+        len_depends_on = mdata_json["len_depends_on"]
+
+        return ValueMetadata(ats, is_array, is_malloc_size, 
+                is_file_path, len_depends_on)
 
     @staticmethod
     def get_access_type_set(ats_json) -> AccessTypeSet:
@@ -314,19 +325,20 @@ class Utils:
 
             for fc_json in conditions:
 
-                function_name = fc_json["functionName"]
+                function_name = fc_json["function_name"]
 
                 params_at = []
                 p_idx = 0
                 while True:
                     try:
-                        ats = Utils.get_access_type_set(fc_json[f"param_{p_idx}"])
-                        params_at += [ats]
+                        mdata = Utils.get_value_metadata(
+                            fc_json[f"param_{p_idx}"])
+                        params_at += [mdata]
                     except KeyError as e:
                         break
                     p_idx += 1
 
-                return_at = Utils.get_access_type_set(fc_json[f"return"])
+                return_at = Utils.get_value_metadata(fc_json[f"return"])
 
                 fc = FunctionConditions(function_name, params_at, return_at)
                 fcs.add_function_conditions(fc)

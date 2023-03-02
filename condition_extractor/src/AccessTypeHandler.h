@@ -24,7 +24,7 @@ bool malloc_handler(ValueMetadata *mdata, std::string fun_name,
         mdata->getAccessTypeSet()->insert(atNode, icfgNode);
         return true;
     }
-    if (param_num == 0) {
+    if (param_num == 0 && atNode.getNumFields() == 0) {
         atNode.setAccess(AccessType::Access::read);
         mdata->getAccessTypeSet()->insert(atNode, icfgNode);
         mdata->setMallocSize(true);
@@ -37,7 +37,7 @@ bool malloc_handler(ValueMetadata *mdata, std::string fun_name,
 bool free_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, int param_num, AccessType atNode) {
 
-    if (param_num == 0) {
+    if (param_num == 0 && atNode.getNumFields() == 0) {
         atNode.setAccess(AccessType::Access::del);
         mdata->getAccessTypeSet()->insert(atNode, icfgNode);
     }
@@ -48,7 +48,7 @@ bool free_handler(ValueMetadata *mdata, std::string fun_name,
 bool open_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, int param_num, AccessType atNode) {
 
-    if (param_num == 0) {
+    if (param_num == 0 && atNode.getNumFields() == 0) {
         atNode.setAccess(AccessType::Access::read);
         mdata->getAccessTypeSet()->insert(atNode, icfgNode);
         mdata->setIsFilePath(true);

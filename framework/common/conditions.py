@@ -68,13 +68,41 @@ class AccessTypeSet:
     def __eq__(self, other):
         return hash(self) == hash(other)
 
+class ValueMetadata:
+    ats: AccessTypeSet
+    is_array: bool
+    is_malloc_size: bool
+    is_file_path: bool
+    len_depends_on: str
+
+    def __init__(self, ats: AccessTypeSet, is_array: bool, 
+        is_malloc_size: bool, is_file_path: bool, len_depends_on: str):
+        self.ats = ats
+        self.is_array = is_array
+        self.is_malloc_size = is_malloc_size
+        self.is_file_path = is_file_path
+        self.len_depends_on = len_depends_on
+
+    def __str__(self):
+        return f"ValueMetadata(ats={len(self.ats.access_type_set)})"
+
+    def __repr__(self):
+        return str(self)
+
+    def __hash__(self):
+        return hash(self.ats, self.is_array, self.is_malloc_size, 
+                    self.is_file_path, self.len_depends_on)
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
 class FunctionConditions:
     function_name: str
-    argument_at: List[AccessTypeSet]
-    return_at: AccessTypeSet
+    argument_at: List[ValueMetadata]
+    return_at: ValueMetadata
 
-    def __init__(self, function_name: str, argument_at: List[AccessTypeSet],
-                    return_at: AccessTypeSet):
+    def __init__(self, function_name: str, argument_at: List[ValueMetadata],
+                    return_at: ValueMetadata):
         self.function_name = function_name
         self.argument_at = argument_at
         self.return_at = return_at
