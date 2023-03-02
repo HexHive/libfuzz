@@ -45,7 +45,7 @@
 
 /workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -interface /workspaces/libfuzz/analysis/libtiff/work/apipass/apis_clang.json -output /workspaces/libfuzz/condition_extractor/conditions-tmp-icpt.json -v v0 -t json -do_indirect_jumps
 
-/workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -interface /workspaces/libfuzz/analysis/libtiff/work/apipass/apis_clang.json -output /workspaces/libfuzz/condition_extractor/conditions-tmp-icpt1.json -v v0 -t json -do_indirect_jumps
+/workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -interface /workspaces/libfuzz/analysis/libtiff/work/apipass/apis_clang.json -output /workspaces/libfuzz/condition_extractor/conditions-tmp-icpt2.json -v v0 -t json -do_indirect_jumps
 
 
 /workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function uv_encode -output /workspaces/libfuzz/condition_extractor/conditions-uv_encode.json -v v1 -t json -do_indirect_jumps
