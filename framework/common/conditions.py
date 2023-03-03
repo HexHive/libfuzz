@@ -90,8 +90,8 @@ class ValueMetadata:
         return str(self)
 
     def __hash__(self):
-        return hash(self.ats, self.is_array, self.is_malloc_size, 
-                    self.is_file_path, self.len_depends_on)
+        return hash((self.ats, self.is_array, self.is_malloc_size, 
+            self.is_file_path, self.len_depends_on))
 
     def __eq__(self, other):
         return hash(self) == hash(other)

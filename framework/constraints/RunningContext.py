@@ -16,7 +16,8 @@ class RunningContext(Context):
         self.variables_alive = []
         self.var_to_cond = {}
 
-    def has_var_type(self, type: Type) -> bool:
+    # override of Context method
+    def has_vars_type(self, type: Type) -> bool:
 
         # FLAVIO: I think this should be like that!
         # TODO: Extract "base" type with a dedicated method?
@@ -93,7 +94,7 @@ class RunningContext(Context):
             return var
 
 
-    def add_variable(self, val: Value, cond: AccessTypeSet):
+    def add_variable(self, val: Value, cond: ValueMetadata):
 
         if not isinstance(val, Variable):
             raise Exception(f"{val} is not a Variable! :(")
@@ -106,12 +107,21 @@ class RunningContext(Context):
 
         if seek_val is None:
             self.variables_alive += [val]
-            self.var_to_cond[val] = Conditions(cond)
+            if cond != None:
+                self.var_to_cond[val] = Conditions(cond)
         else:
-            self.var_to_cond[val].add_conditions(cond)
+            if cond != None:
+                self.var_to_cond[val].add_conditions(cond.ats)
 
-    def try_to_get_var(self, type: Type, cond: AccessTypeSet,
+        # TODO: handle dependency fields here?
+
+    def try_to_get_var(self, type: Type, cond: ValueMetadata,
                         is_ret: bool = False) -> Value:
+
+        # from IPython import embed; embed(); exit(1)
+
+        # TODO: this has to include logic to handl arrays, malloc, file
+        # diependencies, etc
 
         is_sink = self.is_sink(cond)
 
@@ -135,7 +145,7 @@ class RunningContext(Context):
                     val = self.randomly_gimme_a_var(type, "", is_ret)
                 else:
                     raise ConditionUnsat()
-        elif self.has_var_type(type):
+        elif self.has_vars_type(type):
             val = self.get_value_that_satisfy(type, cond)
             if val is None:
                 if (Conditions.is_unconstraint(cond) and 
@@ -158,7 +168,8 @@ class RunningContext(Context):
 
         return val
 
-    def update(self, val: Optional[Value], cond: AccessTypeSet, is_ret: bool = False):
+    def update(self, val: Optional[Value], cond: ValueMetadata,
+        is_ret: bool = False):
 
         if isinstance(val, NullConstant):
             # NullConstant does not have conditions
@@ -169,12 +180,12 @@ class RunningContext(Context):
             # I am not sure it should be done here!
             x = AccessType(Access.WRITE, [])
             x2 = AccessTypeSet(set([x]))
-            cond2 = cond.union(x2)
+            cond2 = cond.ats.union(x2)
             var = val
         elif isinstance(val, Address):
             x = AccessType(Access.WRITE, [-1])
             x2 = AccessTypeSet(set([x]))
-            cond2 = cond.union(x2)
+            cond2 = cond.ats.union(x2)
             var = val.get_variable()
         else:
             raise Exception(f"I don't know this val: {val}")
@@ -197,11 +208,11 @@ class RunningContext(Context):
 
     # NOTE: this oracle infers if the variable with the access types (cond) can
     # be considered a sink
-    def is_sink(self, cond: AccessTypeSet):
+    def is_sink(self, cond: ValueMetadata):
         deletes_root = any([c.access == Access.DELETE and c.fields == [] 
-                            for c in cond])
+                            for c in cond.ats])
         creates_root = any([c.access == Access.CREATE and c.fields == [] 
-                            for c in cond])
+                            for c in cond.ats])
         return deletes_root and not creates_root
 
     def __copy__(self):

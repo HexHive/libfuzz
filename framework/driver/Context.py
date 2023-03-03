@@ -71,7 +71,7 @@ class Context:
     def get_allocated_size(self):
         return sum([ b.get_allocated_size() for b in self.buffs_alive ])
 
-    def has_vars_type(self, type: Type):
+    def has_vars_type(self, type: Type) -> bool:
         for v in self.buffs_alive:
             if v.get_type() == type:
                 return True
