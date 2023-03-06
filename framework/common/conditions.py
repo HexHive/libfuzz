@@ -12,14 +12,25 @@ class Access(Enum):
 class AccessType:
     access: Access
     fields: List[int]
+    type: str
+    type_string: str
 
-    def __init__(self, access: Access, fields: List[int]):
+    parent: 'AccessType'
+
+    def __init__(self, access: Access, fields: List[int],
+        type: str, type_string: str):
         self.access = access
         self.fields = fields
+        self.type = type
+        self.typs_string = type_string
+        self.parent = None
 
     def __str__(self):
         ff = ".".join([f"{f}" for f in self.fields])
-        return f"AccessType(access={self.access},fields={ff})"
+        if self.parent is not None:
+            return f"AccessType(access={self.access},fields={ff},P)"
+        else:
+            return f"AccessType(access={self.access},fields={ff})"
 
     def __repr__(self):
         return str(self)
@@ -150,6 +161,9 @@ class FunctionConditionsSet:
         l_funcondset = [hash(v) for _, v in self.fun_cond_set.items()]
         h_funcondset = tuple(l_funcondset)
         return hash((h_funcondset, str(self.__class__.__name__)))
+
+    def __getitem__(self, key):
+        return self.fun_cond_set[key]
 
     def __eq__(self, other):
         return hash(self) == hash(other)

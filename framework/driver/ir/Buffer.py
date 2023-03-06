@@ -41,7 +41,7 @@ class Buffer:
     def _init(self, key):
         # lazy init, I set the variable if requested by somebody
         if key not in self.variables:
-                self.variables[key] = Variable.Variable(f"{self.token}_{key}", key, self)
+            self.variables[key] = Variable.Variable(f"{self.token}_{key}", key, self)
 
     def get_address(self):
         if self.n_element == 0:

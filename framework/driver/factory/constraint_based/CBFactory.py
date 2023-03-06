@@ -54,29 +54,41 @@ class CBFactory(Factory):
 
         return starting_api
 
+    # FLAVIO: that's for debug (?)
+    # cnt = 0
+
     def try_to_instantiate_api_call(self, api_call: ApiCall,
                         conditions: FunctionConditions, 
                         rng_ctx: RunningContext):
-
+        # if api_call.function_name == "TIFFReadRGBAImage":
+        #     self.cnt += 1
         # I prefer to have a local one
         rng_ctx = copy.deepcopy(rng_ctx)
         # context = rng_ctx.context
 
         unsat_vars = set()
 
+        # if api_call.function_name == "TIFFReadRGBAImage":
+        #     par_debug = 3
+        #     is_ret = False
+        #     arg0_type = api_call.arg_types[par_debug]
+        #     arg0_cond = conditions.argument_at[par_debug]
+        #     type = arg0_type
+        #     from IPython import embed; embed(); exit(1)
+
         for arg_pos, arg_type in api_call.get_pos_args_types():
-            arg_ats = conditions.argument_at[arg_pos]
+            arg_cond = conditions.argument_at[arg_pos]
+
             try:
                 if rng_ctx.is_void_pointer(arg_type):
-                    arg_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, arg_ats)
+                    arg_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, arg_cond)
                 elif isinstance(arg_type, PointerType) and arg_type.to_function:
                     arg_var = rng_ctx.get_null_constant()
                 else:
-                    arg_var = rng_ctx.try_to_get_var(arg_type, arg_ats)
+                    arg_var = rng_ctx.try_to_get_var(arg_type, arg_cond)
                 api_call.set_pos_arg_var(arg_pos, arg_var)
             except ConditionUnsat:
-                # print(f"got unsat, to handle 1!")
-                unsat_vars.add((arg_pos, arg_ats))
+                unsat_vars.add((arg_pos, arg_cond))
         
         ret_ats = conditions.return_at
         ret_type = api_call.ret_type
@@ -95,13 +107,10 @@ class CBFactory(Factory):
             return (None, unsat_vars)
 
         for arg_pos, arg_type in api_call.get_pos_args_types():
-            arg_ats = conditions.argument_at[arg_pos]
-            rng_ctx.update(api_call.arg_vars[arg_pos], arg_ats)
+            arg_cond = conditions.argument_at[arg_pos]
+            rng_ctx.update(api_call.arg_vars[arg_pos], arg_cond)
         if api_call.ret_var is not None:
             rng_ctx.update(api_call.ret_var, ret_ats,  True)
-
-        # if api_call.function_name == "_TIFFfree":
-        #     from IPython import embed; embed(); exit(1)
 
         return (rng_ctx, unsat_vars)
 
@@ -171,6 +180,10 @@ class CBFactory(Factory):
                 # (ApiCall, RunningContext, Api)
                 (api_call, rng_ctx_1, api_n) = random.choice(candidate_api)
                 print(f"[INFO] choose {api_call.function_name}")
+
+                # if api_call.function_name == "TIFFReadRGBAImage":
+                #     from IPython import embed; embed(); exit(1)
+
                 drv += [(api_call, rng_ctx_1)]
             else:
                 api_n = random.choice(starting_api)

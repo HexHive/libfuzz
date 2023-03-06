@@ -288,30 +288,43 @@ class Utils:
                 is_file_path, len_depends_on)
 
     @staticmethod
+    def get_access_type(at_json) -> AccessType:
+
+        access = None
+        if at_json["access"] == "read":
+            access = Access.READ
+        elif at_json["access"] == "write":
+            access = Access.WRITE
+        elif at_json["access"] == "return":
+            access = Access.RETURN
+        elif at_json["access"] == "create":
+            access = Access.CREATE
+        elif at_json["access"] == "delete":
+            access = Access.DELETE
+        elif at_json["access"] == "none":
+            access = Access.NONE
+
+        if access == None:
+            print("'access' is None, what should I do?")
+            exit(1)
+
+        fields = at_json["fields"]
+        type = at_json["type"]
+        type_string = at_json["type_string"]
+
+        return AccessType(access, fields, type, type_string)
+
+
+    @staticmethod
     def get_access_type_set(ats_json) -> AccessTypeSet:
         ats = set()
         for at_json in ats_json:
-            access = None
-            if at_json["access"] == "read":
-                access = Access.READ
-            elif at_json["access"] == "write":
-                access = Access.WRITE
-            elif at_json["access"] == "return":
-                access = Access.RETURN
-            elif at_json["access"] == "create":
-                access = Access.CREATE
-            elif at_json["access"] == "delete":
-                access = Access.DELETE
-            elif at_json["access"] == "none":
-                access = Access.NONE
-
-            if access == None:
-                print("'access' is None, what should I do?")
-                exit(1)
-
-            fields = at_json["fields"]
             
-            ats.add(AccessType(access, fields))
+            at = Utils.get_access_type(at_json)
+            if at_json["parent"] != 0:
+                at.parent = Utils.get_access_type(at_json["parent"])
+            
+            ats.add(at)
 
         return AccessTypeSet(ats)
 

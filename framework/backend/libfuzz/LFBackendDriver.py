@@ -85,8 +85,9 @@ class LFBackendDriver(BackendDriver):
     # Address
     def address_emit(self, address: Address) -> str:
         variable = address.variable
+        type = variable.get_type()
 
-        if isinstance(variable.get_type(), PointerType):
+        if isinstance(type, PointerType):
             return f"{self.variable_emit(variable)}"
         else:
             return f"&{self.variable_emit(variable)}"
@@ -111,18 +112,23 @@ class LFBackendDriver(BackendDriver):
         # if isinstance(type, PointerType):
         #     print("buffdec_emit")
         #     from IPython import embed; embed(); exit()
-        
+
         n_stars = 0
         tmp_type = type
         while isinstance(tmp_type, PointerType):
             n_stars += 1
             tmp_type = tmp_type.get_pointee_type()
 
-        str_stars = "*"*n_stars
+        str_stars = ""
+        n_brackets = ""
+        if isinstance(type, PointerType) and type.get_base_type().is_incomplete:
+            str_stars = "*"*n_stars
+        else:
+            n_brackets = "[1]"*n_stars
 
         const_attr = "const " if type.is_const else ""
 
-        return f"{const_attr}{self.type_emit(type)} {str_stars}{token}[{n_element}];"
+        return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}];"
 
     # BuffInit
     def buffinit_emit(self, buffinit: BuffInit) -> str:
@@ -195,8 +201,12 @@ class LFBackendDriver(BackendDriver):
         idx     = variable.get_index()
         buffer  = variable.get_buffer()
         token   = self.clean_token(buffer.token)
+        type    = buffer.get_type()
 
+        # if isinstance(type, PointerType) and type.get_base_type().is_incomplete:
         return f"{token}[{idx}]"
+        # else:
+        # return f"{token}"
 
     # Type
     def type_emit(self, type: Type) -> str:

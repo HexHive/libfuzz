@@ -23,12 +23,15 @@ class Conditions:
     def get_sub_fields(self, f_prev):
         f_prev_len = len(f_prev)
         f_prev_sub = []
-        for x in self.ats.access_type_set:
+        for x in self.ats:
             if f_prev == x.fields[:f_prev_len]:
                 f_prev_sub += [x.fields]
         return f_prev_sub
 
-    def are_compatible_with(self, r_cond: ValueMetadata) -> bool:
+    def is_compatible_with(self, r_cond: ValueMetadata) -> bool:
+
+        if self.is_array != r_cond.is_array:
+            return False
 
         # r_requirements = set([at for at in r_cond if at.access == Access.READ])
         r_requirements = set([at for at in r_cond.ats if at.access == Access.WRITE])
