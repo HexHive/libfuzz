@@ -25,6 +25,13 @@ class CBFactory(Factory):
         # self.dependency_graph = dgraph
         self.conditions = conditions
 
+        # I need this to build synthetic constraints in "update" method
+        RunningContext.type_to_hash = {}
+        for f, c in self.conditions:
+            for arg in c.argument_at + [c.return_at]:
+                for at in arg.ats:
+                    RunningContext.type_to_hash[at.type_string] = at.type
+
         # DependencyGraph must be inverted, this is an "error". It probably
         # needs refactor in the future
         inv_dep_graph = dict((k, set()) for k in list(dgraph.keys()))
@@ -80,9 +87,10 @@ class CBFactory(Factory):
             arg_cond = conditions.argument_at[arg_pos]
 
             try:
-                if rng_ctx.is_void_pointer(arg_type):
-                    arg_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, arg_cond)
-                elif isinstance(arg_type, PointerType) and arg_type.to_function:
+                # if rng_ctx.is_void_pointer(arg_type):
+                #     arg_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, arg_cond)
+                # el
+                if isinstance(arg_type, PointerType) and arg_type.to_function:
                     arg_var = rng_ctx.get_null_constant()
                 else:
                     arg_var = rng_ctx.try_to_get_var(arg_type, arg_cond)
@@ -93,9 +101,10 @@ class CBFactory(Factory):
         ret_ats = conditions.return_at
         ret_type = api_call.ret_type
         try:
-            if rng_ctx.is_void_pointer(ret_type):
-                ret_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, ret_ats, True)
-            elif isinstance(ret_type, PointerType) and ret_type.to_function:
+            # if rng_ctx.is_void_pointer(ret_type):
+            #     ret_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, ret_ats, True)
+            # el
+            if isinstance(ret_type, PointerType) and ret_type.to_function:
                 ret_var = rng_ctx.get_null_constant()
             else:
                 ret_var = rng_ctx.try_to_get_var(ret_type, ret_ats, True)

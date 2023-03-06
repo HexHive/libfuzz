@@ -1,6 +1,6 @@
 from typing import List, Set, Dict, Tuple, Optional
 
-import random, copy
+import random, copy, string
 
 from driver import Context
 from driver.ir import Variable, Type, Value, PointerType
@@ -11,6 +11,9 @@ from common.conditions import *
 class RunningContext(Context):
     variables_alive:    List[Variable]
     var_to_cond:        Dict[Variable, Conditions]
+
+    # static dictionary
+    type_to_hash:        Dict[str, str]
 
     def __init__(self):
         super().__init__()
@@ -114,19 +117,9 @@ class RunningContext(Context):
         if seek_val is None:
             self.variables_alive += [val]
             if cond != None:
-                # if cond.is_array:
-                #     print("Update an array 2 ?")
-                #     from IPython import embed; embed(); exit(1)
                 self.var_to_cond[val] = Conditions(cond)
-                # self.var_to_cond[val].is_array = cond.is_array
-                # self.var_to_cond[val].is_malloc_size = cond.is_malloc_size
-                # self.var_to_cond[val].is_file_path = cond.is_file_path
-                # self.var_to_cond[val].len_depends_on = cond.len_depends_on
         else:
             if cond != None:
-                # if cond.is_array:
-                #     print("Update an array 1?")
-                #     from IPython import embed; embed(); exit(1)
                 self.var_to_cond[val].add_conditions(cond.ats)
                 self.var_to_cond[val].is_array = cond.is_array
                 self.var_to_cond[val].is_malloc_size = cond.is_malloc_size
@@ -341,6 +334,77 @@ class RunningContext(Context):
 
         # return self.get_random_buffer(type, cond)[0]
 
+    def infer_type(self, cond, fields):
+        type_str = ""
+        type_hash = ""
+
+        if fields == []:
+            type_strings = set()
+            for x in cond.ats.access_type_set:
+                if x.fields == []:
+                    type_strings.add(x.type_string)
+
+            if len(type_strings) == 0:
+                raise Exception("Not found type at []")
+
+            type_hash = None
+            for t in type_strings:
+                if t in RunningContext.type_to_hash:
+                    type_str = t
+                    type_hash = RunningContext.type_to_hash[t]
+                    break
+
+            if not type_hash:
+                raise Exception(f"Cannot find type hash for {type_strings}")
+            
+        elif fields == [-1]:
+            
+            type_strings = set()
+            for x in cond.ats.access_type_set:
+                if x.fields == []:
+                    type_strings.add(x.type_string)
+
+            if len(type_strings) == 0:
+                raise Exception("Not found type at [-1]")
+
+            type_strs = []
+            type_hash = None
+            for t in type_strings:
+                # I care only of 1-d pointers 
+                if t.count("*") != 1:
+                    continue
+                if t in RunningContext.type_to_hash:
+                    type_strs += [t[:-1]]
+            
+            if len(type_str):
+                raise Exception(f"Cannot find type hash for {type_strings}")
+
+            type_hash = None
+            type_str = None
+            for s in type_strs:
+                if s in RunningContext.type_to_hash:
+                    type_hash = RunningContext.type_to_hash[s]
+                    type_str = s
+                    break
+
+            # if I can't find anchestor, just produce a random hash
+            if type_hash is None:
+                length = 20
+                letters = string.ascii_lowercase
+                type_hash = ''.join(random.choice(letters) for i in range(length))
+            
+            if type_str is None:
+                if len(type_strs) == 1:
+                    type_str = type_strs[0]
+                else:
+                    raise Exception(f"Really don't know what to do with {type_strings}")
+                
+
+        else:
+            raise Exception(f"Cannot handle {fields} field type inferring")
+
+        return (type_str, type_hash)
+
     def update(self, val: Optional[Value], cond: ValueMetadata,
         is_ret: bool = False):
 
@@ -352,15 +416,15 @@ class RunningContext(Context):
 
         var = None
         if isinstance(val, Variable):
-            # TODO: handle types
-            # I am not sure it should be done here!
-            x = AccessType(Access.WRITE, [], "", "")
+            (type_str, type_hash) = self.infer_type(cond, [])
+            x = AccessType(Access.WRITE, [], type_hash, type_str)
             synthetic_cond = AccessTypeSet(set([x]))
             var = val
         elif isinstance(val, Address):
-            # TODO: handle types
-            x0 = AccessType(Access.WRITE, [], "", "")
-            x1 = AccessType(Access.WRITE, [-1], "", "")
+            (type_str, type_hash) = self.infer_type(cond, [])
+            x0 = AccessType(Access.WRITE, [], type_hash, type_str)
+            (type_str, type_hash) = self.infer_type(cond, [-1])
+            x1 = AccessType(Access.WRITE, [-1], type_hash, type_str)
             x1.parent = x0
             synthetic_cond = AccessTypeSet(set([x0, x1]))
             var = val.get_variable()

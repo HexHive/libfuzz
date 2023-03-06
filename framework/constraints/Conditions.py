@@ -33,6 +33,12 @@ class Conditions:
         if self.is_array != r_cond.is_array:
             return False
 
+        if self.is_file_path != r_cond.is_file_path:
+            return False
+
+        if self.is_malloc_size != r_cond.is_malloc_size:
+            return False
+
         # r_requirements = set([at for at in r_cond if at.access == Access.READ])
         r_requirements = set([at for at in r_cond.ats if at.access == Access.WRITE])
         # holding_condition = set([at for at in self.ats if at.access in [Access.WRITE, Access.RETURN]])

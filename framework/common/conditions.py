@@ -22,7 +22,7 @@ class AccessType:
         self.access = access
         self.fields = fields
         self.type = type
-        self.typs_string = type_string
+        self.type_string = type_string
         self.parent = None
 
     def __str__(self):
