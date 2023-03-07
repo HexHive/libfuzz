@@ -60,7 +60,8 @@ bool open_handler(ValueMetadata *mdata, std::string fun_name,
 static AccessTypeHandler_map accessTypeHandlers = {
     {"malloc", &malloc_handler},
     {"free", &free_handler},
-    {"open", &open_handler}
+    {"open", &open_handler},
+    {"fopen", &open_handler},
 };
 
 #endif /* INCLUDE_DOM_ACCESSTYPE_HANDLER_H_ */

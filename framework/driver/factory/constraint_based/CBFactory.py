@@ -61,26 +61,22 @@ class CBFactory(Factory):
 
         return starting_api
 
-    # FLAVIO: that's for debug (?)
-    # cnt = 0
-
     def try_to_instantiate_api_call(self, api_call: ApiCall,
                         conditions: FunctionConditions, 
                         rng_ctx: RunningContext):
-        # if api_call.function_name == "TIFFReadRGBAImage":
-        #     self.cnt += 1
         # I prefer to have a local one
         rng_ctx = copy.deepcopy(rng_ctx)
         # context = rng_ctx.context
 
         unsat_vars = set()
 
-        # if api_call.function_name == "TIFFReadRGBAImage":
-        #     par_debug = 3
-        #     is_ret = False
-        #     arg0_type = api_call.arg_types[par_debug]
-        #     arg0_cond = conditions.argument_at[par_debug]
-        #     type = arg0_type
+        # if api_call.function_name == "create":
+        #     print("hook create")
+        #     # par_debug = 0
+        #     is_ret = True
+        #     arg_type = api_call.ret_type
+        #     arg_cond = conditions.return_at
+        #     type = arg_type
         #     from IPython import embed; embed(); exit(1)
 
         for arg_pos, arg_type in api_call.get_pos_args_types():

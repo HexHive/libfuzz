@@ -19,6 +19,7 @@ class LFBackendDriver(BackendDriver):
                 if f.endswith(".h") or f.endswith(".hpp") or f.endswith(".hxx"):
                     f_full = os.path.join(root, f)
                     f_rel = os.path.relpath(f_full, headers_dir)
+                    # from IPython import embed; embed(); exit(1)
                     self.headers.append(f_rel)
 
     def get_name(self) -> str:

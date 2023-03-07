@@ -251,6 +251,10 @@ class Utils:
             if arg_info.flag in ["val", "ref"]:
                 arg_info.type =  apis_clang_list[function_name]["arguments_info"][i]["type_clang"]
 
+        # if return_info.type == "void*":
+        #     print("VOID*?")
+        #     from IPython import embed; embed(); exit(1)
+
         return Api(function_name, is_vararg, return_info, arguments_info)
 
     @staticmethod
@@ -260,6 +264,9 @@ class Utils:
         x = a_type
         while x[-1] == "*":
             x = x[:-1]
+
+        # if "void" in a_type:
+        #     from IPython import embed; embed(); exit(1)
 
         return x in incomplete_types_list
 

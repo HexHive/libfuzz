@@ -334,7 +334,7 @@ class RunningContext(Context):
 
         # return self.get_random_buffer(type, cond)[0]
 
-    def infer_type(self, cond, fields):
+    def infer_type(self, type, cond, fields):
         type_str = ""
         type_hash = ""
 
@@ -345,14 +345,17 @@ class RunningContext(Context):
                     type_strings.add(x.type_string)
 
             if len(type_strings) == 0:
-                raise Exception("Not found type at []")
-
-            type_hash = None
-            for t in type_strings:
-                if t in RunningContext.type_to_hash:
-                    type_str = t
-                    type_hash = RunningContext.type_to_hash[t]
-                    break
+                type_str = type.token
+                length = 20
+                letters = string.ascii_lowercase
+                type_hash = ''.join(random.choice(letters) for i in range(length))
+            else:
+                type_hash = None
+                for t in type_strings:
+                    if t in RunningContext.type_to_hash:
+                        type_str = t
+                        type_hash = RunningContext.type_to_hash[t]
+                        break
 
             if not type_hash:
                 raise Exception(f"Cannot find type hash for {type_strings}")
@@ -371,7 +374,7 @@ class RunningContext(Context):
             type_hash = None
             for t in type_strings:
                 # I care only of 1-d pointers 
-                if t.count("*") != 1:
+                if "*" not in t:
                     continue
                 if t in RunningContext.type_to_hash:
                     type_strs += [t[:-1]]
@@ -397,11 +400,14 @@ class RunningContext(Context):
                 if len(type_strs) == 1:
                     type_str = type_strs[0]
                 else:
+                    from IPython import embed; embed(); exit(1)
                     raise Exception(f"Really don't know what to do with {type_strings}")
                 
 
         else:
             raise Exception(f"Cannot handle {fields} field type inferring")
+
+        RunningContext.type_to_hash[type_str] = type_hash
 
         return (type_str, type_hash)
 
@@ -416,14 +422,16 @@ class RunningContext(Context):
 
         var = None
         if isinstance(val, Variable):
-            (type_str, type_hash) = self.infer_type(cond, [])
+            type = val.get_type()
+            (type_str, type_hash) = self.infer_type(type, cond, [])
             x = AccessType(Access.WRITE, [], type_hash, type_str)
             synthetic_cond = AccessTypeSet(set([x]))
             var = val
         elif isinstance(val, Address):
-            (type_str, type_hash) = self.infer_type(cond, [])
+            type = val.get_variable().get_type()
+            (type_str, type_hash) = self.infer_type(type, cond, [])
             x0 = AccessType(Access.WRITE, [], type_hash, type_str)
-            (type_str, type_hash) = self.infer_type(cond, [-1])
+            (type_str, type_hash) = self.infer_type(type, cond, [-1])
             x1 = AccessType(Access.WRITE, [-1], type_hash, type_str)
             x1.parent = x0
             synthetic_cond = AccessTypeSet(set([x0, x1]))

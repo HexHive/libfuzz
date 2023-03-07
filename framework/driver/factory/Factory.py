@@ -53,6 +53,9 @@ class Factory(ABC):
         pointer_level = a_type.count("*")
         a_type_core = a_type.replace("*", "")
 
+        if a_type_core == "void":
+            a_is_incomplete = True
+
         type_core = Type(a_type_core, a_size, a_is_incomplete, a_is_const)
 
         return_type = type_core
