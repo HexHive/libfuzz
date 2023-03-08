@@ -9,6 +9,16 @@ class FileInit(Statement):
 
     def __init__(self, buffer, len_var):
         super().__init__()
+
+        buff_type = buffer.get_type()
+        len_type = len_var.get_type()
+
+        if buff_type.get_token() != "char*":
+            raise Exception(f"FileInit excepts \"char*\" as buffer, \"{type}\" given instead")
+
+        if len_type.get_token() != "size_t":
+            raise Exception(f"FileInit excepts \"size_t\" as len_Var, \"{type}\" given instead")
+
         self.buffer = buffer
         self.len_var = len_var
 
