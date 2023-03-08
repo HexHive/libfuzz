@@ -4,13 +4,17 @@ import random, copy, string
 
 from driver import Context
 from driver.ir import Variable, Type, Value, PointerType
-from driver.ir import Address, NullConstant, Buffer
+from driver.ir import Address, NullConstant, Buffer, ConstStringDecl
+from driver.ir import BuffDecl, BuffInit, FileInit, Statement
 from . import Conditions
 from common.conditions import *
 
 class RunningContext(Context):
     variables_alive:    List[Variable]
     var_to_cond:        Dict[Variable, Conditions]
+    file_path_buffers:  Set[Buffer]
+    new_vars:           Set[Tuple[Variable, Conditions]]
+    const_strings:      Dict[Variable, str]
 
     # static dictionary
     type_to_hash:        Dict[str, str]
@@ -19,6 +23,10 @@ class RunningContext(Context):
         super().__init__()
         self.variables_alive = []
         self.var_to_cond = {}
+
+        self.file_path_buffers = set()
+        self.new_vars = set()
+        self.const_strings = {}
 
     # override of Context method
     def has_vars_type(self, type: Type, cond: ValueMetadata) -> bool:
@@ -186,7 +194,37 @@ class RunningContext(Context):
         if val == None:
             raise Exception("Val unset")
 
+        if cond.is_file_path and not isinstance(val, NullConstant):
+            # print("cond.is_file_path")
+            # from IPython import embed; embed(); exit(1)
+
+            var = None
+            if isinstance(val, Address):
+                var = val.get_variable()
+            elif isinstance(val, Variable):
+                var = var
+            else:
+                raise Exception("Excepted Address or Variable")
+
+            buff = var.get_buffer()
+            (len_dep, len_cond) = self.create_dependency_length_variable()
+
+            self.file_path_buffers.add(buff)
+            self.new_vars.add((var, len_dep, len_cond))
+
+            length = 20
+            letters = string.ascii_lowercase
+            file_name = ''.join(random.choice(letters) for i in range(length)) + ".bin"
+
+            self.const_strings[var] = file_name
+
         return val
+
+    def create_dependency_length_variable(self):
+        len_type = Type("size_t", 8)
+        ats = AccessTypeSet()
+        mdata = ValueMetadata(ats, False, False, False, "")
+        return (self.create_new_var(len_type, mdata), mdata)
 
     def create_new_buffer(self, type: Type, cond: ValueMetadata):
         # if isinstance(type, PointerType):
@@ -457,6 +495,57 @@ class RunningContext(Context):
 
             # from IPython import embed; embed(); exit(1);
             # import pdb; pdb.set_trace(); exit(1);
+
+    def generate_buffer_init(self) -> List[Statement]:
+        buff_init = []
+
+        # I have to handle dynamic arrays separately
+        dynamic_buff = set()
+        for b in self.file_path_buffers:
+            dynamic_buff.add(b)
+            len_var = self.var_to_cond[b[0]].len_depends_on
+            dynamic_buff.add(len_var.get_buffer())
+
+        # first init static buffers
+        for x in self.buffs_alive:
+            t = x.get_type()
+
+            if isinstance(t, PointerType) and t.get_base_type().is_incomplete:
+                continue
+
+            if t.is_incomplete:
+                continue
+            
+            if t == self.stub_void:
+                continue
+
+            if x in dynamic_buff:
+                continue
+
+            buff_init += [BuffInit(x)]
+
+        # then init dynamic buffers
+        for b in self.file_path_buffers: 
+            len_var = self.var_to_cond[b[0]].len_depends_on
+            buff_init += [FileInit(b, len_var)]
+
+        return buff_init
+
+    def generate_buffer_decl(self) -> List[Statement]:
+        buff_decl = []
+
+        for x in self.buffs_alive:
+            if x.get_type() == self.stub_void:
+                continue
+
+            if x[0] in self.const_strings:
+                x_val = self.const_strings[x[0]]
+                buff_decl += [ConstStringDecl(x, x_val)]
+            else:
+                buff_decl += [BuffDecl(x)]
+            
+        return buff_decl
+
 
     # NOTE: this oracle infers if the variable with the access types (cond) can
     # be considered a sink

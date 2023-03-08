@@ -8,7 +8,7 @@ from constraints import Conditions, ConditionUnsat, RunningContext
 from dependency import DependencyGraph
 from driver import Context, Driver
 from driver.factory import Factory
-from driver.ir import ApiCall, BuffDecl, PointerType, Statement, Type, Variable
+from driver.ir import ApiCall, PointerType, Statement, Type, Variable
 
 
 class CBFactory(Factory):
@@ -83,9 +83,6 @@ class CBFactory(Factory):
             arg_cond = conditions.argument_at[arg_pos]
 
             try:
-                # if rng_ctx.is_void_pointer(arg_type):
-                #     arg_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, arg_cond)
-                # el
                 if isinstance(arg_type, PointerType) and arg_type.to_function:
                     arg_var = rng_ctx.get_null_constant()
                 else:
@@ -97,9 +94,6 @@ class CBFactory(Factory):
         ret_ats = conditions.return_at
         ret_type = api_call.ret_type
         try:
-            # if rng_ctx.is_void_pointer(ret_type):
-            #     ret_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, ret_ats, True)
-            # el
             if isinstance(ret_type, PointerType) and ret_type.to_function:
                 ret_var = rng_ctx.get_null_constant()
             else:
@@ -117,7 +111,16 @@ class CBFactory(Factory):
         if api_call.ret_var is not None:
             rng_ctx.update(api_call.ret_var, ret_ats,  True)
 
-        return (rng_ctx, unsat_vars)
+        # I might have other pending vars to include
+        # e.g., for controlling arrays length
+        # print("for var, cond in rng_ctx.new_vars")
+        # from IPython import embed;embed();exit(1)
+        for var, var_len, cond_len in rng_ctx.new_vars:
+            rng_ctx.update(var_len, cond_len)
+            rng_ctx.var_to_cond[var].len_depends_on = var_len
+        rng_ctx.new_vars.clear()
+
+        return (rng_ctx, {})
 
     def create_random_driver(self) -> Driver:
 

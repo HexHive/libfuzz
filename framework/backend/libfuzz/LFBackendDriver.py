@@ -1,5 +1,7 @@
 from driver import Driver
-from driver.ir import ApiCall, BuffDecl, BuffInit, Type, PointerType, Address, Variable, Statement, Value, NullConstant
+from driver.ir import ApiCall, BuffDecl, BuffInit, FileInit
+from driver.ir import PointerType, Address, Variable, Type
+from driver.ir import Statement, Value, NullConstant, ConstStringDecl
 from backend import BackendDriver
 
 import random, string, os, shutil
@@ -12,6 +14,8 @@ class LFBackendDriver(BackendDriver):
         self.headers_dir = headers_dir
         self.num_seeds = num_seeds
         self._idx = 0
+
+        self.file_pointer_cnt = 0
 
         self.headers = [] # os.listdir(headers_dir)
         for root, _, f_names in os.walk(headers_dir):
@@ -95,15 +99,45 @@ class LFBackendDriver(BackendDriver):
 
     def stmt_emit(self, stmt: Statement) -> str:
         if isinstance(stmt, BuffDecl):
-            return self.buffdec_emit(stmt)
+            return self.buffdecl_emit(stmt)
+        if isinstance(stmt, ConstStringDecl):
+            return self.conststringdecl_emit(stmt)
         elif isinstance(stmt, BuffInit):
             return self.buffinit_emit(stmt)
+        elif isinstance(stmt, FileInit):
+            return self.fileinit_emit(stmt)
         elif isinstance(stmt, ApiCall):
             return self.apicall_emit(stmt)
         raise NotImplementedError
 
+    # ConstStringDecl
+    def conststringdecl_emit(self, cnststrdecl: ConstStringDecl) -> str:
+        # NOTE: ConstStringDecl ensures to be assigned only to [const] char* 
+        buffer      = cnststrdecl.get_buffer()
+        str_value   = cnststrdecl.get_string_val()
+
+        type        = buffer.get_type()
+        n_element   = buffer.get_number_elements()
+        token       = self.clean_token(buffer.get_token())
+
+        n_stars = 0
+        tmp_type = type
+        while isinstance(tmp_type, PointerType):
+            n_stars += 1
+            tmp_type = tmp_type.get_pointee_type()
+        str_stars = "*"
+        n_brackets = "[1]"*(n_stars-1)
+        const_attr = "const " if type.is_const else ""
+
+        stmt = ""
+        stmt += f"{const_attr}{self.type_emit(type)} "
+        stmt += f"{str_stars}{token}{n_brackets}[{n_element}] = "
+        stmt += f"{{\"{str_value}\"}};"
+
+        return stmt
+
     # BuffDecl
-    def buffdec_emit(self, buffdecl: BuffDecl) -> str:
+    def buffdecl_emit(self, buffdecl: BuffDecl) -> str:
         buffer      = buffdecl.get_buffer()
 
         type        = buffer.get_type()
@@ -111,7 +145,7 @@ class LFBackendDriver(BackendDriver):
         token       = self.clean_token(buffer.get_token())
 
         # if isinstance(type, PointerType):
-        #     print("buffdec_emit")
+        #     print("buffdecl_emit")
         #     from IPython import embed; embed(); exit()
 
         n_stars = 0
@@ -130,6 +164,33 @@ class LFBackendDriver(BackendDriver):
         const_attr = "const " if type.is_const else ""
 
         return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}];"
+
+    def get_new_file_pointer(self):
+        cnt = self.file_pointer_cnt
+        self.file_pointer_cnt += 1
+        return f"p{cnt}"
+
+    # FileInit
+    def fileinit_emit(self, fileinit: FileInit) -> str:
+        stmt = "\n\t//file init\n"
+
+        var_len = fileinit.get_len_var()
+
+        # file pointer name
+        p = self.get_new_file_pointer()
+
+        # var_len from fuzzer seed
+        var_len_init = BuffInit(var_len.get_buffer())
+        stmt += "\t" + self.buffinit_emit(var_len_init) + "\n"
+        # file open
+        buff = fileinit.get_buffer()
+        stmt += f"\tFILE *{p} = fopen({self.value_emit(buff[0])}, \"w\");\n"
+        # fwrite into buff value
+        stmt += f"\tfwrite(data, 1, {self.value_emit(var_len)}, {p});\n"
+        # fclose
+        stmt += f"\tfclose({p});\n"
+
+        return stmt
 
     # BuffInit
     def buffinit_emit(self, buffinit: BuffInit) -> str:

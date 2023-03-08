@@ -12,5 +12,7 @@ from .Address               import Address
 from .NullConstant          import NullConstant
 from .ApiCall               import ApiCall
 from .BuffDecl              import BuffDecl
+from .ConstStringDecl       import ConstStringDecl
 from .BuffInit              import BuffInit
+from .FileInit              import FileInit
 from .Buffer                import Buffer

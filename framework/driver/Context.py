@@ -156,8 +156,6 @@ class Context:
         return [BuffDecl(x) for x in self.buffs_alive if x.get_type() != self.stub_void]
 
     def generate_buffer_init(self) -> List[Statement]:
-        # return [BuffInit(x) for x in self.buffs_alive if not x.get_type().is_incomplete and not isinstance(x.get_type(), PointerType) and x.get_type() != self.stub_void]
-
         buff_init = []
 
         for x in self.buffs_alive:
