@@ -265,6 +265,16 @@ class RunningContext(Context):
         # for the time being, I always return the first element
         return buffer[0]
 
+    def has_dereference(self, cond: ValueMetadata):
+
+        has_deref = False
+        for at in cond.ats:
+            if at.fields == [-1]:
+                has_deref = True
+                break
+
+        return has_deref
+
     def randomly_gimme_a_var(self, type: Type, cond: ValueMetadata,
         is_ret: bool = False) -> Value:
 
@@ -281,7 +291,7 @@ class RunningContext(Context):
                 is_incomplete = tt.is_incomplete
 
             # If asking for ret value, I always need a pointer
-            if is_ret or cond.is_file_path:
+            if is_ret or cond.is_file_path or self.has_dereference(cond):
                 a_choice = Context.POINTER_STRATEGY_ARRAY
             else:
                 a_choice = random.choice(self.poninter_strategies)
