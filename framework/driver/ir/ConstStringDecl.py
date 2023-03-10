@@ -14,7 +14,9 @@ class ConstStringDecl(Statement):
 
         # I want a Pointer(Type), no multiple pointers, no base types
         if type.token != "char*":
-            raise Exception(f"ConstStringDecl accepts only 'const char*', {type} received")
+            print("ConstStringDecl")
+            from IPython import embed; embed(); exit(1)
+            raise Exception(f"ConstStringDecl accepts only 'char*', {type} received")
 
         self.buffer = buffer
         self.string_val = string_val

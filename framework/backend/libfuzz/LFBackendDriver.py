@@ -54,7 +54,6 @@ class LFBackendDriver(BackendDriver):
             with open(os.path.join(seed_folder, f"seed{x}.bin"), "wb") as f:
                 f.write(os.urandom(seed_size))
 
-    # this return the filename
     def emit_driver(self, driver: Driver, driver_filename: str):
 
         # file name for the driver
@@ -62,10 +61,7 @@ class LFBackendDriver(BackendDriver):
 
         # driver_filename = "CEOBJLE6DR.txt"
 
-        stmt_instances = []
-
-        for stmt in driver:
-            stmt_instances.append(self.stmt_emit(stmt))
+        # stmt_instances = []
 
         with open(os.path.join(self.working_dir, driver_filename), "w") as f:
             # TODO: add headers inclusion
@@ -78,8 +74,9 @@ class LFBackendDriver(BackendDriver):
 
             f.write("extern \"C\" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t Size) {\n")
 
-            for stmt in stmt_instances:
-                f.write("\t" + stmt + "\n")
+            # for stmt in stmt_instances:
+            for stmt in driver:
+                f.write("\t" + self.stmt_emit(stmt) + "\n")
 
             f.write("\n\treturn 0;\n}")
 
@@ -172,7 +169,7 @@ class LFBackendDriver(BackendDriver):
 
     # FileInit
     def fileinit_emit(self, fileinit: FileInit) -> str:
-        stmt = "\n\t//file init\n"
+        stmt = "//file init\n"
 
         var_len = fileinit.get_len_var()
 
@@ -187,8 +184,8 @@ class LFBackendDriver(BackendDriver):
         stmt += f"\tFILE *{p} = fopen({self.value_emit(buff[0])}, \"w\");\n"
         # fwrite into buff value
         stmt += f"\tfwrite(data, 1, {self.value_emit(var_len)}, {p});\n"
-        # fclose
-        stmt += f"\tfclose({p});\n"
+        # fclose + move cursor ahead
+        stmt += f"\tfclose({p});data += {self.value_emit(var_len)};\n"
 
         return stmt
 

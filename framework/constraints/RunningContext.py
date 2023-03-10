@@ -167,6 +167,7 @@ class RunningContext(Context):
                 else:
                     raise ConditionUnsat()
         elif self.has_vars_type(type, cond):
+            # print("elif self.has_vars_type(type, cond):")
             # val = self.get_value_that_satisfy(type, cond)
             # if val is None:
             #     if (Conditions.is_unconstraint(cond) and 
@@ -179,6 +180,7 @@ class RunningContext(Context):
                 # else:
                 #     raise ConditionUnsat()
         else:
+            # print("else:")
             if isinstance(type, PointerType):
                 tt = type.get_pointee_type()  
             else:
@@ -202,12 +204,16 @@ class RunningContext(Context):
             if isinstance(val, Address):
                 var = val.get_variable()
             elif isinstance(val, Variable):
-                var = var
+                var = val
             else:
                 raise Exception("Excepted Address or Variable")
 
             buff = var.get_buffer()
             (len_dep, len_cond) = self.create_dependency_length_variable()
+
+            if buff.get_type().token != "char*":
+                print("checking type")
+                from IPython import embed; embed(); exit(1)
 
             self.file_path_buffers.add(buff)
             self.new_vars.add((var, len_dep, len_cond))
@@ -216,6 +222,7 @@ class RunningContext(Context):
             letters = string.ascii_lowercase
             file_name = ''.join(random.choice(letters) for i in range(length)) + ".bin"
 
+            # TODO: add folder to the file lenght
             self.const_strings[var] = file_name
 
         return val
@@ -274,7 +281,7 @@ class RunningContext(Context):
                 is_incomplete = tt.is_incomplete
 
             # If asking for ret value, I always need a pointer
-            if is_ret:
+            if is_ret or cond.is_file_path:
                 a_choice = Context.POINTER_STRATEGY_ARRAY
             else:
                 a_choice = random.choice(self.poninter_strategies)
@@ -289,11 +296,13 @@ class RunningContext(Context):
                     not self.has_vars_type(type, cond)) and 
                     not is_incomplete):
                     try:
-                        vp = self.create_new_buffer(tt, cond)
+                        # print("self.create_new_buffer(tt, cond)")
+                        vp = self.create_new_buffer(type, cond)
                     except Exception as e:
                         print("within 'a_choice == Context.POINTER_STRATEGY_ARRAY'")
                         from IPython import embed; embed(); exit()
                 else:
+                    # print("get_random_buffer")
                     vp = self.get_random_buffer(type, cond)
 
                 v = vp.get_address()
