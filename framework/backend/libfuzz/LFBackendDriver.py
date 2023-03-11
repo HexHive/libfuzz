@@ -1,6 +1,6 @@
 from driver import Driver
 from driver.ir import ApiCall, BuffDecl, BuffInit, FileInit
-from driver.ir import PointerType, Address, Variable, Type
+from driver.ir import PointerType, Address, Variable, Type, DynArrayInit
 from driver.ir import Statement, Value, NullConstant, ConstStringDecl
 from backend import BackendDriver
 
@@ -103,6 +103,8 @@ class LFBackendDriver(BackendDriver):
             return self.buffinit_emit(stmt)
         elif isinstance(stmt, FileInit):
             return self.fileinit_emit(stmt)
+        elif isinstance(stmt, DynArrayInit):
+            return self.dynarrayinit_emit(stmt)
         elif isinstance(stmt, ApiCall):
             return self.apicall_emit(stmt)
         raise NotImplementedError
@@ -166,6 +168,26 @@ class LFBackendDriver(BackendDriver):
         cnt = self.file_pointer_cnt
         self.file_pointer_cnt += 1
         return f"p{cnt}"
+
+    def dynarrayinit_emit(self, dynarrayinit: DynArrayInit) -> str:
+        stmt = "//dyn array init\n"
+
+        var_len = dynarrayinit.get_len_var()
+        buff = dynarrayinit.get_buffer()
+        
+        dst_type = self.type_emit(buff.get_type())
+
+        # var_len from fuzzer seed
+        var_len_init = BuffInit(var_len.get_buffer())
+        stmt += "\t" + self.buffinit_emit(var_len_init) + "\n"
+        # malloc
+        stmt += f"\t{self.value_emit(buff[0])} = ({dst_type}*)malloc({self.value_emit(var_len)});\n"
+        # memcpy
+        stmt += f"\tmemcpy({self.value_emit(buff[0])}, data, {self.value_emit(var_len)});\n"
+        # move cursor ahead
+        stmt += f"\tdata += {self.value_emit(var_len)};\n"
+
+        return stmt
 
     # FileInit
     def fileinit_emit(self, fileinit: FileInit) -> str:

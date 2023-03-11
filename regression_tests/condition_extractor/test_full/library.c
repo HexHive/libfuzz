@@ -68,9 +68,9 @@ void set_b(my_struct *s, int b) {
 	s->field_b = b;
 }
 
-void set_data(my_struct *s, char *b)  {
-	unsigned int len_b = strlen(b);
-	free(s->generic_data);
+void set_data(my_struct *s, char *b, size_t len_b)  {
+	if (s->generic_data != NULL)
+		free(s->generic_data);
 	s->generic_data = (char*) malloc(len_b);
 	memcpy(s->generic_data, b, len_b);
 }

@@ -1,7 +1,7 @@
 create(char *)
 set_a(my_struct *, int)
 set_b(my_struct *, int)
-set_data(my_struct *, char *)
+set_data(my_struct *, char *, int)
 get_a(my_struct *)
 get_b(my_struct *)
 get_data(my_struct *, char **)

@@ -5,7 +5,7 @@ import random, copy, string
 from driver import Context
 from driver.ir import Variable, Type, Value, PointerType
 from driver.ir import Address, NullConstant, Buffer, ConstStringDecl
-from driver.ir import BuffDecl, BuffInit, FileInit, Statement
+from driver.ir import BuffDecl, BuffInit, FileInit, Statement, DynArrayInit
 from . import Conditions
 from common.conditions import *
 
@@ -15,6 +15,7 @@ class RunningContext(Context):
     file_path_buffers:  Set[Buffer]
     new_vars:           Set[Tuple[Variable, Conditions]]
     const_strings:      Dict[Variable, str]
+    # len_dependency:     Dict[Variable, Variable]
 
     # static dictionary
     type_to_hash:        Dict[str, str]
@@ -27,6 +28,8 @@ class RunningContext(Context):
         self.file_path_buffers = set()
         self.new_vars = set()
         self.const_strings = {}
+
+#        self.len_dependency = {}
 
     # override of Context method
     def has_vars_type(self, type: Type, cond: ValueMetadata) -> bool:
@@ -132,7 +135,7 @@ class RunningContext(Context):
                 self.var_to_cond[val].is_array = cond.is_array
                 self.var_to_cond[val].is_malloc_size = cond.is_malloc_size
                 self.var_to_cond[val].is_file_path = cond.is_file_path
-                self.var_to_cond[val].len_depends_on = cond.len_depends_on
+                # self.var_to_cond[val].len_depends_on = cond.len_depends_on
 
         # TODO: handle dependency fields here?
 
@@ -185,6 +188,7 @@ class RunningContext(Context):
                 tt = type.get_pointee_type()  
             else:
                 tt = type
+            # TODO: check if the ats allow to generate an object
             if tt.is_incomplete and not is_ret:
                 raise ConditionUnsat()
             else:
@@ -291,7 +295,9 @@ class RunningContext(Context):
                 is_incomplete = tt.is_incomplete
 
             # If asking for ret value, I always need a pointer
-            if is_ret or cond.is_file_path or self.has_dereference(cond):
+            if (is_ret or cond.is_file_path or 
+                self.has_dereference(cond) or
+                cond.len_depends_on != ""):
                 a_choice = Context.POINTER_STRATEGY_ARRAY
             else:
                 a_choice = random.choice(self.poninter_strategies)
@@ -520,10 +526,38 @@ class RunningContext(Context):
 
         # I have to handle dynamic arrays separately
         dynamic_buff = set()
-        for b in self.file_path_buffers:
-            dynamic_buff.add(b)
-            len_var = self.var_to_cond[b[0]].len_depends_on
-            dynamic_buff.add(len_var.get_buffer())
+        for var, cond in self.var_to_cond.items():
+            if cond.len_depends_on is not None:
+                var_len = cond.len_depends_on
+                for x in [var, var_len]:
+                    buff = None
+                    if isinstance(x, Address):
+                        buff = x.get_variable().get_buffer()
+                    elif isinstance(x, Variable):
+                        buff = x.get_buffer()
+                    else:
+                        raise Exception(f"{x} did not expected here!")
+
+                    dynamic_buff.add(buff)
+        
+        # # buffers for file paths
+        # for b in self.file_path_buffers:
+        #     dynamic_buff.add(b)
+        #     len_var = self.var_to_cond[b[0]].len_depends_on
+        #     dynamic_buff.add(len_var.get_buffer())
+
+        # # buffers for malloc-like objects
+        # for b, b_len in self.len_dependency.items():
+        #     for x in [b, b_len]:
+        #         buff = None
+        #         if isinstance(x, Address):
+        #             buff = x.get_variable().get_buffer()
+        #         elif isinstance(x, Variable):
+        #             buff = x.get_buffer()
+        #         else:
+        #             raise Exception(f"{x} did not expected here!")
+
+        #         dynamic_buff.add(buff)
 
         # first init static buffers
         for x in self.buffs_alive:
@@ -543,10 +577,39 @@ class RunningContext(Context):
 
             buff_init += [BuffInit(x)]
 
-        # then init dynamic buffers
-        for b in self.file_path_buffers: 
-            len_var = self.var_to_cond[b[0]].len_depends_on
-            buff_init += [FileInit(b, len_var)]
+        for var, cond in self.var_to_cond.items():
+            len_var = cond.len_depends_on
+            if len_var is None:
+                continue
+            
+            buff = None
+            if isinstance(var, Address):
+                buff = var.get_variable().get_buffer()
+            elif isinstance(var, Variable):
+                buff = var.get_buffer()
+            else:
+                raise Exception(f"{var} did not expected here (final)!")
+
+            if buff in self.file_path_buffers:
+                buff_init += [FileInit(buff, len_var)]
+            else:
+                buff_init += [DynArrayInit(buff, len_var)]
+
+        # # then init file pointers
+        # for b in self.file_path_buffers: 
+        #     len_var = self.var_to_cond[b[0]].len_depends_on
+        #     buff_init += [FileInit(b, len_var)]
+
+        # # finally init dynamic buffers
+        # for b, b_len in self.len_dependency.items():
+        #     buff = None
+        #     if isinstance(b, Address):
+        #         buff = b.get_variable().get_buffer()
+        #     elif isinstance(b, Variable):
+        #         buff = b.get_buffer()
+        #     else:
+        #         raise Exception(f"{b} did not expected here (final)!")
+        #     buff_init += [DynArrayInit(buff, b_len)]
 
         return buff_init
 

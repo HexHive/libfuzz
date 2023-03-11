@@ -15,4 +15,5 @@ from .BuffDecl              import BuffDecl
 from .ConstStringDecl       import ConstStringDecl
 from .BuffInit              import BuffInit
 from .FileInit              import FileInit
+from .DynArrayInit          import DynArrayInit
 from .Buffer                import Buffer

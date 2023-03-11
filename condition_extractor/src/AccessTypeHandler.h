@@ -57,11 +57,28 @@ bool open_handler(ValueMetadata *mdata, std::string fun_name,
     return false;
 }
 
+bool memcpy_hander(ValueMetadata *mdata, std::string fun_name, 
+    const ICFGNode* icfgNode, int param_num, AccessType atNode) {
+
+    if ((param_num == 0 || param_num == 1) && atNode.getNumFields() == 0) {
+
+        AccessType tmpAcNode = atNode;
+        tmpAcNode.addField(-1);
+        tmpAcNode.setAccess(AccessType::Access::read);
+        // ats->insert(tmpAcNode, vNode->getICFGNode());
+        // atNode.setAccess(AccessType::Access::read);
+        mdata->getAccessTypeSet()->insert(tmpAcNode, icfgNode);
+    }
+
+    return false;
+}
+
 static AccessTypeHandler_map accessTypeHandlers = {
     {"malloc", &malloc_handler},
     {"free", &free_handler},
     {"open", &open_handler},
     {"fopen", &open_handler},
+    {"memcpy", &memcpy_hander},
 };
 
 #endif /* INCLUDE_DOM_ACCESSTYPE_HANDLER_H_ */

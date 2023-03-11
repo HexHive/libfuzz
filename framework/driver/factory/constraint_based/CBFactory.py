@@ -9,6 +9,7 @@ from dependency import DependencyGraph
 from driver import Context, Driver
 from driver.factory import Factory
 from driver.ir import ApiCall, PointerType, Statement, Type, Variable
+from driver.ir import NullConstant
 
 
 class CBFactory(Factory):
@@ -79,8 +80,33 @@ class CBFactory(Factory):
         #     type = arg_type
         #     from IPython import embed; embed(); exit(1)
 
+        # first round to initialize dependency args
         for arg_pos, arg_type in api_call.get_pos_args_types():
             arg_cond = conditions.argument_at[arg_pos]
+            if arg_cond.len_depends_on != "":
+                arg_var = rng_ctx.create_new_var(arg_type, arg_cond)
+                x = arg_var
+                if (isinstance(arg_var, Variable) and 
+                    isinstance(arg_type, PointerType)):
+                    arg_var = arg_var.get_address()
+                api_call.set_pos_arg_var(arg_pos, arg_var)
+
+                idx = int(arg_cond.len_depends_on.replace("param_", ""))
+                idx_type = api_call.arg_types[idx]
+                idx_cond = conditions.argument_at[idx]
+                b_len = rng_ctx.create_new_var(idx_type, idx_cond)
+                api_call.set_pos_arg_var(idx, b_len)
+
+                rng_ctx.update(api_call.arg_vars[arg_pos], arg_cond)
+                rng_ctx.update(api_call.arg_vars[idx], idx_cond)
+                rng_ctx.var_to_cond[x].len_depends_on = b_len
+
+        # second round to initialize all the other args
+        for arg_pos, arg_type in api_call.get_pos_args_types():
+            arg_cond = conditions.argument_at[arg_pos]
+
+            if api_call.arg_vars[arg_pos] is not None:
+                continue
 
             try:
                 if isinstance(arg_type, PointerType) and arg_type.to_function:
@@ -108,13 +134,12 @@ class CBFactory(Factory):
         for arg_pos, arg_type in api_call.get_pos_args_types():
             arg_cond = conditions.argument_at[arg_pos]
             rng_ctx.update(api_call.arg_vars[arg_pos], arg_cond)
+
         if api_call.ret_var is not None:
             rng_ctx.update(api_call.ret_var, ret_ats,  True)
 
         # I might have other pending vars to include
         # e.g., for controlling arrays length
-        # print("for var, cond in rng_ctx.new_vars")
-        # from IPython import embed;embed();exit(1)
         for var, var_len, cond_len in rng_ctx.new_vars:
             rng_ctx.update(var_len, cond_len)
             rng_ctx.var_to_cond[var].len_depends_on = var_len
