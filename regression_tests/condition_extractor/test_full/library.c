@@ -83,8 +83,8 @@ int get_b(my_struct *s) {
 	return s->field_b;
 }
 
-void get_data(my_struct *s, char **b) {
-	memcpy(*b, s->generic_data, s->len_data);
+void get_data(my_struct *s, char *b) {
+	memcpy(b, s->generic_data, s->len_data);
 }
 
 void operation(my_struct *s) {

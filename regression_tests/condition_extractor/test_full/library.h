@@ -18,7 +18,7 @@ void set_b(my_struct*,int);
 void set_data(my_struct *s, char *b, size_t len_b);
 int get_a(my_struct*);
 int get_b(my_struct*);
-void get_data(my_struct*,char**);
+void get_data(my_struct*,char*);
 void operation(my_struct*);
 void close(my_struct *);
 void my_free(void*);

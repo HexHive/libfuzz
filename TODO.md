@@ -22,7 +22,6 @@ void set_data(my_struct *s, char *b, size_t len_b)  {
 - Add additional policies to recognize source APIs. Here [1], md5Init
   initializes `MD5Context`. The gist is that md5Init just writes into fields but
   does not read from any. Therefore, we can consider this as a source API
-- differentiate between buffers in stack and heap! now I really need it :S. Here, I should add a boolean (stack/heap?) and then use this information in the backend. How, I only rely on `is_incomplete`, which is not sufficient.
 - In `try_to_instantiate_api_call`, I should add a test to understand if the
   condition of a variable allows me to instantiate a new variable from skretch (otherwise `raise Unsat()`)
 - Include custom mutator in libfuzzer to handle dynamic arrays
@@ -31,7 +30,7 @@ void set_data(my_struct *s, char *b, size_t len_b)  {
 
 # road map
 - add new instruction for checking returned pointers != NULL
-- remove null pointer in driver creation
+- remove null pointer in driver creation [TO TEST EFFECT WHILE FUZZING]
 - emit X drivers for libtiff -> compile in libfuzzer -> check how many works
 - start 1h fuzzing campaing for each driver
 

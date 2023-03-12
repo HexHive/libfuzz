@@ -417,8 +417,8 @@
                     "access": "read",
                     "fields": [],
                     "parent": 0,
-                    "type": "253d5f0607ceb30562c1db589fa8233b",
-                    "type_string": "i8**"
+                    "type": "18b89c5f007a284357aa3c461c3c31b1",
+                    "type_string": "i8*"
                 }
             ],
             "is_array": true,
@@ -834,7 +834,7 @@
                     "type_string": "i8*"
                 }
             ],
-            "is_array": false,
+            "is_array": true,
             "is_file_path": false,
             "is_malloc_size": false,
             "len_depends_on": "param_2"

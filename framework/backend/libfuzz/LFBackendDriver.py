@@ -88,9 +88,19 @@ class LFBackendDriver(BackendDriver):
     def address_emit(self, address: Address) -> str:
         variable = address.variable
         type = variable.get_type()
+        buffer  = variable.get_buffer()
+        token   = self.clean_token(buffer.token)
+
+        # if type.token == "char*":
+        #     print("token char*")
+        #     from IPython import embed; embed(); exit(1)
 
         if isinstance(type, PointerType):
-            return f"{self.variable_emit(variable)}"
+            # idx     = variable.get_index()
+            if buffer.get_alloctype() == AllocType.HEAP:
+                return f"{self.variable_emit(variable)}"
+            else:
+                return f"{token}"
         else:
             return f"&{self.variable_emit(variable)}"
 
@@ -125,13 +135,12 @@ class LFBackendDriver(BackendDriver):
             n_stars += 1
             tmp_type = tmp_type.get_pointee_type()
         str_stars = "*"
-        n_brackets = "[1]"*(n_stars-1)
+        # n_brackets = "[1]"*(n_stars-1)
         const_attr = "const " if type.is_const else ""
 
         stmt = ""
         stmt += f"{const_attr}{self.type_emit(type)} "
-        stmt += f"{str_stars}{token}{n_brackets}[{n_element}] = "
-        stmt += f"{{\"{str_value}\"}};"
+        stmt += f"{str_stars}{token} = \"{str_value}\";"
 
         return stmt
 
@@ -228,6 +237,14 @@ class LFBackendDriver(BackendDriver):
         ret_type = apicall.ret_type
         arg_vars = apicall.arg_vars
         function_name = apicall.function_name
+
+        # if function_name == "get_data":
+        #     print("get_data backend")
+        #     from IPython import embed; embed(); exit(1)
+
+        # if function_name == "create":
+        #     print("create backend")
+        #     from IPython import embed; embed(); exit(1)
 
         ret_var_code = self.value_emit(ret_var)
         arg_vars_code = ", ".join([self.value_emit(a) for a in arg_vars])
