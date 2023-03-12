@@ -1,28 +1,39 @@
 # My todo:
 
-- LLVM get structures real size and log it
-- make sure the driver knows their input size
-    - handle strange structures such as _IO_FILE
-
-- generate driver.cc ->
-    - add a check that data size is as long as excepted
-
 
 # TODO driver generation framework
 - check poetry and documentation (pdoc3)
-- make the framework "only for generating drivers"
-- re-think shits and the role of any component
+- Include other  forms of argument dependency, e,g,, memcpy , strcpy, and other
+  functions like that, check below: b depends on len_b since used by memcpy. (We
+  can leverage the hooking system already present.)
+```
+void set_data(my_struct *s, char *b, size_t len_b)  {
+	if (s->generic_data != NULL)
+		free(s->generic_data);
+	s->generic_data = (char*) malloc(len_b);
+	memcpy(s->generic_data, b, len_b);
+}
+```
+- Special treatment for known types, such as stream objects in C++ and `FILE*`
+  for standard C. (We can leverage the hooking system already present.)
 
 # TODO for condition_extractor:
-- re-include dominator analysis (and test)
-- add pointers analysis, which funcounts any field could invoke?
-- run condition-extractor for each function invoked indirectly (from previos point)
-- include "list of function" as parameter of condition_extractor + check the results match "single invokation"
-- add false positive analysis: does any field match the original source file?
-- heuristics to mark "source" and "sink" APIs
+- Add additional policies to recognize source APIs. Here [1], md5Init
+  initializes `MD5Context`. The gist is that md5Init just writes into fields but
+  does not read from any. Therefore, we can consider this as a source API
+- differentiate between buffers in stack and heap! now I really need it :S. Here, I should add a boolean (stack/heap?) and then use this information in the backend. How, I only rely on `is_incomplete`, which is not sufficient.
+- In `try_to_instantiate_api_call`, I should add a test to understand if the
+  condition of a variable allows me to instantiate a new variable from skretch (otherwise `raise Unsat()`)
+- Include custom mutator in libfuzzer to handle dynamic arrays
+- Extend condition check with field types (the three-fields relations). See if
+  it makes sense
 
 # road map
 
-- including our custom AFL++
-- add AFL++ w/  `crashmode`
-- statistics from crashes 
+- implement stack/heap
+- remove null pointer in driver creation
+- emit X drivers for libtiff -> compile in libfuzzer -> check how many works
+- start 1h fuzzing campaing for each driver
+
+# Links
+[1] https://github.com/Zunawe/md5-c/blob/main/md5.h
