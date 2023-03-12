@@ -18,6 +18,7 @@ void set_data(my_struct *s, char *b, size_t len_b)  {
   for standard C. (We can leverage the hooking system already present.)
 
 # TODO for condition_extractor:
+- add new instruction for checking returned pointers != NULL
 - Add additional policies to recognize source APIs. Here [1], md5Init
   initializes `MD5Context`. The gist is that md5Init just writes into fields but
   does not read from any. Therefore, we can consider this as a source API
@@ -29,8 +30,7 @@ void set_data(my_struct *s, char *b, size_t len_b)  {
   it makes sense
 
 # road map
-
-- implement stack/heap
+- add new instruction for checking returned pointers != NULL
 - remove null pointer in driver creation
 - emit X drivers for libtiff -> compile in libfuzzer -> check how many works
 - start 1h fuzzing campaing for each driver

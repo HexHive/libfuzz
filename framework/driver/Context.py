@@ -12,7 +12,6 @@ class Context:
 
     POINTER_STRATEGY_NULL = 0
     POINTER_STRATEGY_ARRAY = 1
-    POINTER_STRATEGY_DEP = 2
 
     def __init__(self):
         self.buffs_alive = set()
@@ -21,7 +20,6 @@ class Context:
         self.stub_char_array = PointerType("char*", Type("char", 8))
         self.poninter_strategies = [Context.POINTER_STRATEGY_NULL, 
                                     Context.POINTER_STRATEGY_ARRAY]
-                                    # Context.POINTER_STRATEGY_DEP]
 
         # special case a buffer of void variables
         self.buffer_void = Buffer("buff_void", 1, self.stub_void, 
