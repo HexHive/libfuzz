@@ -5,8 +5,8 @@ coercemap = "/workspaces/libfuzz/regression_tests/condition_extractor/test_full/
 headers = "/workspaces/libfuzz/regression_tests/condition_extractor/test_full/exported_functions.txt"
 incomplete_types = "/workspaces/libfuzz/regression_tests/condition_extractor/test_full/incomplete_types.txt"
 conditions = "/workspaces/libfuzz/regression_tests/condition_extractor/test_full/library.json"
-# minimum_apis = ""
-minimum_apis = "/workspaces/libfuzz/regression_tests/condition_extractor/test_full/minimize_api.txt"
+minimum_apis = ""
+# minimum_apis = "/workspaces/libfuzz/regression_tests/condition_extractor/test_full/minimize_api.txt"
 
 
 [generator]

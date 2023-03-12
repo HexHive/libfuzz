@@ -1,17 +1,25 @@
 from abc import ABC, abstractmethod
 from typing import List, Set, Dict, Tuple, Optional
+from enum import Enum
 
 from . import Statement, Type, Variable
+
+class AllocType(Enum):
+    HEAP = 1
+    STACK = 2
+
 
 class Buffer:
     # variables:  List[Variable]
     n_element:  int
     type:       Type
+    alloctype:  AllocType
 
-    def __init__(self, token, n_element, type):
+    def __init__(self, token, n_element, type, alloctype):
         self.token = token
         self.n_element = n_element
         self.type = type
+        self.alloctype = alloctype
 
         self.variables = {}
 
@@ -28,6 +36,9 @@ class Buffer:
             raise KeyError
 
         self.variables[key] = value
+
+    def get_alloctype(self):
+        return self.alloctype
 
     def get_type(self):
         return self.type

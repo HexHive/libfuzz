@@ -3,7 +3,7 @@ from typing import List, Set, Dict, Tuple, Optional
 import random, copy, string
 
 from driver import Context
-from driver.ir import Variable, Type, Value, PointerType
+from driver.ir import Variable, Type, Value, PointerType, AllocType
 from driver.ir import Address, NullConstant, Buffer, ConstStringDecl
 from driver.ir import BuffDecl, BuffInit, FileInit, Statement, DynArrayInit
 from . import Conditions
@@ -241,17 +241,31 @@ class RunningContext(Context):
         # if isinstance(type, PointerType):
         #     raise Exception(f"This function creates buffers only for base types (no pointers!) {type}")
 
+        alloctype = AllocType.STACK
+        if (isinstance(type, PointerType) and 
+            (type.get_base_type().is_incomplete or cond.len_depends_on != "")):
+            alloctype = AllocType.HEAP
+
         buff_counter = self.buffs_counter.get(type, 0)
         
-        pnt = "_p" if isinstance(type, PointerType) else ""
+        pnt = ""
+        tt = type
+        ps = ""
+        while isinstance(tt, PointerType):
+            ps += "p"
+            tt = tt.get_pointee_type()
+        if ps != "":
+            pnt = f"_{ps}"
         cst = "c" if type.is_const else ""
+        # so far, only HEAP and STACK
+        heap = "h" if alloctype == AllocType.HEAP else "s"
 
-        buff_name = f"{type.token}{pnt}_{cst}{buff_counter}"
+        buff_name = f"{type.token}{pnt}_{cst}{heap}{buff_counter}"
         buff_name = buff_name.replace(" ", "")
         if cond.is_array:
-            new_buffer = Buffer(buff_name, self.MAX_ARRAY_SIZE, type)
+            new_buffer = Buffer(buff_name, self.MAX_ARRAY_SIZE, type, alloctype)
         else:
-            new_buffer = Buffer(buff_name, 1, type)
+            new_buffer = Buffer(buff_name, 1, type, alloctype)
 
         self.buffs_alive.add(new_buffer)
         self.buffs_counter[type] = buff_counter + 1

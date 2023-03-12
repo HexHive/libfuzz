@@ -421,7 +421,7 @@
                     "type_string": "i8**"
                 }
             ],
-            "is_array": false,
+            "is_array": true,
             "is_file_path": false,
             "is_malloc_size": false,
             "len_depends_on": ""

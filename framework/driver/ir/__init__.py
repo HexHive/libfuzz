@@ -17,3 +17,4 @@ from .BuffInit              import BuffInit
 from .FileInit              import FileInit
 from .DynArrayInit          import DynArrayInit
 from .Buffer                import Buffer
+from .Buffer                import AllocType

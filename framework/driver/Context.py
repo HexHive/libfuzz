@@ -1,7 +1,8 @@
 from typing import List, Set, Dict #, Tuple, Optional
 import random, copy
 
-from .ir import Type, PointerType, Variable, BuffDecl, BuffInit, Statement, Value, NullConstant, Buffer
+from .ir import Type, PointerType, Variable, BuffDecl, BuffInit
+from .ir import Statement, Value, NullConstant, Buffer, AllocType 
 
 class Context:
     # trace the variable alives in this buffers within the context
@@ -23,7 +24,8 @@ class Context:
                                     # Context.POINTER_STRATEGY_DEP]
 
         # special case a buffer of void variables
-        self.buffer_void = Buffer("buff_void", 1, self.stub_void)
+        self.buffer_void = Buffer("buff_void", 1, self.stub_void, 
+            AllocType.STACK)
         self.buffs_alive.add(self.buffer_void)
 
         # TODO: make this from config?

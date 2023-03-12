@@ -1,5 +1,5 @@
 from driver import Driver
-from driver.ir import ApiCall, BuffDecl, BuffInit, FileInit
+from driver.ir import ApiCall, BuffDecl, BuffInit, FileInit, AllocType
 from driver.ir import PointerType, Address, Variable, Type, DynArrayInit
 from driver.ir import Statement, Value, NullConstant, ConstStringDecl
 from backend import BackendDriver
@@ -142,10 +142,7 @@ class LFBackendDriver(BackendDriver):
         type        = buffer.get_type()
         n_element   = buffer.get_number_elements()
         token       = self.clean_token(buffer.get_token())
-
-        # if isinstance(type, PointerType):
-        #     print("buffdecl_emit")
-        #     from IPython import embed; embed(); exit()
+        alloctype   = buffer.get_alloctype()
 
         n_stars = 0
         tmp_type = type
@@ -155,10 +152,15 @@ class LFBackendDriver(BackendDriver):
 
         str_stars = ""
         n_brackets = ""
-        if isinstance(type, PointerType) and type.get_base_type().is_incomplete:
-            str_stars = "*"*n_stars
-        else:
-            n_brackets = "[1]"*n_stars
+        # if isinstance(type, PointerType) and type.get_base_type().is_incomplete:
+        #     str_stars = "*"*n_stars
+        # else:
+
+        # if buffer in heap, add a * and remove a [1], i.e., trasform the buffer
+        # in an array of pointers instead of variables
+        if alloctype == AllocType.HEAP:
+            str_stars = "*"
+            n_brackets = "[1]"*(n_stars-1)
 
         const_attr = "const " if type.is_const else ""
 
