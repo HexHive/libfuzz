@@ -2,6 +2,7 @@ from driver import Driver
 from driver.ir import ApiCall, BuffDecl, BuffInit, FileInit, AllocType
 from driver.ir import PointerType, Address, Variable, Type, DynArrayInit
 from driver.ir import Statement, Value, NullConstant, ConstStringDecl
+from driver.ir import AssertNull
 from backend import BackendDriver
 
 import random, string, os, shutil
@@ -117,6 +118,8 @@ class LFBackendDriver(BackendDriver):
             return self.dynarrayinit_emit(stmt)
         elif isinstance(stmt, ApiCall):
             return self.apicall_emit(stmt)
+        elif isinstance(stmt, AssertNull):
+            return self.assertnull_emit(stmt)
         raise NotImplementedError
 
     # ConstStringDecl
@@ -230,6 +233,12 @@ class LFBackendDriver(BackendDriver):
             raise Exception(f"I can't initialize a buffer of imcomplete types {type}")
   
         return f"memcpy({token}, data, sizeof({token}));data += sizeof({token});"
+
+    # AssertNull
+    def assertnull_emit(self, assertnull: AssertNull) -> str:
+        buff = assertnull.get_buffer()
+
+        return f"if ({self.value_emit(buff[0])} == 0) return 0;"
 
     # ApiCall
     def apicall_emit(self, apicall: ApiCall) -> str:

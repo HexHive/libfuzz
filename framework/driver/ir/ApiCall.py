@@ -42,6 +42,15 @@ class ApiCall(Statement):
         self.arg_vars[pos] = var
 
     def set_ret_var(self, ret_var):
+
+        if (isinstance(ret_var, Variable) and
+            isinstance(self.ret_type, PointerType)):
+            raise Exception(f"ret type is {self.ret_type} but giving {ret_var}")
+
+        if (isinstance(ret_var, Address) and 
+            not isinstance(self.ret_type, Type)):
+            raise Exception(f"ret type is {self.ret_type} but giving {ret_var}")
+
         self.ret_var = ret_var
 
     # for an element, the hash is just the key + type

@@ -9,7 +9,7 @@ from dependency import DependencyGraph
 from driver import Context, Driver
 from driver.factory import Factory
 from driver.ir import ApiCall, PointerType, Statement, Type, Variable
-from driver.ir import NullConstant
+from driver.ir import NullConstant, AssertNull
 
 
 class CBFactory(Factory):
@@ -239,7 +239,13 @@ class CBFactory(Factory):
 
         # I want the last RunningContext
         context = [rng_ctx for _, rng_ctx in drv][-1]
-        statements_apicall = [api_call for api_call, _ in drv]
+
+        statements_apicall = []
+        for api_call, _ in drv:
+            statements_apicall += [api_call]
+            if isinstance(api_call.ret_type, PointerType):
+                var = api_call.ret_var.get_variable()
+                statements_apicall += [AssertNull(var.get_buffer())]
 
         statements = []
         statements += context.generate_buffer_decl()
