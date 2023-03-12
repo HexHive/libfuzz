@@ -152,10 +152,7 @@ class LFBackendDriver(BackendDriver):
 
         str_stars = ""
         n_brackets = ""
-        # if isinstance(type, PointerType) and type.get_base_type().is_incomplete:
-        #     str_stars = "*"*n_stars
-        # else:
-
+        
         # if buffer in heap, add a * and remove a [1], i.e., trasform the buffer
         # in an array of pointers instead of variables
         if alloctype == AllocType.HEAP:
@@ -286,10 +283,7 @@ class LFBackendDriver(BackendDriver):
         token   = self.clean_token(buffer.token)
         type    = buffer.get_type()
 
-        # if isinstance(type, PointerType) and type.get_base_type().is_incomplete:
         return f"{token}[{idx}]"
-        # else:
-        # return f"{token}"
 
     # Type
     def type_emit(self, type: Type) -> str:
