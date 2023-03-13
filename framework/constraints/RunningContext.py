@@ -218,9 +218,9 @@ class RunningContext(Context):
             buff = var.get_buffer()
             (len_dep, len_cond) = self.create_dependency_length_variable()
 
-            if buff.get_type().token != "char*":
-                print("checking type")
-                from IPython import embed; embed(); exit(1)
+            # if buff.get_type().token != "char*":
+            #     print("checking type")
+            #     from IPython import embed; embed(); exit(1)
 
             self.file_path_buffers.add(buff)
             self.new_vars.add((var, len_dep, len_cond))

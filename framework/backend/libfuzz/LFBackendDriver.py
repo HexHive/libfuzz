@@ -223,7 +223,7 @@ class LFBackendDriver(BackendDriver):
         addrbuff = buff[0].get_address()
         stmt += f"\tFILE *{p} = fopen({self.value_emit(addrbuff)}, \"w\");\n"
         # fwrite into buff value
-        stmt += f"\tfwrite(data, 1, {self.value_emit(var_len)}, {p});\n"
+        stmt += f"\tfwrite(data, {self.value_emit(var_len)}, 1, {p});\n"
         # fclose + move cursor ahead
         stmt += f"\tfclose({p});data += {self.value_emit(var_len)};\n"
 
