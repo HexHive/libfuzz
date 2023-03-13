@@ -1,10 +1,10 @@
 #!/bin/bash
 
-rm -r  clang lld llvm
-
 LLVM_VERSION=12.0.0
 
 cd $HOME
+
+rm -r  clang lld llvm compiler-rt
 
 #get LLVM
 if [ ! -d llvm ]; then
@@ -23,6 +23,15 @@ mv clang-$LLVM_VERSION.src clang
 rm clang-$LLVM_VERSION.src.tar.xz
 fi
 echo "Done with Clang"
+
+#get compiler-rt
+if [ ! -d compiler-rt ]; then
+wget -q --retry-connrefused --tries=100 https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVM_VERSION/compiler-rt-$LLVM_VERSION.src.tar.xz
+tar -xf compiler-rt-$LLVM_VERSION.src.tar.xz
+mv compiler-rt-$LLVM_VERSION.src compiler-rt
+rm compiler-rt-$LLVM_VERSION.src.tar.xz
+fi
+echo "Done with compiler-rt"
 
 #get lld
 if [ ! -d lld ]; then
@@ -47,6 +56,10 @@ echo "Done with LLVM gold"
 #Set up clang, compiler-rt
 cd llvm/tools
 ln -s ../../clang .
+cd ../../
+
+cd llvm/projects
+ln -s ../../compiler-rt .
 cd ../../
 
 cd -

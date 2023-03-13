@@ -6,6 +6,7 @@
 - start 1h fuzzing campaing for each driver
 
 # TODO driver generation framework
+- add custom mutator (test how it works?)
 - check poetry and documentation (pdoc3)
 - Include other  forms of argument dependency, e,g,, memcpy , strcpy, and other
   functions like that, check below: b depends on len_b since used by memcpy. (We
