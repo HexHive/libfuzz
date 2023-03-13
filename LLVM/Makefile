@@ -1,8 +1,5 @@
-LLVM_DIR = /root/llvm
-BUILD_DIR = /root/llvm-build
-# LLVM_DIR = /home/tregua/llvm
-# BUILD_DIR = /home/tregua/llvm-build
-
+LLVM_DIR = ${HOME}/llvm
+BUILD_DIR = ${HOME}/llvm-build
 
 all:
 	mkdir -p ${BUILD_DIR}
