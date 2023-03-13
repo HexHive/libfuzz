@@ -1,5 +1,9 @@
 # My todo:
 
+# ROAD MAP
+- remove null pointer in driver creation [TO TEST EFFECT WHILE FUZZING]
+- emit X drivers for libtiff -> compile in libfuzzer -> check how many works
+- start 1h fuzzing campaing for each driver
 
 # TODO driver generation framework
 - check poetry and documentation (pdoc3)
@@ -27,10 +31,29 @@ void set_data(my_struct *s, char *b, size_t len_b)  {
 - Extend condition check with field types (the three-fields relations). See if
   it makes sense
 
-# road map
-- remove null pointer in driver creation [TO TEST EFFECT WHILE FUZZING]
-- emit X drivers for libtiff -> compile in libfuzzer -> check how many works
-- start 1h fuzzing campaing for each driver
+# Stub Functions
+- realloc
+  - ?
+- calloc
+  - ?
+- <other malloc-like function?>
+- malloc
+  - ret -> allocate new object/buffer
+- memcpy
+  - par0 -> is array;
+  - par1 -> is array; depends on par2
+- memset
+  - par0 -> is array; depends on par2
+- strlen
+  - par0 -> is array; is string (?)
+- strcpy
+  - par0 -> is array; is string (?)
+  - par1 -> is array; is string (?)
+- open/fopen
+  - par0 -> is file path
+- free
+  - par0 -> (delete, [], void*)
 
 # Links
+
 [1] https://github.com/Zunawe/md5-c/blob/main/md5.h
