@@ -212,6 +212,9 @@ class RunningContext(Context):
             else:
                 raise Exception("Excepted Address or Variable")
 
+            # buff = var.get_buffer()
+            # buff.alloctype = AllocType.GLOBAL
+            
             buff = var.get_buffer()
             (len_dep, len_cond) = self.create_dependency_length_variable()
 

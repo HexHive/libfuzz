@@ -69,7 +69,10 @@ class LFBackendDriver(BackendDriver):
             for header in self.headers:
                 f.write(f"#include <{header}>\n")
 
-            f.write(f"\n#include <string.h>\n")
+            f.write("\n")
+            f.write("#include <string.h>\n")
+            f.write("#include <stdlib.h>\n")
+            f.write("#include <stdio.h>\n")
 
             f.write("\n")
 
@@ -209,12 +212,16 @@ class LFBackendDriver(BackendDriver):
         # file pointer name
         p = self.get_new_file_pointer()
 
+        # print("fileinit_emit ")
+        # from IPython import embed; embed(); exit(1)
+
         # var_len from fuzzer seed
         var_len_init = BuffInit(var_len.get_buffer())
         stmt += "\t" + self.buffinit_emit(var_len_init) + "\n"
         # file open
         buff = fileinit.get_buffer()
-        stmt += f"\tFILE *{p} = fopen({self.value_emit(buff[0])}, \"w\");\n"
+        addrbuff = buff[0].get_address()
+        stmt += f"\tFILE *{p} = fopen({self.value_emit(addrbuff)}, \"w\");\n"
         # fwrite into buff value
         stmt += f"\tfwrite(data, 1, {self.value_emit(var_len)}, {p});\n"
         # fclose + move cursor ahead

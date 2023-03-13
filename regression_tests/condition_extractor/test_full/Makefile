@@ -51,5 +51,8 @@ gen: apis_llvm.json apis_clang.json coerce.log exported_functions.txt incomplete
 	@echo "Generating drivers"
 	$(DRIVER_GENERATION) --config $(GENERATOR_CONF) 
 
+driver0: workdir/drivers/driver0.cc library.a
+	clang++ -g -I. -fsanitize=address,fuzzer $? -o driver0
+
 clean:
 	rm -f $(TARGET).o $(TARGET).o.bc .$(TARGET).o.bc $(TARGET).o.svf.bc $(TARGET).o.ll apis_llvm.log apis_llvm.json *.pdf dom*.dot postdom*.dot dom*.txt postdom*.txt

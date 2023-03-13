@@ -7,7 +7,7 @@ from . import Statement, Type, Variable
 class AllocType(Enum):
     HEAP = 1
     STACK = 2
-
+    GLOBAL = 3
 
 class Buffer:
     # variables:  List[Variable]
