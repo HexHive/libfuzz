@@ -3,7 +3,7 @@ from typing import List, Set, Dict, Tuple, Optional
 import random, copy, string
 
 from driver import Context
-from driver.ir import Variable, Type, Value, PointerType, AllocType
+from driver.ir import Variable, Type, Value, PointerType, AllocType, CleanBuffer
 from driver.ir import Address, NullConstant, Buffer, ConstStringDecl
 from driver.ir import BuffDecl, BuffInit, FileInit, Statement, DynArrayInit
 from . import Conditions
@@ -556,25 +556,6 @@ class RunningContext(Context):
                         raise Exception(f"{x} did not expected here!")
 
                     dynamic_buff.add(buff)
-        
-        # # buffers for file paths
-        # for b in self.file_path_buffers:
-        #     dynamic_buff.add(b)
-        #     len_var = self.var_to_cond[b[0]].len_depends_on
-        #     dynamic_buff.add(len_var.get_buffer())
-
-        # # buffers for malloc-like objects
-        # for b, b_len in self.len_dependency.items():
-        #     for x in [b, b_len]:
-        #         buff = None
-        #         if isinstance(x, Address):
-        #             buff = x.get_variable().get_buffer()
-        #         elif isinstance(x, Variable):
-        #             buff = x.get_buffer()
-        #         else:
-        #             raise Exception(f"{x} did not expected here!")
-
-        #         dynamic_buff.add(buff)
 
         # first init static buffers
         for x in self.buffs_alive:
@@ -612,22 +593,6 @@ class RunningContext(Context):
             else:
                 buff_init += [DynArrayInit(buff, len_var)]
 
-        # # then init file pointers
-        # for b in self.file_path_buffers: 
-        #     len_var = self.var_to_cond[b[0]].len_depends_on
-        #     buff_init += [FileInit(b, len_var)]
-
-        # # finally init dynamic buffers
-        # for b, b_len in self.len_dependency.items():
-        #     buff = None
-        #     if isinstance(b, Address):
-        #         buff = b.get_variable().get_buffer()
-        #     elif isinstance(b, Variable):
-        #         buff = b.get_buffer()
-        #     else:
-        #         raise Exception(f"{b} did not expected here (final)!")
-        #     buff_init += [DynArrayInit(buff, b_len)]
-
         return buff_init
 
     def generate_buffer_decl(self) -> List[Statement]:
@@ -645,6 +610,24 @@ class RunningContext(Context):
             
         return buff_decl
 
+    def get_allocated_size(self):
+        # print("get_allocated_size")
+        # from IPython import embed; embed();
+        print([(b.token, b.alloctype) for b in self.buffs_alive])
+
+        return sum([ b.get_allocated_size() for b in self.buffs_alive ])
+
+    def generate_clean_up(self):
+        clean_up = []
+
+        for b in self.buffs_alive:
+            if b.get_alloctype() == AllocType.HEAP:
+                clean_up += [CleanBuffer(b)]
+        # for v in self.variables_alive:
+            # if v.get_buffer().get_alloctype() == AllocType.HEAP:
+            #     clean_up += [CleanBuffer(v.get_buffer())]
+
+        return clean_up
 
     # NOTE: this oracle infers if the variable with the access types (cond) can
     # be considered a sink

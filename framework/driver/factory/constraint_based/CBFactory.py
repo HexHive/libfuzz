@@ -9,7 +9,7 @@ from dependency import DependencyGraph
 from driver import Context, Driver
 from driver.factory import Factory
 from driver.ir import ApiCall, PointerType, Statement, Type, Variable
-from driver.ir import NullConstant, AssertNull
+from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
 
 
 class CBFactory(Factory):
@@ -95,7 +95,10 @@ class CBFactory(Factory):
                 idx_type = api_call.arg_types[idx]
                 idx_cond = conditions.argument_at[idx]
                 b_len = rng_ctx.create_new_var(idx_type, idx_cond)
-                api_call.set_pos_arg_var(idx, b_len)
+                try:
+                    api_call.set_pos_arg_var(idx, b_len)
+                except:
+                    from IPython import embed; embed(); exit(1)
 
                 rng_ctx.update(api_call.arg_vars[arg_pos], arg_cond)
                 rng_ctx.update(api_call.arg_vars[idx], idx_cond)
@@ -246,13 +249,25 @@ class CBFactory(Factory):
             if isinstance(api_call.ret_type, PointerType):
                 var = api_call.ret_var.get_variable()
                 statements_apicall += [AssertNull(var.get_buffer())]
+            cond = get_cond(api_call)
+            for cond_pos, cond_arg in enumerate(cond.argument_at):
+                if context.is_sink(cond_arg):
+                    arg = api_call.arg_vars[cond_pos]
+                    if isinstance(arg, Address):
+                        buff = arg.get_variable().get_buffer()
+                    elif isinstance(arg, Variable):
+                        buff = arg.get_buffer()
+                    statements_apicall += [SetNull(buff)]
+            # if context.is_sink(api_call.ret_type, PointerType):
 
         statements = []
         statements += context.generate_buffer_decl()
         statements += context.generate_buffer_init()
         statements += statements_apicall 
 
+        clean_up_sec = context.generate_clean_up()
+
         # from IPython import embed; embed(); 
         # exit()
 
-        return Driver(statements, context)
+        return Driver(statements, context).add_clean_up(clean_up_sec)

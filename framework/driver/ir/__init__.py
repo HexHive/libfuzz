@@ -19,3 +19,5 @@ from .DynArrayInit          import DynArrayInit
 from .Buffer                import Buffer
 from .Buffer                import AllocType
 from .AssertNull            import AssertNull
+from .CleanBuffer           import CleanBuffer
+from .SetNull               import SetNull

@@ -2,7 +2,7 @@ from driver import Driver
 from driver.ir import ApiCall, BuffDecl, BuffInit, FileInit, AllocType
 from driver.ir import PointerType, Address, Variable, Type, DynArrayInit
 from driver.ir import Statement, Value, NullConstant, ConstStringDecl
-from driver.ir import AssertNull
+from driver.ir import AssertNull, CleanBuffer, SetNull
 from backend import BackendDriver
 
 import random, string, os, shutil
@@ -17,6 +17,8 @@ class LFBackendDriver(BackendDriver):
         self._idx = 0
 
         self.file_pointer_cnt = 0
+
+        self.seed_clean_up = False
 
         self.headers = [] # os.listdir(headers_dir)
         for root, _, f_names in os.walk(headers_dir):
@@ -64,6 +66,8 @@ class LFBackendDriver(BackendDriver):
 
         # stmt_instances = []
 
+        self.seed_clean_up = len(driver.clean_up_sec) != 0
+
         with open(os.path.join(self.working_dir, driver_filename), "w") as f:
             # TODO: add headers inclusion
             for header in self.headers:
@@ -73,6 +77,7 @@ class LFBackendDriver(BackendDriver):
             f.write("#include <string.h>\n")
             f.write("#include <stdlib.h>\n")
             f.write("#include <stdio.h>\n")
+            f.write("#include <time.h>\n")
 
             f.write("\n")
 
@@ -80,6 +85,12 @@ class LFBackendDriver(BackendDriver):
 
             # for stmt in stmt_instances:
             for stmt in driver:
+                f.write("\t" + self.stmt_emit(stmt) + "\n")
+
+            if self.seed_clean_up:
+                f.write("\nclean_up:\n")
+
+            for stmt in driver.clean_up_sec:
                 f.write("\t" + self.stmt_emit(stmt) + "\n")
 
             f.write("\n\treturn 0;\n}")
@@ -123,7 +134,25 @@ class LFBackendDriver(BackendDriver):
             return self.apicall_emit(stmt)
         elif isinstance(stmt, AssertNull):
             return self.assertnull_emit(stmt)
+        elif isinstance(stmt, CleanBuffer):
+            return self.cleanbuffer_emit(stmt)
+        elif isinstance(stmt, SetNull):
+            return self.setnull_emit(stmt)
         raise NotImplementedError
+
+    # SetNull
+    def setnull_emit(self, setnull: SetNull) -> str:
+        buff = setnull.get_buffer()
+
+        v = self.value_emit(buff[0])
+        return f"{v} = 0;"
+
+    # CleanBuffer
+    def cleanbuffer_emit(self, cleanbuffer: CleanBuffer) -> str:
+        buff = cleanbuffer.get_buffer()
+
+        v = self.value_emit(buff[0])
+        return f"if ({v} != 0) free({v});"
 
     # ConstStringDecl
     def conststringdecl_emit(self, cnststrdecl: ConstStringDecl) -> str:
@@ -176,7 +205,10 @@ class LFBackendDriver(BackendDriver):
 
         const_attr = "const " if type.is_const else ""
 
-        return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}];"
+        if buffer.get_alloctype() == AllocType.HEAP:
+            return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}] = {{ 0 }};"
+        else:
+            return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}];"
 
     def get_new_file_pointer(self):
         cnt = self.file_pointer_cnt
@@ -245,7 +277,10 @@ class LFBackendDriver(BackendDriver):
     def assertnull_emit(self, assertnull: AssertNull) -> str:
         buff = assertnull.get_buffer()
 
-        return f"if ({self.value_emit(buff[0])} == 0) return 0;"
+        if self.seed_clean_up:
+            return f"if ({self.value_emit(buff[0])} == 0) goto clean_up;"
+        else:
+            return f"if ({self.value_emit(buff[0])} == 0) return 0;"
 
     # ApiCall
     def apicall_emit(self, apicall: ApiCall) -> str:

@@ -6,6 +6,7 @@
 - start 1h fuzzing campaing for each driver
 
 # TODO driver generation framework
+- if args depend only to "int"-like stuffs, not struct pointers or similar
 - add custom mutator (test how it works?)
 - check poetry and documentation (pdoc3)
 - Include other  forms of argument dependency, e,g,, memcpy , strcpy, and other
@@ -23,6 +24,9 @@ void set_data(my_struct *s, char *b, size_t len_b)  {
   for standard C. (We can leverage the hooking system already present.)
 
 # TODO for condition_extractor:
+- add check minimun size in driver
+- after sink operation, set pointer = NULL
+- Add clean up section in driver to freey malloc() arrays, if the pointer == NULL
 - Add additional policies to recognize source APIs. Here [1], md5Init
   initializes `MD5Context`. The gist is that md5Init just writes into fields but
   does not read from any. Therefore, we can consider this as a source API
