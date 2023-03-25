@@ -8,6 +8,7 @@ from driver.ir import Address, NullConstant, Buffer, ConstStringDecl
 from driver.ir import BuffDecl, BuffInit, FileInit, Statement, DynArrayInit
 from . import Conditions
 from common.conditions import *
+from common import Utils
 
 class RunningContext(Context):
     variables_alive:    List[Variable]
@@ -15,7 +16,6 @@ class RunningContext(Context):
     file_path_buffers:  Set[Buffer]
     new_vars:           Set[Tuple[Variable, Conditions]]
     const_strings:      Dict[Variable, str]
-    # len_dependency:     Dict[Variable, Variable]
 
     # static dictionary
     type_to_hash:        Dict[str, str]
@@ -235,7 +235,7 @@ class RunningContext(Context):
         return val
 
     def create_dependency_length_variable(self):
-        len_type = Type("size_t", 8)
+        len_type = Type("size_t", Utils.infer_type_size("size_t"))
         ats = AccessTypeSet()
         mdata = ValueMetadata(ats, False, False, False, "")
         return (self.create_new_var(len_type, mdata), mdata)
@@ -611,11 +611,73 @@ class RunningContext(Context):
         return buff_decl
 
     def get_allocated_size(self):
-        # print("get_allocated_size")
-        # from IPython import embed; embed();
-        print([(b.token, b.alloctype) for b in self.buffs_alive])
 
-        return sum([ b.get_allocated_size() for b in self.buffs_alive ])
+        # I have to handle dynamic arrays separately
+        dynamic_buff = set()
+        for var, cond in self.var_to_cond.items():
+            if cond.len_depends_on is not None:
+                var_len = cond.len_depends_on
+                for x in [var, var_len]:
+                    buff = None
+                    if isinstance(x, Address):
+                        buff = x.get_variable().get_buffer()
+                    elif isinstance(x, Variable):
+                        buff = x.get_buffer()
+                    else:
+                        raise Exception(f"{x} did not expected here!")
+
+                    dynamic_buff.add(buff)
+
+        fixed_buffs = set()
+
+        # first init static buffers
+        for x in self.buffs_alive:
+            t = x.get_type()
+
+            if isinstance(t, PointerType) and t.get_base_type().is_incomplete:
+                continue
+
+            if t.is_incomplete:
+                continue
+            
+            if t == self.stub_void:
+                continue
+
+            if x in dynamic_buff:
+                continue
+
+            fixed_buffs.add(x)
+        
+        # for b in fixed_buffs:
+        #     print(b.get_token(), b.get_allocated_size())
+
+        tot = sum([ b.get_allocated_size() for b in fixed_buffs ])
+        # print(f"tot: {tot}")
+
+        # from IPython import embed; embed(); exit(1)
+
+        return tot
+
+    def get_counter_size(self):
+        counter_size = []
+
+        # I have to handle dynamic arrays separately
+        dynamic_buff = set()
+        for var, cond in self.var_to_cond.items():
+            if cond.len_depends_on is not None:
+                var_len = cond.len_depends_on
+
+                buff = None
+                if isinstance(var_len, Address):
+                    buff = var_len.get_variable().get_buffer()
+                elif isinstance(var_len, Variable):
+                    buff = var_len.get_buffer()
+                else:
+                    raise Exception(f"{x} did not expected here!")
+
+                counter_size += [buff.get_allocated_size()/8]
+
+        return counter_size
 
     def generate_clean_up(self):
         clean_up = []

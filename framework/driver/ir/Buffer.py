@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Set, Dict, Tuple, Optional
 from enum import Enum
 
-from . import Statement, Type, Variable
+from . import Statement, Type, Variable, PointerType
 
 class AllocType(Enum):
     HEAP = 1
@@ -62,4 +62,10 @@ class Buffer:
         return self.variables[0].get_address()
 
     def get_allocated_size(self):
-        return self.n_element * self.type.get_size()
+
+        b_t = self.type
+        if (isinstance(b_t, PointerType) and 
+            self.alloctype == AllocType.STACK):
+            return self.n_element * b_t.get_base_type().get_size()
+        else:
+            return self.n_element * b_t.get_size()

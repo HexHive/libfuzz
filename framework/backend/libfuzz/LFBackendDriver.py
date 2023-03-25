@@ -7,6 +7,8 @@ from backend import BackendDriver
 
 import random, string, os, shutil
 
+from typing import List, Set, Dict, Tuple, Optional
+
 class LFBackendDriver(BackendDriver):
 
     def __init__(self, working_dir, seeds_dir, num_seeds, headers_dir):
@@ -57,16 +59,30 @@ class LFBackendDriver(BackendDriver):
             with open(os.path.join(seed_folder, f"seed{x}.bin"), "wb") as f:
                 f.write(os.urandom(seed_size))
 
+    def emit_defines(self, seed_fix_size, counter_size) -> str:
+
+        counter_size_str = ",".join([f"{c}" for c in counter_size])
+        min_seed_size = seed_fix_size + sum(counter_size)
+
+        cm = ""
+        cm += f"#define FIXED_SIZE {seed_fix_size}\n"
+        cm += f"#define COUNTER_NUMBER {len(counter_size)}\n"
+        cm += f"#define MIN_SEED_SIZE {min_seed_size}\n"
+
+        cm += f"const unsigned counter_size[COUNTER_NUMBER] = "
+        cm += f"{{ {counter_size_str} }};\n"
+
+        cm += "\n#define NEW_DATA_LEN 4096\n"
+
+        return cm
+
     def emit_driver(self, driver: Driver, driver_filename: str):
 
-        # file name for the driver
-        # driver_filename = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)) + ".txt"
-
-        # driver_filename = "CEOBJLE6DR.txt"
-
-        # stmt_instances = []
-
         self.seed_clean_up = len(driver.clean_up_sec) != 0
+        self.has_counter = len(driver.get_counter_size()) != 0
+
+        seed_fix_size = driver.get_input_size()
+        counter_size = driver.get_counter_size()
 
         with open(os.path.join(self.working_dir, driver_filename), "w") as f:
             # TODO: add headers inclusion
@@ -79,9 +95,15 @@ class LFBackendDriver(BackendDriver):
             f.write("#include <stdio.h>\n")
             f.write("#include <time.h>\n")
 
+            if self.has_counter:
+                f.write("\n")
+                f.write(self.emit_defines(seed_fix_size, counter_size))
+
             f.write("\n")
 
             f.write("extern \"C\" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t Size) {\n")
+
+            f.write("\tif (Size < MIN_SEED_SIZE) return 0;\n")
 
             # for stmt in stmt_instances:
             for stmt in driver:
@@ -95,9 +117,75 @@ class LFBackendDriver(BackendDriver):
 
             f.write("\n\treturn 0;\n}")
 
+            if self.has_counter:
+                f.write("\n\n")
+                f.write(self.inject_custom_mutator())
+
         # print(driver.get_input_size())
 
         # return driver_filename
+
+    def inject_custom_mutator(self) -> str:
+
+        cm = ""
+        cm += "int cmpfunc (const void * a, const void * b)\n"
+        cm += "{return ( *(unsigned*)a - *(unsigned*)b );}\n\n"
+
+        cm += "// Forward-declare the libFuzzer's mutator callback.\n"
+        cm += "extern \"C\" size_t LLVMFuzzerMutate(uint8_t *Data, size_t Size, size_t MaxSize);\n\n"
+
+        cm += "extern \"C\" size_t LLVMFuzzerCustomMutator(uint8_t *Data, size_t Size, size_t MaxSize, unsigned int Seed) {\n\n"
+
+        cm += "\tif (Size < FIXED_SIZE)return Size;\n"
+        cm += "\tunsigned cut[COUNTER_NUMBER] = { 0 };\n"
+        cm += "\tuint8_t NewData[NEW_DATA_LEN];\n"
+        cm += "\tsize_t NewDataSize = sizeof(NewData);\n"
+
+        cm += "\tuint8_t *NewDataPtr = NewData;\n"
+        cm += "\tuint8_t *DataPtr = Data;\n"
+
+        cm += "\tsize_t NewDataLen = LLVMFuzzerMutate(Data, Size, NEW_DATA_LEN);\n"
+
+        cm += "\tif (NewDataLen < FIXED_SIZE) return NewDataLen;\n"
+
+        cm += "\tsize_t DynamicPart = NewDataLen - FIXED_SIZE;\n"
+
+        cm += "\tcut[0] = 0;\n"
+        cm += "\tif (DynamicPart == 0) {\n"
+        cm += "\t\tfor (int i = 1; i < COUNTER_NUMBER; i++) cut[i] = 0;\n";
+        cm += "\t} else {\n"
+        cm += "\t\tfor (int i = 1; i < COUNTER_NUMBER; i++)\n"
+        cm += "\t\t\tcut[i] = rand() % DynamicPart;\n"
+        cm += "\t\tqsort(cut, COUNTER_NUMBER, sizeof(unsigned), cmpfunc);\n"
+        cm += "\t}\n"
+
+        cm += "\t// copy Fixed Part\n"
+        cm += "\tsize_t slice_len = FIXED_SIZE;\n"
+        cm += "\tmemcpy(NewDataPtr, DataPtr, slice_len);\n"
+        cm += "\tDataPtr += slice_len;\n"
+        cm += "\tNewDataPtr += slice_len;\n"
+
+        cm += "\tsize_t NewDataFinalLen = slice_len;\n"
+    
+        cm += "\tfor (int i = 0; i < COUNTER_NUMBER; i++) {\n"
+        cm += "\t\tif (i == COUNTER_NUMBER - 1)\n"
+        cm += "\t\t\tslice_len = DynamicPart - cut[i];\n"
+        cm += "\t\telse\n"
+        cm += "\t\t\tslice_len = cut[i+1] - cut[i];\n"
+        cm += "\t\tmemcpy(NewDataPtr, &slice_len, counter_size[i]);\n"
+        cm += "\t\tNewDataPtr += counter_size[i];\n"
+        cm += "\t\tmemcpy(NewDataPtr, DataPtr, slice_len);\n"
+        cm += "\t\tDataPtr += slice_len;\n"
+        cm += "\t\tNewDataPtr += slice_len;\n"
+        cm += "\t\tNewDataFinalLen += slice_len + counter_size[i];\n"
+        cm += "\t}\n"
+
+        cm += "\tmemcpy(Data, NewData, NewDataFinalLen);\n"
+
+        cm += "\treturn NewDataFinalLen;\n"
+        cm += "}\n"
+
+        return cm
 
     # Address
     def address_emit(self, address: Address) -> str:

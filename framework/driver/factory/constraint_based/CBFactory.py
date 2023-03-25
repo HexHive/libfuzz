@@ -83,6 +83,8 @@ class CBFactory(Factory):
         # first round to initialize dependency args
         for arg_pos, arg_type in api_call.get_pos_args_types():
             arg_cond = conditions.argument_at[arg_pos]
+            #  TODO: add and test if it works
+            #  and not isinstance(arg_type, PonterType)
             if arg_cond.len_depends_on != "":
                 arg_var = rng_ctx.create_new_var(arg_type, arg_cond)
                 x = arg_var
@@ -267,7 +269,9 @@ class CBFactory(Factory):
 
         clean_up_sec = context.generate_clean_up()
 
+        counter_size = context.get_counter_size()
+
         # from IPython import embed; embed(); 
         # exit()
 
-        return Driver(statements, context).add_clean_up(clean_up_sec)
+        return Driver(statements, context).add_clean_up(clean_up_sec).add_counter_size(counter_size)
