@@ -6,18 +6,40 @@
 #define MAX_STACKSIZE 20
 
 // static fields, mainly for debug
-bool AccessTypeSet::debug = false;
-std::string AccessTypeSet::debug_condition = "";
-bool AccessTypeSet::consider_indirect_calls = false;
+bool ValueMetadata::debug = false;
+std::string ValueMetadata::debug_condition = "";
+bool ValueMetadata::consider_indirect_calls = false;
 
-bool predefined_access_type_dispatcher(AccessTypeSet ats, std::string fun, const ICFGNode * node) {
+
+// NOT EXPOSED FUNCTIONS -- THESE FUNCTIONS ARE MEANT FOR ONLY INTERNAL USAGE!
+bool areConnected(const VFGNode*, const VFGNode*);
+std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
+bool areCompatible(FunctionType*,FunctionType*);
+bool handlerDispatcher(ValueMetadata*, std::string,
+    const ICFGNode*, int, AccessType);
+// NOT EXPOSED FUNCTIONS -- END!
+
+/**
+If exists, call the predefined handler for function fun.
+
+@param: ats: the access type set to be updated by the handler
+@param: fun: the name of the function
+@param: node: the node currently analyzed
+
+@return: boolean value indicating if the analysis should continue on the subfield.
+         For example, it might be false for a cast to indicate we do not try to follow further child of the node.
+         default true.
+*/
+bool handlerDispatcher(ValueMetadata *mdata,
+    std::string fun, const ICFGNode * icfgNode, int param_num,
+    AccessType atNode) {
     // TODO move this line to the .h file
     auto pos = accessTypeHandlers.find(fun);
     if (pos != accessTypeHandlers.end()) {
         // call the specific handler
-        return pos->second(ats, fun, node);
+        return pos->second(mdata, fun, icfgNode, param_num, atNode);
     }
-    return false;
+    return true;
 }
 
 bool areCompatible(FunctionType* caller,FunctionType* callee) {
@@ -40,139 +62,7 @@ bool areCompatible(FunctionType* caller,FunctionType* callee) {
     return are_comp;
 }
 
-AccessTypeSet AccessTypeSet::extractRawPointerAccessType(
-    const SVFG* vfg, const Value* val, Type* seek_type) {
-
-    AccessTypeSet ats;
-
-    // 0.A) only with BitCastInst
-    assert(SVFUtil::isa<BitCastInst>(val) && "val must be a BitCastInt!");
-
-    const BitCastInst* bitcast_inst = SVFUtil::dyn_cast<BitCastInst>(val);
-    // 0.B) the BitCastInst must cast from my known type!
-    assert(bitcast_inst->getDestTy() == seek_type && "val must cast from seek_type!");
-
-    StructType* st = (StructType*)seek_type;
-
-    SVFIR* pag = SVFIR::getPAG();
-
-
-    LLVMModuleSet *llvmModuleSet = SVF::LLVMModuleSet::getLLVMModuleSet();
-    PAGNode* pNode = pag->getGNode(pag->getValueNode(val));
-    const VFGNode* vNode = vfg->getDefSVFGNode(pNode);
-
-    const Type *seek_origin;
-    if (SVFUtil::isa<PointerType>(seek_type)) {
-        seek_origin = seek_type->getPointerElementType();
-    } else {
-        seek_origin = seek_type;
-    }
-
-    assert(SVFUtil::isa<StructType>(seek_origin) && 
-            "I need a pointer to a struct!");
-    
-    const StructType *seek_struct = SVFUtil::dyn_cast<StructType>(seek_origin);
-
-    const StructLayout *seek_layout;
-
-    for (int i = 0; i < llvmModuleSet->getModuleNum(); i++) {
-        Module *llvmModule = llvmModuleSet->getModule(i);
-        DataLayout *datalayout = SVF::LLVMUtil::getDataLayout(llvmModule);
-        if (datalayout->getStructLayout( 
-                const_cast<StructType*>(seek_struct))) {
-            seek_layout = datalayout->getStructLayout(
-                const_cast<StructType*>(seek_struct));
-            break;
-        }
-    }
-
-    auto struct_offsets = nullptr; //seek_layout->getMemberOffsets();
-    // this conversion is slow, but then I can use find() from the vector
-    std::vector<uint64_t> struct_offsets_v; //= struct_offsets.vec();
-    // outs() << "[DEBUG] field -> offset (bytes?)\n";
-    // int i = 0;
-    // for (auto o: struct_offsets) {
-    //     outs() << " -> " << i << ": " << o << "\n";
-    //     i++;
-    // }
-    // outs() << "\n";
-
-    std::set<VFGNode*> generation_nodes;
-    std::set<VFGNode*> gep_nodes;
-
-    // 1) find the declartion: alloca or i8* return function
-    for (VFGNode::const_iterator it = vNode->InEdgeBegin(), 
-        eit = vNode->InEdgeEnd(); it != eit; ++it) {
-        VFGEdge* edge = *it;
-
-        // try to follow only Direct Edges
-        if (SVFUtil::isa<SVF::DirectSVFGEdge>(edge)) {
-            VFGNode* node = edge->getSrcNode();
-
-            if (auto call = SVFUtil::dyn_cast<ActualRetVFGNode>(node)) {
-                generation_nodes.insert(node);
-            } else if (auto addr = SVFUtil::dyn_cast<AddrVFGNode>(node)) {
-                generation_nodes.insert(node);
-            }
-        }
-    }
-
-    outs() << "[INFO] found these generators:\n";
-    for (auto gn: generation_nodes) {
-        outs() << " -> " << gn->toString() << "\n";
-    }
-
-    for (auto gn: generation_nodes) {
-        for (VFGNode::const_iterator it = gn->OutEdgeBegin(), 
-            eit = gn->OutEdgeEnd(); it != eit; ++it) {
-
-            VFGEdge* edge = *it;
-
-            if (!SVFUtil::isa<SVF::DirectSVFGEdge>(edge))
-                continue;
-
-            VFGNode* node = edge->getDstNode();
-
-            if (auto gep = SVFUtil::dyn_cast<GetElementPtrInst>
-                (node->getValue())) {
-                gep_nodes.insert(node);
-            }
-        
-        }
-    }
-
-    outs() << "[INFO] found these GEPs:\n";
-    for (auto gep: gep_nodes) {
-        auto inst = SVFUtil::dyn_cast<GetElementPtrInst>(gep->getValue());
-        if (inst->hasAllConstantIndices() &&
-            inst->getNumIndices() == 1) {
-            outs() << " -> " << gep->toString() << "\n";
-
-            ConstantInt *CI=dyn_cast<ConstantInt>(inst->getOperand(1));
-            uint64_t idx = CI->getZExtValue();
-
-            outs() << " -> offset: " << idx << "\n";
-
-            auto idx_iterator = std::find(struct_offsets_v.begin(), 
-                                            struct_offsets_v.end(), idx);
-            if (idx_iterator != struct_offsets_v.end()) {
-                unsigned int field = idx_iterator - struct_offsets_v.begin();
-                outs() << " -> field: " << field << "\n";
-            } else {
-                outs() << " -> field not found :(\n";
-            }
-
-            outs() << "\n";
-        }
-    }
-
-    exit(1);
-
-    return ats;
-
-}
-
-AccessTypeSet AccessTypeSet::extractReturnAccessType(
+ValueMetadata ValueMetadata::extractReturnMetadata(
     const SVFG* vfg, const Value* val) {
 
     SVFIR* pag = SVFIR::getPAG();
@@ -187,6 +77,9 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
     // std::set<Path> visited;
     // S.push(v)
     // worklist.push_back(Path(vNode));
+
+    ValueMetadata mdata;
+    mdata.setValue(val);
 
     SVFModule *svfModule = pag->getModule();
 
@@ -218,7 +111,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
     std::stack<ICFGEdge*> empty_stack;
     working.push(std::make_pair(entry_node, empty_stack));
 
-    AccessTypeSet ats;
+    AccessTypeSet *ats = mdata.getAccessTypeSet();
 
     while(!working.empty()) {
 
@@ -257,7 +150,7 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                 }
             }
         } else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
-
+            // Handling calls
             if (!consider_indirect_calls && call_node->isIndirectCall())
                     continue;
 
@@ -273,12 +166,13 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
 
             if (callee != nullptr) {
                 std::string fun = callee->getName();
-                // TODO: add an allow-list
                 // malloc handler
-                bool _ignored = predefined_access_type_dispatcher(ats, fun, node);
+                AccessType acNode(retType);
+                bool _ = handlerDispatcher(&mdata, fun, node, -1, acNode);
             }
         }  
 
+        // We'll go throught the children and add unknown ones to our work list.
         if (node->hasOutgoingEdge()) {
             ICFGNode::const_iterator it = node->OutEdgeBegin();
             ICFGNode::const_iterator eit = node->OutEdgeEnd();
@@ -287,8 +181,10 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
                 ICFGEdge *edge = *it;
                 ICFGNode *dst = edge->getDstNode();
 
-                if (visited.find(dst) != visited.end()) 
+                if (visited.find(dst) != visited.end()) {
+                    // We've seen it already
                     continue;
+                }
                 
                 if(auto ret_edge = SVFUtil::dyn_cast<RetCFGEdge>(edge)) {
 
@@ -315,74 +211,194 @@ AccessTypeSet AccessTypeSet::extractReturnAccessType(
         }
 
     }
+    // We have visited all the nodes
 
     // std::map<const Instruction*, AccessTypeSet> all_ats;
-    std::map<const Value*, AccessTypeSet> all_ats;
+    std::map<const Instruction*, ValueMetadata> all_ats;
     for (auto a: allocainst_set) {
         // outs() << "[INFO] paraAT() " << *a << " -- ";
         // outs() << a->getFunction()->getName().str() << "\n";
-        AccessTypeSet l_ats = AccessTypeSet::extractParameterAccessType(vfg, a, retType);
+        ValueMetadata mdata = ValueMetadata::extractParameterMetadata(
+            vfg, a, retType);
 
         // outs() << "[STARTING POINT] " << *a << "\n";
-        // outs() << l_ats.toString(true) << "\n";
-        // exit(1);
+        // outs() << " result -> " << mdata.getAccessNum() << "AT\n";
+        // // exit(1);
 
         bool do_not_return = true;
-        for (auto at: l_ats)
+        for (auto at: *mdata.getAccessTypeSet()) {
             if (at.getAccess() == AccessType::Access::ret) {
                 auto l_ats_all_nodes = at.getICFGNodes();
-                for (auto inst: l_ats_all_nodes)
+                for (auto inst: l_ats_all_nodes) {
                     if (inst == fun_exit) {
-                        for (auto at2: l_ats)
+                        for (auto at2: *mdata.getAccessTypeSet())
                             for (auto inst2:  at.getICFGNodes())
-                                ats.insert(at2, inst2);
+                                ats->insert(at2, inst2);
                         do_not_return = false;
                         break;
                     }
-            }
-
-        if (do_not_return)
-            all_ats[a] = l_ats;
-    }
-
-    // outs() << "LET'S SEE WHAT FUNCTIONS WE HAVE HERE!!!\n";
-    // exit(1);
-
-    // MERGE traces that lead to a return value (and ignoring the others)
-    bool ast_is_changed = true;
-    while (ast_is_changed) {
-
-        ast_is_changed = false;
-
-        auto ats_all_nodes_before = ats.getAllICFGNodes();
-
-        for (auto atsx: all_ats) {
-            auto ats_all_nodes = ats_all_nodes_before;
-            auto atsx_all_nodes = atsx.second.getAllICFGNodes();
-            for (auto inst: atsx_all_nodes)
-                if (ats_all_nodes.find(inst) != ats_all_nodes.end()) {
-                    // I found something in common
-                    if (AccessTypeSet::debug) {
-                        outs() << "[MATCHING]" << inst->toString()  << "\n";
-                    }
-                    for (auto atx:  atsx.second)
-                        for (auto inst: atx.getICFGNodes())
-                            ats.insert(atx, inst);
-                    break;
                 }
-        }
-
-        auto ats_all_nodes_merged = ats.getAllICFGNodes();
-
-        ast_is_changed = ats_all_nodes_merged != ats_all_nodes_before;
-
+            }
+        }   
+        if (do_not_return)
+            all_ats[a] = mdata;
     }
 
-    return ats;
+    // outs() << "Get Summary:\n";
+    // I just merge all!
+    for (auto el: all_ats) {
+        // outs() << el.first->getFunction()->getName().str() << " ";
+        // outs() << el.second.getSummary();
+         for (auto atx:  *el.second.getAccessTypeSet())
+            for (auto inst: atx.getICFGNodes())
+                ats->insert(atx, inst);
+    }
+
+    return mdata;
 
 }
 
-AccessTypeSet AccessTypeSet::extractParameterAccessType(
+std::string ValueMetadata::extractDependentParameter(
+    ValueMetadata* mdata, SVF::SVFG* svfg, const SVFFunction* fun) {
+
+    std::string dependent_param = "";
+
+    SVFIR* pag = SVFIR::getPAG();
+
+    // DominatorTree dom_tree(*fun->getLLVMFun());
+    // LoopInfo loop_info(dom_tree);
+
+    PAG::FunToArgsListMap funmap_par = pag->getFunArgsMap();
+    PAG::SVFVarList fun_params = funmap_par[fun];    
+
+    // use this to find loops faster
+    //  Loop* loop_info->getLoopFor(const BasicBlock *BB) const
+
+    for (auto i: mdata->getIndexes()) {
+        // outs() << "I: " << *i << "\n";
+
+        llvm:: Instruction *ii = SVFUtil::dyn_cast<llvm::Instruction>(i);
+
+        // just in case
+        if (ii == nullptr)
+            continue;
+
+        DominatorTree dom_tree(*ii->getFunction());
+        LoopInfo loop_info(dom_tree);
+        Loop* l = loop_info.getLoopFor(ii->getParent());
+
+        if (l == nullptr) {
+            continue;
+        }
+
+        SmallVector<llvm::BasicBlock*> exits;
+	    l->getExitingBlocks(exits);
+        for (auto e: exits) {
+            auto v = &e->back();
+            // outs() << "V: " << *v << "\n";
+
+            PAGNode* pV = pag->getGNode(pag->getValueNode(v));
+            const VFGNode* vV = svfg->getDefSVFGNode(pV);
+            PAGNode* pI = nullptr;
+            PAGNode* pP = nullptr;
+
+            bool index_control_loop = false;
+            bool param_control_loop = false;
+            for (auto i: mdata->getIndexes()) {
+                pI = pag->getGNode(pag->getValueNode(i));
+                const VFGNode* vI = svfg->getDefSVFGNode(pI);
+
+                if (areConnected(vI,vV)) {
+                    // outs() << "Index control Loop\n";
+                    index_control_loop = true;
+                    break;
+                }
+            }
+
+            int p_idx = 0;
+            for (auto p: fun_params) {
+                // pP = const_cast<llvm::Value*>(p->getValue());
+                pP = pag->getGNode(pag->getValueNode(p->getValue()));
+                const VFGNode* vP = svfg->getDefSVFGNode(pP);
+                // const_cast<llvm::Value*>(p->getValue());
+                // outs() << "P: " << pP->toString() << "\n";
+                if (areConnected(vP,vV)) {
+                    // outs() << "Param control Loop\n";
+                    param_control_loop = true;
+                    break;
+                } 
+                p_idx++;
+                // else
+                //     outs() << "no control!\n";
+            }
+
+            if (param_control_loop && index_control_loop) {
+                // outs() << "Index: " << pI->toString() << "\n";
+                // outs() << "Param: " << pP->toString() << "\n";
+                dependent_param = "param_" + std::to_string(p_idx);
+            }
+        }
+
+    }
+
+    return dependent_param;
+}
+
+// std::set<const VFGNode*> ValueMetadata::getDefinitionSet(const VFGNode *n) {
+std::set<const VFGNode*> getDefinitionSet(const VFGNode *n) {
+
+    std::set<const VFGNode*> definitions;
+
+    std::set<const VFGNode*> visited;
+    std::vector<const VFGNode*> worklist;
+
+    worklist.push_back(n);
+    while(!worklist.empty()) {
+        auto n = worklist.back();
+        worklist.pop_back();
+        if (visited.find(n) != visited.end())
+            continue;
+        int n_parents = 0;
+        for(auto in: n->getInEdges()) {
+            auto pn = in->getSrcNode();
+            worklist.push_back(pn);
+            n_parents++;
+            
+        }
+        // Maybe select some classes, e.g., alloca, param
+        if (n_parents == 0) 
+            definitions.insert(n);
+        visited.insert(n);
+    }
+
+    return definitions;
+}
+
+// bool ValueMetadata::areConnected(const VFGNode *a, const VFGNode *b) {
+bool areConnected(const VFGNode *a, const VFGNode *b) {
+
+    std::set<const VFGNode*> defA = getDefinitionSet(a);
+    std::set<const VFGNode*> defB = getDefinitionSet(b);
+    std::set<const VFGNode*> intersection;
+
+    // outs() << "DefA:" << a->toString() << "\n";
+    // for (auto e: defA)
+    //     outs() << e->toString() << "\n";
+    // outs() << "DefB:" << b->toString() << "\n";
+    // for (auto e: defB)
+    //     outs() << e->toString() << "\n";
+
+    std::set_intersection(
+        defA.begin(), defA.end(),
+        defB.begin(), defB.end(), 
+        std::inserter(intersection, intersection.begin()));
+
+    return !intersection.empty();
+
+}
+
+
+ValueMetadata ValueMetadata::extractParameterMetadata(
     const SVFG* vfg, const Value* val, Type *seek_type)
 {
     SVFIR* pag = SVFIR::getPAG();
@@ -395,14 +411,25 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
 
     PAGNode* pNode = pag->getGNode(pag->getValueNode(val));
     const VFGNode* vNode = vfg->getDefSVFGNode(pNode);
+
+    ValueMetadata mdata;
+    mdata.setValue(val);
+
     // need a stack -> FILO
     // let S be a stack
     std::vector<Path> worklist;
     std::set<Path> visited;
     // S.push(v)
-    worklist.push_back(Path(vNode));
+    // worklist.push_back(Path(vNode));
+    worklist.push_back(Path(vNode, val, seek_type));
 
-    AccessTypeSet ats;
+    // if (seek_type)
+    //     outs() << "DEBUG: seek_type: " << *seek_type << "\n";
+
+    // outs() << "DEBUG: val: " << *val << "\n";
+
+    AccessTypeSet *ats = mdata.getAccessTypeSet();
+    bool is_array = false;
 
     // std::set<std::string> visitedFunctions;
 
@@ -421,7 +448,7 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
 
         // visitedFunctions.insert(vNode->getFun()->getName());
 
-        if (AccessTypeSet::debug) {
+        if (ValueMetadata::debug) {
 
             outs() << "\nWorking node:\n";
             outs() << "A.->" << vNode->toString() << "\n";
@@ -429,7 +456,7 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
             // outs() << "Stack size: " << p.getStackSize() << "\n";
             outs() << "AT: " << acNode.toString() << "\n";
 
-            if (acNode.toString().rfind(AccessTypeSet::debug_condition, 0) 
+            if (acNode.toString().rfind(ValueMetadata::debug_condition, 0) 
                 == 0) {
                 outs() << "[STOP]\n";
                 for (auto h: p.getSteps()) {
@@ -492,30 +519,60 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
             // process the node!
             if (vNode->getNodeKind() == VFGNode::VFGNodeK::Load) {
                 acNode.setAccess(AccessType::Access::read);
-                ats.insert(acNode, vNode->getICFGNode());
+                ats->insert(acNode, vNode->getICFGNode());
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Store) {
 
                 const Value* prevValue = p.getPrevValue();
 
-                if (prevValue != nullptr) {
-                    auto inst = (StoreInst *)vNode->getValue();
+                if (prevValue != nullptr &&
+                    SVFUtil::isa<StoreInst>(vNode->getValue())) {
+                        
+                    auto inst = SVFUtil::dyn_cast<StoreInst>(vNode->getValue());
 
                     if (inst->getPointerOperand() == prevValue) {
                         acNode.setAccess(AccessType::Access::write);
-                        ats.insert(acNode, vNode->getICFGNode());
+                        ats->insert(acNode, vNode->getICFGNode());
                     } else if (inst->getValueOperand() == prevValue) {
                         acNode.setAccess(AccessType::Access::read);
-                        ats.insert(acNode, vNode->getICFGNode());
+                        ats->insert(acNode, vNode->getICFGNode());
                     }
                 }
 
-            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Gep) {
-                auto inst = (GetElementPtrInst *)vNode->getValue();
+            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Gep &&
+                      SVFUtil::isa<GetElementPtrInst>(vNode->getValue())) {
+                
+                // auto inst = (GetElementPtrInst *)vNode->getValue();
+                auto inst = SVFUtil::dyn_cast<GetElementPtrInst>(vNode->getValue());
+
+                // outs() << "[DEBUG] GEP under analysis:\n";
+                // outs() << *inst << "\n";
+                // outs() << vNode->toString() << "\n";
+
                 auto sType = inst->getSourceElementType();
+                auto dType = inst->getResultElementType();
+                auto pType = inst->getPointerOperandType();
+
+                // outs() << "[DEBUG]\n";
+
+                // outs() << "sType:\n";
+                // outs() << *sType << "\n";
+
+                // outs() << "dType:\n";
+                // outs() << *dType << "\n";
+
+                // outs() << "pType:\n";
+                // outs() << *pType << "\n";
+
+                // outs() << "acNode.getType():\n";
+                // outs() << *acNode.getType() << "\n";
+
+                // outs() << "[DEBUG END]\n";
 
                 // this avoids us to move into strange pointer-offset opreations
                 // that look like field access
-                if (SVFUtil::isa<llvm::StructType>(sType)) {
+                // if (SVFUtil::isa<llvm::StructType>(sType) && 
+                //  AccessTypeSet::isSameType(pType, acNode.getType()) ) {
+                if (TypeMatcher::compare_types(pType, acNode.getType())) {
                     if (inst->hasAllConstantIndices()) {
 
                         for (int pos = 1; pos <= inst->getNumIndices(); pos++) {
@@ -524,45 +581,88 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                                 AccessType tmpAcNode = acNode;
                                 tmpAcNode.addField(-1);
                                 tmpAcNode.setAccess(AccessType::Access::read);
-                                ats.insert(tmpAcNode, vNode->getICFGNode());
+                                ats->insert(tmpAcNode, vNode->getICFGNode());
                             } else {
                                 ConstantInt *CI=dyn_cast<ConstantInt>(
                                             inst->getOperand(pos));
                                 uint64_t idx = CI->getZExtValue();
                                 acNode.addField(idx);
+                                acNode.setType(dType);
                             }
 
                         }
+                    } else if (acNode.getNumFields() == 0) {
+
+                        is_array = !SVFUtil::isa<ConstantInt>(
+                            inst->getOperand(1));
+                        if (is_array) {
+                            auto d = inst->getOperand(1);
+                            mdata.addIndex(d);
+                        }
+
                     }
                 }
-            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Copy) {
-                auto inst = (Instruction*)vNode->getValue();
+                // else {
+                //     outs() << "[DEBUG] GEP incoherent: \n";
+
+                //     outs() << "instruction:\n";
+                //     outs() << vNode->toString() << "\n";
+
+                //     outs() << "sType:\n";
+                //     outs() << *sType << "\n";
+
+                //     outs() << "dType:\n";
+                //     outs() << *dType << "\n";
+
+                //     outs() << "pType:\n";
+                //     outs() << *pType << "\n";
+
+                //     outs() << "acNode.getType():\n";
+                //     outs() << *acNode.getType() << "\n";
+                //     outs() << "\n";
+                //     exit(1);
+                // }
+            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Copy &&
+                    SVFUtil::isa<Instruction>(vNode->getValue())) {
+                auto inst = SVFUtil::dyn_cast<Instruction>(vNode->getValue());
 
                 acNode.setAccess(AccessType::Access::read);
-                ats.insert(acNode, vNode->getICFGNode());
+                ats->insert(acNode, vNode->getICFGNode());
 
                 // XXX: casting operations complitate things a lot. For the time
                 // being I just leave it.
 
                 if (auto bitcastinst = SVFUtil::dyn_cast<BitCastInst>(inst)) {
                     auto dst_typ = bitcastinst->getDestTy();
-                    if (dst_typ != seek_type && dst_typ != i8ptr_typ) {
-                        skipNode = true;
+                    auto src_typ = bitcastinst->getSrcTy();
+
+                    // if (acNode.getNumFields() != 0 &&                        
+                    //     TypeMatcher::compare_types(src_typ, acNode.getType())) {
+                    if (TypeMatcher::compare_types(src_typ, acNode.getType())) {
+                        acNode.setType(dst_typ);
+                        ats->insert(acNode, vNode->getICFGNode());
                     }
+                    else {
+                        skipNode = true;    
+                    }
+
+                    // if (dst_typ != seek_type && dst_typ != i8ptr_typ) {
+                    //     skipNode = true;
+                    // }
                 }
                 // if (Instruction::isCast(inst->getOpcode()))
                 //     skipNode = true;
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Cmp) {
                 acNode.setAccess(AccessType::Access::read);
-                ats.insert(acNode, vNode->getICFGNode());
+                ats->insert(acNode, vNode->getICFGNode());
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::BinaryOp) {
                 acNode.setAccess(AccessType::Access::read);
-                ats.insert(acNode, vNode->getICFGNode());
+                ats->insert(acNode, vNode->getICFGNode());
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::FRet) {
                 // outs() << "[INFO] I found a FormalRet\n";
                 // outs() << vNode->toString() << "\n";
                 acNode.setAccess(AccessType::Access::ret);
-                ats.insert(acNode, vNode->getICFGNode());
+                ats->insert(acNode, vNode->getICFGNode());
             }
 
             if (skipNode) {
@@ -631,8 +731,9 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                         if (p_succ.getStackSize() >= MAX_STACKSIZE) {
                             ok_continue = false;
                             outs() << "[INFO] Stack size too big!\n";
-                        } else if (cs->isIndirectCall()) {
-                            ok_continue = false; // TODO CHECK WITH FLAVIO is is a stop flag to no go into children?
+                        } else if (!consider_indirect_calls && 
+                            cs->isIndirectCall()) {
+                            ok_continue = false;
                             // outs() << "[INFO] Indirect call, I stop!\n";
                         // it is a direct call, check for stubs
                         } else {
@@ -642,10 +743,44 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
                                 // outs() << "[DEBUG] I found this function: " 
                                 //        << fun << "\n";
 
-                                // TODO: add an allow-list
-                                // free handler
-                                ok_continue = predefined_access_type_dispatcher(ats, fun, vNode->getICFGNode());
+                                bool can_handle_parameter = false;
 
+                                SVF::PAGNode* param = nullptr;
+                                if (auto call_node =
+                                    SVFUtil::dyn_cast<ActualParmVFGNode>(
+                                        succNode)) {
+                                    param = const_cast<SVF::PAGNode*>( 
+                                        call_node->getParam());
+                                    can_handle_parameter = true;
+                                }
+                                else if (auto call_node =
+                                    SVFUtil::dyn_cast<FormalParmVFGNode>(
+                                        succNode)) {
+                                    param = const_cast<SVF::PAGNode*>(
+                                        call_node->getParam());
+                                    can_handle_parameter = true;
+                                // } else {
+                                //     outs() << "it is none!!\n";
+                                }
+
+                                // outs() << "succ node:\n";
+                                // outs() << succNode->toString() << "\n";
+
+
+                                if (can_handle_parameter) {
+                                    assert(param && "Param not found!\n");
+
+                                    int n_param = 0;
+                                    for  (auto p: cs->getActualParms()) {
+                                        if (p == param) 
+                                            break;
+                                        n_param++;
+                                    }
+
+                                    ok_continue = handlerDispatcher(
+                                        &mdata, fun, vNode->getICFGNode(),
+                                        n_param, acNode);
+                                }
                             }
                         }
                     }
@@ -675,7 +810,9 @@ AccessTypeSet AccessTypeSet::extractParameterAccessType(
     //     outs() << x << "\n";
     // }
 
-    return ats;
+    mdata.setIsArray(is_array);
+
+    return mdata;
 }
 
 void FunctionConditionsSet::storeIntoJsonFile(

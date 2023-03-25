@@ -12,5 +12,12 @@ from .Address               import Address
 from .NullConstant          import NullConstant
 from .ApiCall               import ApiCall
 from .BuffDecl              import BuffDecl
+from .ConstStringDecl       import ConstStringDecl
 from .BuffInit              import BuffInit
+from .FileInit              import FileInit
+from .DynArrayInit          import DynArrayInit
 from .Buffer                import Buffer
+from .Buffer                import AllocType
+from .AssertNull            import AssertNull
+from .CleanBuffer           import CleanBuffer
+from .SetNull               import SetNull

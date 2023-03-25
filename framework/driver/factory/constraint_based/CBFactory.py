@@ -8,7 +8,8 @@ from constraints import Conditions, ConditionUnsat, RunningContext
 from dependency import DependencyGraph
 from driver import Context, Driver
 from driver.factory import Factory
-from driver.ir import ApiCall, BuffDecl, PointerType, Statement, Type, Variable
+from driver.ir import ApiCall, PointerType, Statement, Type, Variable
+from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
 
 
 class CBFactory(Factory):
@@ -24,6 +25,13 @@ class CBFactory(Factory):
         self.driver_size = driver_size
         # self.dependency_graph = dgraph
         self.conditions = conditions
+
+        # I need this to build synthetic constraints in "update" method
+        RunningContext.type_to_hash = {}
+        for f, c in self.conditions:
+            for arg in c.argument_at + [c.return_at]:
+                for at in arg.ats:
+                    RunningContext.type_to_hash[at.type_string] = at.type
 
         # DependencyGraph must be inverted, this is an "error". It probably
         # needs refactor in the future
@@ -57,33 +65,67 @@ class CBFactory(Factory):
     def try_to_instantiate_api_call(self, api_call: ApiCall,
                         conditions: FunctionConditions, 
                         rng_ctx: RunningContext):
-
         # I prefer to have a local one
         rng_ctx = copy.deepcopy(rng_ctx)
         # context = rng_ctx.context
 
         unsat_vars = set()
 
+        # if api_call.function_name == "create":
+        #     print("hook create")
+        #     # par_debug = 0
+        #     is_ret = True
+        #     arg_type = api_call.ret_type
+        #     arg_cond = conditions.return_at
+        #     type = arg_type
+        #     from IPython import embed; embed(); exit(1)
+
+        # first round to initialize dependency args
         for arg_pos, arg_type in api_call.get_pos_args_types():
-            arg_ats = conditions.argument_at[arg_pos]
+            arg_cond = conditions.argument_at[arg_pos]
+            #  TODO: add and test if it works
+            #  and not isinstance(arg_type, PonterType)
+            if arg_cond.len_depends_on != "":
+                arg_var = rng_ctx.create_new_var(arg_type, arg_cond)
+                x = arg_var
+                if (isinstance(arg_var, Variable) and 
+                    isinstance(arg_type, PointerType)):
+                    arg_var = arg_var.get_address()
+                api_call.set_pos_arg_var(arg_pos, arg_var)
+
+                idx = int(arg_cond.len_depends_on.replace("param_", ""))
+                idx_type = api_call.arg_types[idx]
+                idx_cond = conditions.argument_at[idx]
+                b_len = rng_ctx.create_new_var(idx_type, idx_cond)
+                try:
+                    api_call.set_pos_arg_var(idx, b_len)
+                except:
+                    from IPython import embed; embed(); exit(1)
+
+                rng_ctx.update(api_call.arg_vars[arg_pos], arg_cond)
+                rng_ctx.update(api_call.arg_vars[idx], idx_cond)
+                rng_ctx.var_to_cond[x].len_depends_on = b_len
+
+        # second round to initialize all the other args
+        for arg_pos, arg_type in api_call.get_pos_args_types():
+            arg_cond = conditions.argument_at[arg_pos]
+
+            if api_call.arg_vars[arg_pos] is not None:
+                continue
+
             try:
-                if rng_ctx.is_void_pointer(arg_type):
-                    arg_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, arg_ats)
-                elif isinstance(arg_type, PointerType) and arg_type.to_function:
+                if isinstance(arg_type, PointerType) and arg_type.to_function:
                     arg_var = rng_ctx.get_null_constant()
                 else:
-                    arg_var = rng_ctx.try_to_get_var(arg_type, arg_ats)
+                    arg_var = rng_ctx.try_to_get_var(arg_type, arg_cond)
                 api_call.set_pos_arg_var(arg_pos, arg_var)
             except ConditionUnsat:
-                # print(f"got unsat, to handle 1!")
-                unsat_vars.add((arg_pos, arg_ats))
+                unsat_vars.add((arg_pos, arg_cond))
         
         ret_ats = conditions.return_at
         ret_type = api_call.ret_type
         try:
-            if rng_ctx.is_void_pointer(ret_type):
-                ret_var = rng_ctx.try_to_get_var(rng_ctx.stub_char_array, ret_ats, True)
-            elif isinstance(ret_type, PointerType) and ret_type.to_function:
+            if isinstance(ret_type, PointerType) and ret_type.to_function:
                 ret_var = rng_ctx.get_null_constant()
             else:
                 ret_var = rng_ctx.try_to_get_var(ret_type, ret_ats, True)
@@ -95,15 +137,20 @@ class CBFactory(Factory):
             return (None, unsat_vars)
 
         for arg_pos, arg_type in api_call.get_pos_args_types():
-            arg_ats = conditions.argument_at[arg_pos]
-            rng_ctx.update(api_call.arg_vars[arg_pos], arg_ats)
+            arg_cond = conditions.argument_at[arg_pos]
+            rng_ctx.update(api_call.arg_vars[arg_pos], arg_cond)
+
         if api_call.ret_var is not None:
             rng_ctx.update(api_call.ret_var, ret_ats,  True)
 
-        # if api_call.function_name == "_TIFFfree":
-        #     from IPython import embed; embed(); exit(1)
+        # I might have other pending vars to include
+        # e.g., for controlling arrays length
+        for var, var_len, cond_len in rng_ctx.new_vars:
+            rng_ctx.update(var_len, cond_len)
+            rng_ctx.var_to_cond[var].len_depends_on = var_len
+        rng_ctx.new_vars.clear()
 
-        return (rng_ctx, unsat_vars)
+        return (rng_ctx, {})
 
     def create_random_driver(self) -> Driver:
 
@@ -171,6 +218,10 @@ class CBFactory(Factory):
                 # (ApiCall, RunningContext, Api)
                 (api_call, rng_ctx_1, api_n) = random.choice(candidate_api)
                 print(f"[INFO] choose {api_call.function_name}")
+
+                # if api_call.function_name == "TIFFReadRGBAImage":
+                #     from IPython import embed; embed(); exit(1)
+
                 drv += [(api_call, rng_ctx_1)]
             else:
                 api_n = random.choice(starting_api)
@@ -193,14 +244,34 @@ class CBFactory(Factory):
 
         # I want the last RunningContext
         context = [rng_ctx for _, rng_ctx in drv][-1]
-        statements_apicall = [api_call for api_call, _ in drv]
+
+        statements_apicall = []
+        for api_call, _ in drv:
+            statements_apicall += [api_call]
+            if isinstance(api_call.ret_type, PointerType):
+                var = api_call.ret_var.get_variable()
+                statements_apicall += [AssertNull(var.get_buffer())]
+            cond = get_cond(api_call)
+            for cond_pos, cond_arg in enumerate(cond.argument_at):
+                if context.is_sink(cond_arg):
+                    arg = api_call.arg_vars[cond_pos]
+                    if isinstance(arg, Address):
+                        buff = arg.get_variable().get_buffer()
+                    elif isinstance(arg, Variable):
+                        buff = arg.get_buffer()
+                    statements_apicall += [SetNull(buff)]
+            # if context.is_sink(api_call.ret_type, PointerType):
 
         statements = []
         statements += context.generate_buffer_decl()
         statements += context.generate_buffer_init()
         statements += statements_apicall 
 
+        clean_up_sec = context.generate_clean_up()
+
+        counter_size = context.get_counter_size()
+
         # from IPython import embed; embed(); 
         # exit()
 
-        return Driver(statements, context)
+        return Driver(statements, context).add_clean_up(clean_up_sec).add_counter_size(counter_size)

@@ -6,4 +6,4 @@ for func in ('debug', 'info', 'warning', 'error', 'critical'):
 from .utils         import Utils, CoerceFunction, CoerceArgument
 from .api           import Api, Arg
 from .conditions    import FunctionConditionsSet, FunctionConditions
-from .conditions    import AccessTypeSet, AccessType, Access
+from .conditions    import AccessTypeSet, AccessType, Access, ValueMetadata

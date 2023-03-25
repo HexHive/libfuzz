@@ -1,29 +1,46 @@
 from typing import List, Set, Dict, Tuple, Optional
 
-from driver.ir import Type, PointerType
+from driver.ir import Type, PointerType, Variable
 
-from common import AccessTypeSet, AccessType, Access
+from common import AccessTypeSet, AccessType, Access, ValueMetadata
 
 class Conditions:
     # conditions that have WRITE or RET
     ats: AccessTypeSet
+    is_array: bool
+    is_malloc_size: bool
+    is_file_path: bool
+    len_depends_on: Variable
     
-    def __init__(self, r_ats: AccessTypeSet):
+    def __init__(self, mdata: ValueMetadata):
         self.ats = AccessTypeSet()
-        self.add_conditions(r_ats)
+        self.add_conditions(mdata.ats)
+        self.is_array = mdata.is_array
+        self.is_malloc_size = mdata.is_malloc_size
+        self.is_file_path = mdata.is_file_path
+        self.len_depends_on = None 
 
     def get_sub_fields(self, f_prev):
         f_prev_len = len(f_prev)
         f_prev_sub = []
-        for x in self.ats.access_type_set:
+        for x in self.ats:
             if f_prev == x.fields[:f_prev_len]:
                 f_prev_sub += [x.fields]
         return f_prev_sub
 
-    def are_compatible_with(self, r_ats: AccessTypeSet) -> bool:
+    def is_compatible_with(self, r_cond: ValueMetadata) -> bool:
 
-        # r_requirements = set([at for at in r_ats if at.access == Access.READ])
-        r_requirements = set([at for at in r_ats if at.access == Access.WRITE])
+        if self.is_array != r_cond.is_array:
+            return False
+
+        if self.is_file_path != r_cond.is_file_path:
+            return False
+
+        if self.is_malloc_size != r_cond.is_malloc_size:
+            return False
+
+        # r_requirements = set([at for at in r_cond if at.access == Access.READ])
+        r_requirements = set([at for at in r_cond.ats if at.access == Access.WRITE])
         # holding_condition = set([at for at in self.ats if at.access in [Access.WRITE, Access.RETURN]])
 
         matching_requirements = 0
@@ -86,13 +103,13 @@ class Conditions:
         self.ats = self.ats.union(new_ats)
 
     @staticmethod
-    def is_unconstraint(cond: AccessTypeSet) -> bool:
+    def is_unconstraint(cond: ValueMetadata) -> bool:
 
-        if len(cond) == 0:
+        if len(cond.ats) == 0:
             return True 
             
-        if len(cond) == 1:
-            at = list(cond)[0]
+        if len(cond.ats) == 1:
+            at = list(cond.ats)[0]
             if at.access == Access.READ and at.fields == []:
                 return True
 

@@ -17,18 +17,6 @@ from driver.factory.constraint_based import *
 from generator import Pool
 
 class Configuration:
-    """
-    A parser for the JSON-formatted configuration file.
-
-    The file has the following structure:
-    {
-        "analysis": {
-            "apis": "/path/to/apis.log",
-            "coercemap": "/path/to/coercemap.txt",
-            "headers": "/path/to/headers/*.h{pp}"
-        },
-    }
-    """
     def __init__(self, config_path):
         
         if not path.isfile(config_path):

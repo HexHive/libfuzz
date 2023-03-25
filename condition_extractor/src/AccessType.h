@@ -5,8 +5,12 @@
 #include <Graphs/SVFG.h>
 #include <Graphs/GenericGraph.h>
 #include "WPA/Andersen.h"
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Analysis/LoopInfo.h>
+#include <llvm/IR/Dominators.h>
 
 #include "PhiFunction.h"
+#include "TypeMatcher.h"
 #include "json/json.h"
 #include <fstream> 
 
@@ -17,17 +21,40 @@ using namespace std;
 class AccessType {
     public:
         typedef enum _access { read, write, ret, 
-                                del, create, none } Access;
+                                del, create, none, 
+                                file, input_stream, output_stream } Access;
 
 
     private:
         std::set<const ICFGNode*> icfg_set;
         std::vector<int> fields;
         Access access;
+        llvm::Type* type;
+
+        // fake parent
+        bool has_parent;
+        std::vector<int> p_fields;
+        Access p_access;
+        llvm::Type* p_type;
+        
+
+        static std::string type_to_string(llvm::Type* typ) {
+            std::string str;
+            llvm::raw_string_ostream(str) << *typ;
+            return str;
+        }
+
+        static std::string type_to_hash(llvm::Type* typ) {
+            return TypeMatcher::compute_hash(typ);
+        }
 
     public:
-        AccessType() {
+        AccessType(llvm::Type* t) {
             access = none;
+            p_access = none;
+            has_parent = false;
+            type = t;
+            p_type = nullptr;
         }
         ~AccessType() {fields.clear();}
 
@@ -35,8 +62,16 @@ class AccessType {
         AccessType& operator=(const AccessType &rhs) {
             this->fields = rhs.fields;
             this->access = rhs.access;
+            this->type = rhs.type;
+
             // hope this does not make a mess!
             this->icfg_set = rhs.icfg_set;
+
+            // parent
+            this->has_parent = rhs.has_parent;
+            this->p_fields = rhs.p_fields;
+            this->p_access = rhs.p_access;
+            this->p_type = rhs.p_type;
 
             return *this;
         };
@@ -50,6 +85,11 @@ class AccessType {
         }
 
         void addField(int a_field) {
+            // fake father? find better way to do so
+            p_fields = fields;
+            p_access = access;
+            p_type = type;
+            has_parent = true;
             fields.push_back(a_field);
         }
 
@@ -81,6 +121,20 @@ class AccessType {
             return access;
         }
 
+        void setType(llvm::Type* typ) {
+            type = typ;
+        }
+
+        llvm::Type* getType() {
+            return type;
+        }
+
+        // void clone() {
+        //     unsigned int new_ID = ++global_object_id;
+        //     parent_ID = ID;
+        //     ID = new_ID;
+        // }
+
         bool equals(std::string s) {
             return s == toString(false);
         }
@@ -89,6 +143,8 @@ class AccessType {
             if (other.fields != fields)
                 return false;
             if (other.access != access)
+                return false;
+            if (other.type != type)
                 return false;
             return true;
         }
@@ -105,8 +161,7 @@ class AccessType {
             return rawstr.str();
         }
 
-        std::string toString(bool verbose = false) {
-
+        std::string toStringParent() {
             std::string str;
             raw_string_ostream rawstr(str);
 
@@ -145,7 +200,67 @@ class AccessType {
                 outs() << "[ERROR] Access:: " << access << " unknown!!\n";
                 exit(1);
             }
-            rawstr << ")";
+            rawstr << ", " << type_to_string(type);
+            rawstr << ", " << type_to_hash(type) << ")";
+
+            return rawstr.str();
+        }
+
+        std::string toString(bool verbose = false) {
+
+            std::string str;
+            raw_string_ostream rawstr(str);
+
+            // example of output:
+            // (., write) -> write the whole pointer (all the fields)
+            // (.1, read) -> read field in position 1
+            // (.0.1, write) -> write subfield 1 of the field 0
+
+            rawstr << "(";
+
+            if (has_parent) {
+                AccessType p(p_type);
+                // AccessType p;
+                // p.setType(p_type);
+                p.setAccess(p_access);
+                for (auto f: p_fields)
+                    p.addField(f);
+                rawstr << p.toStringParent() << ",";
+            } else 
+                rawstr << "(0),";
+
+            rawstr  << ".";
+            int max_fields = getNumFields();
+            int i = 0;
+            for (int f: getFields()) {
+                if (f == -1)
+                    rawstr << "*";
+                else 
+                    rawstr << f;
+                if (i < max_fields - 1)
+                    rawstr << ".";
+                i++;
+            }
+
+            rawstr << ", ";
+            if (access == Access::read) 
+                rawstr << "read";
+            else if (access == Access::write)
+                rawstr << "write";
+            else if (access == Access::ret)
+                rawstr << "return";
+            else if (access == Access::none)
+                rawstr << "none";
+            else if (access == Access::del)
+                rawstr << "delete";
+            else if (access == Access::create)
+                rawstr << "create";
+            else {
+                outs() << "[ERROR] Access:: " << access << " unknown!!\n";
+                exit(1);
+            }
+            rawstr << ", " << type_to_string(type);
+            rawstr << ", " << type_to_hash(type) << ")";
 
             if (verbose) {
                 rawstr << "\n";
@@ -165,7 +280,7 @@ class AccessType {
             return debugInfo;
         }
 
-        Json::Value toJson(bool verbose) {
+        Json::Value toJsonParent() {
             Json::Value accessTypeJson;
 
             if (access == Access::read) 
@@ -191,6 +306,51 @@ class AccessType {
                 fieldsJson.append(field);
         
             accessTypeJson["fields"] = fieldsJson;
+            accessTypeJson["type"] = type_to_hash(type);
+            accessTypeJson["type_string"] = type_to_string(type);
+
+            return accessTypeJson;
+        }
+
+        Json::Value toJson(bool verbose) {
+            Json::Value accessTypeJson;
+
+            if (has_parent) {
+                AccessType p(p_type);
+                // AccessType p;
+                // p.setType(p_type);
+                p.setAccess(p_access);
+                for (auto f: p_fields)
+                    p.addField(f);
+                accessTypeJson["parent"] = p.toJsonParent();
+            } else 
+                accessTypeJson["parent"] = 0;
+
+            if (access == Access::read) 
+                accessTypeJson["access"] = "read";
+            else if (access == Access::write)
+                accessTypeJson["access"] = "write";
+            else if (access == Access::ret)
+                accessTypeJson["access"] = "return";
+            else  if (access == Access::none)
+                accessTypeJson["access"] = "none";
+            else if (access == Access::del)
+                accessTypeJson["access"] = "delete";
+            else if (access == Access::create)
+                accessTypeJson["access"] = "create";
+            else {
+                outs() << "[ERROR] Access:: " << access << " unknown!!\n";
+                exit(1);
+            }
+
+            Json::Value fieldsJson(Json::arrayValue);
+
+            for (auto field: fields)
+                fieldsJson.append(field);
+        
+            accessTypeJson["fields"] = fieldsJson;
+            accessTypeJson["type"] = type_to_hash(type);
+            accessTypeJson["type_string"] = type_to_string(type);
 
             if (verbose)
                 accessTypeJson["debug"] = dumpICFGNodesJson();
@@ -200,8 +360,12 @@ class AccessType {
 
         // for std:set
         bool operator<(const AccessType& rhs) const {
-            if (fields == rhs.fields)
-                return access < rhs.access;
+            if (fields == rhs.fields) {
+                if (access == rhs.access)
+                    return type < rhs.type;
+                else
+                    return access < rhs.access;
+            }
             
             return fields < rhs.fields;
         }
@@ -284,20 +448,6 @@ class AccessTypeSet {
             return ats_set < rhs.ats_set;
         }    
 
-    public: // static functions/data!
-
-        // handle debug information
-        static bool debug;
-        static std::string debug_condition;
-        static bool consider_indirect_calls;
-
-        static AccessTypeSet extractParameterAccessType(
-            const SVFG*, const Value*, Type* = nullptr);
-        static AccessTypeSet extractReturnAccessType(
-            const SVFG*, const Value*);
-        static AccessTypeSet extractRawPointerAccessType(
-            const SVFG*, const Value*, Type*);
-
 };
 
 class Path {
@@ -309,9 +459,16 @@ class Path {
         std::vector<std::pair<const ICFGNode*, AccessType>> history;
 
     public:
-        Path(const VFGNode* p_node) {
+        // Path(const VFGNode* p_node) {
+        //     node = p_node;
+        //     prevValue = nullptr;
+        // }
+
+        Path(const VFGNode* p_node, const llvm::Value* val, llvm::Type* type) :
+            access_type(type) {
             node = p_node;
             prevValue = nullptr;
+            // access_type.setType(val->getType());
         }
 
         void addStep(const ICFGNode* node) {
@@ -405,35 +562,137 @@ class Path {
         }
 };
 
+class ValueMetadata {
+    AccessTypeSet ats;
+    bool is_array;
+    bool is_malloc_size;
+    bool is_file_path;
+    std::string len_depends_on;
+
+    const llvm::Value* val;
+    std::vector<llvm::Value*> indexes;
+
+    public: 
+        ValueMetadata() {
+            val = nullptr;
+            is_array = false;
+            is_malloc_size = false;
+            is_file_path = false;
+            len_depends_on = "";
+        }
+
+        void setValue(const llvm::Value* p_val) {val = p_val;}
+        const llvm::Value* getValue() {return val;}
+
+        void addIndex(const llvm::Value* idx) {
+            indexes.push_back(const_cast<llvm::Value*>(idx));
+        }
+        std::vector<llvm::Value*> getIndexes() {return indexes;}
+
+        void setAccessTypeSet(AccessTypeSet p_ats) {ats = p_ats;}
+        AccessTypeSet* getAccessTypeSet() {return &ats;}
+        int getAccessNum() {return ats.size();}
+
+        void setIsArray(bool p_is_array) {is_array = p_is_array;}
+        bool isArray() {return is_array;}
+
+        void setMallocSize(bool p_malloc_size) {is_malloc_size = p_malloc_size;}
+        bool isMallocSize() {return is_malloc_size;}
+
+        void setIsFilePath(bool p_is_file_path) {is_file_path = p_is_file_path;}
+        bool isFilePath() {return is_file_path;}
+
+        void setLenDependency(std::string p_dep) {len_depends_on = p_dep;}
+        std::string getLenDependency() {return len_depends_on;}
+
+
+        Json::Value toJson(bool verbose) {
+
+            Json::Value medataResult;
+
+            medataResult["access_type_set"] = ats.toJson(verbose);
+            medataResult["is_array"] = is_array;
+            medataResult["is_malloc_size"] = is_malloc_size;
+            medataResult["is_file_path"] = is_file_path;
+            medataResult["len_depends_on"] = len_depends_on;
+
+            return medataResult;
+        }
+
+        std::string toString(bool verbose) {
+
+            std::stringstream sstream;
+
+            sstream << "is_array: " << std::to_string(is_array) << "\n";
+            sstream << "is_malloc_size: " 
+                    << std::to_string(is_malloc_size) << "\n";
+            sstream << "is_file_path: " 
+                    << std::to_string(is_file_path) << "\n";
+            sstream << "len_depends_on: " << len_depends_on << "\n";
+            sstream << "access_type_set:\n" << ats.toString(verbose) << "\n";
+
+            return sstream.str();
+        }
+
+        std::string getSummary() {
+
+            std::stringstream sstream;
+
+            sstream << "ATS " << ats.size() << ", ";
+            sstream << "array " << std::to_string(is_array) << ", ";
+            sstream << "malloc " << std::to_string(is_malloc_size) << ", ";
+            sstream << "path " << std::to_string(is_file_path) << ", ";
+            sstream << "depends '" << len_depends_on << "'\n";
+
+            return sstream.str();
+        }
+
+    public: // static functions/data!
+
+        // handle debug information
+        static bool debug;
+        static std::string debug_condition;
+        static bool consider_indirect_calls;
+
+        static ValueMetadata extractParameterMetadata(
+            const SVFG*, const Value*, Type*);
+        static ValueMetadata extractReturnMetadata(
+            const SVFG*, const Value*);
+        static std::string extractDependentParameter(
+            ValueMetadata*, SVF::SVFG*, const SVFFunction*);
+};
+
 class FunctionConditions {
     private:
-        std::vector<AccessTypeSet> parameter_ats;
-        AccessTypeSet return_ats;
+        // std::vector<AccessTypeSet> parameter_ats;
+        // AccessTypeSet return_ats;
+        std::vector<ValueMetadata> parameter_metadata;
+        ValueMetadata return_metadata;
         std::string function_name;
 
     public:
         void setFunctionName(std::string f) {function_name = f;}
         std::string getFunctionName() {return function_name;}
 
-        void addParameterAccessTypeSet(AccessTypeSet par) {
-            parameter_ats.push_back(par);
+        void addParameterMetadata(ValueMetadata par) {
+            parameter_metadata.push_back(par);
         }
 
-        int getParameterAccessNum() {return parameter_ats.size();}
+        int getParameterNum() {return parameter_metadata.size();}
 
-        void replacedParameterAccessTypeSet(int parm, AccessTypeSet new_ats) {
-            parameter_ats[parm] = new_ats;
+        void replaceParameterMetadata(int parm, ValueMetadata new_par) {
+            parameter_metadata[parm] = new_par;
         }
 
-        AccessTypeSet getParameterAccessTypeSet(int idx) {
-            if (idx < 0 || idx >= parameter_ats.size())
+        ValueMetadata getParameterMetadata(int idx) {
+            if (idx < 0 || idx >= parameter_metadata.size())
                 assert("idx out of bounds!");
 
-            return parameter_ats[idx];
+            return parameter_metadata[idx];
         }
 
-        void setReturnAccessTypeSet(AccessTypeSet ret) {return_ats = ret;}
-        AccessTypeSet getReturnAccessTypeSet() {return return_ats;}
+        void setReturnMetadata(ValueMetadata ret) {return_metadata = ret;}
+        ValueMetadata getReturnMetadata() {return return_metadata;}
 
         // for using it in std::set
         bool operator<(const FunctionConditions& rhs) const 
@@ -445,16 +704,17 @@ class FunctionConditions {
 
             Json::Value functionResult;
 
-            functionResult["functionName"] = function_name;
+            functionResult["function_name"] = function_name;
 
             int pn = 0;
-            for (auto param: parameter_ats) {
+            for (auto param: parameter_metadata) {
                 auto param_key = "param_" + std::to_string(pn);
                 functionResult[param_key] = param.toJson(verbose);
                 pn++;
+        std::vector<ValueMetadata> parameter_metadata;
             }
 
-            functionResult["return"] = return_ats.toJson(verbose);
+            functionResult["return"] = return_metadata.toJson(verbose);
 
             return functionResult;
         }
@@ -466,14 +726,14 @@ class FunctionConditions {
             sstream << "Function: " << function_name << "\n";
 
             int pn = 0;
-            for (auto param: parameter_ats) {
+            for (auto param: parameter_metadata) {
                 sstream << "param_" + std::to_string(pn) << ":\n";
                 sstream << param.toString(verbose);
                 pn++;
             }
 
             sstream << "return:\n";
-            sstream << return_ats.toString(verbose);
+            sstream << return_metadata.toString(verbose);
 
             return sstream.str();
         }
@@ -483,13 +743,14 @@ class FunctionConditions {
             sstream << "[INFO] Summary " << function_name << ":\n";
 
             int pn = 0;
-            for (auto param: parameter_ats) {
+            for (auto param: parameter_metadata) {
                 sstream << "param_" + std::to_string(pn) 
-                        << ": " << param.size() << " access types\n";
+                        << ": " << param.getAccessNum() << " access types\n";
                 pn++;
             }
 
-            sstream << "return: " << return_ats.size() << " access types\n";
+            sstream << "return: " << return_metadata.getAccessNum()
+                    << " access types\n";
 
             return sstream.str();
         }

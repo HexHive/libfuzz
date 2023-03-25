@@ -251,6 +251,10 @@ class Utils:
             if arg_info.flag in ["val", "ref"]:
                 arg_info.type =  apis_clang_list[function_name]["arguments_info"][i]["type_clang"]
 
+        # if return_info.type == "void*":
+        #     print("VOID*?")
+        #     from IPython import embed; embed(); exit(1)
+
         return Api(function_name, is_vararg, return_info, arguments_info)
 
     @staticmethod
@@ -260,6 +264,9 @@ class Utils:
         x = a_type
         while x[-1] == "*":
             x = x[:-1]
+
+        # if "void" in a_type:
+        #     from IPython import embed; embed(); exit(1)
 
         return x in incomplete_types_list
 
@@ -275,32 +282,55 @@ class Utils:
                 exported_functions |= { l_strip[:p_par] }
 
         return list(exported_functions)
+        
+    @staticmethod
+    def get_value_metadata(mdata_json) -> ValueMetadata:
+        ats = Utils.get_access_type_set(mdata_json["access_type_set"])
+        is_array = mdata_json["is_array"]
+        is_file_path = mdata_json["is_file_path"]
+        is_malloc_size = mdata_json["is_malloc_size"]
+        len_depends_on = mdata_json["len_depends_on"]
+
+        return ValueMetadata(ats, is_array, is_malloc_size, 
+                is_file_path, len_depends_on)
+
+    @staticmethod
+    def get_access_type(at_json) -> AccessType:
+
+        access = None
+        if at_json["access"] == "read":
+            access = Access.READ
+        elif at_json["access"] == "write":
+            access = Access.WRITE
+        elif at_json["access"] == "return":
+            access = Access.RETURN
+        elif at_json["access"] == "create":
+            access = Access.CREATE
+        elif at_json["access"] == "delete":
+            access = Access.DELETE
+        elif at_json["access"] == "none":
+            access = Access.NONE
+
+        if access == None:
+            print("'access' is None, what should I do?")
+            exit(1)
+
+        fields = at_json["fields"]
+        type = at_json["type"]
+        type_string = at_json["type_string"]
+
+        return AccessType(access, fields, type, type_string)
 
     @staticmethod
     def get_access_type_set(ats_json) -> AccessTypeSet:
         ats = set()
         for at_json in ats_json:
-            access = None
-            if at_json["access"] == "read":
-                access = Access.READ
-            elif at_json["access"] == "write":
-                access = Access.WRITE
-            elif at_json["access"] == "return":
-                access = Access.RETURN
-            elif at_json["access"] == "create":
-                access = Access.CREATE
-            elif at_json["access"] == "delete":
-                access = Access.DELETE
-            elif at_json["access"] == "none":
-                access = Access.NONE
-
-            if access == None:
-                print("'access' is None, what should I do?")
-                exit(1)
-
-            fields = at_json["fields"]
             
-            ats.add(AccessType(access, fields))
+            at = Utils.get_access_type(at_json)
+            if at_json["parent"] != 0:
+                at.parent = Utils.get_access_type(at_json["parent"])
+            
+            ats.add(at)
 
         return AccessTypeSet(ats)
 
@@ -314,21 +344,59 @@ class Utils:
 
             for fc_json in conditions:
 
-                function_name = fc_json["functionName"]
+                function_name = fc_json["function_name"]
 
                 params_at = []
                 p_idx = 0
                 while True:
                     try:
-                        ats = Utils.get_access_type_set(fc_json[f"param_{p_idx}"])
-                        params_at += [ats]
+                        mdata = Utils.get_value_metadata(
+                            fc_json[f"param_{p_idx}"])
+                        params_at += [mdata]
                     except KeyError as e:
                         break
                     p_idx += 1
 
-                return_at = Utils.get_access_type_set(fc_json[f"return"])
+                return_at = Utils.get_value_metadata(fc_json[f"return"])
 
                 fc = FunctionConditions(function_name, params_at, return_at)
                 fcs.add_function_conditions(fc)
 
         return fcs
+
+    @staticmethod
+    def infer_type_size(type) -> int:
+        # given a clang-like type, try to infer its size
+        # table written for x86 64
+        # TODO: to expand in order to consider complex sructures
+
+        # any pointer is 8 byes in x86 64
+        if "*" in type:
+            return 8*8
+        # sizeof(float) = 4
+        elif type == "float":
+            return 4*8
+        # sizeof(double) = 8
+        elif type == "double":
+            return 8*8
+        # sizeof(int) = 4
+        elif type == "int":
+            return 4*8
+        # sizeof(unsigned int) = 4
+        elif type == "unsigned int":
+            return 4*8
+        # sizeof(long) = 8
+        elif type == "long":
+            return 8*8
+        # sizeof(unsigned long) = 8
+        elif type == "unsigned long":
+            return 8*8
+        # sizeof(char) = 1
+        elif type == "char":
+            return 1*8
+        # sizeof(void) = 0
+        elif type == "void":
+            return 0
+        # sizeof(size_t) = 0            
+        elif type == "size_t":
+            return 8*8

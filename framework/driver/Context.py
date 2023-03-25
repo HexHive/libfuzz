@@ -1,7 +1,8 @@
 from typing import List, Set, Dict #, Tuple, Optional
 import random, copy
 
-from .ir import Type, PointerType, Variable, BuffDecl, BuffInit, Statement, Value, NullConstant, Buffer
+from .ir import Type, PointerType, Variable, BuffDecl, BuffInit
+from .ir import Statement, Value, NullConstant, Buffer, AllocType 
 
 class Context:
     # trace the variable alives in this buffers within the context
@@ -11,7 +12,6 @@ class Context:
 
     POINTER_STRATEGY_NULL = 0
     POINTER_STRATEGY_ARRAY = 1
-    POINTER_STRATEGY_DEP = 2
 
     def __init__(self):
         self.buffs_alive = set()
@@ -20,10 +20,10 @@ class Context:
         self.stub_char_array = PointerType("char*", Type("char", 8))
         self.poninter_strategies = [Context.POINTER_STRATEGY_NULL, 
                                     Context.POINTER_STRATEGY_ARRAY]
-                                    # Context.POINTER_STRATEGY_DEP]
 
         # special case a buffer of void variables
-        self.buffer_void = Buffer("buff_void", 1, self.stub_void)
+        self.buffer_void = Buffer("buff_void", 1, self.stub_void, 
+            AllocType.STACK)
         self.buffs_alive.add(self.buffer_void)
 
         # TODO: make this from config?
@@ -71,7 +71,7 @@ class Context:
     def get_allocated_size(self):
         return sum([ b.get_allocated_size() for b in self.buffs_alive ])
 
-    def has_vars_type(self, type: Type):
+    def has_vars_type(self, type: Type) -> bool:
         for v in self.buffs_alive:
             if v.get_type() == type:
                 return True
@@ -156,5 +156,20 @@ class Context:
         return [BuffDecl(x) for x in self.buffs_alive if x.get_type() != self.stub_void]
 
     def generate_buffer_init(self) -> List[Statement]:
-        return [BuffInit(x) for x in self.buffs_alive if not x.get_type().is_incomplete and not isinstance(x.get_type(), PointerType) and x.get_type() != self.stub_void]
-        
+        buff_init = []
+
+        for x in self.buffs_alive:
+            t = x.get_type()
+
+            if isinstance(t, PointerType) and t.get_base_type().is_incomplete:
+                continue
+
+            if t.is_incomplete:
+                continue
+            
+            if t == self.stub_void:
+                continue
+            
+            buff_init += [BuffInit(x)]
+
+        return buff_init
