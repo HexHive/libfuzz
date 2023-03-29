@@ -8,7 +8,7 @@
 // 	char* generic_data; // malloc(len_data)
 // };
 
-extern "C" {
+// extern {
 
 typedef struct a_struct my_struct;
 
@@ -27,4 +27,4 @@ void operation(my_struct*);
 void close(my_struct *);
 void my_free(void*);
 void* my_malloc(size_t);
-}
+// }

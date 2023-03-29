@@ -85,7 +85,7 @@ class CBFactory(Factory):
             arg_cond = conditions.argument_at[arg_pos]
             #  TODO: add and test if it works
             #  and not isinstance(arg_type, PonterType)
-            if arg_cond.len_depends_on != "":
+            if arg_cond.len_depends_on != "" and not isinstance(arg_type, PointerType):
                 arg_var = rng_ctx.create_new_var(arg_type, arg_cond)
                 x = arg_var
                 if (isinstance(arg_var, Variable) and 
@@ -100,6 +100,7 @@ class CBFactory(Factory):
                 try:
                     api_call.set_pos_arg_var(idx, b_len)
                 except:
+                    print("Exception here")
                     from IPython import embed; embed(); exit(1)
 
                 rng_ctx.update(api_call.arg_vars[arg_pos], arg_cond)

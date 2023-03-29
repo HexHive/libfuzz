@@ -68,4 +68,7 @@ class Buffer:
             self.alloctype == AllocType.STACK):
             return self.n_element * b_t.get_base_type().get_size()
         else:
+            if b_t.get_size() is None:
+                print("Is none?")
+                from IPython import embed; embed(); exit(1)
             return self.n_element * b_t.get_size()

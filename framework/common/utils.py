@@ -397,6 +397,20 @@ class Utils:
         # sizeof(void) = 0
         elif type == "void":
             return 0
-        # sizeof(size_t) = 0            
+        # sizeof(size_t) = 0
         elif type == "size_t":
             return 8*8
+        elif type == "TIFF":
+            return 0
+        elif type == "uint32_t":
+            return 4*8
+        elif type == "uint64_t":
+            return 8*8
+        elif "(" in type:
+            return 8*8
+        elif type == "tmsize_t":
+            return 8*8
+        elif type == "thandle_t":
+            return 8*8
+        else:
+            raise Exception(f"I don't know the size of '{type}'")
