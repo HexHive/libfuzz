@@ -12,11 +12,12 @@ You can define handlers for specific functions that will manually update the acc
 */
 
 typedef bool (*Handler)(ValueMetadata*, std::string, 
-    const ICFGNode*, int, AccessType);
-typedef std::map<std::string, Handler> AccessTypeHandler_map;
+    const ICFGNode*, const CallICFGNode*, int, AccessType);
+typedef std::map<std::string, Handler> AccessTypeHandlerMap;
 
 bool malloc_handler(ValueMetadata *mdata, std::string fun_name, 
-    const ICFGNode* icfgNode, int param_num, AccessType atNode) {
+    const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num,
+    AccessType atNode) {
 
     if (param_num == -1) {
         // no need to set field, empty field set is what I need
@@ -35,7 +36,8 @@ bool malloc_handler(ValueMetadata *mdata, std::string fun_name,
 }
 
 bool free_handler(ValueMetadata *mdata, std::string fun_name, 
-    const ICFGNode* icfgNode, int param_num, AccessType atNode) {
+    const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num,
+    AccessType atNode) {
 
     if (param_num == 0 && atNode.getNumFields() == 0) {
         atNode.setAccess(AccessType::Access::del);
@@ -46,7 +48,8 @@ bool free_handler(ValueMetadata *mdata, std::string fun_name,
 }
 
 bool open_handler(ValueMetadata *mdata, std::string fun_name, 
-    const ICFGNode* icfgNode, int param_num, AccessType atNode) {
+    const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num, 
+    AccessType atNode) {
 
     if (param_num == 0 && atNode.getNumFields() == 0) {
         atNode.setAccess(AccessType::Access::read);
@@ -58,7 +61,8 @@ bool open_handler(ValueMetadata *mdata, std::string fun_name,
 }
 
 bool memcpy_hander(ValueMetadata *mdata, std::string fun_name, 
-    const ICFGNode* icfgNode, int param_num, AccessType atNode) {
+    const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num, 
+    AccessType atNode) {
 
     if ((param_num == 0 || param_num == 1) && atNode.getNumFields() == 0) {
 
@@ -68,17 +72,23 @@ bool memcpy_hander(ValueMetadata *mdata, std::string fun_name,
         // ats->insert(tmpAcNode, vNode->getICFGNode());
         // atNode.setAccess(AccessType::Access::read);
         mdata->getAccessTypeSet()->insert(tmpAcNode, icfgNode);
+        mdata->setIsArray(true);
+        if (param_num == 1) {
+            auto i = SVFUtil::dyn_cast<CallBase>(cs->getCallSite());
+            Value *v = i->getArgOperand(2);
+            mdata->addFunParam(v);
+        }
     }
 
     return false;
 }
 
-static AccessTypeHandler_map accessTypeHandlers = {
+static AccessTypeHandlerMap accessTypeHandlers = {
     {"malloc", &malloc_handler},
     {"free", &free_handler},
     {"open", &open_handler},
     {"fopen", &open_handler},
-    {"memcpy", &memcpy_hander},
+    {"llvm.memcpy.*", &memcpy_hander},
 };
 
 #endif /* INCLUDE_DOM_ACCESSTYPE_HANDLER_H_ */

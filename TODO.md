@@ -7,24 +7,12 @@
 
 # TODO driver generation framework
 - check poetry and documentation (pdoc3)
-- Include other  forms of argument dependency, e,g,, memcpy , strcpy, and other
-  functions like that, check below: b depends on len_b since used by memcpy. (We
-  can leverage the hooking system already present.)
-```
-void set_data(my_struct *s, char *b, size_t len_b)  {
-	if (s->generic_data != NULL)
-		free(s->generic_data);
-	s->generic_data = (char*) malloc(len_b);
-	memcpy(s->generic_data, b, len_b);
-}
-```
 - Special treatment for known types, such as stream objects in C++ and `FILE*`
   for standard C. (We can leverage the hooking system already present.)
-- Include heuristics for inferring if chars* are string, I identified three cases:
+- Include heuristics for inferring if chars* are string, I identified two cases:
   1. char* + len var (like memcpy -- already done?)
-  2. char* is used in known apis (e.g., strcmp, strcpy) -> need NULL-terminator
-  3. char* is used in a loop whose exit condition is an null check -> need NULL-terminator
-  4. char* is just an array, no info regarding termination or length 
+  2. char* has NULL termiated
+  other heuristics to find char* used as strings are left for future work
 
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init
@@ -34,7 +22,12 @@ void set_data(my_struct *s, char *b, size_t len_b)  {
   condition of a variable allows me to instantiate a new variable from skretch (otherwise `raise Unsat()`)
 - Extend condition check with field types (the three-fields relations). See if
   it makes sense
-- 
+- Extract type system from library (only for structs):
+  - match llvm and clanv api file
+  - first, check if known from table
+  - second, check if in LLVM api
+  - third, check if in list of incomplete types
+  - fourth, get type from LLVM definition through LLVM name (add extraction from condition_extraction)
 
 # Stub Functions
 - realloc

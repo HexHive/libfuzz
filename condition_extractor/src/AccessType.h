@@ -571,6 +571,7 @@ class ValueMetadata {
 
     const llvm::Value* val;
     std::vector<llvm::Value*> indexes;
+    std::vector<llvm::Value*> fun_params;
 
     public: 
         ValueMetadata() {
@@ -588,6 +589,11 @@ class ValueMetadata {
             indexes.push_back(const_cast<llvm::Value*>(idx));
         }
         std::vector<llvm::Value*> getIndexes() {return indexes;}
+
+        void addFunParam(const llvm::Value* fp) {
+            fun_params.push_back(const_cast<llvm::Value*>(fp));
+        }
+        std::vector<llvm::Value*> getFunParams() {return fun_params;}
 
         void setAccessTypeSet(AccessTypeSet p_ats) {ats = p_ats;}
         AccessTypeSet* getAccessTypeSet() {return &ats;}

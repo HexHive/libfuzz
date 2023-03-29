@@ -15,7 +15,7 @@ EXTRACT_BC = extract-bc
 # FUNCTION = indirect_test
 # FUNCTION = first
 # FUNCTION = foo
-FUNCTION = create
+FUNCTION = set_data
 INTERFACE = $(PWD)/apis_clang.json
 EXTR_INC_FUNC = /workspaces/libfuzz/tool/misc/extract_included_functions.py
 CACHE_FOLDER = $(shell pwd)
@@ -37,8 +37,8 @@ run: $(TARGET).o.bc $(TARGET).o.ll
 	@echo "Running condition_extractor"
 #	$(WPA) -steens --dump-icfg  ./$(TARGET).o.bc
 	$(EXTR_INC_FUNC) -i $(PWD) -e "$(PWD)/exported_functions.txt" -t "$(PWD)/incomplete_types.txt" -a $(INTERFACE)
-	$(EXTRACTOR) $< -interface $(INTERFACE) -t json -output $(TARGET).json -v v0 -do_indirect_jumps
-#	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v1 -dom -print_dom -cache_folder $(CACHE_FOLDER)
+#	$(EXTRACTOR) $< -interface $(INTERFACE) -t json -output $(TARGET).json -v v0 -do_indirect_jumps
+	$(EXTRACTOR) $< -function $(FUNCTION) -t stdo -v v0 -data_layout datalayout.txt
 #	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v1 -dom  -print_dom
 # 	$(EXTRACTOR) $< -function $(FUNCTION) -t json -output $(TARGET).json -v v0 -do_indirect_jumps
 #	$(EXTRACTOR) $< -function $(FUNCTION) -t txt -output $(TARGET).txt -v v0 -do_indirect_jumps

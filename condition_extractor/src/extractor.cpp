@@ -82,6 +82,9 @@ static llvm::cl::opt<Verbosity> Verbose("v",
 static llvm::cl::opt<std::string> DebugCondition("debug_condition",
         llvm::cl::desc("<debug_condition> in combination with v2"));
 
+static llvm::cl::opt<std::string> ExtractDataLayout("data_layout",
+        llvm::cl::desc("<datalayout file>"), llvm::cl::init(""));
+
 static llvm::cl::opt<std::string> OutputFile("output",
         llvm::cl::desc("<output file>"), llvm::cl::init("conditions.json"));
 static llvm::cl::opt<OutType> OutputType("t", cl::desc("Output type:"), 
@@ -664,6 +667,31 @@ int main(int argc, char ** argv)
     }
 
     outs() << fun_cond_set.getSummary();
+
+    // extract data layout
+    if (ExtractDataLayout != "") {
+        outs() << "\n[INFO] extract structs data layout!\n";
+
+        Module *m = LLVMModuleSet::getLLVMModuleSet()->getMainLLVMModule();
+        const DataLayout &data_layout = m->getDataLayout();
+
+        ofstream fw(ExtractDataLayout, std::ofstream::out);
+        if (fw.is_open())
+        {
+            for (auto st: m->getIdentifiedStructTypes()) {
+                fw << st->getName().str() << " ";
+                if (st->isSized()) {
+                    uint64_t storeSize = data_layout.getTypeStoreSizeInBits(st);
+                    fw << storeSize << "\n";
+                } else {
+                    fw << "0\n";
+                }
+            }
+            fw.close();
+        }        
+
+        outs() << "[INFO] struct data layout done!\n";
+    }
 
     // clean up memory
     if (dom)

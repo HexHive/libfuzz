@@ -16,7 +16,7 @@ bool areConnected(const VFGNode*, const VFGNode*);
 std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
 bool areCompatible(FunctionType*,FunctionType*);
 bool handlerDispatcher(ValueMetadata*, std::string,
-    const ICFGNode*, int, AccessType);
+    const ICFGNode*, const CallICFGNode*, int, AccessType);
 // NOT EXPOSED FUNCTIONS -- END!
 
 /**
@@ -30,14 +30,24 @@ If exists, call the predefined handler for function fun.
          For example, it might be false for a cast to indicate we do not try to follow further child of the node.
          default true.
 */
-bool handlerDispatcher(ValueMetadata *mdata,
-    std::string fun, const ICFGNode * icfgNode, int param_num,
+bool handlerDispatcher(ValueMetadata *mdata, std::string fun, 
+    const ICFGNode * icfgNode, const CallICFGNode* cs, int param_num,
     AccessType atNode) {
-    // TODO move this line to the .h file
-    auto pos = accessTypeHandlers.find(fun);
-    if (pos != accessTypeHandlers.end()) {
-        // call the specific handler
-        return pos->second(mdata, fun, icfgNode, param_num, atNode);
+
+    std::string suffix = "*";
+    for (auto f: accessTypeHandlers) {
+        std::string fk = f.first;
+        int fk_size = fk.length() - suffix.length();
+        if (fk.compare(fk_size, suffix.length(), suffix) == 0 && 
+            fun.size() >= fk_size) {
+            std::string fk_clean = fk.substr(0, fk_size);
+            std::string fun_clean = fun.substr(0, fk_size);
+            if (fk_clean == fun_clean)
+                f.second(mdata, fun, icfgNode, cs, param_num, atNode);
+        }
+        else if (fun == f.first) {
+            f.second(mdata, fun, icfgNode, cs, param_num, atNode);
+        }
     }
     return true;
 }
@@ -168,7 +178,8 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                 std::string fun = callee->getName();
                 // malloc handler
                 AccessType acNode(retType);
-                bool _ = handlerDispatcher(&mdata, fun, node, -1, acNode);
+                bool _ = handlerDispatcher(&mdata, fun, node, call_node, -1, 
+                                            acNode);
             }
         }  
 
@@ -265,15 +276,10 @@ std::string ValueMetadata::extractDependentParameter(
 
     SVFIR* pag = SVFIR::getPAG();
 
-    // DominatorTree dom_tree(*fun->getLLVMFun());
-    // LoopInfo loop_info(dom_tree);
-
     PAG::FunToArgsListMap funmap_par = pag->getFunArgsMap();
     PAG::SVFVarList fun_params = funmap_par[fun];    
 
-    // use this to find loops faster
-    //  Loop* loop_info->getLoopFor(const BasicBlock *BB) const
-
+    // seek dependencies through loops
     for (auto i: mdata->getIndexes()) {
         // outs() << "I: " << *i << "\n";
 
@@ -340,6 +346,37 @@ std::string ValueMetadata::extractDependentParameter(
         }
 
     }
+
+    if (dependent_param == "")
+        for (auto fs: mdata->getFunParams()) {
+            // outs() << *fs << "\n";
+
+            PAGNode* pS = pag->getGNode(pag->getValueNode(fs));
+            const VFGNode* vS = svfg->getDefSVFGNode(pS);
+
+            int p_idx = 0;
+            bool param_control_len = false;
+            for (auto p: fun_params) {
+                // pP = const_cast<llvm::Value*>(p->getValue());
+                PAGNode* pP = pag->getGNode(pag->getValueNode(p->getValue()));
+                const VFGNode* vP = svfg->getDefSVFGNode(pP);
+                // const_cast<llvm::Value*>(p->getValue());
+                // outs() << "P: " << pP->toString() << "\n";
+                if (areConnected(vP,vS)) {
+                    // outs() << "Param control Loop\n";
+                    param_control_len = true;
+                    break;
+                } 
+                p_idx++;
+                // else
+                //     outs() << "no control!\n";
+            }
+
+            if (param_control_len) {
+                dependent_param = "param_" + std::to_string(p_idx);
+            }
+        }
+
 
     return dependent_param;
 }
@@ -778,7 +815,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                                     }
 
                                     ok_continue = handlerDispatcher(
-                                        &mdata, fun, vNode->getICFGNode(),
+                                        &mdata, fun, vNode->getICFGNode(), cs,
                                         n_param, acNode);
                                 }
                             }
@@ -810,7 +847,8 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
     //     outs() << x << "\n";
     // }
 
-    mdata.setIsArray(is_array);
+    if (!mdata.isArray())
+        mdata.setIsArray(is_array);
 
     return mdata;
 }
