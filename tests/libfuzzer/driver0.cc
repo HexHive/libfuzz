@@ -34,14 +34,15 @@ extern "C" size_t LLVMFuzzerCustomMutator(uint8_t *Data, size_t Size,
     for (int i = 0; i < COUNTER_NUMBER; i++)
         counter_size_sum += counter_size[i];
 
-    if (Size < FIXED_SIZE || Size >= (NEW_DATA_LEN-counter_size_sum))
+    if (Size < FIXED_SIZE || 
+        Size >= (NEW_DATA_LEN-counter_size_sum))
         return 0;
 
     // printf("check 1 done\n");
 
     unsigned cut[COUNTER_NUMBER] = { 0 };
 
-    uint8_t NewData[NEW_DATA_LEN+1];
+    uint8_t NewData[NEW_DATA_LEN];
     size_t NewDataSize = sizeof(NewData);
 
     uint8_t *NewDataPtr = NewData;

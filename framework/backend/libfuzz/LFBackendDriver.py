@@ -72,7 +72,8 @@ class LFBackendDriver(BackendDriver):
         cm += f"const unsigned counter_size[COUNTER_NUMBER] = "
         cm += f"{{ {counter_size_str} }};\n"
 
-        cm += "\n#define NEW_DATA_LEN 4096\n"
+        cm += "\n#define NEW_DATA_LEN 4096\n\n"
+        cm += "bool custom_mutator_ok = false;\n\n"
 
         return cm
 
@@ -103,7 +104,8 @@ class LFBackendDriver(BackendDriver):
 
             f.write("extern \"C\" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t Size) {\n")
 
-            f.write("\tif (Size < MIN_SEED_SIZE) return 0;\n")
+            f.write("\tif (!custom_mutator_ok) return 0;\n")
+            f.write("\tcustom_mutator_ok = false;\n")
 
             # for stmt in stmt_instances:
             for stmt in driver:
@@ -136,7 +138,14 @@ class LFBackendDriver(BackendDriver):
 
         cm += "extern \"C\" size_t LLVMFuzzerCustomMutator(uint8_t *Data, size_t Size, size_t MaxSize, unsigned int Seed) {\n\n"
 
-        cm += "\tif (Size < FIXED_SIZE)return Size;\n"
+        cm += "\tcustom_mutator_ok = false;\n"
+        cm += "\tsize_t counter_size_sum = 0;\n"
+        cm += "\tfor (int i = 0; i < COUNTER_NUMBER; i++)\n"
+        cm += "\t\tcounter_size_sum += counter_size[i];\n\n"
+
+        cm += "\tif (Size < FIXED_SIZE ||\n"
+        cm += "\t\tSize >= (NEW_DATA_LEN-counter_size_sum))\n"
+        cm += "\t\treturn 0;\n"
         cm += "\tunsigned cut[COUNTER_NUMBER] = { 0 };\n"
         cm += "\tuint8_t NewData[NEW_DATA_LEN];\n"
         cm += "\tsize_t NewDataSize = sizeof(NewData);\n"
@@ -146,7 +155,9 @@ class LFBackendDriver(BackendDriver):
 
         cm += "\tsize_t NewDataLen = LLVMFuzzerMutate(Data, Size, NEW_DATA_LEN);\n"
 
-        cm += "\tif (NewDataLen < FIXED_SIZE) return NewDataLen;\n"
+        cm += "\tif (NewDataLen < FIXED_SIZE ||\n"
+        cm += "\t\t NewDataLen >= (NEW_DATA_LEN-counter_size_sum))\n"       
+        cm += "\t\treturn 0;\n"
 
         cm += "\tsize_t DynamicPart = NewDataLen - FIXED_SIZE;\n"
 
@@ -182,6 +193,7 @@ class LFBackendDriver(BackendDriver):
 
         cm += "\tmemcpy(Data, NewData, NewDataFinalLen);\n"
 
+        cm += "\tcustom_mutator_ok = true;\n"
         cm += "\treturn NewDataFinalLen;\n"
         cm += "}\n"
 

@@ -6,8 +6,6 @@
 - start 1h fuzzing campaing for each driver
 
 # TODO driver generation framework
-- if args depend only to "int"-like stuffs, not struct pointers or similar
-- add custom mutator (test how it works?)
 - check poetry and documentation (pdoc3)
 - Include other  forms of argument dependency, e,g,, memcpy , strcpy, and other
   functions like that, check below: b depends on len_b since used by memcpy. (We
@@ -29,17 +27,14 @@ void set_data(my_struct *s, char *b, size_t len_b)  {
   4. char* is just an array, no info regarding termination or length 
 
 # TODO for condition_extractor:
-- add check minimun size in driver
-- after sink operation, set pointer = NULL
-- Add clean up section in driver to freey malloc() arrays, if the pointer == NULL
 - Add additional policies to recognize source APIs. Here [1], md5Init
   initializes `MD5Context`. The gist is that md5Init just writes into fields but
   does not read from any. Therefore, we can consider this as a source API
 - In `try_to_instantiate_api_call`, I should add a test to understand if the
   condition of a variable allows me to instantiate a new variable from skretch (otherwise `raise Unsat()`)
-- Include custom mutator in libfuzzer to handle dynamic arrays
 - Extend condition check with field types (the three-fields relations). See if
   it makes sense
+- 
 
 # Stub Functions
 - realloc
