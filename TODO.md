@@ -22,6 +22,11 @@ void set_data(my_struct *s, char *b, size_t len_b)  {
 ```
 - Special treatment for known types, such as stream objects in C++ and `FILE*`
   for standard C. (We can leverage the hooking system already present.)
+- Include heuristics for inferring if chars* are string, I identified three cases:
+  1. char* + len var (like memcpy -- already done?)
+  2. char* is used in known apis (e.g., strcmp, strcpy) -> need NULL-terminator
+  3. char* is used in a loop whose exit condition is an null check -> need NULL-terminator
+  4. char* is just an array, no info regarding termination or length 
 
 # TODO for condition_extractor:
 - add check minimun size in driver
