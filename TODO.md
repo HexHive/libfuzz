@@ -1,7 +1,6 @@
 # My todo:
 
 # ROAD MAP
-- remove null pointer in driver creation [TO TEST EFFECT WHILE FUZZING]
 - emit X drivers for libtiff -> compile in libfuzzer -> check how many works
 - start 1h fuzzing campaing for each driver
 
@@ -11,7 +10,7 @@
   for standard C. (We can leverage the hooking system already present.)
 - Include heuristics for inferring if chars* are string, I identified two cases:
   1. char* + len var (like memcpy -- already done?)
-  2. char* has NULL termiated
+  2. char* has NULL terminated
   other heuristics to find char* used as strings are left for future work
 
 # TODO for condition_extractor:

@@ -105,6 +105,39 @@ class Utils:
         return incomplete_types_list
 
     @staticmethod
+    def get_data_layout(data_layout_p):
+        data_layout = {}
+        with open(data_layout_p) as f:
+            for l in f:
+                l = l.strip()
+                if l:
+                    (type, size) = l.split(" ")
+                    data_layout["%" + type] = int(size)
+        return data_layout
+
+    @staticmethod
+    def get_apis_llvm_list(apis_llvm):
+        apis_llvm_list = {}
+
+        with open(apis_llvm) as  f:
+            for l in f:
+                if not l.strip():
+                    continue
+                if l.startswith("#"):
+                    continue
+                api = json.loads(l)
+
+                function_name = api["function_name"]
+
+                # if function_name in apis_llvm_list:
+                #     raise Exception(f"Function '{function_name}' already extracted!")
+
+                apis_llvm_list[function_name] = copy.deepcopy(api)
+        
+        return apis_llvm_list
+
+
+    @staticmethod
     def get_apis_clang_list(apis_clang):
 
         apis_clang_list = {}
@@ -363,54 +396,3 @@ class Utils:
                 fcs.add_function_conditions(fc)
 
         return fcs
-
-    @staticmethod
-    def infer_type_size(type) -> int:
-        # given a clang-like type, try to infer its size
-        # table written for x86 64
-        # TODO: to expand in order to consider complex sructures
-
-        # any pointer is 8 byes in x86 64
-        if "*" in type:
-            return 8*8
-        # sizeof(float) = 4
-        elif type == "float":
-            return 4*8
-        # sizeof(double) = 8
-        elif type == "double":
-            return 8*8
-        # sizeof(int) = 4
-        elif type == "int":
-            return 4*8
-        # sizeof(unsigned int) = 4
-        elif type == "unsigned int":
-            return 4*8
-        # sizeof(long) = 8
-        elif type == "long":
-            return 8*8
-        # sizeof(unsigned long) = 8
-        elif type == "unsigned long":
-            return 8*8
-        # sizeof(char) = 1
-        elif type == "char":
-            return 1*8
-        # sizeof(void) = 0
-        elif type == "void":
-            return 0
-        # sizeof(size_t) = 0
-        elif type == "size_t":
-            return 8*8
-        elif type == "TIFF":
-            return 0
-        elif type == "uint32_t":
-            return 4*8
-        elif type == "uint64_t":
-            return 8*8
-        elif "(" in type:
-            return 8*8
-        elif type == "tmsize_t":
-            return 8*8
-        elif type == "thandle_t":
-            return 8*8
-        else:
-            raise Exception(f"I don't know the size of '{type}'")

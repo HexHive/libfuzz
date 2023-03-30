@@ -7,6 +7,7 @@ incomplete_types = "/workspaces/libfuzz/regression_tests/condition_extractor/tes
 conditions = "/workspaces/libfuzz/regression_tests/condition_extractor/test_full/library.json"
 minimum_apis = ""
 # minimum_apis = "/workspaces/libfuzz/regression_tests/condition_extractor/test_full/minimize_api.txt"
+data_layout = "/workspaces/libfuzz/regression_tests/condition_extractor/test_full/datalayout.txt"
 
 
 [generator]

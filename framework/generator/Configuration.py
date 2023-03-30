@@ -9,7 +9,7 @@ from dependency import UndefDependencyGraphGenerator
 from grammar import GrammarGenerator, NonTerminal, Terminal
 
 from backend import BackendDriver, MockBackendDriver, LFBackendDriver
-from common import Utils
+from common import Utils, DataLayout
 
 from driver.factory.only_type import *
 from driver.factory.constraint_based import *
@@ -136,6 +136,32 @@ class Configuration:
         # t = Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types)
         # from IPython import embed; embed(); exit()
         return Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types, minimum_apis)
+
+    # this builds a static structure in DataLayout
+    def build_data_layout(self):
+        if not "analysis" in self._config:
+            raise Exception("'analysis' not defined")
+
+        analysis = self._config["analysis"]
+
+        if not "apis_llvm" in analysis:
+            raise Exception("'apis_llvm' not defined")
+
+        if not "apis_clang" in analysis:
+            raise Exception("'apis_clang' not defined")
+
+        if not "incomplete_types" in analysis:
+            raise Exception("'incomplete_types' not defined")
+
+        if not "data_layout" in analysis:
+            raise Exception("'data_layout' not defined")
+        
+        apis_llvm = analysis["apis_llvm"]
+        apis_clang = analysis["apis_clang"]
+        incomplete_types = analysis["incomplete_types"]
+        data_layout = analysis["data_layout"]
+
+        DataLayout.populate(apis_clang, apis_llvm, incomplete_types, data_layout)
 
     @cached_property
     def dependency_graph(self):

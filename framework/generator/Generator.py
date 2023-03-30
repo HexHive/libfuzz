@@ -7,6 +7,8 @@ class Generator:
         self._backend   = config.backend
         self._pool      = config.pool
 
+        config.build_data_layout()
+
     def run(self):
         print("Generating drivers...")
 

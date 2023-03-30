@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import copy, re
 
-from common import Api, Utils
+from common import Api, Utils, DataLayout
 
 from driver import Driver
 from driver.ir import Type, PointerType, ApiCall
@@ -58,7 +58,7 @@ class Factory(ABC):
 
         # NOTE: a_size comes wrong from LLVM analysis, I use this trick to fix
         # the size
-        a_size = Utils.infer_type_size(a_type_core)
+        a_size = DataLayout.get_type_size(a_type_core)
         type_core = Type(a_type_core, a_size, a_is_incomplete, a_is_const)
 
         return_type = type_core

@@ -1,6 +1,6 @@
 from . import Type
 
-from common import Utils
+from common import DataLayout
 
 class PointerType(Type):
     def __init__(self, token, type: Type):
@@ -9,7 +9,7 @@ class PointerType(Type):
         self.is_const = type.is_const
         # it makes sense because I always have poninter to functions
         self.to_function = False
-        self.size = Utils.infer_type_size("*")
+        self.size = DataLayout.infer_type_size("*")
 
     def get_pointee_type(self):
         return self.type

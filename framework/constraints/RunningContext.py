@@ -8,7 +8,7 @@ from driver.ir import Address, NullConstant, Buffer, ConstStringDecl
 from driver.ir import BuffDecl, BuffInit, FileInit, Statement, DynArrayInit
 from . import Conditions
 from common.conditions import *
-from common import Utils
+from common import Utils, DataLayout
 
 class RunningContext(Context):
     variables_alive:    List[Variable]
@@ -235,7 +235,7 @@ class RunningContext(Context):
         return val
 
     def create_dependency_length_variable(self):
-        len_type = Type("size_t", Utils.infer_type_size("size_t"))
+        len_type = Type("size_t", DataLayout.get_type_size("size_t"))
         ats = AccessTypeSet()
         mdata = ValueMetadata(ats, False, False, False, "")
         return (self.create_new_var(len_type, mdata), mdata)
