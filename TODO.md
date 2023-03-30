@@ -35,22 +35,22 @@
 - calloc
   - ?
 - <other malloc-like function?>
-- malloc
-  - ret -> allocate new object/buffer
-- memcpy
-  - par0 -> is array;
-  - par1 -> is array; depends on par2
-- memset
-  - par0 -> is array; depends on par2
-- strlen
-  - par0 -> is array; is string (?)
-- strcpy
-  - par0 -> is array; is string (?)
-  - par1 -> is array; is string (?)
-- open/fopen
-  - par0 -> is file path
-- free
-  - par0 -> (delete, [], void*)
+x malloc
+  x ret -> allocate new object/buffer
+x memcpy
+  x par0 -> is array;
+  x par1 -> is array; depends on par2
+x memset
+  x par0 -> is array; depends on par2
+x strlen
+  x par0 -> is array; is string (?)
+x strcpy
+  xpar0 -> is array; is string (?)
+  x par1 -> is array; is string (?)
+x open/fopen
+  x par0 -> is file path
+x free
+  x par0 -> (delete, [], void*)
 
 # Links
 

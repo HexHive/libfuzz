@@ -21,6 +21,7 @@
 
 /workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFClientOpen -output /workspaces/libfuzz/condition_extractor/conditions-tmp-ic.json -v v0 -t json
 
+/workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFClientOpen -v v0 -t json -output /workspaces/libfuzz/condition_extractor/aa.json
 
 /workspaces/libfuzz/regression_tests/condition_extractor/test_simpleapi/library.o.bc -function indirect_test -t json -output indirect_test.json -v v1
 
