@@ -6,6 +6,7 @@ from driver import Context
 from driver.ir import Variable, Type, Value, PointerType, AllocType, CleanBuffer
 from driver.ir import Address, NullConstant, Buffer, ConstStringDecl
 from driver.ir import BuffDecl, BuffInit, FileInit, Statement, DynArrayInit
+from driver.ir import SetStringNull
 from . import Conditions
 from common.conditions import *
 from common import Utils, DataLayout
@@ -28,8 +29,6 @@ class RunningContext(Context):
         self.file_path_buffers = set()
         self.new_vars = set()
         self.const_strings = {}
-
-#        self.len_dependency = {}
 
     # override of Context method
     def has_vars_type(self, type: Type, cond: ValueMetadata) -> bool:
@@ -245,9 +244,11 @@ class RunningContext(Context):
         #     raise Exception(f"This function creates buffers only for base types (no pointers!) {type}")
 
         alloctype = AllocType.STACK
-        if (isinstance(type, PointerType) and 
-            (type.get_base_type().is_incomplete or cond.len_depends_on != "")):
-            alloctype = AllocType.HEAP
+        if isinstance(type, PointerType):
+            if type.get_base_type().is_incomplete:
+                alloctype = AllocType.HEAP
+            if cond.len_depends_on != "":
+                alloctype = AllocType.HEAP
 
         buff_counter = self.buffs_counter.get(type, 0)
         
@@ -265,7 +266,10 @@ class RunningContext(Context):
 
         buff_name = f"{type.token}{pnt}_{cst}{heap}{buff_counter}"
         buff_name = buff_name.replace(" ", "")
-        if cond.is_array:
+        # NOTE: char* => always considered as array!
+        if ((cond.is_array or 
+            type.token == "char*" or type.token == "unsigned char*") and
+            alloctype == AllocType.STACK):
             new_buffer = Buffer(buff_name, self.MAX_ARRAY_SIZE, type, alloctype)
         else:
             new_buffer = Buffer(buff_name, 1, type, alloctype)
@@ -575,6 +579,9 @@ class RunningContext(Context):
 
             buff_init += [BuffInit(x)]
 
+            if t.get_token() in ["char*", "unsigned char*"]:
+                 buff_init += [SetStringNull(x)]
+
         for var, cond in self.var_to_cond.items():
             len_var = cond.len_depends_on
             if len_var is None:
@@ -592,6 +599,9 @@ class RunningContext(Context):
                 buff_init += [FileInit(buff, len_var)]
             else:
                 buff_init += [DynArrayInit(buff, len_var)]
+
+            if buff.get_type().get_token() in ["char*", "unsigned char*"]:
+                buff_init += [SetStringNull(buff, len_var)]
 
         return buff_init
 

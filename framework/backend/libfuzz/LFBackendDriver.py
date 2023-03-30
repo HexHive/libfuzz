@@ -2,7 +2,7 @@ from driver import Driver
 from driver.ir import ApiCall, BuffDecl, BuffInit, FileInit, AllocType
 from driver.ir import PointerType, Address, Variable, Type, DynArrayInit
 from driver.ir import Statement, Value, NullConstant, ConstStringDecl
-from driver.ir import AssertNull, CleanBuffer, SetNull
+from driver.ir import AssertNull, CleanBuffer, SetNull, SetStringNull
 from backend import BackendDriver
 
 import random, string, os, shutil
@@ -238,7 +238,22 @@ class LFBackendDriver(BackendDriver):
             return self.cleanbuffer_emit(stmt)
         elif isinstance(stmt, SetNull):
             return self.setnull_emit(stmt)
+        elif isinstance(stmt, SetStringNull):
+            return self.setstringnull_emit(stmt)
         raise NotImplementedError
+
+    # SetStringNull
+    def setstringnull_emit(self, stmt: SetStringNull) -> str:
+        buff = stmt.get_buffer()
+        len_var = stmt.get_len_var()
+
+        v = self.address_emit(buff.get_address())
+
+        if len_var is None:
+            return f"{v}[sizeof({v}) - 1] = 0;"
+        else:
+            return f"{v}[{self.value_emit(len_var)} - 1] = 0;"
+
 
     # SetNull
     def setnull_emit(self, setnull: SetNull) -> str:

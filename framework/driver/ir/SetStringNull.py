@@ -3,12 +3,11 @@ from typing import List, Set, Dict, Tuple, Optional
 
 from . import Statement, Type, Variable, Buffer
 
-class ConstStringDecl(Statement):
+class SetStringNull(Statement):
     buffer:     Buffer
-    string_val: str
+    len_var:    Variable
 
-    def __init__(self, buffer: Buffer, string_val: str):
-        super().__init__()
+    def __init__(self, buffer: Buffer, len_var: Variable = None):
 
         type = buffer.get_type()
 
@@ -19,7 +18,7 @@ class ConstStringDecl(Statement):
             raise Exception(f"ConstStringDecl accepts only 'char*', {type} received")
 
         self.buffer = buffer
-        self.string_val = string_val
+        self.len_var = len_var
 
     # for an element, the hash is just the key + type
     def __hash__(self):
@@ -31,5 +30,5 @@ class ConstStringDecl(Statement):
     def get_buffer(self):
         return self.buffer
 
-    def get_string_val(self):
-        return self.string_val
+    def get_len_var(self):
+        return self.len_var
