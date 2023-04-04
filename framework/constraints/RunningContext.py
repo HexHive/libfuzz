@@ -452,8 +452,11 @@ class RunningContext(Context):
                     type_strings.add(x.type_string)
 
             if len(type_strings) == 0:
-                raise Exception("Not found type at [-1]")
-
+                # from IPython import embed; embed(); exit(1)
+                # raise Exception("Not found type at [-1]")
+                print("Not found type at [-1]")
+                type_strings.add(type.get_token())
+            
             type_strs = []
             type_hash = None
             for t in type_strings:
@@ -580,7 +583,7 @@ class RunningContext(Context):
             buff_init += [BuffInit(x)]
 
             if t.get_token() in ["char*", "unsigned char*"]:
-                 buff_init += [SetStringNull(x)]
+                buff_init += [SetStringNull(x)]
 
         for var, cond in self.var_to_cond.items():
             len_var = cond.len_depends_on
@@ -599,9 +602,8 @@ class RunningContext(Context):
                 buff_init += [FileInit(buff, len_var)]
             else:
                 buff_init += [DynArrayInit(buff, len_var)]
-
-            if buff.get_type().get_token() in ["char*", "unsigned char*"]:
-                buff_init += [SetStringNull(buff, len_var)]
+                if buff.get_type().get_token() in ["char*", "unsigned char*"]:
+                    buff_init += [SetStringNull(buff, len_var)]
 
         return buff_init
 

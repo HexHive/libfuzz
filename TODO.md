@@ -9,6 +9,12 @@
 - Special treatment for known types, such as stream objects in C++ and `FILE*`
   for standard C. (We can leverage the hooking system already present.)
 
+- if only fix seeds -> the corpus has seeds with 0 size!
+
+- if return pointers to TIFFTagMethods (or struct in general), I have to put the buffer in heap
+
+- include hash types in DataLayout (in gen driver) and find how to synthetize new access type
+
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init
   initializes `MD5Context`. The gist is that md5Init just writes into fields but
@@ -17,6 +23,8 @@
   condition of a variable allows me to instantiate a new variable from skretch (otherwise `raise Unsat()`)
 - Extend condition check with field types (the three-fields relations). See if
   it makes sense
+
+- TLS_client_method (openssl) returns a global structure, this is consider a "source" function
 
 # Stub Functions
 - realloc

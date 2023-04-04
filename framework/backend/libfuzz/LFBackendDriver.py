@@ -104,8 +104,9 @@ class LFBackendDriver(BackendDriver):
 
             f.write("extern \"C\" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t Size) {\n")
 
-            f.write("\tif (!custom_mutator_ok) return 0;\n")
-            f.write("\tcustom_mutator_ok = false;\n")
+            if self.has_counter:
+                f.write("\tif (!custom_mutator_ok) return 0;\n")
+                f.write("\tcustom_mutator_ok = false;\n")
 
             # for stmt in stmt_instances:
             for stmt in driver:

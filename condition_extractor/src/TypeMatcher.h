@@ -22,8 +22,6 @@ class TypeMatcher {
             std::set<std::string> ids_done = {});
         static bool compare_types(llvm::Type*,llvm::Type*);
         static std::string remove_trail_num(std::string);
-
-        static void precompute_type_hash(llvm::Module*);
 };
 
 #endif

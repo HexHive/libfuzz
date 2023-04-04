@@ -255,7 +255,8 @@ class CBFactory(Factory):
         statements_apicall = []
         for api_call, _ in drv:
             statements_apicall += [api_call]
-            if isinstance(api_call.ret_type, PointerType):
+            if (isinstance(api_call.ret_type, PointerType) and
+                not isinstance(api_call.ret_var, NullConstant)):
                 var = api_call.ret_var.get_variable()
                 statements_apicall += [AssertNull(var.get_buffer())]
             cond = get_cond(api_call)

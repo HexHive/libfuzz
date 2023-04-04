@@ -4,12 +4,6 @@
 TypeMatcher::TypeStringMap TypeMatcher::type_hash_map;
 TypeMatcher::TypeStringMap TypeMatcher::type_id_map;
 
-void TypeMatcher::precompute_type_hash(llvm::Module* module) {
-    for (auto t: module->getIdentifiedStructTypes())
-        // TypeMatcher::type_hash_map[t] = TypeMatcher::compute_hash(t);
-        TypeMatcher::compute_hash(t);
-}
-
 std::string TypeMatcher::compute_id(llvm::StructType* t) {
 
     if (type_id_map.find(t) != type_id_map.end())

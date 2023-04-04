@@ -437,6 +437,13 @@ int main(int argc, char ** argv)
     PostDominator *pDom = nullptr;
 
     PAG::FunToArgsListMap funmap_par = pag->getFunArgsMap();
+
+    // for (auto x: funmap_par) {
+    //     outs() << x.first << "\n";
+    //     outs() << x.second.size() << "\n";
+    // }
+    // exit(1);
+
     PAG::FunToRetMap funmap_ret = pag->getFunRets();
 
     PTACallGraph* callgraph = point_to_analysys->getPTACallGraph();
@@ -682,9 +689,10 @@ int main(int argc, char ** argv)
                 fw << st->getName().str() << " ";
                 if (st->isSized()) {
                     uint64_t storeSize = data_layout.getTypeStoreSizeInBits(st);
-                    fw << storeSize << "\n";
+                    fw << storeSize << " ";
+                    fw << TypeMatcher::compute_hash(st) << "\n";
                 } else {
-                    fw << "0\n";
+                    fw << "0 <random>\n";
                 }
             }
             fw.close();

@@ -6,9 +6,9 @@ export TARGET=$LIBFUZZ/analysis/libtiff/
 ./fetch.sh
 
 WORK="$TARGET/work"
-# rm -rf "$WORK"
-# mkdir -p "$WORK"
-# mkdir -p "$WORK/lib" "$WORK/include"
+rm -rf "$WORK"
+mkdir -p "$WORK"
+mkdir -p "$WORK/lib" "$WORK/include"
 
 export CC=wllvm
 export CXX=wllvm++
