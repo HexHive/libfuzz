@@ -11,11 +11,7 @@
 
 - if only fix seeds -> the corpus has seeds with 0 size!
 
-- if return pointers to TIFFTagMethods (or struct in general), I have to put the buffer in heap
-
 - include hash types in DataLayout (in gen driver) and find how to synthetize new access type
-
-- check some NULL passed (check slides for example)
 
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init

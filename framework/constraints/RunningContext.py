@@ -324,13 +324,16 @@ class RunningContext(Context):
             # If asking for ret value, I always need a pointer
             if (is_ret or cond.is_file_path or 
                 self.has_dereference(cond) or
-                cond.len_depends_on != ""):
+                cond.len_depends_on != "" or
+                type.get_base_type().token != "char"):
                 a_choice = Context.POINTER_STRATEGY_ARRAY
             else:
                 a_choice = random.choice(self.poninter_strategies)
 
             # just NULL
             if a_choice == Context.POINTER_STRATEGY_NULL:
+                # print("choosing null")
+                # from IPython import embed; embed(); exit(1)
                 v = NullConstant(tt)
             # a vector
             elif a_choice == Context.POINTER_STRATEGY_ARRAY:
