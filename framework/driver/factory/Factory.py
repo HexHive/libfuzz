@@ -5,7 +5,7 @@ import copy, re
 from common import Api, Utils, DataLayout
 
 from driver import Driver
-from driver.ir import Type, PointerType, ApiCall
+from driver.ir import Type, PointerType, ApiCall, TypeTag
 
 class Factory(ABC):
 
@@ -59,7 +59,14 @@ class Factory(ABC):
         # NOTE: a_size comes wrong from LLVM analysis, I use this trick to fix
         # the size
         a_size = DataLayout.get_type_size(a_type_core)
-        type_core = Type(a_type_core, a_size, a_is_incomplete, a_is_const)
+
+        type_tag = TypeTag.PRIMITIVE
+        if DataLayout.is_a_struct(a_type_core):
+            # print("is this a struct?")
+            # from IPython import embed; embed(); exit(1)
+            type_tag = TypeTag.STRUCT
+            
+        type_core = Type(a_type_core, a_size, a_is_incomplete, a_is_const, type_tag)
 
         return_type = type_core
         for x in range(1, pointer_level + 1):

@@ -15,6 +15,8 @@
 
 - include hash types in DataLayout (in gen driver) and find how to synthetize new access type
 
+- check some NULL passed (check slides for example)
+
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init
   initializes `MD5Context`. The gist is that md5Init just writes into fields but

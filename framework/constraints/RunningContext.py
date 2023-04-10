@@ -6,7 +6,7 @@ from driver import Context
 from driver.ir import Variable, Type, Value, PointerType, AllocType, CleanBuffer
 from driver.ir import Address, NullConstant, Buffer, ConstStringDecl
 from driver.ir import BuffDecl, BuffInit, FileInit, Statement, DynArrayInit
-from driver.ir import SetStringNull
+from driver.ir import SetStringNull, TypeTag
 from . import Conditions
 from common.conditions import *
 from common import Utils, DataLayout
@@ -141,10 +141,8 @@ class RunningContext(Context):
     def try_to_get_var(self, type: Type, cond: ValueMetadata,
                         is_ret: bool = False) -> Value:
 
-        # from IPython import embed; embed(); exit(1)
-
-        # TODO: this has to include logic to handl arrays, malloc, file
-        # diependencies, etc
+        # if isinstance(type, PointerType) and type.get_base_type().tag == TypeTag.STRUCT:
+        #     from IPython import embed; embed(); exit(1)
 
         is_sink = self.is_sink(cond)
 
@@ -249,6 +247,10 @@ class RunningContext(Context):
                 alloctype = AllocType.HEAP
             if cond.len_depends_on != "":
                 alloctype = AllocType.HEAP
+            if type.is_const:
+                alloctype = AllocType.HEAP
+            if type.get_base_type().tag == TypeTag.STRUCT:
+                alloctype = AllocType.HEAP
 
         buff_counter = self.buffs_counter.get(type, 0)
         
@@ -304,6 +306,10 @@ class RunningContext(Context):
         is_ret: bool = False) -> Value:
 
         v = None
+
+        # if type.is_const and is_ret:
+        #     print("type is const")
+        #     from IPython import embed; embed(); exit(1)
 
         if isinstance(type, PointerType):
             is_incomplete = False
@@ -571,6 +577,10 @@ class RunningContext(Context):
             if isinstance(t, PointerType) and t.get_base_type().is_incomplete:
                 continue
 
+            if (isinstance(t, PointerType) and 
+                t.get_base_type().tag == TypeTag.STRUCT):
+                continue
+
             if t.is_incomplete:
                 continue
             
@@ -578,6 +588,9 @@ class RunningContext(Context):
                 continue
 
             if x in dynamic_buff:
+                continue
+
+            if t.is_const:
                 continue
 
             buff_init += [BuffInit(x)]
@@ -658,6 +671,9 @@ class RunningContext(Context):
             if x in dynamic_buff:
                 continue
 
+            if t.is_const:
+                continue
+
             fixed_buffs.add(x)
         
         # for b in fixed_buffs:
@@ -695,7 +711,8 @@ class RunningContext(Context):
         clean_up = []
 
         for b in self.buffs_alive:
-            if b.get_alloctype() == AllocType.HEAP:
+            if (b.get_alloctype() == AllocType.HEAP and 
+                not b.get_type().is_const):
                 clean_up += [CleanBuffer(b)]
         # for v in self.variables_alive:
             # if v.get_buffer().get_alloctype() == AllocType.HEAP:

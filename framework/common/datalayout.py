@@ -13,6 +13,7 @@ from common import Utils
 class DataLayout:
     # so far, only clang_str -> (size in bit)
     layout:     Dict[str, int]
+    structs:    Set[str]
 
     @staticmethod
     def populate(apis_clang_p: str, apis_llvm_p: str,
@@ -30,6 +31,7 @@ class DataLayout:
         DataLayout.apis_llvm = apis_llvm
         DataLayout.incomplete_types = incomplete_types
         DataLayout.data_layout = data_layout
+        DataLayout.clang_to_llvm_struct = {}
 
         # loop all the types in apis_clang (args + ret) and try to infer all the
         # types
@@ -84,6 +86,7 @@ class DataLayout:
                     t_size = 0
                 elif type_llvm in DataLayout.data_layout:
                     t_size = DataLayout.data_layout[type_llvm]
+                    DataLayout.clang_to_llvm_struct[ttype] = type_llvm
 
         return t_size
     
@@ -156,3 +159,9 @@ class DataLayout:
             return DataLayout.infer_type_size(a_type)
         except:
             return DataLayout.layout[a_type]
+
+    @staticmethod
+    def is_a_struct(a_type) -> bool:
+        # for k, s in DataLayout.data_layout.items():
+            # if 
+        return a_type in DataLayout.clang_to_llvm_struct

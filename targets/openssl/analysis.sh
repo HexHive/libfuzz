@@ -4,12 +4,12 @@ set -e
 export LIBFUZZ=/workspaces/libfuzz/
 export TARGET=$LIBFUZZ/analysis/openssl/ 
 
-# ./fetch.sh
+./fetch.sh
 
 WORK="$TARGET/work"
-# rm -rf "$WORK"
-# mkdir -p "$WORK"
-# mkdir -p "$WORK/lib" "$WORK/include"
+rm -rf "$WORK"
+mkdir -p "$WORK"
+mkdir -p "$WORK/lib" "$WORK/include"
 
 export CC=wllvm
 export CXX=wllvm++
@@ -18,7 +18,7 @@ export LLVM_COMPILER_PATH=$LLVM_DIR/bin
 export LIBFUZZ_LOG_PATH=$WORK/apipass
 CFLAGS="-mllvm -get-api-pass -g -O0"
 
-# mkdir -p "$LIBFUZZ_LOG_PATH"
+mkdir -p "$LIBFUZZ_LOG_PATH"
 
 # build the libpng library
 cd "$TARGET/repo"
@@ -31,11 +31,7 @@ cd "$TARGET/repo"
 # the config script supports env var LDLIBS instead of LIBS
 export LDLIBS="$LIBS"
 
-# ./config --debug -DPEDANTIC \
-#     -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION no-shared no-module \
-#     enable-tls1_3 enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 \
-#     enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers \
-#     $CFLAGS -fno-sanitize=alignment $CONFIGURE_FLAGS --prefix="$WORK"
+./config --debug $CFLAGS -fno-sanitize=alignment $CONFIGURE_FLAGS --prefix="$WORK"
 
 # configure compiles some shits for testing, better remove it
 rm -f $LIBFUZZ_LOG_PATH/apis_clang.json
@@ -47,12 +43,12 @@ touch $LIBFUZZ_LOG_PATH/coerce.log
 
 # CXXFLAGS="-fPIC -DOPENSSL_PIC"
 
-# make -j$(nproc) clean
-# make -j$(nproc) LDCMD="$CXX $CXXFLAGS"
-# make install
+make -j$(nproc) clean
+make -j$(nproc) LDCMD="$CXX $CXXFLAGS"
+make install
 # # make -j$(nproc) 
 
-# extract-bc -b $WORK/lib/libssl.a
+extract-bc -b $WORK/lib/libssl.a
 
 # this extracts the exported functions in a file, to be used later for grammar generations
 $LIBFUZZ/tool/misc/extract_included_functions.py -i "$WORK/include/openssl" \

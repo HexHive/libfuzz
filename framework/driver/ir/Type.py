@@ -1,15 +1,23 @@
+from enum import Enum
+
+class TypeTag(Enum):
+    PRIMITIVE = 1
+    STRUCT = 2
+
 class Type:
     token: str
     size: int
     # attributes!
     is_incomplete: bool
     is_const: bool
+    tag: TypeTag
     
-    def __init__(self, token, size = 0, is_incomplete = False, is_const = False):
-        self.token  = token
-        self.size   = size
-        self.is_incomplete = is_incomplete
-        self.is_const = is_const
+    def __init__(self, token, size = 0, is_incomplete = False, is_const = False, tag = TypeTag.PRIMITIVE):
+        self.token          = token
+        self.size           = size
+        self.is_incomplete  = is_incomplete
+        self.is_const       = is_const
+        self.tag            = tag
 
     def __str__(self):
         return f"{self.__class__.__name__}(name={self.token})"

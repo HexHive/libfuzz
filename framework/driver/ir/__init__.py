@@ -5,6 +5,7 @@ for func in ('debug', 'info', 'warning', 'error', 'critical'):
 
 from .Statement             import Statement
 from .Type                  import Type
+from .Type                  import TypeTag
 from .PointerType           import PointerType
 from .Value                 import Value
 from .Variable              import Variable

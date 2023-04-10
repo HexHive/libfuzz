@@ -57,3 +57,7 @@
 /workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFGetField -v v0 -t stdo -do_indirect_jumps -data_layout data_layout.txt
 
 /workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/openssl/work/lib/libssl.a.bc -function d2i_X509 -v v0 -t stdo -do_indirect_jumps
+
+
+/workspaces/libfuzz/condition_extractor/bin/extractor /workspaces/libfuzz/analysis/openssl/work/lib/libcrypto.a.bc -function d2i_X509 -v v0 -t json -output libcrypto.json -do_indirect_jumps
+
