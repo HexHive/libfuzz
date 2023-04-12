@@ -31,6 +31,22 @@ public class ApiInfo {
         }
     }
 
+    public static Optional<ApiInfo> buildApiInfo(Constructor<?> constructor) {
+        try {
+            ApiInfo info = new ApiInfo();
+            info.functionName = constructor.getName();
+            info.params =
+                    Arrays.stream(constructor.getGenericParameterTypes()).map(Arg::buildArg).collect(ImmutableList.toImmutableList());
+            info.exceptions =
+                    Arrays.stream(constructor.getGenericExceptionTypes()).map(Arg::buildArg).collect(ImmutableList.toImmutableList());
+            info.returnType = Arg.buildArg(constructor.getDeclaringClass());
+            info.modifier = constructor.getModifiers();
+            return Optional.of(info);
+        } catch (UnsupportedOperationException e) {
+            return Optional.empty();
+        }
+    }
+
     public void setDeclaringClazz(Class<?> klazz) {
         declaringClazz = Arg.buildArg(klazz);
     }

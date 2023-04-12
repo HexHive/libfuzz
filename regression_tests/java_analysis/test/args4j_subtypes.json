@@ -1,0 +1,74 @@
+{"name":{"rawType":"org.kohsuke.args4j.spi.MultiFileOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.OptionHandlerFilter$2","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.UuidOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.ArgumentImpl","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.ShortOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.URLOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.OptionHandlerRegistry","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.SubCommandHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.InetAddressOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.IntOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.StopOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.BooleanOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.Parameters","argTypes":[]},"subtypes":[{"rawType":"org.kohsuke.args4j.CmdLineParser$CmdLineImpl","argTypes":[]}]}
+{"name":{"rawType":"org.kohsuke.args4j.Argument","argTypes":[]},"subtypes":[{"rawType":"org.kohsuke.args4j.spi.ArgumentImpl","argTypes":[]}]}
+{"name":{"rawType":"org.kohsuke.args4j.OptionHandlerRegistry$OptionHandlerFactory","argTypes":[]},"subtypes":[{"rawType":"org.kohsuke.args4j.OptionHandlerRegistry$DefaultConstructorHandlerFactory","argTypes":[]}]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.DoubleOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.MapOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.OptionHandler","argTypes":[]},"subtypes":[{"rawType":"org.kohsuke.args4j.spi.URIOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.EnumOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.MacAddressOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.StopOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.MultiPathOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.LongOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.StringOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.ByteOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.DoubleOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.BooleanOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.RestOfArgumentsHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.InetAddressOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.UuidOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.StringArrayOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.CharOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.FloatOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.ShortOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.FileOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.MultiFileOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.MapOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.ExplicitBooleanOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.PatternOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.URLOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.SubCommandHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.IntOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.PathOptionHandler","argTypes":[]}]}
+{"name":{"rawType":"org.kohsuke.args4j.Config$ConfigHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.OptionHandlerFilter$3","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.RestOfArgumentsHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.CmdLineParser$CmdLineImpl","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.ParserProperties$1","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.NamedOptionDef","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.ConfigElement","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.Option","argTypes":[]},"subtypes":[{"rawType":"org.kohsuke.args4j.spi.OptionImpl","argTypes":[]}]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.FieldSetter","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.CmdLineParser","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.CmdLineException","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.OptionImpl","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.AnnotationImpl","argTypes":[]},"subtypes":[{"rawType":"org.kohsuke.args4j.spi.OptionImpl","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.ArgumentImpl","argTypes":[]}]}
+{"name":{"rawType":"org.kohsuke.args4j.Messages","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.FieldParser","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.OptionHandlerFilter$1","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.OptionHandlerRegistry$DefaultConstructorHandlerFactory","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.Localizable","argTypes":[]},"subtypes":[{"rawType":"org.kohsuke.args4j.spi.Messages","argTypes":[]}, {"rawType":"org.kohsuke.args4j.Messages","argTypes":[]}]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.LongOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.Setters","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.ExplicitBooleanOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.EnumOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.XmlParser","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.OptionDef","argTypes":[]},"subtypes":[{"rawType":"org.kohsuke.args4j.NamedOptionDef","argTypes":[]}]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.OneArgumentOptionHandler","argTypes":[]},"subtypes":[{"rawType":"org.kohsuke.args4j.spi.ByteOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.DoubleOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.LongOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.FloatOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.UuidOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.PathOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.ShortOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.InetAddressOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.FileOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.CharOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.IntOptionHandler","argTypes":[]}]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.Getter","argTypes":[]},"subtypes":[{"rawType":"org.kohsuke.args4j.spi.ArrayFieldSetter","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.FieldSetter","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.MultiValueFieldSetter","argTypes":[]}]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.PathOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.StringArrayOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.StringOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.SubCommands","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.MultiValueFieldSetter","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.ByteOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.ClassParser","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.FileOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.SubCommandHandler$1","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.Config","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.ExampleMode$2","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.ParserProperties","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.MacAddressOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.Utilities","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.OptionHandlerFilter","argTypes":[]},"subtypes":[{"rawType":"org.kohsuke.args4j.OptionHandlerFilter$2","argTypes":[]}, {"rawType":"org.kohsuke.args4j.ExampleMode$2","argTypes":[]}, {"rawType":"org.kohsuke.args4j.OptionHandlerFilter$3","argTypes":[]}, {"rawType":"org.kohsuke.args4j.OptionHandlerFilter$1","argTypes":[]}, {"rawType":"org.kohsuke.args4j.ExampleMode$1","argTypes":[]}]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.Messages","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.DelimitedOptionHandler","argTypes":[]},"subtypes":[{"rawType":"org.kohsuke.args4j.spi.MultiFileOptionHandler","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.MultiPathOptionHandler","argTypes":[]}]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.MethodSetter","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.ExampleMode$1","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.ArrayFieldSetter","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.Starter","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.ExampleMode","argTypes":[]},"subtypes":[{"rawType":"org.kohsuke.args4j.ExampleMode$1","argTypes":[]}, {"rawType":"org.kohsuke.args4j.ExampleMode$2","argTypes":[]}]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.Setter","argTypes":[]},"subtypes":[{"rawType":"org.kohsuke.args4j.spi.MultiValueFieldSetter","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.ArrayFieldSetter","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.MethodSetter","argTypes":[]}, {"rawType":"org.kohsuke.args4j.spi.FieldSetter","argTypes":[]}]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.URIOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.MultiPathOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.PatternOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.IllegalAnnotationError","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.CharOptionHandler","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.SubCommand","argTypes":[]},"subtypes":[]}
+{"name":{"rawType":"org.kohsuke.args4j.spi.FloatOptionHandler","argTypes":[]},"subtypes":[]}

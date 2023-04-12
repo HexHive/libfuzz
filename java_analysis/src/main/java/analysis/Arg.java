@@ -1,6 +1,7 @@
 package analysis;
 
 import com.google.common.collect.ImmutableList;
+import sootup.core.types.ClassType;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -35,6 +36,14 @@ public class Arg {
             return arg;
         }
         throw new UnsupportedOperationException("Unsupported type");
+    }
+
+    public static Arg buildArg(ClassType type) {
+        Arg arg = new Arg();
+        arg.rawType = String.format("%s.%s", type.getPackageName(), type.getClassName());
+        arg.argType = ImmutableList.of();
+//        System.out.println(arg.rawType);
+        return arg;
     }
 
     @Override

@@ -2,11 +2,14 @@ package analysis;
 
 import com.google.common.collect.ImmutableList;
 import sootup.core.model.SourceType;
+import sootup.core.typehierarchy.ViewTypeHierarchy;
 import sootup.java.bytecode.inputlocation.PathBasedAnalysisInputLocation;
 import sootup.java.core.JavaProject;
 import sootup.java.core.JavaSootClass;
 import sootup.java.core.language.JavaLanguage;
+import sootup.java.core.views.JavaView;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -14,6 +17,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class LibAnalyzer {
     private static final JavaLanguage language = new JavaLanguage(8);
@@ -44,6 +48,10 @@ public class LibAnalyzer {
     }
 
     private ImmutableList<ApiInfo> extractApiFromClazz(JavaSootClass clazz, ClassLoader loader) throws ClassNotFoundException {
+        if (!clazz.isPublic()) {
+            return ImmutableList.of();
+        }
+
         ImmutableList.Builder<ApiInfo> builder = ImmutableList.builder();
         Class<?> klazz = Class.forName(clazz.getName(), false, loader);
 
@@ -77,6 +85,30 @@ public class LibAnalyzer {
                 builder.add(info);
             }
         }
+
+        for (Constructor<?> constructor: klazz.getDeclaredConstructors()) {
+            Optional<ApiInfo> result = ApiInfo.buildApiInfo(constructor);
+            if (result.isPresent()) {
+                ApiInfo info = result.get();
+                info.setDeclaringClazz(klazz);
+                builder.add(info);
+            }
+        }
+
         return builder.build();
+    }
+
+    // The main point is to retrieve all subtype of a class and all implementer of a interface
+    public Map<Arg, Set<Arg>> retrieveSubTypes() {
+        JavaView view = project.createFullView();
+        ViewTypeHierarchy hierarchy = new ViewTypeHierarchy(view);
+
+        Map<Arg, Set<Arg>> subTypes = new HashMap<>();
+        for (JavaSootClass sootClass: view.getClasses()) {
+            // We don't care interface or abstract class since we cannot implement them
+            subTypes.put(Arg.buildArg(sootClass.getType()),
+                        hierarchy.subtypesOf(sootClass.getType()).stream().filter(classType -> view.getClass(classType).get().isConcrete()).map(Arg::buildArg).collect(Collectors.toSet()));
+        }
+        return subTypes;
     }
 }
