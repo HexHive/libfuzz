@@ -31,7 +31,7 @@ TODO
 
 ## How to run the static analyzer
 
-TODO
+[Here](./docs/Analysis.md)
 
 ## Tests
 
