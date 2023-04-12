@@ -103,9 +103,7 @@ class Configuration:
         os.makedirs(d, exist_ok=True)
         return d
 
-    @cached_property
-    def api_list(self):
-
+    def api_list_for_c(self):
         if not "analysis" in self._config:
             raise Exception("'analysis' not defined")
 
@@ -135,8 +133,46 @@ class Configuration:
 
         # t = Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types)
         # from IPython import embed; embed(); exit()
-        return Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types, minimum_apis)
+        return Utils.get_api_list_for_c(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types, minimum_apis)
 
+    def api_list_for_java(self):
+        if not "analysis" in self._config:
+            raise Exception("'analysis' not defined")
+
+        analysis = self._config["analysis"]
+
+        if not "apis" in analysis:
+            raise Exception("'apis' not defined")
+
+        # if not "coercemap" in analysis:
+        #     raise Exception("'coercemap' not defined")
+
+        if not "minimum_apis" in analysis:
+            raise Exception("'minimum_apis' not defined")
+
+        apis = analysis["apis"]
+        # coerce_map = analysis["coercemap"]
+        # incomplete_types = analysis["incomplete_types"]
+        minimum_apis = analysis["minimum_apis"]
+
+        # t = Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types)
+        # from IPython import embed; embed(); exit()
+        return Utils.get_api_list_for_java(apis, minimum_apis)
+
+    @cached_property
+    def api_list(self):
+        if not "language" in self._config:
+            language = "c"
+        else:
+            language = self._config["language"]
+        
+        if language == "c":
+            return self.api_list_for_c()
+        elif language == "java":
+            return self.api_list_for_java()
+        else:
+            raise Exception(f"Unsupported language: {language}")
+        
     @cached_property
     def dependency_graph(self):
 
@@ -165,6 +201,11 @@ class Configuration:
 
         if not "generator" in self._config:
             raise Exception("'generator' not defined")
+
+        if not "language" in self._config:
+            language = "c"
+        else:
+            language = self._config["language"]
 
         generator = self._config["generator"]
 

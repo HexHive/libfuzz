@@ -2,7 +2,7 @@
 import json, collections, copy, os
 from typing import List, Set #, Dict, Tuple, Optional
 
-from .api import Api, Arg
+from .api import *
 from .conditions import *
 
 class CoerceArgument:
@@ -127,7 +127,7 @@ class Utils:
         return apis_clang_list
 
     @staticmethod
-    def get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types, minimum_apis) -> Set[Api]:
+    def get_api_list_for_c(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types, minimum_apis) -> Set[Api]:
 
         coerce_info = Utils.read_coerce_log(coerce_map)
         included_functions = Utils.get_include_functions(hedader_folder)
@@ -173,6 +173,90 @@ class Utils:
                 # exit()
 
         return apis_list
+
+    @staticmethod
+    def get_api_list_for_java(apis, minimum_apis) -> Set[Api]:
+        included_functions = None
+
+        minimum_apis_list = []
+        if os.path.isfile(minimum_apis):
+            with open(minimum_apis) as f:
+                for l in f:
+                    l = l.strip()
+                    if l:
+                        minimum_apis_list += [l]
+        else:
+            print("WARNING, minimum_apis not found, considering all APIs")
+
+        if len(minimum_apis_list) != 0:
+            included_functions = minimum_apis_list
+
+        # TODO: make a white list form the original header
+        # blacklist = ["__cxx_global_var_init", "_GLOBAL__sub_I_network_lib.cpp"]
+
+        apis_list = set()
+        with open(apis) as  f:
+            for l in f:
+                if not l.strip():
+                    continue
+                if l.startswith("#"):
+                    continue
+                try:
+                    api = json.loads(l)
+                except Exception as e: 
+                    from IPython import embed; embed(); exit()
+                function_name = api["functionName"]
+                # if function_name in blacklist:
+                #     continue
+                if included_functions and not function_name in included_functions:
+                    continue
+                apis_list.add(Utils.create_java_api(api))
+                # print(apis_list)
+                # exit()
+
+        return apis_list
+
+    @staticmethod
+    def build_java_arg(info, arg_name: str) -> Java_Arg:
+        def name_for_class_and_primitive(item):
+            if "name" in item:
+                return item["name"], ""
+            if "className" in item:
+                return item["className"], item["packageName"]["packageName"]
+            raise Exception("this method only support class and primitive")
+
+        if info:
+            if "name" in info or "className" in info:
+                # primitive type in java
+                type_name, package_name = name_for_class_and_primitive(info)
+                return Java_Arg(arg_name, type_name, package_name)
+            elif "baseType" in info:
+                # Array in java
+                type_name, package_name = name_for_class_and_primitive(info["baseType"])
+                return Java_Arg(arg_name, type_name, package_name, info["dimension"])
+            else:
+                raise Exception(f"Unsupported for {info}")
+        else:
+            # For return type and argument type, annotation type and null type should not exists, so we only need to consider void type
+            return Java_Arg(arg_name, "void", "")
+
+    @staticmethod
+    def create_java_api(api) -> Api:
+        return_info = Utils.build_java_arg(api["returnType"], "return")
+
+        declaring_clazz = Utils.build_java_arg(api["declaringClazz"], "declaring_clazz")
+
+        arguments_info = []
+        for pos, item in enumerate(api["params"]):
+            a = Utils.build_java_arg(item, f"param{pos}")
+            arguments_info.append(a)
+
+        exceptions_info = []
+        for i, item in enumerate(api["exceptions"]):
+            a = Utils.build_java_arg(item, f"exception{i}")
+            exceptions_info.append(a)
+
+        return Java_Api(api["functionName"], declaring_clazz, return_info, arguments_info, exceptions_info, api["isStatic"], api["isFinal"], api["isAbstract"], api["accessModifier"])
 
     @staticmethod
     def normalize_coerce_args(api, apis_clang_list, coerce_info, incomplete_types_list) -> Api:
@@ -222,7 +306,7 @@ class Utils:
             for i, a_json in enumerate(arguments_info_json):
                 is_incomplete = Utils.is_incomplete(a_json["type"], incomplete_types_list)
                 is_const = apis_clang_list[function_name]["arguments_info"][i]["const"]
-                a = Arg(a_json["name"], a_json["flag"], 
+                a = C_Arg(a_json["name"], a_json["flag"], 
                         a_json["size"], a_json["type"], is_incomplete, is_const)
 
                 arguments_info.append(a)
@@ -233,14 +317,14 @@ class Utils:
             for i, a_json in enumerate(arguments_info_json):
                 is_incomplete = Utils.is_incomplete(a_json["type"], incomplete_types_list)
                 is_const = apis_clang_list[function_name]["arguments_info"][i]["const"]
-                a = Arg(a_json["name"], a_json["flag"], 
+                a = C_Arg(a_json["name"], a_json["flag"], 
                         a_json["size"], a_json["type"], is_incomplete, is_const)
 
                 arguments_info.append(a)
 
         is_const = apis_clang_list[function_name]["return_info"]["const"]
         is_incomplete = Utils.is_incomplete(return_info["type"], incomplete_types_list)
-        return_info = Arg(return_info["name"], return_info["flag"],
+        return_info = C_Arg(return_info["name"], return_info["flag"],
                             return_info["size"], return_info["type"], is_incomplete, is_const)
 
         # normalize arguments_info and return_info
@@ -255,7 +339,7 @@ class Utils:
         #     print("VOID*?")
         #     from IPython import embed; embed(); exit(1)
 
-        return Api(function_name, is_vararg, return_info, arguments_info)
+        return C_Api(function_name, is_vararg, return_info, arguments_info)
 
     @staticmethod
     def is_incomplete(a_type, incomplete_types_list):

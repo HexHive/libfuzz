@@ -1,54 +1,54 @@
 package analysis;
 
 import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
-import sootup.core.model.SootMethod;
-import sootup.core.types.ClassType;
-import sootup.core.types.Type;
 
-import java.io.FileWriter;
-import java.io.IOException;
+import java.lang.reflect.*;
+import java.util.Arrays;
+import java.util.Optional;
 
 public class ApiInfo {
-    public enum Acess {
-        PUBLIC,
-        PRIVATE,
-        PROTECTED
-    }
-
     private String functionName;
-    private Type returnType;
-    private ImmutableList<Type> params;
-    private ImmutableList<Type> exceptions;
-    private ClassType declaringClazz;
-    private boolean isStatic;
-    private boolean isFinal;
-    private boolean isAbstract;
-    private Acess accessModifier;
+    private Arg returnType;
+    private ImmutableList<Arg> params;
+    private ImmutableList<Arg> exceptions;
+    private Arg declaringClazz;
+    private int modifier;
 
     private ApiInfo() {}
 
-    public static ApiInfo buildApiInfo(SootMethod method) {
-        ApiInfo info = new ApiInfo();
-        info.isStatic = method.isStatic();
-        info.functionName = method.getName();
-        info.returnType = method.getReturnType();
-        info.params = ImmutableList.copyOf(method.getParameterTypes());
-        info.exceptions = ImmutableList.copyOf(method.getExceptionSignatures());
-        info.declaringClazz = method.getDeclaringClassType();
-        info.isFinal = method.isFinal();
-        info.isAbstract = method.isAbstract();
-
-        if (method.isPrivate()) {
-            info.accessModifier = Acess.PRIVATE;
-        } else if (method.isProtected()) {
-            info.accessModifier = Acess.PROTECTED;
-        } else if (method.isPublic()) {
-            info.accessModifier = Acess.PUBLIC;
-        } else {
-            // Why this will happen?
+    public static Optional<ApiInfo> buildApiInfo(Method method) {
+        try {
+            ApiInfo info = new ApiInfo();
+            info.functionName = method.getName();
+            info.params =
+                    Arrays.stream(method.getGenericParameterTypes()).map(Arg::buildArg).collect(ImmutableList.toImmutableList());
+            info.exceptions = Arrays.stream(method.getGenericExceptionTypes()).map(Arg::buildArg).collect(ImmutableList.toImmutableList());
+            info.returnType = Arg.buildArg(method.getGenericReturnType());
+            info.modifier = method.getModifiers();
+            return Optional.of(info);
+        } catch (UnsupportedOperationException e) {
+            return Optional.empty();
         }
+    }
 
-        return info;
+    public void setDeclaringClazz(Class<?> klazz) {
+        declaringClazz = Arg.buildArg(klazz);
+    }
+
+    @Override
+    public String toString() {
+        String result = "{";
+
+        result += String.format("\"functionName\":\"%s\",", functionName);
+        result += String.format("\"returnType\":%s,", returnType);
+
+        result += String.format("\"params\":%s,", params.toString());
+
+        result += String.format("\"exceptions\":%s,", exceptions.toString());
+
+        result += String.format("\"declaringClazz\":%s,", declaringClazz);
+        result += String.format("\"modifier\":%d", modifier);
+
+        return result + "}";
     }
 }
