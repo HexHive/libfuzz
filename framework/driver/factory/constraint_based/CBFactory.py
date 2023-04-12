@@ -183,8 +183,9 @@ class CBFactory(Factory):
             call_begin, begin_condition, rng_ctx)
 
         if len(unsat_var_1) > 0:
-            print("[ERROR] Cannot instantiate the first function :(")
+            print("[ERROR] Cannot instantiate the first function [first] :(")
             print(unsat_var_1)
+            from IPython import embed; embed(); exit(1)
             exit(1)
 
         print(f"[INFO] starting with {call_begin.function_name}")
@@ -240,8 +241,9 @@ class CBFactory(Factory):
                 rng_ctx_1, unsat_var_1 = self.try_to_instantiate_api_call(call_begin, begin_condition, rng_ctx_1)
 
                 if len(unsat_var_1) > 0:
-                    print("[ERROR] Cannot instantiate the first function :(")
+                    print("[ERROR] Cannot instantiate the first function [second] :(")
                     print(unsat_var_1)
+                    from IPython import embed; embed(); exit(1)
                     exit(1)
 
                 drv += [(call_begin, rng_ctx_1)]

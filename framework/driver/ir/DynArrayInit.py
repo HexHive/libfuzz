@@ -3,9 +3,11 @@ from typing import List, Set, Dict, Tuple, Optional
 
 from . import Statement, Type, Variable, Buffer
 
-class  DynArrayInit(Statement):
+class DynArrayInit(Statement):
     buffer:     Buffer
     len_var:    Variable
+
+    size_types = ["size_t", "int", "uint32_t", "uint64_t"]
 
     def __init__(self, buffer, len_var):
         super().__init__()
@@ -16,8 +18,7 @@ class  DynArrayInit(Statement):
         # if buff_type.get_token() != "char*":
         #     raise Exception(f" DynArrayInit expects \"char*\" as buffer, \"{type}\" given instead")
 
-        if (len_type.get_token() != "size_t" and
-            len_type.get_token() != "int"):
+        if len_type.get_token() not in DynArrayInit.size_types:
             raise Exception(f" DynArrayInit expects \"size_t\" or \"int\" as len_Var, \"{len_type}\" given instead")
 
         self.buffer = buffer
