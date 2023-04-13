@@ -384,26 +384,6 @@ class RunningContext(Context):
 
     def get_random_buffer(self, type: Type, cond: ValueMetadata) -> Buffer:
         return self.get_random_var(type, cond).buffer
-        # tt = None
-        # if isinstance(type, PointerType):
-        #     if type.get_pointee_type().is_incomplete:
-        #         tt = type
-        #     else:
-        #         tt = type.get_pointee_type()
-        # else:
-        #     tt = type
-
-        # suitable_buff = []
-
-        # for b in self.buffs_alive:
-        #     var_b = b[0]
-        #     if var_b not in self.var_to_cond:
-        #         continue
-        #     if (b.get_type() == tt and
-        #         self.var_to_cond[var_b].is_compatible_with(cond)):
-        #         suitable_buff += [b]
-
-        # return random.choice(suitable_buff)
     
     def get_random_var(self, type: Type, cond: ValueMetadata) -> Variable:
 
@@ -554,11 +534,18 @@ class RunningContext(Context):
             # from IPython import embed; embed(); exit(1);
             # import pdb; pdb.set_trace(); exit(1);
 
-    def generate_buffer_init(self) -> List[Statement]:
-        buff_init = []
+    # the return structure (buff_var, dynamic_buff, fix_buff)
+    # var_buff - list of var_buff for controlling var_len
+    # dynamic_buff - list of dynamic allocated buffer
+    # fix_buff - list of fixed size buffers
+    # len(var_buff) == len(dynamic_buff)
+    def get_fixed_and_dynamic_buffers(self) -> Tuple[List[Buffer],List[Buffer],List[Buffer]]:
 
-        # I have to handle dynamic arrays separately
-        dynamic_buff = set()
+        dyn_buff = set()
+        var_buff = set()
+        fix_buff = set()
+        
+        # dynamic arrays and respective var_len variables
         for var, cond in self.var_to_cond.items():
             if cond.len_depends_on is not None:
                 var_len = cond.len_depends_on
@@ -571,9 +558,13 @@ class RunningContext(Context):
                     else:
                         raise Exception(f"{x} did not expected here!")
 
-                    dynamic_buff.add(buff)
+                    if x == var:
+                        dyn_buff.add(buff)
+                    if x == var_len:
+                        var_buff.add(buff)
+                        
 
-        # first init static buffers
+        # fixed size arrays
         for x in self.buffs_alive:
             t = x.get_type()
 
@@ -590,29 +581,32 @@ class RunningContext(Context):
             if t == self.stub_void:
                 continue
 
-            if x in dynamic_buff:
+            if x in dyn_buff.union(var_buff):
                 continue
 
             if t.is_const:
                 continue
 
+            fix_buff.add(x)
+
+        return var_buff, dyn_buff, fix_buff
+
+
+    def generate_buffer_init(self) -> List[Statement]:
+        buff_init = []
+
+        var_buff, dyn_byff, fix_buff = self.get_fixed_and_dynamic_buffers()
+
+        for x in fix_buff:
+            t = x.get_type()
             buff_init += [BuffInit(x)]
 
             if t.get_token() in ["char*", "unsigned char*"]:
                 buff_init += [SetStringNull(x)]
 
-        for var, cond in self.var_to_cond.items():
-            len_var = cond.len_depends_on
-            if len_var is None:
-                continue
-            
-            buff = None
-            if isinstance(var, Address):
-                buff = var.get_variable().get_buffer()
-            elif isinstance(var, Variable):
-                buff = var.get_buffer()
-            else:
-                raise Exception(f"{var} did not expected here (final)!")
+        for buff, buff_len in zip(dyn_byff, var_buff):
+
+            len_var = buff_len[0]
 
             if buff in self.file_path_buffers:
                 buff_init += [FileInit(buff, len_var)]
@@ -640,73 +634,19 @@ class RunningContext(Context):
 
     def get_allocated_size(self):
 
-        # I have to handle dynamic arrays separately
-        dynamic_buff = set()
-        for var, cond in self.var_to_cond.items():
-            if cond.len_depends_on is not None:
-                var_len = cond.len_depends_on
-                for x in [var, var_len]:
-                    buff = None
-                    if isinstance(x, Address):
-                        buff = x.get_variable().get_buffer()
-                    elif isinstance(x, Variable):
-                        buff = x.get_buffer()
-                    else:
-                        raise Exception(f"{x} did not expected here!")
+        _, _, fix_buff = self.get_fixed_and_dynamic_buffers()
 
-                    dynamic_buff.add(buff)
-
-        fixed_buffs = set()
-
-        # first init static buffers
-        for x in self.buffs_alive:
-            t = x.get_type()
-
-            if isinstance(t, PointerType) and t.get_base_type().is_incomplete:
-                continue
-
-            if t.is_incomplete:
-                continue
-            
-            if t == self.stub_void:
-                continue
-
-            if x in dynamic_buff:
-                continue
-
-            if t.is_const:
-                continue
-
-            fixed_buffs.add(x)
-        
-        # for b in fixed_buffs:
-        #     print(b.get_token(), b.get_allocated_size())
-
-        tot = sum([ b.get_allocated_size() for b in fixed_buffs ])
-        # print(f"tot: {tot}")
-
-        # from IPython import embed; embed(); exit(1)
+        tot = sum([ b.get_allocated_size() for b in fix_buff ])
 
         return tot
 
     def get_counter_size(self):
         counter_size = []
 
-        # I have to handle dynamic arrays separately
-        dynamic_buff = set()
-        for var, cond in self.var_to_cond.items():
-            if cond.len_depends_on is not None:
-                var_len = cond.len_depends_on
+        var_buff, _, _ = self.get_fixed_and_dynamic_buffers()
 
-                buff = None
-                if isinstance(var_len, Address):
-                    buff = var_len.get_variable().get_buffer()
-                elif isinstance(var_len, Variable):
-                    buff = var_len.get_buffer()
-                else:
-                    raise Exception(f"{x} did not expected here!")
-
-                counter_size += [buff.get_allocated_size()/8]
+        for buff in var_buff:
+            counter_size += [buff.get_allocated_size()/8]
 
         return counter_size
 
@@ -717,9 +657,6 @@ class RunningContext(Context):
             if (b.get_alloctype() == AllocType.HEAP and 
                 not b.get_type().is_const):
                 clean_up += [CleanBuffer(b)]
-        # for v in self.variables_alive:
-            # if v.get_buffer().get_alloctype() == AllocType.HEAP:
-            #     clean_up += [CleanBuffer(v.get_buffer())]
 
         return clean_up
 
