@@ -58,7 +58,7 @@ extract-bc -b $WORK/lib/libtiff.a
 
 The exported functions are extracted by analyzing only the header files through:
 ```bash
-tool/misc/extract_included_functions.py
+./tool/misc/extract_included_functions.py
 ```
 Options:
 - `-h` -- show the help prompt

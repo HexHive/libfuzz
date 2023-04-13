@@ -25,18 +25,13 @@ https://code.visualstudio.com/docs/remote/containers#_sharing-git-credentials-wi
 
 TODO
 
-## How to run regression tests
 
-TODO
+## Specific Gudies
 
-## How to run the static analyzer
+Ad-hoc guides for specific components of the project
 
-[Here](./docs/Analysis.md)
-
-## Tests
-
-We include a set of tests for validating the correctness of every component.
-
-### How to analyzer a target
-
-TODO
+- [Library Analysis](./docs/Analysis.md)
+- [Driver Generation](./docs/DriverGeneration.md)
+- Fuzzing (TODO)
+- Triage (TODO)
+- Statistics (TODO)
