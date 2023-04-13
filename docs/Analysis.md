@@ -99,9 +99,9 @@ Output:
 Options:
 - \<arg1\> -- a `.bc` file containing LLVM bit code
 - `-h` -- show the help prompt
-- `-interafce <flie path>` -- APIs plus arguments info extracted from `./extract_included_functions.py` (i.e., `apis_clang.json`)
+- `-interafce <flie path>` -- analyze all the APIs extracted from `./extract_included_functions.py` (e.g., `-interafce apis_clang.json`)
 - `-function <string>` -- limit the analysis on a single function indicated as string (e.g., `-function TIFFCheckpointDirectory`)
-- `-output <file path>` -- JSON containing the fields constraints (e.g., `-output condition.json`)
+- `-output <file path>` -- output file containing the field's constraints (e.g., `-output condition.json`)
 - `-v [v0|v1|v2|v3]` -- verbosisty:
     - `v0` - No verbose (smallest `-output` file)
     - `v1` - Report ICFG nodes
@@ -112,8 +112,8 @@ Options:
     - `txt` - Text file in `-output`
     - `json` - Json file in `-output`, this is the expected format for the driver generator
     - `stdo` - Into stdout, `-output` ingored
-- `-do_indirect_jumps` -- consider indirect jumps in the analysis (otherwhise stop)
-- `-minimize_api <file path>` - extract minimal set of APIs to test (e.g., `-minimize_api ./apis_minimized.txt`)
+- `-do_indirect_jumps` -- consider indirect jumps in the analysis. Stop the exploration at the indirect jumps if omitted.
+- `-minimize_api <file path>` - extract minimal set of APIs to test (e.g., `-minimize_api apis_minimized.txt`)
 - `-data_layout <file path>` - dump daya layout information (e.g., `-data_layout data_layout.txt`)
 
 Options for Dominator, very experimental, don't use in production:
