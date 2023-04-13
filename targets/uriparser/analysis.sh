@@ -55,10 +55,9 @@ extract-bc -b $WORK/lib/libtiff.a
 
 # this extracts the exported functions in a file, to be used later for grammar generations
 $LIBFUZZ/tool/misc/extract_included_functions.py -i "$WORK/include" \
-    -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
-    -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
-    -a "$LIBFUZZ_LOG_PATH/apis_clang.json" \
-    -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
+                                                 -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
+                                                 -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
+                                                 -a "$LIBFUZZ_LOG_PATH/apis_clang.json"
 
 # TODO: this should get the list of apis, not a single functions
 # $LIBFUZZ/condition_extractor/bin/extractor $WORK/lib/libtiff.a.bc -function TIFFClientOpen -output $LIBFUZZ_LOG_PATH/conditions.json -v v1 -t json

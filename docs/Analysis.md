@@ -103,16 +103,18 @@ Options:
 - `-function <string>` -- limit the analysis on a single function indicated as string (e.g., `-function TIFFCheckpointDirectory`)
 - `-output <file path>` -- JSON containing the fields constraints (e.g., `-output condition.json`)
 - `-v [v0|v1|v2|v3]` -- verbosisty:
-    - `=v0` - No verbose (smallest `-output` file)
-    - `=v1` - Report ICFG nodes
-    - `=v2` - Report Paths if \<debug_condition\> is met (experimental)
-    - `=v3` - To implement, no effect at the moment
-- `-t` -- output type:
-    - `=txt` - Text file in `-output`
-    - `=json` - Json file in `-output`
-    - `=stdo` - Into stdout, `-output` ingored
+    - `v0` - No verbose (smallest `-output` file)
+    - `v1` - Report ICFG nodes
+    - `v2` - Report Paths if `-debug_condition` is met (experimental)
+    - `v3` - To implement, no effect at the moment
+- `-debug_condition <cond>` - Specific condition to be intercepted, used to print specific debug information (experimental -- very hacky!)
+- `-t [txt|json|stdo]` -- output type:
+    - `txt` - Text file in `-output`
+    - `json` - Json file in `-output`, this is the expected format for the driver generator
+    - `stdo` - Into stdout, `-output` ingored
 - `-do_indirect_jumps` -- consider indirect jumps in the analysis (otherwhise stop)
 - `-minimize_api <file path>` - extract minimal set of APIs to test (e.g., `-minimize_api ./apis_minimized.txt`)
+- `-data_layout <file path>` - dump daya layout information (e.g., `-data_layout data_layout.txt`)
 
 Options for Dominator, very experimental, don't use in production:
 - `-dom` - Use Post/Dominators, very slow, no correctness guaranteed (experimental)
@@ -123,10 +125,11 @@ Options for Dominator, very experimental, don't use in production:
 Example of usage:
 ```bash
 ./bin/extractor $INSTALLATION_DIR/libtiff.a.bc \
-    -interface $LIBRARY_PATH/apis_clang.json \
-    -output $LIBRARY_PATH/conditions.json \
+    -interface "$LIBRARY_PATH/apis_clang.json" \
+    -output "$LIBRARY_PATH/conditions.json" \
     -v v0 -t json -do_indirect_jumps \
-    -minimize_api $LIBRARY_PATH/apis_minimized.txt
+    -minimize_api "$LIBRARY_PATH/apis_minimized.txt" \
+    -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
 ```
 
 ## End-to-End Example
@@ -203,8 +206,9 @@ $LIBFUZZ/tool/misc/extract_included_functions.py \
 # extract fields dependency from the library itself, repeat for each object produced
 $LIBFUZZ/condition_extractor/bin/extractor \
     $WORK/lib/libtiff.a.bc \
-    -interace $LIBRARY_PATH/apis_clang.json \
-    -output $LIBFUZZ_LOG_PATH/conditions.json \
-    -minimize_api $LIBRARY_PATH/apis_minimized.txt \
-    -v v1 -t json -do_indirect_jumps
+    -interace "$LIBRARY_PATH/apis_clang.json" \
+    -output "$LIBFUZZ_LOG_PATH/conditions.json" \
+    -minimize_api "$LIBRARY_PATH/apis_minimized.txt" \
+    -v v0 -t json -do_indirect_jumps \
+    -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
 ```
