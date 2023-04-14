@@ -1,5 +1,5 @@
 
-import json, collections, copy, os
+import json, collections, copy, os, random, string
 from typing import List, Set #, Dict, Tuple, Optional
 
 from .api import Api, Arg
@@ -111,8 +111,12 @@ class Utils:
             for l in f:
                 l = l.strip()
                 if l:
-                    (type, size) = l.split(" ")
-                    data_layout["%" + type] = int(size)
+                    (type, size, hash) = l.split(" ")
+                    if hash == "<random>":
+                        length = 20
+                        letters = string.ascii_lowercase
+                        hash = ''.join(random.choice(letters) for i in range(length))
+                    data_layout["%" + type] = (int(size), hash)
         return data_layout
 
     @staticmethod

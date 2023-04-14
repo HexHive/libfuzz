@@ -8,6 +8,8 @@ set -e
 # - env CC, CXX, FLAGS, LIBS, etc...
 ##
 
+./fetch.sh
+
 # source ${FUZZER}/instrument.sh
 
 export TARGET=/tmp/libtiff

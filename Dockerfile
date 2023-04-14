@@ -58,3 +58,14 @@ RUN mkdir -p ${TARGET}
 
 CMD ${LIBFUZZ}/targets/${TARGET_NAME}/analysis.sh
 
+
+FROM libfuzzpp_dev_image AS libfuzzpp_drivergeneration
+
+ARG target_name=simple_connection
+
+ENV TARGET_NAME ${target_name}
+
+COPY ./framework ${LIBFUZZ}/framework/
+COPY ./tool//main.py ${LIBFUZZ}/tool/main.py
+
+CMD ${LIBFUZZ}/tool/main.py --config ${LIBFUZZ}/targets/${TARGET_NAME}/generator.toml

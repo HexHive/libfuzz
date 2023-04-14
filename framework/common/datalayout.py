@@ -85,7 +85,7 @@ class DataLayout:
                 if type_llvm in DataLayout.incomplete_types:
                     t_size = 0
                 elif type_llvm in DataLayout.data_layout:
-                    t_size = DataLayout.data_layout[type_llvm]
+                    t_size, _ = DataLayout.data_layout[type_llvm]
                     DataLayout.clang_to_llvm_struct[ttype] = type_llvm
 
         return t_size
