@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 FROM ubuntu:20.04 AS libfuzzpp_dev_image
 
 WORKDIR /root
@@ -26,6 +28,7 @@ COPY ./LLVM /root/LLVM
 RUN cd /root/LLVM && ./fetch_repos.sh
 RUN cd /root/LLVM && ./build.sh
 ENV LLVM_DIR /root/llvm-build/
+ENV LIBFUZZ /workspaces/libfuzz
 
 # SVF
 RUN git clone https://github.com/SVF-tools/SVF.git && \
@@ -39,3 +42,19 @@ RUN cd /root/python && python3.9 -m pip install -r requirements.txt
 RUN pip3 install ipython
 
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+FROM libfuzzpp_dev_image AS libfuzzpp_analysis
+
+# simple_connection is a toy example library (not even sure it works)
+ARG target_name=simple_connection
+
+ENV TARGET ${LIBFUZZ}/analysis/${target_name}
+ENV TARGET_NAME ${target_name}
+
+COPY ./condition_extractor ${LIBFUZZ}/condition_extractor/
+COPY ./tool/misc/extract_included_functions.py ${LIBFUZZ}/tool/misc/
+RUN cd ${LIBFUZZ}/condition_extractor && ./bootstrap.sh && make
+RUN mkdir -p ${TARGET}
+
+CMD ${LIBFUZZ}/targets/${TARGET_NAME}/analysis.sh
+

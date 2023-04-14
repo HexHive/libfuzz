@@ -10,12 +10,15 @@ set -e
 
 # source ${FUZZER}/instrument.sh
 
-export TARGET=libtiff
+export TARGET=/tmp/libtiff
 
 if [ ! -d "$TARGET/repo" ]; then
     echo "fetch.sh must be executed first."
     exit 1
 fi
+
+export CC=$LLVM_DIR/bin/clang
+export CXX=$LLVM_DIR/bin/clang++
 
 WORK="$TARGET/work"
 rm -rf "$WORK"
@@ -26,19 +29,12 @@ echo "make 1"
 cd "$TARGET/repo"
 ./autogen.sh
 echo "./configure"
-./configure --disable-shared --prefix="$WORK"
+./configure --disable-shared --prefix="$WORK" \
+                            CXXFLAGS="-fsanitize=fuzzer-no-link -g" \
+                            CFLAGS="-fsanitize=fuzzer-no-link -g"
 echo "make clean"
 make -j$(nproc) clean
 echo "make"
 make -j$(nproc)
 echo "make install"
 make install
-
-# echo "cpy 1"
-# cp "$WORK/bin/tiffcp" "$OUT/"
-
-# echo "cxx 1"
-# $CXX $CXXFLAGS -std=c++11 -I$WORK/include \
-#     contrib/oss-fuzz/tiff_read_rgba_fuzzer.cc -o $OUT/tiff_read_rgba_fuzzer \
-#     $WORK/lib/libtiffxx.a $WORK/lib/libtiff.a -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic \
-#     $LDFLAGS $LIBS

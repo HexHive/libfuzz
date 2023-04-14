@@ -82,13 +82,10 @@ $LIBFUZZ/tool/misc/extract_included_functions.py \
 
 The analyzer is in `./condition_extractor` folder and extract fields constraints plus other rinformation.
 
-Preparation:
+Preparation and compilation:
 ```bash
 cd condition_extractor
 ./bootstrap.sh
-```
-Compile:
-```bash
 make
 ```
 Output:
@@ -125,10 +122,10 @@ Options for Dominator, very experimental, don't use in production:
 Example of usage:
 ```bash
 ./bin/extractor $INSTALLATION_DIR/libtiff.a.bc \
-    -interface "$LIBRARY_PATH/apis_clang.json" \
-    -output "$LIBRARY_PATH/conditions.json" \
+    -interface "$LIBFUZZ_LOG_PATH/apis_clang.json" \
+    -output "$LIBFUZZ_LOG_PATH/conditions.json" \
     -v v0 -t json -do_indirect_jumps \
-    -minimize_api "$LIBRARY_PATH/apis_minimized.txt" \
+    -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
     -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
 ```
 
@@ -206,9 +203,9 @@ $LIBFUZZ/tool/misc/extract_included_functions.py \
 # extract fields dependency from the library itself, repeat for each object produced
 $LIBFUZZ/condition_extractor/bin/extractor \
     $WORK/lib/libtiff.a.bc \
-    -interace "$LIBRARY_PATH/apis_clang.json" \
+    -interface "$LIBFUZZ_LOG_PATH/apis_clang.json" \
     -output "$LIBFUZZ_LOG_PATH/conditions.json" \
-    -minimize_api "$LIBRARY_PATH/apis_minimized.txt" \
+    -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
     -v v0 -t json -do_indirect_jumps \
     -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
 ```

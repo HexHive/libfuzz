@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export LIBFUZZ=/workspaces/libfuzz/
-export TARGET=$LIBFUZZ/analysis/libtiff/ 
+# export LIBFUZZ=/workspaces/libfuzz/
+# export TARGET=$LIBFUZZ/analysis/libtiff/ 
 
 ./fetch.sh
 
@@ -57,8 +57,13 @@ extract-bc -b $WORK/lib/libtiff.a
 $LIBFUZZ/tool/misc/extract_included_functions.py -i "$WORK/include" \
     -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
     -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
-    -a "$LIBFUZZ_LOG_PATH/apis_clang.json" \
-    -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
+    -a "$LIBFUZZ_LOG_PATH/apis_clang.json" 
 
-# TODO: this should get the list of apis, not a single functions
-# $LIBFUZZ/condition_extractor/bin/extractor $WORK/lib/libtiff.a.bc -function TIFFClientOpen -output $LIBFUZZ_LOG_PATH/conditions.json -v v1 -t json
+# extract fields dependency from the library itself, repeat for each object produced
+$LIBFUZZ/condition_extractor/bin/extractor \
+    $WORK/lib/libtiff.a.bc \
+    -interface "$LIBFUZZ_LOG_PATH/apis_clang.json" \
+    -output "$LIBFUZZ_LOG_PATH/conditions.json" \
+    -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
+    -v v0 -t json -do_indirect_jumps \
+    -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
