@@ -32,8 +32,9 @@ cd "$TARGET/repo"
 ./autogen.sh
 echo "./configure"
 ./configure --disable-shared --prefix="$WORK" \
-                            CXXFLAGS="-fsanitize=fuzzer-no-link -g" \
-                            CFLAGS="-fsanitize=fuzzer-no-link -g"
+        CXXFLAGS="-fsanitize=fuzzer-no-link,address -g" \
+        CFLAGS="-fsanitize=fuzzer-no-link,address -g"
+        
 echo "make clean"
 make -j$(nproc) clean
 echo "make"
