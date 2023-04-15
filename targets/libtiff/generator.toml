@@ -12,7 +12,7 @@ data_layout = "/workspaces/libfuzz/analysis/libtiff/work/apipass/data_layout.txt
 
 
 [generator]
-workdir = "/workspaces/libfuzz/workdir/"
+workdir = "/workspaces/libfuzz/workdir/libtiff"
 policy = "constraint_based"
 dep_graph = "type"
 # dep_graph = "undef"

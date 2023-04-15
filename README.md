@@ -32,6 +32,6 @@ Ad-hoc guides for specific components of the project
 
 - [Library Analysis](./docs/Analysis.md)
 - [Driver Generation](./docs/DriverGeneration.md)
-- Fuzzing (TODO)
+- [Fuzzing a Driver](./docs/FuzzingDrivers.md)
 - Triage (TODO)
 - Statistics (TODO)

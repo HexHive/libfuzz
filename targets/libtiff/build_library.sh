@@ -12,7 +12,7 @@ set -e
 
 # source ${FUZZER}/instrument.sh
 
-export TARGET=/tmp/libtiff
+# export TARGET=/tmp/libtiff
 
 if [ ! -d "$TARGET/repo" ]; then
     echo "fetch.sh must be executed first."
@@ -40,3 +40,5 @@ echo "make"
 make -j$(nproc)
 echo "make install"
 make install
+
+echo "[INFO] Library installed in: $WORK"

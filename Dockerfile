@@ -43,6 +43,7 @@ RUN pip3 install ipython
 
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
+# TARGET FOR LIBRARY ANALYSIS
 FROM libfuzzpp_dev_image AS libfuzzpp_analysis
 
 # simple_connection is a toy example library (not even sure it works)
@@ -58,7 +59,7 @@ RUN mkdir -p ${TARGET}
 
 CMD ${LIBFUZZ}/targets/${TARGET_NAME}/analysis.sh
 
-
+# TARGET FOR DRIVER GENERATION
 FROM libfuzzpp_dev_image AS libfuzzpp_drivergeneration
 
 ARG target_name=simple_connection
@@ -66,6 +67,26 @@ ARG target_name=simple_connection
 ENV TARGET_NAME ${target_name}
 
 COPY ./framework ${LIBFUZZ}/framework/
-COPY ./tool//main.py ${LIBFUZZ}/tool/main.py
+COPY ./tool/main.py ${LIBFUZZ}/tool/main.py
 
 CMD ${LIBFUZZ}/tool/main.py --config ${LIBFUZZ}/targets/${TARGET_NAME}/generator.toml
+
+# TARGET FOR FUZZING SESSION
+FROM libfuzzpp_dev_image AS libfuzzpp_fuzzing
+
+ARG target_name=simple_connection
+# ARG timeout=10m
+# ARG driver=*.cc
+
+ENV TARGET_NAME ${target_name}
+ENV TARGET /library
+
+# I want to install the library at building time, so later I only need to build
+# the drivers
+COPY ./targets/${TARGET_NAME} ${LIBFUZZ}/targets/${TARGET_NAME}
+WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
+RUN ./preinstall.sh
+RUN ./build_library.sh
+
+WORKDIR ${LIBFUZZ}
+CMD ${LIBFUZZ}/targets/${TARGET_NAME}/run_driver.sh
