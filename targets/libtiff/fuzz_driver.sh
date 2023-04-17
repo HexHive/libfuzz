@@ -72,5 +72,5 @@ do
     mkdir -p ${CRASHES_DIR}
     timeout $TIMEOUT $d \
         ${LIBFUZZ}/workdir/${TARGET_NAME}/corpus/${DRIVER_NAME%%.*} \
-        -artifact_prefix=${CRASHES_DIR} || echo "Done: $d"
+        -artifact_prefix=${CRASHES_DIR}/ || echo "Done: $d"
 done

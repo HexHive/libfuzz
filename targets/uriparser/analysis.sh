@@ -1,9 +1,15 @@
 #!/bin/bash
 
-export LIBFUZZ=/workspaces/libfuzz/
-export TARGET=$LIBFUZZ/analysis/libtiff/ 
+# export LIBFUZZ=/workspaces/libfuzz/
+# export TARGET=$LIBFUZZ/analysis/uriparser/ 
 
+./preinstall.sh
 ./fetch.sh
+
+# NOTE: if TOOLD_DIR is unset, I assume to find stuffs in LIBFUZZ folder
+if [ -z $TOOLS_DIR ]; then
+    TOOLS_DIR=$LIBFUZZ
+fi
 
 WORK="$TARGET/work"
 rm -rf "$WORK"
@@ -23,16 +29,11 @@ export LIBFUZZ_LOG_PATH=$WORK/apipass
 
 mkdir -p $LIBFUZZ_LOG_PATH
 
-echo "make 1"
 cd "$TARGET/repo"
-./autogen.sh
-echo "./configure"
-# ./configure --disable-shared --prefix="$WORK" \
-#                                 CC=wllvm CXX=wllvm++
-./configure --disable-shared --prefix="$WORK" \
-                                CC=wllvm CXX=wllvm++ \
-                                CXXFLAGS="-mllvm -get-api-pass -g -O0" \
-                                CFLAGS="-mllvm -get-api-pass -g -O0"
+cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
+        -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_C_FLAGS_DEBUG="-g -O0 -mllvm -get-api-pass" \
+        -DCMAKE_CXX_FLAGS_DEBUG="-g -O0 -mllvm -get-api-pass" 
 
 # configure compiles some shits for testing, better remove it
 rm $LIBFUZZ_LOG_PATH/apis.log
@@ -50,14 +51,19 @@ make -j$(nproc)
 echo "make install"
 make install
 
-extract-bc -b $WORK/lib/libtiffxx.a
-extract-bc -b $WORK/lib/libtiff.a
+extract-bc -b $WORK/lib/liburiparser.a
 
 # this extracts the exported functions in a file, to be used later for grammar generations
-$LIBFUZZ/tool/misc/extract_included_functions.py -i "$WORK/include" \
-                                                 -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
-                                                 -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
-                                                 -a "$LIBFUZZ_LOG_PATH/apis_clang.json"
+$TOOLS_DIR/tool/misc/extract_included_functions.py -i "$WORK/include" \
+    -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
+    -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
+    -a "$LIBFUZZ_LOG_PATH/apis_clang.json"
 
-# TODO: this should get the list of apis, not a single functions
-# $LIBFUZZ/condition_extractor/bin/extractor $WORK/lib/libtiff.a.bc -function TIFFClientOpen -output $LIBFUZZ_LOG_PATH/conditions.json -v v1 -t json
+# extract fields dependency from the library itself, repeat for each object produced
+$TOOLS_DIR/condition_extractor/bin/extractor \
+    $WORK/lib/liburiparser.a.bc \
+    -interface "$LIBFUZZ_LOG_PATH/apis_clang.json" \
+    -output "$LIBFUZZ_LOG_PATH/conditions.json" \
+    -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
+    -v v0 -t json -do_indirect_jumps \
+    -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
