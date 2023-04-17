@@ -20,7 +20,7 @@ IMG_NAME="libpp-fuzzing-$TARGET"
 LIBPP=../
 
 set -x
-docker build -t "$IMG_NAME" \
+DOCKER_BUILDKIT=1 docker build -t "$IMG_NAME" \
     --target libfuzzpp_fuzzing \
     --build-arg target_name="$TARGET" \
     -f "$LIBPP/Dockerfile" "$LIBPP"
