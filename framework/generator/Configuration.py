@@ -13,6 +13,7 @@ from common import Utils
 
 from driver.factory.only_type import *
 from driver.factory.constraint_based import *
+from driver.factory.java_analysis import *
 
 from generator import Pool
 
@@ -111,31 +112,32 @@ class Configuration:
 
         analysis = self._config["analysis"]
 
-        if not "apis_llvm" in analysis:
-            raise Exception("'apis_llvm' not defined")
-
-        if not "apis_clang" in analysis:
-            raise Exception("'apis_clang' not defined")
-        
-        if not "headers" in analysis:
-            raise Exception("'headers' not defined")
-
-        if not "coercemap" in analysis:
-            raise Exception("'coercemap' not defined")
+        if not "apis" in analysis:
+            raise Exception("'apis' not defined")
 
         if not "minimum_apis" in analysis:
             raise Exception("'minimum_apis' not defined")
 
-        apis_llvm = analysis["apis_llvm"]
-        apis_clang = analysis["apis_clang"]
-        hedader_folder = analysis["headers"]
-        coerce_map = analysis["coercemap"]
-        incomplete_types = analysis["incomplete_types"]
+        apis = analysis["apis"]
         minimum_apis = analysis["minimum_apis"]
 
         # t = Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types)
         # from IPython import embed; embed(); exit()
-        return Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types, minimum_apis)
+        return Utils.get_api_list(apis, minimum_apis)
+
+    @cached_property
+    def subtypes(self):
+        if not "analysis" in self._config:
+            raise Exception("'analysis' not defined")
+
+        analysis = self._config["analysis"]
+
+        if not "subtypes" in analysis:
+            raise Exception("'subtypes' not defined")
+        
+        subtypes = analysis["subtypes"]
+
+        return Utils.get_subtypes(subtypes)
 
     @cached_property
     def dependency_graph(self):
@@ -185,6 +187,9 @@ class Configuration:
         if policy == "constraint_based":
             dep_graph = self.dependency_graph
             return CBFactory(self.api_list, self.driver_size, dep_graph, self.function_conditions)
+        
+        if policy == "java":
+            return JavaFactory(self.api_list, self.subtypes)
 
         raise NotImplementedError
 

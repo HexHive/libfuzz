@@ -1,7 +1,8 @@
 
 import json, collections, copy, os
-from typing import List, Set #, Dict, Tuple, Optional
+from typing import List, Set, Tuple #, Dict, Tuple, Optional
 
+from .javaapi import JavaApi, JavaArg
 from .api import Api, Arg
 from .conditions import *
 
@@ -127,11 +128,7 @@ class Utils:
         return apis_clang_list
 
     @staticmethod
-    def get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types, minimum_apis) -> Set[Api]:
-
-        coerce_info = Utils.read_coerce_log(coerce_map)
-        included_functions = Utils.get_include_functions(hedader_folder)
-        incomplete_types_list = Utils.get_incomplete_types_list(incomplete_types)
+    def get_api_list(apis, minimum_apis) -> Set[JavaApi]:
 
         minimum_apis_list = []
         if os.path.isfile(minimum_apis):
@@ -145,14 +142,11 @@ class Utils:
 
         if len(minimum_apis_list) != 0:
             included_functions = minimum_apis_list
-
-        # TODO: make a white list form the original header
-        blacklist = ["__cxx_global_var_init", "_GLOBAL__sub_I_network_lib.cpp"]
-
-        apis_clang_list = Utils.get_apis_clang_list(apis_clang)
+        else:
+            included_functions = None
 
         apis_list = set()
-        with open(apis_llvm) as  f:
+        with open(apis) as  f:
             for l in f:
                 if not l.strip():
                     continue
@@ -162,17 +156,54 @@ class Utils:
                     api = json.loads(l)
                 except Exception as e: 
                     from IPython import embed; embed(); exit()
-                function_name = api["function_name"]
-                if function_name in blacklist:
+                function_name = api["functionName"]
+                if included_functions and not function_name in included_functions:
                     continue
-                if not function_name in included_functions:
-                    continue
-                apis_list.add(Utils.normalize_coerce_args(api, apis_clang_list, 
-                                coerce_info, incomplete_types_list))
+                apis_list.add(Utils.normalize_args(api))
                 # print(apis_list)
                 # exit()
 
         return apis_list
+
+    @staticmethod
+    def get_subtypes(subtypes) -> Dict[Tuple[str, str], Set[str]]:
+        subtype_dict = {}
+
+        with open(subtypes) as f:
+            for l in f:
+                if not l.strip():
+                    continue
+                if l.startswith("#"):
+                    continue
+                try:
+                    subtype = json.loads(l)
+                except Exception as e: 
+                    from IPython import embed; embed(); exit()
+                
+                type_name = subtype["name"]
+                subtype_dict[type_name["rawType"], str(type_name["argTypes"])] = set([item["rawType"] for item in subtype["subtypes"]])
+        
+        return subtype_dict
+
+    @staticmethod 
+    def normalize_args(api) -> JavaApi:
+        function_name = api["functionName"]
+
+        returnArg = Utils.__build_Arg(api["returnType"], "return")
+
+        argumentsInfo = api["params"]
+        arguments = [Utils.__build_Arg(argumentsInfo[i], f"param{i}") for i in range(len(argumentsInfo))]
+
+        exceptionInfo = api["exceptions"]
+        exceptions = [Utils.__build_Arg(exceptionInfo[i], f"exception{i}") for i in range(len(exceptionInfo))]
+
+        declaringClass = Utils.__build_Arg(api["declaringClazz"], "declaringClass")
+
+        return JavaApi(function_name, returnArg, arguments, exceptions, declaringClass, api["is_constructor"], api["modifier"])
+
+    @staticmethod
+    def __build_Arg(item, name):
+        return JavaArg(name, item["rawType"], item["argTypes"])
 
     @staticmethod
     def normalize_coerce_args(api, apis_clang_list, coerce_info, incomplete_types_list) -> Api:

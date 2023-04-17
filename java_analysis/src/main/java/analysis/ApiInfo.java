@@ -13,6 +13,7 @@ public class ApiInfo {
     private ImmutableList<Arg> exceptions;
     private Arg declaringClazz;
     private int modifier;
+    private boolean isConstructor;
 
     private ApiInfo() {}
 
@@ -25,6 +26,7 @@ public class ApiInfo {
             info.exceptions = Arrays.stream(method.getGenericExceptionTypes()).map(Arg::buildArg).collect(ImmutableList.toImmutableList());
             info.returnType = Arg.buildArg(method.getGenericReturnType());
             info.modifier = method.getModifiers();
+            info.isConstructor = false;
             return Optional.of(info);
         } catch (UnsupportedOperationException e) {
             return Optional.empty();
@@ -41,6 +43,7 @@ public class ApiInfo {
                     Arrays.stream(constructor.getGenericExceptionTypes()).map(Arg::buildArg).collect(ImmutableList.toImmutableList());
             info.returnType = Arg.buildArg(constructor.getDeclaringClass());
             info.modifier = constructor.getModifiers();
+            info.isConstructor = true;
             return Optional.of(info);
         } catch (UnsupportedOperationException e) {
             return Optional.empty();
@@ -63,7 +66,8 @@ public class ApiInfo {
         result += String.format("\"exceptions\":%s,", exceptions.toString());
 
         result += String.format("\"declaringClazz\":%s,", declaringClazz);
-        result += String.format("\"modifier\":%d", modifier);
+        result += String.format("\"modifier\":%d,", modifier);
+        result += String.format("\"is_constructor\":%s", isConstructor);
 
         return result + "}";
     }

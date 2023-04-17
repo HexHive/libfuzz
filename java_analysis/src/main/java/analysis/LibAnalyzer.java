@@ -9,23 +9,23 @@ import sootup.java.core.JavaSootClass;
 import sootup.java.core.language.JavaLanguage;
 import sootup.java.core.views.JavaView;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class LibAnalyzer {
     private static final JavaLanguage language = new JavaLanguage(8);
     private static final String objectName = "java.lang.Object";
     private final ClassLoader loader;
     private final JavaProject project;
+    private final JavaView view;
+    private final List<Class<?>> clazzes;
 
-    public LibAnalyzer(String libPath) {
+    public LibAnalyzer(String libPath) throws ClassNotFoundException {
         Path path = Paths.get(libPath);
         URL url;
         try {
@@ -37,23 +37,29 @@ public class LibAnalyzer {
         loader = URLClassLoader.newInstance(new URL[] {url}, getClass().getClassLoader());
 
         project = JavaProject.builder(language).addInputLocation(new PathBasedAnalysisInputLocation(path, SourceType.Library)).build();
+
+        view = project.createFullView();
+
+        clazzes = new ArrayList<>();
+        for (JavaSootClass sootClass: view.getClasses()) {
+            clazzes.add(Class.forName(sootClass.getName(), false, loader));
+        }
     }
 
-    public ImmutableList<ApiInfo> extractAPIs() throws ClassNotFoundException {
+    public ImmutableList<ApiInfo> extractAPIs() {
         ImmutableList.Builder<ApiInfo> builder = new ImmutableList.Builder<>();
-        for (JavaSootClass clazz: project.createFullView().getClasses()) {
-            builder.addAll(extractApiFromClazz(clazz, loader));
+        for (Class<?> clazz: clazzes) {
+            builder.addAll(extractApiFromClazz(clazz));
         }
         return builder.build();
     }
 
-    private ImmutableList<ApiInfo> extractApiFromClazz(JavaSootClass clazz, ClassLoader loader) throws ClassNotFoundException {
-        if (!clazz.isPublic()) {
+    private ImmutableList<ApiInfo> extractApiFromClazz(Class<?> klazz) {
+        if (!Modifier.isPublic(klazz.getModifiers())) {
             return ImmutableList.of();
         }
 
         ImmutableList.Builder<ApiInfo> builder = ImmutableList.builder();
-        Class<?> klazz = Class.forName(clazz.getName(), false, loader);
 
         // If a class is a generic class or an interface, we ignore it since we cannot implement it.
         if (klazz.isInterface() || klazz.getTypeParameters().length != 0) {
@@ -98,17 +104,110 @@ public class LibAnalyzer {
         return builder.build();
     }
 
-    // The main point is to retrieve all subtype of a class and all implementer of a interface
-    public Map<Arg, Set<Arg>> retrieveSubTypes() {
-        JavaView view = project.createFullView();
-        ViewTypeHierarchy hierarchy = new ViewTypeHierarchy(view);
+    // The main point is to retrieve all subtype of a class and all implementer of an interface
+    public Map<Arg, Set<Arg>> retrieveSubTypes() throws ClassNotFoundException {
 
-        Map<Arg, Set<Arg>> subTypes = new HashMap<>();
-        for (JavaSootClass sootClass: view.getClasses()) {
-            // We don't care interface or abstract class since we cannot implement them
-            subTypes.put(Arg.buildArg(sootClass.getType()),
-                        hierarchy.subtypesOf(sootClass.getType()).stream().filter(classType -> view.getClass(classType).get().isConcrete()).map(Arg::buildArg).collect(Collectors.toSet()));
+        Map<Class<?>, GenericType> mapping = new HashMap<>();
+        Map<Arg, Set<Arg>> subtypeMap = new HashMap<>();
+
+        for (Class<?> clazz: clazzes) {
+            getGenericType(clazz, mapping);
         }
-        return subTypes;
+
+        for (Class<?> clazz: clazzes) {
+            // We don't want to implement interface or generic class
+            if (!clazz.isInterface() && clazz.getTypeParameters().length == 0) {
+                GenericType type = mapping.get(clazz);
+                for (Arg a: type.aliasToArgs()) {
+                    if (!subtypeMap.containsKey(a)) {
+                        subtypeMap.put(a, new HashSet<>());
+                    }
+                    subtypeMap.get(a).add(new Arg(clazz));
+                }
+            }
+        }
+
+        return subtypeMap;
+    }
+
+    // It looks this function works well on two test libraries, but I'm not sure if it is perfectly correct.
+    private GenericType getGenericType(Class<?> clazz, Map<Class<?>, GenericType> mapping) {
+        if (isBuiltInClass(clazz)) {
+            return null;
+        }
+
+        if (mapping.containsKey(clazz)) {
+            return mapping.get(clazz);
+        }
+
+        GenericType result = new GenericType(clazz.getName());
+
+        Map<String, ImmutableList<String>> aliasMap = new HashMap<>();
+        Map<String, ImmutableList<Integer>> indexMap = new HashMap<>();
+
+        TypeVariable<?>[] typeVariables = clazz.getTypeParameters();
+
+        buildTypeMap(clazz.getGenericSuperclass(), clazz.getSuperclass(), typeVariables, aliasMap, indexMap, mapping);
+
+        Class<?>[] interfaces = clazz.getInterfaces();
+        Type[] genericInterfaces = clazz.getGenericInterfaces();
+        for (int i = 0; i < interfaces.length; i++) {
+            buildTypeMap(genericInterfaces[i], interfaces[i], typeVariables, aliasMap, indexMap, mapping);
+        }
+
+        result.setAlias(aliasMap);
+        result.setTypeIndex(indexMap);
+
+        mapping.put(clazz, result);
+
+        return result;
+    }
+
+    private void buildTypeMap(Type type, Class<?> clazz, TypeVariable<?>[] typeVariables,
+                              Map<String, ImmutableList<String>> aliasMap,
+                              Map<String, ImmutableList<Integer>> indexMap,
+                              Map<Class<?>, GenericType> mapping) {
+        if (clazz == null || clazz.getName().equals("java.lang.Object")) {
+            return;
+        }
+
+        if (type instanceof ParameterizedType paramType) {
+            GenericType genericType = getGenericType(clazz, mapping);
+            Type[] typeArgs = paramType.getActualTypeArguments();
+
+            if (genericType == null) {
+                aliasMap.put(clazz.getName(),
+                        Arrays.stream(typeArgs).map(Type::getTypeName).collect(ImmutableList.toImmutableList()));
+                indexMap.put(clazz.getName(), ImmutableList.copyOf(retrieveIndex(typeVariables, typeArgs)));
+            } else {
+                aliasMap.putAll(genericType.fulfillAlias(typeArgs));
+                indexMap.putAll(genericType.fulfillTypeIndex(retrieveIndex(typeVariables, typeArgs)));
+            }
+        } else {
+            aliasMap.put(clazz.getName(), ImmutableList.of());
+            indexMap.put(clazz.getName(),
+                    Arrays.stream(typeVariables).map(v -> GenericType.nonExistIdx).collect(ImmutableList.toImmutableList()));
+        }
+    }
+
+    private ImmutableList<Integer> retrieveIndex(TypeVariable<?>[] typeParams, Type[] typeArgs) {
+        ArrayList<Integer> result = new ArrayList<>();
+
+        for (TypeVariable<?> v: typeParams) {
+            Integer idx = null;
+            for (int i = 0; i < typeArgs.length; i++) {
+                if (v.equals(typeArgs[i])) {
+                    idx = i;
+                }
+            }
+            result.add(idx);
+        }
+
+        return ImmutableList.copyOf(result);
+    }
+
+    private boolean isBuiltInClass(Class<?> clazz) {
+        String clazzName = clazz.getName();
+        return clazzName.startsWith("java.") || clazzName.startsWith("com.sun.") || clazzName.startsWith("com.oracle.");
     }
 }

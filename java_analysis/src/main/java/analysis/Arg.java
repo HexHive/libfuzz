@@ -5,32 +5,48 @@ import sootup.core.types.ClassType;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Set;
 
 public class Arg {
     // This class now only support normal class and simple generic type (e.g. List<String>)
     // If a type is a normal class, rawType is set to the class name and argType is set to empty
     // If a type is a simple generic type, rawType is set to owner (e.g. List) and argType is set to its arguments (e.g. String)
     // Otherwise an exception is thrown
+    private static final Set<String> primitive = Set.of("void", "byte", "int", "short", "long", "float", "double",
+            "boolean", "char");
     private String rawType;
     private ImmutableList<String> argType;
+
+    public Arg() {}
+
+    public Arg(String rawType, List<String> argTypes) {
+        this.rawType = rawType;
+        this.argType = ImmutableList.copyOf(argTypes);
+    }
+
+    public Arg(Class<?> clazz) {
+        this.rawType = clazz.getName();
+        this.argType = ImmutableList.of();
+    }
+
     public static Arg buildArg(Type type) throws UnsupportedOperationException {
-        if (type instanceof Class) {
-            Arg arg = new Arg();
-            arg.rawType = ((Class<?>) type).getName();
+        Arg arg = new Arg();
+        if (type instanceof Class<?> classType) {
+            arg.rawType = classType.getName();
             arg.argType = ImmutableList.of();
             return arg;
-        } else if (type instanceof ParameterizedType) {
-            Arg arg = new Arg();
+        } else if (type instanceof ParameterizedType parameterizedType) {
             ImmutableList.Builder<String> builder = ImmutableList.builder();
-            for (Type argType: ((ParameterizedType) type).getActualTypeArguments()) {
-                if (argType instanceof Class) {
-                    builder.add("\"" + ((Class<?>) argType).getName() + "\"");
+            for (Type argType: parameterizedType.getActualTypeArguments()) {
+                if (argType instanceof Class<?> classType) {
+                    builder.add(classType.getName());
                 } else {
                     throw new UnsupportedOperationException("");
                 }
             }
             arg.argType = builder.build();
-            Type rawType = ((ParameterizedType) type).getRawType();
+            Type rawType = parameterizedType.getRawType();
             assert rawType instanceof Class;
             arg.rawType = ((Class<?>) rawType).getName();
             return arg;
@@ -38,16 +54,17 @@ public class Arg {
         throw new UnsupportedOperationException("Unsupported type");
     }
 
-    public static Arg buildArg(ClassType type) {
-        Arg arg = new Arg();
-        arg.rawType = String.format("%s.%s", type.getPackageName(), type.getClassName());
-        arg.argType = ImmutableList.of();
-//        System.out.println(arg.rawType);
-        return arg;
-    }
-
     @Override
     public String toString() {
-        return String.format("{\"rawType\":\"%s\",\"argTypes\":%s}", rawType, argType.toString());
+        return String.format("{\"rawType\":\"%s\",\"argTypes\":%s}", formatName(rawType),
+                argType.stream().map(type -> "\"" + formatName(type) + "\"").toList());
+    }
+
+    private static String formatName(String name) {
+        if (!primitive.contains(name) && !name.contains(".")) {
+            // This indicates an empty package Name
+            return "." + name;
+        }
+        return name;
     }
 }
