@@ -3,7 +3,13 @@
 # export LIBFUZZ=/workspaces/libfuzz/
 # export TARGET=$LIBFUZZ/analysis/libtiff/ 
 
+./preinstall.sh
 ./fetch.sh
+
+# NOTE: if TOOLD_DIR is unset, I assume to find stuffs in LIBFUZZ folder
+if [ -z $TOOLS_DIR  ]; then
+    TOOLS_DIR=$LIBFUZZ
+fi
 
 WORK="$TARGET/work"
 rm -rf "$WORK"
@@ -54,13 +60,13 @@ extract-bc -b $WORK/lib/libtiffxx.a
 extract-bc -b $WORK/lib/libtiff.a
 
 # this extracts the exported functions in a file, to be used later for grammar generations
-$LIBFUZZ/tool/misc/extract_included_functions.py -i "$WORK/include" \
+$TOOLS_DIR/tool/misc/extract_included_functions.py -i "$WORK/include" \
     -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
     -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
     -a "$LIBFUZZ_LOG_PATH/apis_clang.json" 
 
 # extract fields dependency from the library itself, repeat for each object produced
-$LIBFUZZ/condition_extractor/bin/extractor \
+$TOOLS_DIR/condition_extractor/bin/extractor \
     $WORK/lib/libtiff.a.bc \
     -interface "$LIBFUZZ_LOG_PATH/apis_clang.json" \
     -output "$LIBFUZZ_LOG_PATH/conditions.json" \

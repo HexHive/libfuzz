@@ -51,11 +51,13 @@ ARG target_name=simple_connection
 
 ENV TARGET ${LIBFUZZ}/analysis/${target_name}
 ENV TARGET_NAME ${target_name}
+ENV TOOLS_DIR = /root/
 
-COPY ./condition_extractor ${LIBFUZZ}/condition_extractor/
-COPY ./tool/misc/extract_included_functions.py ${LIBFUZZ}/tool/misc/
-RUN cd ${LIBFUZZ}/condition_extractor && ./bootstrap.sh && make
-RUN mkdir -p ${TARGET}
+RUN mkdir -p ${TOOLS_DIR}/condition_extractor/
+RUN mkdir -p ${TOOLS_DIR}/tool/misc/
+COPY ./condition_extractor ${TOOLS_DIR}/condition_extractor/
+COPY ./tool/misc/extract_included_functions.py ${TOOLS_DIR}/tool/misc/
+RUN cd ${TOOLS_DIR}/condition_extractor && ./bootstrap.sh && make
 
 CMD ${LIBFUZZ}/targets/${TARGET_NAME}/analysis.sh
 
@@ -85,7 +87,6 @@ ENV TARGET /library
 # the drivers
 COPY ./targets/${TARGET_NAME} ${LIBFUZZ}/targets/${TARGET_NAME}
 WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
-RUN ./preinstall.sh
 RUN ./build_library.sh
 
 WORKDIR ${LIBFUZZ}

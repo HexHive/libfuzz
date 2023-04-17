@@ -8,6 +8,7 @@ set -e
 # - env CC, CXX, FLAGS, LIBS, etc...
 ##
 
+./preinstall.sh
 ./fetch.sh
 
 # source ${FUZZER}/instrument.sh
