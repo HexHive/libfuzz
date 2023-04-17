@@ -81,7 +81,7 @@ ARG target_name=simple_connection
 # ARG driver=*.cc
 
 ENV TARGET_NAME ${target_name}
-ENV TARGET ${LIBFUZZ}/fuzzing/${target_name}
+ENV TARGET /library
 
 # I want to install the library at building time, so later I only need to build
 # the drivers

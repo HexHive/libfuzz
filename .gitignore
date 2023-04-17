@@ -1,6 +1,5 @@
 workdir/*
 analysis/*
-fuzzing/*
 **/*.pyc
 .vscode/
 libfuzz.code-workspace
