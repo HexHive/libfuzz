@@ -19,12 +19,12 @@ fi
 IMG_NAME="libpp-fuzzing-$TARGET"
 LIBPP=../
 
-set -x
-DOCKER_BUILDKIT=1 docker build -t "$IMG_NAME" \
-    --target libfuzzpp_fuzzing \
-    --build-arg target_name="$TARGET" \
-    -f "$LIBPP/Dockerfile" "$LIBPP"
-set +x
+# set -x
+# DOCKER_BUILDKIT=1 docker build -t "$IMG_NAME" \
+#     --target libfuzzpp_fuzzing \
+#     --build-arg target_name="$TARGET" \
+#     -f "$LIBPP/Dockerfile" "$LIBPP"
+# set +x
 
 echo "[INFO] Running: $IMG_NAME"
 

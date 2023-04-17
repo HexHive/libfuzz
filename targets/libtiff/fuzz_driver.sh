@@ -68,9 +68,16 @@ for d in ` find ${DRIVER_FOLDER} -type f -executable`
 do
     echo "Fuzzing ${TIMEOUT}: $d"
     DRIVER_NAME=$(basename $d)
-    CRASHES_DIR=${LIBFUZZ}/workdir/${TARGET_NAME}/crashes/${DRIVER_NAME%%.*}
+    DRIVER_FUZZ=${DRIVER_NAME%%.*}
+    CRASHES_DIR=${LIBFUZZ}/workdir/${TARGET_NAME}/crashes/${DRIVER_FUZZ}
     mkdir -p ${CRASHES_DIR}
-    timeout $TIMEOUT $d \
-        ${LIBFUZZ}/workdir/${TARGET_NAME}/corpus/${DRIVER_NAME%%.*} \
-        -artifact_prefix=${CRASHES_DIR}/ || echo "Done: $d"
+    
+    # timeout $TIMEOUT $d \
+    #     ${LIBFUZZ}/workdir/${TARGET_NAME}/corpus/${DRIVER_NAME%%.*} \
+    #     -artifact_prefix=${CRASHES_DIR}/ || echo "Done: $d"
+    (sleep $TIMEOUT && pkill ${DRIVER_FUZZ}) &
+    
+    $d ${LIBFUZZ}/workdir/${TARGET_NAME}/corpus/${DRIVER_FUZZ} \
+        -artifact_prefix=${CRASHES_DIR}/ -ignore_crashes=1 \
+        -ignore_timeouts=1 -ignore_ooms=1 -fork=-1 || echo "Done: $d"
 done
