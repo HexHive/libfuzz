@@ -1,2 +1,4 @@
 .git
 LLVM/llvm-build
+analysis/*
+workdir/*
