@@ -17,13 +17,26 @@ from driver.factory.constraint_based import *
 from generator import Pool
 
 class Configuration:
-    def __init__(self, config_path):
+    def __init__(self, config_path, overwrite_path = None):
         
         if not path.isfile(config_path):
             raise Exception(f"The configuration {config_path} is not valid")
 
         with open(config_path, "rb") as f:
             self._config = tomli.load(f)
+
+        if overwrite_path is not None:
+            print(f"[INFO] Found {overwrite_path}, overwriting some parameters")
+            with open(overwrite_path, "rb") as f:
+                new_conf = tomli.load(f)
+
+                # overwrite (section, parameter) with overwrite_path values
+                for k_section, v in new_conf.items():
+                    if k_section in self._config:
+                        for k_par, v_par in v.items():
+                            if k_par in self._config[k_section]:
+                                self._config[k_section][k_par] = v_par
+
 
         self.start_term = NonTerminal("start")
         self.end_term = Terminal("end")

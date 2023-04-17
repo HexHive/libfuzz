@@ -51,7 +51,7 @@ ARG target_name=simple_connection
 
 ENV TARGET ${LIBFUZZ}/analysis/${target_name}
 ENV TARGET_NAME ${target_name}
-ENV TOOLS_DIR = /root/
+ENV TOOLS_DIR /root/
 
 RUN mkdir -p ${TOOLS_DIR}/condition_extractor/
 RUN mkdir -p ${TOOLS_DIR}/tool/misc/
@@ -68,10 +68,7 @@ ARG target_name=simple_connection
 
 ENV TARGET_NAME ${target_name}
 
-COPY ./framework ${LIBFUZZ}/framework/
-COPY ./tool/main.py ${LIBFUZZ}/tool/main.py
-
-CMD ${LIBFUZZ}/tool/main.py --config ${LIBFUZZ}/targets/${TARGET_NAME}/generator.toml
+CMD ${LIBFUZZ}/targets/${TARGET_NAME}/generate_drivers.sh
 
 # TARGET FOR FUZZING SESSION
 FROM libfuzzpp_dev_image AS libfuzzpp_fuzzing

@@ -7,7 +7,7 @@
 ./fetch.sh
 
 # NOTE: if TOOLD_DIR is unset, I assume to find stuffs in LIBFUZZ folder
-if [ -z $TOOLS_DIR  ]; then
+if [ -z $TOOLS_DIR ]; then
     TOOLS_DIR=$LIBFUZZ
 fi
 

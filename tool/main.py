@@ -24,9 +24,11 @@ def __main():
     parser = argparse.ArgumentParser(description='Automatic Driver Generator')
     parser.add_argument('--config', type=str, help='The configuration', default=default_config)
 
+    parser.add_argument('--overwrite', type=str, help='Set of parameters that overwrite the `config` toml file. Used to standardize configuration when testing multipe libraries.')
+
     args = parser.parse_args()
 
-    config = Configuration(args.config)
+    config = Configuration(args.config, args.overwrite)
     sess = Generator(config)
     sess.run()
 
