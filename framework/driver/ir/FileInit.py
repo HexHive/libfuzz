@@ -14,10 +14,10 @@ class FileInit(Statement):
         len_type = len_var.get_type()
 
         if buff_type.get_token() != "char*":
-            raise Exception(f"FileInit expects \"char*\" as buffer, \"{type}\" given instead")
+            raise Exception(f"FileInit expects \"char*\" as buffer, \"{buff_type}\" given instead")
 
         if len_type.get_token() != "size_t":
-            raise Exception(f"FileInit expects \"size_t\" as len_Var, \"{type}\" given instead")
+            raise Exception(f"FileInit expects \"size_t\" as len_Var, \"{len_type}\" given instead")
 
         self.buffer = buffer
         self.len_var = len_var
