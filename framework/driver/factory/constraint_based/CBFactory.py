@@ -57,6 +57,8 @@ class CBFactory(Factory):
             if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
                 and api.return_info.type == "void*"):
                 starting_api.add(api)
+            if not any(arg.is_type_incomplete for arg in api.arguments_info):
+                starting_api.add(api)
 
         # from IPython import embed; embed(); exit(1)
 
@@ -174,6 +176,9 @@ class CBFactory(Factory):
 
         # List[(ApiCall, RunningContext)]
         drv = list()
+
+        # print("after create_random_driver")
+        # from IPython import embed; embed(); exit(1)
 
         begin_api = random.choice(starting_api)
         begin_condition = get_cond(begin_api)

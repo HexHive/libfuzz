@@ -243,14 +243,15 @@ class RunningContext(Context):
 
         alloctype = AllocType.STACK
         if isinstance(type, PointerType):
-            if type.get_base_type().is_incomplete:
+            if (type.get_base_type().is_incomplete and 
+                type.get_base_type().tag == TypeTag.STRUCT):
                 alloctype = AllocType.HEAP
             if cond.len_depends_on != "":
                 alloctype = AllocType.HEAP
             if type.is_const:
                 alloctype = AllocType.HEAP
-            if type.get_base_type().tag == TypeTag.STRUCT:
-                alloctype = AllocType.HEAP
+            # if type.get_base_type().tag == TypeTag.STRUCT:
+            #     alloctype = AllocType.HEAP
 
         buff_counter = self.buffs_counter.get(type, 0)
         
