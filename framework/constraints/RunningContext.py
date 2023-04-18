@@ -243,6 +243,9 @@ class RunningContext(Context):
 
         alloctype = AllocType.STACK
         if isinstance(type, PointerType):
+            # if "TIFF" in type.token:
+            #     print("what allocatype I need?")
+            #     from IPython import embed; embed(); exit(1)
             if (type.get_base_type().is_incomplete and 
                 type.get_base_type().tag == TypeTag.STRUCT):
                 alloctype = AllocType.HEAP
@@ -572,7 +575,7 @@ class RunningContext(Context):
             if isinstance(t, PointerType) and t.get_base_type().is_incomplete:
                 continue
 
-            if (isinstance(t, PointerType) and 
+            if (isinstance(t, PointerType) and t.is_incomplete and
                 t.get_base_type().tag == TypeTag.STRUCT):
                 continue
 

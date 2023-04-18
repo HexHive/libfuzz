@@ -86,7 +86,8 @@ class DataLayout:
                     t_size = 0
                 elif type_llvm in DataLayout.data_layout:
                     t_size, _ = DataLayout.data_layout[type_llvm]
-                    DataLayout.clang_to_llvm_struct[ttype] = type_llvm
+                    
+                DataLayout.clang_to_llvm_struct[ttype] = type_llvm
 
         return t_size
     
@@ -164,4 +165,7 @@ class DataLayout:
     def is_a_struct(a_type) -> bool:
         # for k, s in DataLayout.data_layout.items():
             # if 
+        # if "TIFF" in a_type:
+        #     print("is_a_struct")
+        #     from IPython import embed; embed(); exit(1)
         return a_type in DataLayout.clang_to_llvm_struct
