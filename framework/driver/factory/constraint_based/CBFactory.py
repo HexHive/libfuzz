@@ -3,7 +3,7 @@ import random
 import re
 from typing import Dict, List, Optional, Set, Tuple
 
-from common import Api, FunctionConditionsSet, FunctionConditions
+from common import Api, FunctionConditionsSet, FunctionConditions, DataLayout
 from constraints import Conditions, ConditionUnsat, RunningContext
 from dependency import DependencyGraph
 from driver import Context, Driver
@@ -50,14 +50,16 @@ class CBFactory(Factory):
     def get_starting_api(self) -> Set[Api]:
 
         starting_api = set()
+
         for api in self.api_list:
-            if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
-                and api.return_info.is_type_incomplete):
-                starting_api.add(api)
-            if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
-                and api.return_info.type == "void*"):
-                starting_api.add(api)
-            if not any(arg.is_type_incomplete for arg in api.arguments_info):
+            if DataLayout.has_incomplete_type():
+                if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
+                    and api.return_info.is_type_incomplete):
+                    starting_api.add(api)
+                if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
+                    and api.return_info.type == "void*"):
+                    starting_api.add(api)
+            else:
                 starting_api.add(api)
 
         # from IPython import embed; embed(); exit(1)
@@ -173,6 +175,9 @@ class CBFactory(Factory):
         to_api = lambda x: Factory.api_to_apicall(x)
 
         starting_api = list(self.get_starting_api())
+
+        if len(starting_api) == 0:
+            raise Exception("I cannot find APIs to begin with :(")
 
         # List[(ApiCall, RunningContext)]
         drv = list()

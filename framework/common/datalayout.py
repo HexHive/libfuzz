@@ -169,3 +169,7 @@ class DataLayout:
         #     print("is_a_struct")
         #     from IPython import embed; embed(); exit(1)
         return a_type in DataLayout.clang_to_llvm_struct
+
+    @staticmethod
+    def has_incomplete_type() -> bool:
+        return len(DataLayout.incomplete_types) != 0

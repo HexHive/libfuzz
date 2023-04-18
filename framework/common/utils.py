@@ -302,10 +302,15 @@ class Utils:
         while x[-1] == "*":
             x = x[:-1]
 
-        # if "void" in a_type:
-        #     from IPython import embed; embed(); exit(1)
+        if "void" in a_type:
+            # print("is void?")
+            # from IPython import embed; embed(); exit(1)
+            return True
 
-        return x in incomplete_types_list
+        if x in incomplete_types_list:
+            return True
+
+        return False
 
     @staticmethod
     def get_include_functions(hedader_folder) -> List[str]:
