@@ -12,12 +12,14 @@
 - add a flag (?) to avoid rebuild docker in `docker/` scripts
 - restructur `workdir` and add separate folder for compiled drivers and generated corpus? 
 - keep a copy of the inital corpus? or a backup of driver+corpus somewhere before fuzzing?
-- different source API algorithm:
-  - A) if the library assumes *incomplete* types
-  - B) if the library assumes *all-complete* types
 
 [MOST IMPORTANT:]
 - TIFFWarning with NULL as second arg, why? it is a string, should be not NULL
+- try uriparse, hand `UriQueryListW**`, it is *complete* type.
+```json
+{"function_name": "uriDissectQueryMallocW", "return_info": {"const": false, "type_clang": "int"}, "arguments_info": [{"const": false, "type_clang": "UriQueryListW**"}, {"const": false, "type_clang": "int*"}, {"const": true, "type_clang": "wchar_t*"}, {"const": true, "type_clang": "wchar_t*"}]}
+```
+
 
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init
