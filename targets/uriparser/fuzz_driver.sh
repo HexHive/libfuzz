@@ -42,7 +42,7 @@ do
     CRASHES_DIR=${LIBFUZZ}/workdir/${TARGET_NAME}/crashes/${DRIVER_NAME}
     mkdir -p ${CRASHES_DIR}
     
-    # THIS IS WITH STANDARD MODE -- STOP AT THE FIRST CRASHE
+    # THIS IS WITH STANDARD MODE -- STOP AT THE FIRST CRASH
     # timeout $TIMEOUT $d ${DRIVER_CORPUS} \
     #     -artifact_prefix=${CRASHES_DIR}/ || echo "Done: $d"
 

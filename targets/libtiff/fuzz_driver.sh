@@ -31,7 +31,7 @@ do
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
 done
 
-for d in ` find ${DRIVER_FOLDER} -type f -executable -name "{$DRIVER}"`
+for d in ` find ${DRIVER_FOLDER} -type f -executable -name "${DRIVER}"`
 do
     DRIVER_NAME=$(basename $d)
     echo "Fuzzing ${TIMEOUT}: ${DRIVER_NAME}"
