@@ -73,7 +73,6 @@ class LFBackendDriver(BackendDriver):
         cm += f"{{ {counter_size_str} }};\n"
 
         cm += "\n#define NEW_DATA_LEN 4096\n\n"
-        cm += "bool custom_mutator_ok = false;\n\n"
 
         return cm
 
@@ -96,17 +95,16 @@ class LFBackendDriver(BackendDriver):
             f.write("#include <stdio.h>\n")
             f.write("#include <time.h>\n")
 
-            if self.has_counter:
-                f.write("\n")
-                f.write(self.emit_defines(seed_fix_size, counter_size))
+            # if self.has_counter:
+            f.write("\n")
+            f.write(self.emit_defines(seed_fix_size, counter_size))
 
             f.write("\n")
 
             f.write("extern \"C\" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t Size) {\n")
 
-            if self.has_counter:
-                f.write("\tif (!custom_mutator_ok) return 0;\n")
-                f.write("\tcustom_mutator_ok = false;\n")
+            # if self.has_counter:
+            f.write("\tif (Size < MIN_SEED_SIZE) return 0;\n")
 
             # for stmt in stmt_instances:
             for stmt in driver:
@@ -139,7 +137,6 @@ class LFBackendDriver(BackendDriver):
 
         cm += "extern \"C\" size_t LLVMFuzzerCustomMutator(uint8_t *Data, size_t Size, size_t MaxSize, unsigned int Seed) {\n\n"
 
-        cm += "\tcustom_mutator_ok = false;\n"
         cm += "\tsize_t counter_size_sum = 0;\n"
         cm += "\tfor (int i = 0; i < COUNTER_NUMBER; i++)\n"
         cm += "\t\tcounter_size_sum += counter_size[i];\n\n"
@@ -194,7 +191,6 @@ class LFBackendDriver(BackendDriver):
 
         cm += "\tmemcpy(Data, NewData, NewDataFinalLen);\n"
 
-        cm += "\tcustom_mutator_ok = true;\n"
         cm += "\treturn NewDataFinalLen;\n"
         cm += "}\n"
 

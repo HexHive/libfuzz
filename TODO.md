@@ -12,6 +12,9 @@
 - add a flag (?) to avoid rebuild docker in `docker/` scripts
 - restructur `workdir` and add separate folder for compiled drivers and generated corpus? 
 - keep a copy of the inital corpus? or a backup of driver+corpus somewhere before fuzzing?
+- different source API algorithm:
+  - A) if the library assumes *incomplete* types
+  - B) if the library assumes *all-complete* types
 
 [MOST IMPORTANT:]
 - fix custom mutator: 
@@ -23,6 +26,16 @@
 - if allocating a buffer of pointer to structures, better reasoning if we need
   HEAP or STACK allocation, happens with TIFF and uriparser. Try to understand
   what's goning on
+- TIFFWarning with NULL as second arg, why? it is a string, should be not NULL
+- TIFFUnRegisterCODEC(TIFFCodec) should be initialized, it is not incomplete
+```
+typedef int (*TIFFInitMethod)(TIFF*, int);
+typedef struct {
+	char* name;
+	uint16_t scheme;
+	TIFFInitMethod init;
+} TIFFCodec;
+```
 
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init

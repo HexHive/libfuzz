@@ -8,12 +8,10 @@ set -e
 # - env CC, CXX, FLAGS, LIBS, etc...
 ##
 
+# export TARGET=/tmp/libtiff
+
 ./preinstall.sh
 ./fetch.sh
-
-# source ${FUZZER}/instrument.sh
-
-# export TARGET=/tmp/libtiff
 
 if [ ! -d "$TARGET/repo" ]; then
     echo "fetch.sh must be executed first."
