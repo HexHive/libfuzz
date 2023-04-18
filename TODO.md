@@ -11,6 +11,11 @@
 - change new variable synthesis with data layout info
 
 [MOST IMPORTANT:]
+- fix custom mutator: 
+  - remove `custom_mutator_ok` global variable
+  - return seed length 0 if mutation invalid
+  - driver exists if length 0
+  - no need any global variable!!
 - the corpus has seeds with 0 size: why?!?!
 - if allocating a buffer of pointer to structures, better reasoning if we need
   HEAP or STACK allocation, happens with TIFF and uriparser. Try to understand
