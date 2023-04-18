@@ -1,4 +1,6 @@
 .git
 LLVM/llvm-build
 analysis/*
-workdir/*
+# WE NEED TO INCLUDE workdir/ OR WE MISS IMPORTANT FILES, e.g., THE DRIVER TO
+# FUZZ
+# workdir/*

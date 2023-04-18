@@ -64,20 +64,20 @@ do
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
 done
 
-for d in ` find ${DRIVER_FOLDER} -type f -executable`
+for d in ` find ${DRIVER_FOLDER} -type f -executable -name "{$DRIVER}`
 do
-    echo "Fuzzing ${TIMEOUT}: $d"
     DRIVER_NAME=$(basename $d)
-    DRIVER_FUZZ=${DRIVER_NAME%%.*}
-    CRASHES_DIR=${LIBFUZZ}/workdir/${TARGET_NAME}/crashes/${DRIVER_FUZZ}
+    echo "Fuzzing ${TIMEOUT}: ${DRIVER_NAME}"
+    DRIVER_CORPUS=${LIBFUZZ}/workdir/${TARGET_NAME}/corpus/${DRIVER_NAME}
+    CRASHES_DIR=${LIBFUZZ}/workdir/${TARGET_NAME}/crashes/${DRIVER_NAME}
     mkdir -p ${CRASHES_DIR}
     
-    # timeout $TIMEOUT $d \
-    #     ${LIBFUZZ}/workdir/${TARGET_NAME}/corpus/${DRIVER_NAME%%.*} \
+    # THIS IS WITH STANDARD MODE -- STOP AT THE FIRST CRASHE
+    # timeout $TIMEOUT $d ${DRIVER_CORPUS} \
     #     -artifact_prefix=${CRASHES_DIR}/ || echo "Done: $d"
-    (sleep $TIMEOUT && pkill ${DRIVER_FUZZ}) &
-    
-    $d ${LIBFUZZ}/workdir/${TARGET_NAME}/corpus/${DRIVER_FUZZ} \
-        -artifact_prefix=${CRASHES_DIR}/ -ignore_crashes=1 \
-        -ignore_timeouts=1 -ignore_ooms=1 -fork=-1 || echo "Done: $d"
+
+    # THIS IS WITH FORK-MODE -- KEEP GOING TILL SOMEONE KILLS IT
+    (sleep $TIMEOUT && pkill ${DRIVER_NAME}) &
+    $d ${DRIVER_CORPUS} -artifact_prefix=${CRASHES_DIR}/ -ignore_crashes=1 \
+        -ignore_timeouts=1 -ignore_ooms=1 -fork=1 || echo "Done: $d"
 done
