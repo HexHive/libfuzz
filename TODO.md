@@ -9,6 +9,9 @@
 - Special treatment for known types, such as stream objects in C++ and `FILE*`
   for standard C. (We can leverage the hooking system already present.)
 - change new variable synthesis with data layout info
+- add a flag (?) to avoid rebuild docker in `docker/` scripts
+- restructur `workdir` and add separate folder for compiled drivers and generated corpus? 
+- keep a copy of the inital corpus? or a backup of driver+corpus somewhere before fuzzing?
 
 [MOST IMPORTANT:]
 - fix custom mutator: 
@@ -20,7 +23,6 @@
 - if allocating a buffer of pointer to structures, better reasoning if we need
   HEAP or STACK allocation, happens with TIFF and uriparser. Try to understand
   what's goning on
-- FileInit has problem with a len_var type, add valid types in the allowed-list
 
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init

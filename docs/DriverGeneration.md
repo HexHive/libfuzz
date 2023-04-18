@@ -13,9 +13,13 @@ The main driver generator tool is in
 ```bash
 $ ./tool/main.py
 ```
-and it expects these arguments
+and it expects three arguments
 - `-h` -- show the help prompt
 - `--config CONFIG` -- CONFIG is a .toml file with the following [options](#configuration-file)
+- `--overwrite OVERWRITE` -- this is optional, the framewokr will overwrite the
+  parameters in CONFIG with the ones found in OVEWRITE. To be used to control
+  the driver generation process of multiple targets without changing single
+  files
 
 ## Configuration File
 
