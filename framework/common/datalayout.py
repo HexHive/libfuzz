@@ -151,6 +151,8 @@ class DataLayout:
             return 8*2
         elif type == "unsigned char":
             return 8
+        elif type == "wchar_t":
+            return 8*4
         else:
             raise Exception(f"I don't know the size of '{type}'")
 

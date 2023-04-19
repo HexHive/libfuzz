@@ -21,6 +21,9 @@ class RunningContext(Context):
     # static dictionary
     type_to_hash:        Dict[str, str]
 
+    string_types = ["char*", "unsigned char*", "wchar_t*", \
+                    "char**", "unsigned char**", "wchar_t**"]
+
     def __init__(self):
         super().__init__()
         self.variables_alive = []
@@ -243,7 +246,7 @@ class RunningContext(Context):
 
         alloctype = AllocType.STACK
         if isinstance(type, PointerType):
-            # if "TIFF" in type.token:
+            # if "UriQueryListW" in type.token:
             #     print("what allocatype I need?")
             #     from IPython import embed; embed(); exit(1)
             if (type.get_base_type().is_incomplete and 
@@ -255,6 +258,11 @@ class RunningContext(Context):
                 alloctype = AllocType.HEAP
             if force_pointer:
                 alloctype = AllocType.HEAP
+
+        # double pointers -> always in heap
+        if (isinstance(type, PointerType) and 
+            isinstance(type.get_pointee_type(), PointerType)):
+            alloctype = AllocType.HEAP
 
         buff_counter = self.buffs_counter.get(type, 0)
         
@@ -273,8 +281,7 @@ class RunningContext(Context):
         buff_name = f"{type.token}{pnt}_{cst}{heap}{buff_counter}"
         buff_name = buff_name.replace(" ", "")
         # NOTE: char* => always considered as array!
-        if ((cond.is_array or 
-            type.token == "char*" or type.token == "unsigned char*") and
+        if ((cond.is_array or type.token in RunningContext.string_types) and
             alloctype == AllocType.STACK):
             new_buffer = Buffer(buff_name, self.MAX_ARRAY_SIZE, type, alloctype)
         else:
@@ -354,9 +361,7 @@ class RunningContext(Context):
                         print("within 'a_choice == Context.POINTER_STRATEGY_ARRAY'")
                         from IPython import embed; embed(); exit()
                 else:
-                    print("get_random_buffer")
                     vp = self.get_random_buffer(type, cond)
-                    print(f"{vp}")
 
                 v = vp.get_address()
 
