@@ -174,7 +174,7 @@ If you *really* want to know more regarding options etc, check [here](Analysis.m
 
 **generator.toml**
 
-This controls how to generate drivers. Simplest approach: copy past from
+This controls how to generate drivers. Simplest approach: copy-paste from
 `libtiff` and change the folder paths. The paths must be absolute and refer to
 the in-docker file system.
 
@@ -245,11 +245,11 @@ This script is a simple loop that link drivers in `./workdir/${TARGET}/drivers` 
 Similarly, copy `fuzz_driver.sh` from `libtiff` and adjust the compilation step
 (the firs loop).
 
-For reference, I left two `[TAG]` that contains the part of the script to
-modify. 
+For reference, I left two `[TAG]` that contains the part of the script to modify
+in `libtiff`'s `fuzz_driver.sh` script. 
 
 The important thing is to compile drivers against the `.a` library from
-`./build_library.sh`, and then save the output in the same `.cc` folder. The
+`./build_library.sh`, and save the output in the same `.cc` folder. The
 rest *should* work transparently.
 
 *Entry point for fuzz_driver.sh and build_library.sh*
@@ -264,6 +264,8 @@ TARGET=libtiff TIMEOUT=1m DRIVER=driver8 ./run_fuzzing.sh
 - `TIMEOUT` -- campaign length, accepts minutes [m], seconds [s], hours [h]
 - `DRIVER` -- the actual driver to fuzz, if omitted compile/fuzz all drivres
   (equivalent to `DRIVER=*`)
+
+The script additionally creates a `crashes` folder for the, guess what, crashes! 
 
 For more info refer to [here](FuzzingDrivers.md).
 
