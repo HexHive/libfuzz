@@ -265,11 +265,18 @@ class LFBackendDriver(BackendDriver):
         buff = cleanbuffer.get_buffer()
 
         v = self.value_emit(buff[0])
-        return f"if ({v} != 0) free({v});"
+
+        # NOTE: this is super ugly but not sure how to do otherwise
+        num_extra_brackets = buff.type.token.count("*")-1
+        # print("cleanbuffer_emit")
+        # from IPython import embed; embed(); exit(1)
+
+        extra_brackets = "[0]" * num_extra_brackets
+        return f"if ({v}{extra_brackets} != 0) free({v}{extra_brackets});"
 
     # ConstStringDecl
     def conststringdecl_emit(self, cnststrdecl: ConstStringDecl) -> str:
-        # NOTE: ConstStringDecl ensures to be assigned only to [const] char* 
+        # NOTE: ConstStringDecl ensures to assign only [const] char* 
         buffer      = cnststrdecl.get_buffer()
         str_value   = cnststrdecl.get_string_val()
 
