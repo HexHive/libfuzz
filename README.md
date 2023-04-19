@@ -23,8 +23,8 @@ https://code.visualstudio.com/docs/remote/containers#_sharing-git-credentials-wi
 
 ## How to set a target (add a new library)
 
-TODO
-
+- [Add a new Target](./docs/AddNewTarget.md)
+- [Debug a Target in local](./docs/DebugLocal.md)
 
 ## Specific Gudies
 

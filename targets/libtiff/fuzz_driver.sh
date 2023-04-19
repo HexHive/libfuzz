@@ -23,9 +23,11 @@ CC=$LLVM_DIR/bin/clang
 DRIVER_FOLDER=${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
 echo "Compiling: ${DRIVER_FOLDER}/${DRIVER}.cc"
 
+# [TAG] FIRST LOOP FOR COMPILATION!!! 
 for d in `ls ${DRIVER_FOLDER}/${DRIVER}.cc`
 do
     echo "Driver: $d"
+    # [TAG] THIS STEP MUST BE ADAPTED FOR EACH LIBRARY
     $CXX -g -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
         $d ${TARGET}/work/lib/libtiff.a ${TARGET}/work/lib/libtiffxx.a \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
