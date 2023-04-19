@@ -189,7 +189,7 @@ class RunningContext(Context):
             if tt.is_incomplete and not is_ret:
                 raise ConditionUnsat()
             else:
-                val = self.create_new_var(type, cond)
+                val = self.create_new_var(type, cond, is_ret)
                 if (isinstance(val, Variable) and 
                     isinstance(val.get_type(), PointerType)):
                     val = val.get_address()
@@ -237,7 +237,7 @@ class RunningContext(Context):
         mdata = ValueMetadata(ats, False, False, False, "")
         return (self.create_new_var(len_type, mdata), mdata)
 
-    def create_new_buffer(self, type: Type, cond: ValueMetadata):
+    def create_new_buffer(self, type: Type, cond: ValueMetadata, force_pointer: bool):
         # if isinstance(type, PointerType):
         #     raise Exception(f"This function creates buffers only for base types (no pointers!) {type}")
 
@@ -253,8 +253,8 @@ class RunningContext(Context):
                 alloctype = AllocType.HEAP
             if type.is_const:
                 alloctype = AllocType.HEAP
-            # if type.get_base_type().tag == TypeTag.STRUCT:
-            #     alloctype = AllocType.HEAP
+            if force_pointer:
+                alloctype = AllocType.HEAP
 
         buff_counter = self.buffs_counter.get(type, 0)
         
@@ -285,13 +285,13 @@ class RunningContext(Context):
 
         return new_buffer
 
-    def create_new_var(self, type: Type, cond: ValueMetadata):
+    def create_new_var(self, type: Type, cond: ValueMetadata, force_pointer: bool):
 
         # in case of void, I just return a void from a buffer void
         if type == self.stub_void:
             return self.buffer_void[0]
 
-        buffer = self.create_new_buffer(type, cond)
+        buffer = self.create_new_buffer(type, cond, force_pointer)
 
         # for the time being, I always return the first element
         return buffer[0]
@@ -341,19 +341,22 @@ class RunningContext(Context):
                 v = NullConstant(tt)
             # a vector
             elif a_choice == Context.POINTER_STRATEGY_ARRAY:
+                # print("a_choice == Context.POINTER_STRATEGY_ARRAY")
+                # if is_ret:
+                #     from IPython import embed; embed(); exit(1)
                 # if random.getrandbits(1) == 0 or not self.has_buffer_type(tt):
                 if ((random.getrandbits(1) == 0 or
                     not self.has_vars_type(type, cond)) and 
                     not is_incomplete):
                     try:
-                        # print("self.create_new_buffer(tt, cond)")
-                        vp = self.create_new_buffer(type, cond)
+                        vp = self.create_new_buffer(type, cond, is_ret)
                     except Exception as e:
                         print("within 'a_choice == Context.POINTER_STRATEGY_ARRAY'")
                         from IPython import embed; embed(); exit()
                 else:
-                    # print("get_random_buffer")
+                    print("get_random_buffer")
                     vp = self.get_random_buffer(type, cond)
+                    print(f"{vp}")
 
                 v = vp.get_address()
 
@@ -367,7 +370,7 @@ class RunningContext(Context):
             if not self.has_vars_type(type, cond):
                 # print(f"=> {t} not in context, new one")
                 try:
-                    v = self.create_new_var(type, cond)
+                    v = self.create_new_var(type, cond, is_ret)
                 except:
                     print("within 'not self.has_vars_type(type):'")
                     from IPython import embed; embed(); exit()
@@ -379,7 +382,7 @@ class RunningContext(Context):
                 # or create a new var
                 else:
                     # print(f"=> decided to create a new {t}")
-                    v = self.create_new_var(type, cond)
+                    v = self.create_new_var(type, cond, is_ret)
 
         if v is None:
             raise Exception("v was not assigned!")
@@ -589,6 +592,9 @@ class RunningContext(Context):
                 continue
 
             if t.is_const:
+                continue
+            
+            if x.get_alloctype() == AllocType.HEAP:
                 continue
 
             fix_buff.add(x)

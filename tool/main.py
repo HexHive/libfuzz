@@ -19,8 +19,8 @@ def __main():
     # default_config = "./targets/simple_connection/generator.json"
     # default_config = PROJECT_FOLDER + "/regression_tests/condition_extractor/test_simpleapi/generator.toml"
     # default_config = PROJECT_FOLDER + "/regression_tests/condition_extractor/test_full/generator.toml"
-    default_config = PROJECT_FOLDER + "/targets/uriparser/generator.toml"
-    # default_config = PROJECT_FOLDER + "/targets/libtiff/generator.toml"
+    # default_config = PROJECT_FOLDER + "/targets/uriparser/generator.toml"
+    default_config = PROJECT_FOLDER + "/targets/libtiff/generator.toml"
 
     parser = argparse.ArgumentParser(description='Automatic Driver Generator')
     parser.add_argument('--config', type=str, help='The configuration', default=default_config)

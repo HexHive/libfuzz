@@ -94,6 +94,7 @@ class LFBackendDriver(BackendDriver):
             f.write("#include <stdlib.h>\n")
             f.write("#include <stdio.h>\n")
             f.write("#include <time.h>\n")
+            f.write("#include <stdint.h>\n")
 
             # if self.has_counter:
             f.write("\n")
