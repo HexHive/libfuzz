@@ -16,11 +16,8 @@
 [MOST IMPORTANT:]
 - TIFFWarning with NULL as second arg, why? it is a string, should be not NULL
 - return pointer to struct -> always allocate buffer in heap -> create_new_buffer must know if it is for a return value
-- try uriparse, hand `UriQueryListW**`, it is *complete* type.
-```json
-{"function_name": "uriDissectQueryMallocW", "return_info": {"const": false, "type_clang": "int"}, "arguments_info": [{"const": false, "type_clang": "UriQueryListW**"}, {"const": false, "type_clang": "int*"}, {"const": true, "type_clang": "wchar_t*"}, {"const": true, "type_clang": "wchar_t*"}]}
-```
-
+- add headers allow-list in `extract_included_functions.py` and `.toml`
+  configuraiton file
 
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init
