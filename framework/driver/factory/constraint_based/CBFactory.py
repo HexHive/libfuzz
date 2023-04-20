@@ -96,7 +96,7 @@ class CBFactory(Factory):
                 if isinstance(idx_type, PointerType):
                     arg_cond.len_depends_on = ""
                 else:
-                    arg_var = rng_ctx.create_new_var(arg_type, arg_cond)
+                    arg_var = rng_ctx.create_new_var(arg_type, arg_cond, False)
                     x = arg_var
                     if (isinstance(arg_var, Variable) and 
                         isinstance(arg_type, PointerType)):
@@ -106,7 +106,7 @@ class CBFactory(Factory):
                     # idx = int(arg_cond.len_depends_on.replace("param_", ""))
                     # idx_type = api_call.arg_types[idx]
                     idx_cond = conditions.argument_at[idx]
-                    b_len = rng_ctx.create_new_var(idx_type, idx_cond)
+                    b_len = rng_ctx.create_new_var(idx_type, idx_cond, False)
                     try:
                         api_call.set_pos_arg_var(idx, b_len)
                     except:
