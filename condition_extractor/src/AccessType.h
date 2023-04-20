@@ -37,6 +37,8 @@ class AccessType {
         Access p_access;
         llvm::Type* p_type;
         
+        // remember the types extracted from previous GEP
+        std::set<llvm::Type*> visited_types;
 
         static std::string type_to_string(llvm::Type* typ) {
             std::string str;
@@ -58,6 +60,14 @@ class AccessType {
         }
         ~AccessType() {fields.clear();}
 
+        void add_visited_type(llvm::Type* a_type) {
+            visited_types.insert(a_type);
+        }
+
+        bool is_visited(llvm::Type* a_type) {
+            return visited_types.find(a_type) != visited_types.end();
+        }
+
         // copy assignment operator
         AccessType& operator=(const AccessType &rhs) {
             this->fields = rhs.fields;
@@ -72,6 +82,9 @@ class AccessType {
             this->p_fields = rhs.p_fields;
             this->p_access = rhs.p_access;
             this->p_type = rhs.p_type;
+
+            // visited types for GEP recursion
+            this->visited_types = rhs.visited_types;
 
             return *this;
         };
@@ -665,7 +678,7 @@ class ValueMetadata {
         static ValueMetadata extractReturnMetadata(
             const SVFG*, const Value*);
         static std::string extractDependentParameter(
-            ValueMetadata*, SVF::SVFG*, const SVFFunction*);
+            const SVF::SVFVar*, ValueMetadata*, SVF::SVFG*, const SVFFunction*);
 };
 
 class FunctionConditions {

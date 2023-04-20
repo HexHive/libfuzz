@@ -535,7 +535,7 @@ int main(int argc, char ** argv)
 
                 if (paramMetadata.isArray()) {
                     auto depends_on = ValueMetadata::extractDependentParameter(
-                        &paramMetadata, svfg, fun);
+                        p, &paramMetadata, svfg, fun);
 
                     if (depends_on != "")
                         paramMetadata.setLenDependency(depends_on);

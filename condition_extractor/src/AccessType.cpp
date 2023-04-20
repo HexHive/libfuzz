@@ -270,7 +270,11 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
 }
 
 std::string ValueMetadata::extractDependentParameter(
-    ValueMetadata* mdata, SVF::SVFG* svfg, const SVFFunction* fun) {
+    const SVF::SVFVar* current_parm, ValueMetadata* mdata, SVF::SVFG* svfg, 
+    const SVFFunction* fun) {
+
+    // outs() << "CURRENT PARAM: \n";
+    // outs() << current_parm->toString() << "\n";
 
     std::string dependent_param = "";
 
@@ -301,7 +305,7 @@ std::string ValueMetadata::extractDependentParameter(
 	    l->getExitingBlocks(exits);
         for (auto e: exits) {
             auto v = &e->back();
-            // outs() << "V: " << *v << "\n";
+            // outs() << "Exit Cond:\n" << *v << "\n";
 
             PAGNode* pV = pag->getGNode(pag->getValueNode(v));
             const VFGNode* vV = svfg->getDefSVFGNode(pV);
@@ -323,6 +327,10 @@ std::string ValueMetadata::extractDependentParameter(
 
             int p_idx = 0;
             for (auto p: fun_params) {
+                if (p == current_parm) {
+                    p_idx++;
+                    continue;
+                }
                 // pP = const_cast<llvm::Value*>(p->getValue());
                 pP = pag->getGNode(pag->getValueNode(p->getValue()));
                 const VFGNode* vP = svfg->getDefSVFGNode(pP);
@@ -357,6 +365,10 @@ std::string ValueMetadata::extractDependentParameter(
             int p_idx = 0;
             bool param_control_len = false;
             for (auto p: fun_params) {
+                if (p == current_parm) {
+                    p_idx++;
+                    continue;
+                }
                 // pP = const_cast<llvm::Value*>(p->getValue());
                 PAGNode* pP = pag->getGNode(pag->getValueNode(p->getValue()));
                 const VFGNode* vP = svfg->getDefSVFGNode(pP);
@@ -381,7 +393,6 @@ std::string ValueMetadata::extractDependentParameter(
     return dependent_param;
 }
 
-// std::set<const VFGNode*> ValueMetadata::getDefinitionSet(const VFGNode *n) {
 std::set<const VFGNode*> getDefinitionSet(const VFGNode *n) {
 
     std::set<const VFGNode*> definitions;
@@ -573,6 +584,10 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                         acNode.setAccess(AccessType::Access::read);
                         ats->insert(acNode, vNode->getICFGNode());
                     }
+
+                    // // outs() << "Pointer is:\n";
+                    // auto dest = inst->getPointerOperand();
+                    // // outs() << *(inst->getPointerOperand()) << "\n";
                 }
 
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Gep &&
@@ -593,15 +608,23 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
 
                 // outs() << "sType:\n";
                 // outs() << *sType << "\n";
+                // outs() << TypeMatcher::compute_hash(sType) << "\n";
 
                 // outs() << "dType:\n";
                 // outs() << *dType << "\n";
+                // outs() << TypeMatcher::compute_hash(dType) << "\n";
 
                 // outs() << "pType:\n";
                 // outs() << *pType << "\n";
-
+                // outs() << TypeMatcher::compute_hash(pType) << "\n";
+                
                 // outs() << "acNode.getType():\n";
                 // outs() << *acNode.getType() << "\n";
+                // outs() << TypeMatcher::compute_hash(acNode.getType()) << "\n";
+
+                // outs() << "compare_types(pType, acNode.getType()) "
+                //     << TypeMatcher::compare_types(pType, acNode.getType()) 
+                //     << "\n";
 
                 // outs() << "[DEBUG END]\n";
 
@@ -609,8 +632,10 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                 // that look like field access
                 // if (SVFUtil::isa<llvm::StructType>(sType) && 
                 //  AccessTypeSet::isSameType(pType, acNode.getType()) ) {
-                if (TypeMatcher::compare_types(pType, acNode.getType())) {
-                    if (inst->hasAllConstantIndices()) {
+                if (TypeMatcher::compare_types(pType, acNode.getType()) &&
+                    !acNode.is_visited(pType)) {
+                    if (inst->hasAllConstantIndices() &&
+                        inst->getNumIndices() > 1) {
 
                         for (int pos = 1; pos <= inst->getNumIndices(); pos++) {
                             
@@ -630,14 +655,27 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                         }
                     } else if (acNode.getNumFields() == 0) {
 
-                        is_array = !SVFUtil::isa<ConstantInt>(
-                            inst->getOperand(1));
-                        if (is_array) {
-                            auto d = inst->getOperand(1);
+                        // is_array = !SVFUtil::isa<ConstantInt>(
+                        //     inst->getOperand(1)) || 
+                        //     inst->getNumIndices() == 1;
+                        // if (is_array) {
+                        //     auto d = inst->getOperand(1);
+                        //     mdata.addIndex(d);
+                        // }
+
+                        is_array = false;
+
+                        auto d = inst->getOperand(1);
+                        if (!SVFUtil::isa<ConstantInt>(d)) {
+                            is_array = true;
                             mdata.addIndex(d);
+                        } else if (inst->getNumIndices() == 1) {
+                            is_array = true;
+                            mdata.addIndex(inst);
                         }
 
                     }
+                    acNode.add_visited_type(pType);
                 }
                 // else {
                 //     outs() << "[DEBUG] GEP incoherent: \n";
@@ -712,8 +750,8 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
             p.setPrevValue(vNode->getValue());
 
             if (vNode->hasOutgoingEdge()) {
-                // outs() << "\nChildren:\n";
-                // for all edges from v to w in G.adjacentEdges(v) do 
+                // outs() << "Children of: \n";
+                // outs() << vNode->toString() << "\n";
                 for (VFGNode::const_iterator it = vNode->OutEdgeBegin(), eit =
                             vNode->OutEdgeEnd(); it != eit; ++it)
                 {
@@ -722,8 +760,10 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                     VFGNode* succNode2 = edge->getDstNode();
                     // outs() << "INSPECT?: " << succNode2->toString() << "\n";
 
-                    // follow indirect jumps if a store, probably add a flag
-                    if (vNode->getNodeKind() != VFGNode::VFGNodeK::Store) {
+                    // follow indirect jumps if a store or IntraMSSA
+                    // probably add a flag
+                    if (vNode->getNodeKind() != VFGNode::VFGNodeK::Store && 
+                        vNode->getNodeKind() != VFGNode::VFGNodeK::MIntraPhi) {
                         // try to follow only Direct Edges
                         if (SVFUtil::isa<SVF::IndirectSVFGEdge>(edge)) {
                             // VFGNode* succNode2 = edge->getDstNode();
