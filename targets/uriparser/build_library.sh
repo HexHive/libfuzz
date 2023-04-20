@@ -10,9 +10,6 @@ set -e
 
 # export TARGET=/tmp/libtiff
 
-./preinstall.sh
-./fetch.sh
-
 if [ ! -d "$TARGET/repo" ]; then
     echo "fetch.sh must be executed first."
     exit 1

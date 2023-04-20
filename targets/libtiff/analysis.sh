@@ -3,9 +3,6 @@
 # export LIBFUZZ=/workspaces/libfuzz/
 # export TARGET=$LIBFUZZ/analysis/libtiff/ 
 
-./preinstall.sh
-./fetch.sh
-
 # NOTE: if TOOLD_DIR is unset, I assume to find stuffs in LIBFUZZ folder
 if [ -z $TOOLS_DIR ]; then
     TOOLS_DIR=$LIBFUZZ

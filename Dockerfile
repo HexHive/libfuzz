@@ -60,6 +60,9 @@ COPY ./tool/misc/extract_included_functions.py ${TOOLS_DIR}/tool/misc/
 RUN cd ${TOOLS_DIR}/condition_extractor && ./bootstrap.sh && make
 
 WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
+RUN ./preinstall.sh
+RUN ./fetch.sh
+
 CMD ${LIBFUZZ}/targets/${TARGET_NAME}/analysis.sh
 
 # TARGET FOR DRIVER GENERATION
@@ -88,6 +91,8 @@ ENV TARGET /library
 # the drivers
 COPY ./targets/${TARGET_NAME} ${LIBFUZZ}/targets/${TARGET_NAME}
 WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
+RUN ./preinstall.sh
+RUN ./fetch.sh
 RUN ./build_library.sh
 
 WORKDIR ${LIBFUZZ}
