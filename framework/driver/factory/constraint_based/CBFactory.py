@@ -64,8 +64,6 @@ class CBFactory(Factory):
 
         # from IPython import embed; embed(); exit(1)
 
-        source_api = set([f for f in source_api if f.function_name == "htp_config_create"])
-
         return source_api
 
     def try_to_instantiate_api_call(self, api_call: ApiCall,
