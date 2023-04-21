@@ -17,23 +17,27 @@
 - TIFFWarning with NULL as second arg, why? it is a string, should be not NULL
 - add headers allow-list in `extract_included_functions.py` and `.toml`
   configuraiton file || maybe remove/move non public headers fater analysis.sh/build_library.sh?
+- recognize `enum` and obtain correct name in driver generation
+- in dynamic array chars, include a check that len(array) > 0 before setting array[len-1] = 0
+- why `htp_config_set_server_personality` is not found by `extractor`??
+- if same field has same write and read in condition, those get overwritten
+  maybe check the first instruction????
 
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init
   initializes `MD5Context`. The gist is that md5Init just writes into fields but
   does not read from any. Therefore, we can consider this as a source API
-- In `try_to_instantiate_api_call`, I should add a test to understand if the
-  condition of a variable allows me to instantiate a new variable from skretch (otherwise `raise Unsat()`)
 - Extend condition check with field types (the three-fields relations). See if
-  it makes sense
+  it makes sense -- double check `htp_config_register_log`
 
 - TLS_client_method (openssl) returns a global structure, this is consider a "source" function
 
 # Stub Functions
 - realloc
   - ?
-- calloc
-  - ?
+x calloc
+  x ret -> new object
+  x par2 -> size
 - <other malloc-like function?>
 x malloc
   x ret -> allocate new object/buffer
