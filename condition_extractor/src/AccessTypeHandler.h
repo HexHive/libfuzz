@@ -136,6 +136,27 @@ bool memset_hander(ValueMetadata *mdata, std::string fun_name,
     return false;
 }
 
+bool calloc_handler(ValueMetadata *mdata, std::string fun_name, 
+    const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num,
+    AccessType atNode) {
+
+    if (param_num == -1) {
+        // no need to set field, empty field set is what I need
+        atNode.setAccess(AccessType::Access::create);
+        mdata->getAccessTypeSet()->insert(atNode, icfgNode);
+        return true;
+    }
+    if (param_num == 1 && atNode.getNumFields() == 0) {
+        atNode.setAccess(AccessType::Access::read);
+        mdata->getAccessTypeSet()->insert(atNode, icfgNode);
+        mdata->setMallocSize(true);
+        return false;
+    }
+
+    return false;
+}
+
+
 static AccessTypeHandlerMap accessTypeHandlers = {
     {"malloc", &malloc_handler},
     {"free", &free_handler},
@@ -144,7 +165,8 @@ static AccessTypeHandlerMap accessTypeHandlers = {
     {"llvm.memcpy.*", &memcpy_hander},
     {"strcpy", &strcpy_handler},
     {"strlen", &strlen_handler},
-    {"llvm.memset.*", &memset_hander}
+    {"llvm.memset.*", &memset_hander},
+    {"calloc", &calloc_handler}
 };
 
 #endif /* INCLUDE_DOM_ACCESSTYPE_HANDLER_H_ */

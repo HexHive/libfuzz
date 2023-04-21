@@ -713,6 +713,10 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
 
                     // if (acNode.getNumFields() != 0 &&                        
                     //     TypeMatcher::compare_types(src_typ, acNode.getType())) {
+
+                    // outs() << "src_typ " << *src_typ << "\n";
+                    // outs() << "acNode.getType() " << *acNode.getType() << "\n";
+
                     if (TypeMatcher::compare_types(src_typ, acNode.getType())) {
                         acNode.setType(dst_typ);
                         ats->insert(acNode, vNode->getICFGNode());

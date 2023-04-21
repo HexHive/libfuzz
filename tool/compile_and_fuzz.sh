@@ -6,7 +6,7 @@ CC=$LLVM_DIR/bin/clang
 TARGET=libhtp
 # TARGET=uriparser
 # TARGET=libtiff
-DRIVER=driver1
+DRIVER=driver0
 DRIVER_FOLDER=/workspaces/libfuzz/workdir/${TARGET}/drivers
 
 for d in `ls ${DRIVER_FOLDER}/${DRIVER}.cc`

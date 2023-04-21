@@ -496,8 +496,6 @@ int main(int argc, char ** argv)
         // outs() << "[INFO] Total: " << minimize_functions.size() << "\n";
         // outs() << "[INFO] Original: " << functions.size() << "\n";
 
-        functions = minimize_functions;
-
     }
 
     // outs() << " === EXIT FOR DEBUG ===\n";
@@ -511,7 +509,6 @@ int main(int argc, char ** argv)
         FunctionConditions fun_conds;
 
         fun_conds.setFunctionName(f);
-
         for (auto const& x : funmap_par) {
             const SVFFunction *fun = x.first;
             if ( fun->getName() != f)
@@ -553,7 +550,7 @@ int main(int argc, char ** argv)
 
             auto p = x.second;
             if (verbose >= Verbosity::v1)
-                outs() << "[INFO] return: " << p->toString();
+                outs() << "[INFO] return: " << p->toString() << "\n";
             ValueMetadata returnMetadata =
                 ValueMetadata::extractReturnMetadata(svfg, p->getValue());
 
