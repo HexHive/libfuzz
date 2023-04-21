@@ -21,7 +21,7 @@ https://code.visualstudio.com/docs/remote/containers#_quick-start-open-an-existi
 
 https://code.visualstudio.com/docs/remote/containers#_sharing-git-credentials-with-your-container
 
-## How to set a target (add a new library)
+## How to inteagrate a new a target (a new library)
 
 - [Add a new Target](./docs/AddNewTarget.md)
 - [Debug a Target in local](./docs/DebugLocal.md)
@@ -35,3 +35,58 @@ Ad-hoc guides for specific components of the project
 - [Fuzzing a Driver](./docs/FuzzingDrivers.md)
 - Triage (TODO)
 - Statistics (TODO)
+
+## Internal technical details
+
+- [Driver IR](./docs/Driver_IR.md)
+
+## Problems Addressed and Solved
+
+These are the challenges that we face, and the solution proposed. We further
+indicate if the solution requires manual intervention or is completely automatic.
+
+- Correct sequence of APIs:
+    - control-flow -> a valid chain of functions  
+    - data-flow -> assign coherent arguments to each function
+    > **automatic**: both solved with NDA, which guarantees the creation of a
+    > sequence of APIs whose function + arguments match the contraints of a
+    > context. The constraints are modelled as list of fields manipulated.
+    - source/sink identification: depends on the type-system/philosophy used in
+      the library.
+    > **automatic**: we systematize a few strategies and associate a policy for
+    > each of them. Each policy finds source/sink APIs. We then automatically
+    > identify the most suitable policy for a library.
+- Data constraints -> the arguments should adhere to some data constraints:
+    - args used as a string -> add NULL to the end
+    - args used as an array -> prepare an array of objects
+    - args used as a file -> prepare a temporary file to store information
+    - args modified by the API -> known it is an output
+    - dependencies, we know two arguments are used together (e.g., in a
+      if-condition or in a loop). This info allows us to define few policies:
+        - arg + len: one arg is an array and another arg controls its length.
+        - arg addr + arg addr: the API expects two arguments that belong to the
+          same buffer argument.
+    - coherent cleanup: we infer which function correctly de-allocate an object
+      (i.e., `fclose(pf)`). If it is not possible, we fallback to `free()` if
+      the object is allocated in heap.
+    - args used for malloc-length: we cap the malloc allocation to avoid OOM
+    > **automatic**: For each API's argument, we infer a set of constraints,
+      which combined with some policies, allow us to automatically prepare the
+      driver and increase its stability. 
+- Data initialization -> some library expects the user to initialize data before
+  interacting with the APIs. These operations fall beyond the API code analysis.
+    - chain of objects -> the library expects the user to create a chain of
+      objects that point to each other, without using any APIs
+    - callbacks -> for testing reason, the user should prepare a set of
+      callbacks to test specific library functionalities
+    - var arg functions -> should we care of these cases (??)
+    > **manual**: we require an operator to define a small set of templates to
+    > be used for initializing these cases, e.g., a set of minimal callbacks, or
+    > simple patterns to initialize a struct. Then our driver generator
+    > leverages this info to build valid drivers. We also estimate the number of
+    > manual templates required and their types.
+- Useful header -> what are the headers useful for a consumer?
+    > **manual**: we require an operator to indicate the public header files of
+    > a library. Many headers are supposed to be private but they are installed
+    > as publicly accessible, thus, it is not possible to infer which is which
+    > automatically.
