@@ -28,6 +28,9 @@ echo "./configure"
                                 CXXFLAGS="-mllvm -get-api-pass -g -O0" \
                                 CFLAGS="-mllvm -get-api-pass -g -O0"
 
+# WATCH OUT PADAWAN! SOMETIME SETTING -O0 IN C{XX}FLAGS MIGHT NOT BE ENOUGH!
+find . -name Makefile -exec sed -i 's/-O2/-O0/g' {} \;
+
 # configure compiles some shits for testing, better remove it
 rm $LIBFUZZ_LOG_PATH/apis.log
 

@@ -113,6 +113,13 @@ touch $LIBFUZZ_LOG_PATH/apis_llvm.json
 touch $LIBFUZZ_LOG_PATH/coerce.log
 ```
 - Compile/install, e.g., `make`/`make install`
+
+NOTE! Sometime setting `CFLAGS`/`CXXFLAGS` is not sufficient to force `-O0`. For
+Makefile, for instance, a command like that might turn out handy!
+```bash
+find . -name Makefile -exec sed -i 's/-O2/-O0/g' {} \;
+```
+
 - Extract `.bc` files, for instance
 ```bash
 extract-bc -b $WORK/lib/libtiffxx.a
