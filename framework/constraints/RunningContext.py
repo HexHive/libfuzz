@@ -238,7 +238,7 @@ class RunningContext(Context):
         len_type = Type("size_t", DataLayout.get_type_size("size_t"))
         ats = AccessTypeSet()
         mdata = ValueMetadata(ats, False, False, False, "")
-        return (self.create_new_var(len_type, mdata), mdata)
+        return (self.create_new_var(len_type, mdata, False), mdata)
 
     def create_new_buffer(self, type: Type, cond: ValueMetadata, force_pointer: bool):
         # if isinstance(type, PointerType):
