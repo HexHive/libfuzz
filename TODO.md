@@ -15,9 +15,8 @@
 
 [MOST IMPORTANT:]
 - TIFFWarning with NULL as second arg, why? it is a string, should be not NULL
-- return pointer to struct -> always allocate buffer in heap -> create_new_buffer must know if it is for a return value
 - add headers allow-list in `extract_included_functions.py` and `.toml`
-  configuraiton file
+  configuraiton file || maybe remove/move non public headers fater analysis.sh/build_library.sh?
 
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init

@@ -47,24 +47,26 @@ class CBFactory(Factory):
         # print("dep graph?")
         # from IPython import embed; embed(); exit(1)
 
-    def get_starting_api(self) -> Set[Api]:
+    def get_source_api(self) -> Set[Api]:
 
-        starting_api = set()
+        source_api = set()
 
         for api in self.api_list:
             if DataLayout.has_incomplete_type():
                 if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
                     and api.return_info.is_type_incomplete):
-                    starting_api.add(api)
+                    source_api.add(api)
                 if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
                     and api.return_info.type == "void*"):
-                    starting_api.add(api)
+                    source_api.add(api)
             else:
-                starting_api.add(api)
+                source_api.add(api)
 
         # from IPython import embed; embed(); exit(1)
 
-        return starting_api
+        source_api = set([f for f in source_api if f.function_name == "htp_config_create"])
+
+        return source_api
 
     def try_to_instantiate_api_call(self, api_call: ApiCall,
                         conditions: FunctionConditions, 
@@ -174,9 +176,9 @@ class CBFactory(Factory):
         get_cond = lambda x: self.conditions.get_function_conditions(x.function_name)
         to_api = lambda x: Factory.api_to_apicall(x)
 
-        starting_api = list(self.get_starting_api())
+        source_api = list(self.get_source_api())
 
-        if len(starting_api) == 0:
+        if len(source_api) == 0:
             raise Exception("I cannot find APIs to begin with :(")
 
         # List[(ApiCall, RunningContext)]
@@ -185,7 +187,7 @@ class CBFactory(Factory):
         # print("after create_random_driver")
         # from IPython import embed; embed(); exit(1)
 
-        begin_api = random.choice(starting_api)
+        begin_api = random.choice(source_api)
         begin_condition = get_cond(begin_api)
         call_begin = to_api(begin_api)
 
@@ -242,7 +244,7 @@ class CBFactory(Factory):
 
                 drv += [(api_call, rng_ctx_1)]
             else:
-                api_n = random.choice(starting_api)
+                api_n = random.choice(source_api)
                 begin_condition = get_cond(api_n)
                 call_begin = to_api(api_n)
 

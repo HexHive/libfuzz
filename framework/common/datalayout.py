@@ -76,6 +76,9 @@ class DataLayout:
         #     from IPython import embed; embed(); exit(1)
         
         if not known_type:
+            if function_name not in DataLayout.apis_llvm:
+                return 0
+
             (type_llvm, size_llvm) = DataLayout.get_llvm_type(function_name, pos)
 
             if is_original:
