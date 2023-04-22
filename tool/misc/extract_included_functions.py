@@ -21,7 +21,9 @@ def get_info(type_str):
         info["type_clang"] = type_str
 
     # ducking ugly
-    info["type_clang"] = info["type_clang"].replace(" ", "").replace("unsigned", "unsigned ")
+    info["type_clang"] = info["type_clang"].replace("enum ", "")
+    info["type_clang"] = info["type_clang"].replace(" ", "")
+    info["type_clang"] = info["type_clang"].replace("unsigned", "unsigned ")
     
     # stuffs like char[100] into char*
     if "[" in info["type_clang"]:

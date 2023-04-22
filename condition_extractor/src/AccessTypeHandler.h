@@ -144,6 +144,30 @@ bool calloc_handler(ValueMetadata *mdata, std::string fun_name,
         // no need to set field, empty field set is what I need
         atNode.setAccess(AccessType::Access::create);
         mdata->getAccessTypeSet()->insert(atNode, icfgNode);
+
+        auto t = atNode.getType();
+        if (auto pt = SVFUtil::dyn_cast<llvm::PointerType>(t)) {
+
+            AccessType tmpAcNode = atNode;
+            tmpAcNode.addField(-1);
+            tmpAcNode.setAccess(AccessType::Access::write);
+            mdata->getAccessTypeSet()->insert(tmpAcNode, icfgNode);
+
+            t = pt->getElementType();
+        }
+
+        if (auto st = SVFUtil::dyn_cast<llvm::StructType>(t)) {
+            
+            for (int f = 0; f < st->getNumElements(); f++) {
+                auto ft = st->getElementType(f);
+                AccessType atField = atNode;
+                atField.setAccess(AccessType::Access::write);
+                atField.addField(f);
+                atField.setType(ft);
+                mdata->getAccessTypeSet()->insert(atField, icfgNode);
+            }
+        }
+
         return true;
     }
     if (param_num == 1 && atNode.getNumFields() == 0) {

@@ -17,11 +17,8 @@
 - TIFFWarning with NULL as second arg, why? it is a string, should be not NULL
 - add headers allow-list in `extract_included_functions.py` and `.toml`
   configuraiton file || maybe remove/move non public headers fater analysis.sh/build_library.sh?
-- recognize `enum` and obtain correct name in driver generation
 - in dynamic array chars, include a check that len(array) > 0 before setting array[len-1] = 0
-- why `htp_config_set_server_personality` is not found by `extractor`??
-- if same field has same write and read in condition, those get overwritten
-  maybe check the first instruction????
+- think why `void*` raises Unsat with `htp_connp_set_user_data` -- maybe it is not a problem
 
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init
