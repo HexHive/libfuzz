@@ -64,10 +64,10 @@ git clone --no-checkout https://gitlab.com/libtiff/libtiff.git \
 git -C "$TARGET/repo" checkout c145a6c14978f73bb484c955eb9f84203efcb12e
 ```
 
-If the library is not in git/mercury/svf, you may want to fallback to the old
+If the library is not in git/mercury/svn, you may want to fallback to the old
 good wget+tar.
 
-The script will be automatically invoked by `analysis.sh` and `build_library.sh`.
+The script will be automatically invoked in the docker building.
 
 **analysis.sh**
 
@@ -76,7 +76,6 @@ generating the drivers later. Make sure the building system adheres to the
 following set-up.
 
 Be sure that:
-- you invoke `./preinstall.sh` and `./fetch.sh` before doing anything else.
 - create working dir:
 ```bash
 WORK="$TARGET/work"
