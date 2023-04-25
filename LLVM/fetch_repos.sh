@@ -2,7 +2,7 @@
 
 LLVM_VERSION=12.0.0
 
-cd $HOME
+cd "$HOME" || exit
 
 rm -r  clang lld llvm compiler-rt
 
@@ -46,7 +46,7 @@ echo "Done with lld"
 if [ ! -d binutils ]; then
 git clone --depth 1 git://sourceware.org/git/binutils-gdb.git binutils
 mkdir build
-cd build
+cd build || exit
 ../binutils/configure --enable-gold --enable-plugins --disable-werror --enable-debug
 make all-gold -j
 cd ..
@@ -54,12 +54,12 @@ fi
 echo "Done with LLVM gold"
 
 #Set up clang, compiler-rt
-cd llvm/tools
+cd llvm/tools || exit
 ln -s ../../clang .
 cd ../../
 
-cd llvm/projects
+cd llvm/projects || exit
 ln -s ../../compiler-rt .
 cd ../../
 
-cd -
+cd - || exit
