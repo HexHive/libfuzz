@@ -1,11 +1,10 @@
-
 #!/bin/bash
 
 set -e
 
 LLVMHome="llvm-13.0.0-custom.obj"
 
-cd /root
+cd "$HOME"
 
 # copied from SVF/build.sh build_llvm_from_source
 mkdir "$LLVMHome"
@@ -20,7 +19,7 @@ cd llvm-build
 # /*/ is a dirty hack to get llvm-project-llvmorg-version...
 cmake -DCMAKE_INSTALL_PREFIX="/root/$LLVMHome" ../llvm-source/*/llvm
 # to replace with ./build.sh -- later
-make -j${jobs}
+make -j
 make install
 cd ..
 
