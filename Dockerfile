@@ -37,16 +37,20 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && chmod 4755 /usr/bin/sudo \
     && chown -R $USERNAME /home/$USERNAME
 
-ENV HOME=/root
+ENV HOME=/home/${USERNAME}
+USER ${USERNAME}
 WORKDIR ${HOME}
+ENV CCACHE_DIR=${HOME}/.ccache
+RUN --mount=type=cache,target=${CCACHE_DIR} mkdir -p ${CCACHE_DIR} && sudo -E chown -R ${USERNAME}:${USERNAME} ${CCACHE_DIR}
+RUN echo "export PATH=\$PATH:${HOME}/.local/bin" >> ~/.bashrc
 
 RUN pip3 install ipython
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 # LLVM from source code
 COPY ./LLVM ${HOME}/LLVM
-RUN cd ${HOME}/LLVM && ./fetch_repos.sh
-RUN --mount=type=cache,target=${HOME}/.ccache/ cd ${HOME}/LLVM && ./build.sh
+RUN --mount=type=cache,target=${CCACHE_DIR} cd ${HOME}/LLVM && ./fetch_repos.sh
+RUN --mount=type=cache,target=${CCACHE_DIR} cd ${HOME}/LLVM && ./build.sh
 ENV LIBFUZZ /workspaces/libfuzz
 
 # SVF
@@ -78,8 +82,6 @@ COPY --chown=${USERNAME}:${USERNAME} ./tool/misc/extract_included_functions.py $
 RUN cd ${TOOLS_DIR}/condition_extractor && ./bootstrap.sh && make
 
 WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
-RUN ./preinstall.sh
-RUN ./fetch.sh
 
 CMD ${LIBFUZZ}/targets/${TARGET_NAME}/analysis.sh
 
@@ -103,13 +105,13 @@ ARG target_name=simple_connection
 # ARG driver=*.cc
 
 ENV TARGET_NAME ${target_name}
-ENV TARGET /library
+ENV TARGET ${HOME}/library
 
 # I want to install the library at building time, so later I only need to build
 # the drivers
-COPY ./targets/${TARGET_NAME} ${LIBFUZZ}/targets/${TARGET_NAME}
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME} ${LIBFUZZ}/targets/${TARGET_NAME}  
 WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
-RUN ./preinstall.sh
+RUN sudo ./preinstall.sh
 RUN ./fetch.sh
 RUN ./build_library.sh
 

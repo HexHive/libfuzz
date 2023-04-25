@@ -4,7 +4,7 @@ LLVM_VERSION=12.0.0
 
 cd "$HOME" || exit
 
-rm -r  clang lld llvm compiler-rt
+rm -rf  clang llvm compiler-rt
 
 #get LLVM
 if [ ! -d llvm ]; then
@@ -32,15 +32,6 @@ mv compiler-rt-$LLVM_VERSION.src compiler-rt
 rm compiler-rt-$LLVM_VERSION.src.tar.xz
 fi
 echo "Done with compiler-rt"
-
-#get lld
-if [ ! -d lld ]; then
-wget -q --retry-connrefused --tries=100 https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVM_VERSION/lld-$LLVM_VERSION.src.tar.xz
-tar -xf lld-$LLVM_VERSION.src.tar.xz
-mv lld-$LLVM_VERSION.src lld
-rm lld-$LLVM_VERSION.src.tar.xz
-fi
-echo "Done with lld"
 
 #to install LLVM gold
 if [ ! -d binutils ]; then
