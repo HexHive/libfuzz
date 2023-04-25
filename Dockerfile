@@ -34,6 +34,7 @@ ENV LIBFUZZ /workspaces/libfuzz
 RUN git clone https://github.com/SVF-tools/SVF.git && \
     cd SVF && \ 
     git checkout 1c09651a6c4089402b1c072a1b0ab901bc963846 && \
+    sed -i 's/jobs=4/jobs=/g' build.sh && \
     ./build.sh
 RUN cd SVF && ./setup.sh
 
