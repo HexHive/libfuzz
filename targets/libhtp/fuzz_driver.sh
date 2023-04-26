@@ -28,10 +28,12 @@ for d in `ls ${DRIVER_FOLDER}/${DRIVER}.cc`
 do
     echo "Driver: $d"
     # [TAG] THIS STEP MUST BE ADAPTED FOR EACH LIBRARY
-    $CXX -g -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
-        $d ${TARGET}/work/lib/libhtp.a -lz -ljpeg -Wl,-Bstatic -llzma -Wl, \
+    $CXX -g -std=c++11 -fsanitize=fuzzer,address -I/${TARGET}/work/include \
+        $d ${TARGET}/work/lib/libhtp.a -lz -ljpeg -llzma -Wl, \
         -Bdynamic -lstdc++ -o "${d%%.*}"
 done
+
+echo "[COMPILATION DONE]"
 
 for d in ` find ${DRIVER_FOLDER} -type f -executable -name "${DRIVER}"`
 do
@@ -41,12 +43,12 @@ do
     CRASHES_DIR=${LIBFUZZ}/workdir/${TARGET_NAME}/crashes/${DRIVER_NAME}
     mkdir -p ${CRASHES_DIR}
     
-    # THIS IS WITH STANDARD MODE -- STOP AT THE FIRST CRASHE
-    # timeout $TIMEOUT $d ${DRIVER_CORPUS} \
-    #     -artifact_prefix=${CRASHES_DIR}/ || echo "Done: $d"
+    # THIS IS WITH STANDARD MODE -- STOP AT THE FIRST CRASH
+    timeout $TIMEOUT $d ${DRIVER_CORPUS} \
+        -artifact_prefix=${CRASHES_DIR}/ -detect_leaks=0 || echo "Done: $d"
 
-    # THIS IS WITH FORK-MODE -- KEEP GOING TILL SOMEONE KILLS IT
-    (sleep $TIMEOUT && pkill ${DRIVER_NAME}) &
-    $d ${DRIVER_CORPUS} -artifact_prefix=${CRASHES_DIR}/ -ignore_crashes=1 \
-        -ignore_timeouts=1 -ignore_ooms=1 -fork=1 || echo "Done: $d"
+    # # THIS IS WITH FORK-MODE -- KEEP GOING TILL SOMEONE KILLS IT
+    # (sleep $TIMEOUT && pkill ${DRIVER_NAME}) &
+    # $d ${DRIVER_CORPUS} -artifact_prefix=${CRASHES_DIR}/ \
+    #     -ignore_timeouts=1 -ignore_ooms=1 -fork=1 || echo "Done: $d"
 done

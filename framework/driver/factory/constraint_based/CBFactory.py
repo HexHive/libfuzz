@@ -75,14 +75,14 @@ class CBFactory(Factory):
 
         unsat_vars = set()
 
-        # if api_call.function_name == "TIFFReadRGBAImage":
-        #     print("hook TIFFReadRGBAImage")
-        #     par_debug = 3
+        # if api_call.function_name == "htp_connp_set_user_data":
+        #     print("hook htp_connp_set_user_data")
+        #     par_debug = 1
         #     is_ret = False
         #     arg_type = api_call.arg_types[par_debug]
         #     arg_cond = conditions.argument_at[par_debug]
         #     type = arg_type
-            # from IPython import embed; embed(); exit(1)
+        #     from IPython import embed; embed(); exit(1)
 
         # first round to initialize dependency args
         for arg_pos, arg_type in api_call.get_pos_args_types():
@@ -224,7 +224,6 @@ class CBFactory(Factory):
                     for p, c in unsat_var_2:
                         arg_type = call_next.arg_types[p]
                         print(f" => arg{p}: {arg_type} -> {c}")
-                    print()
 
             print(f"[INFO] Complete doable functions: {len(candidate_api)}")
 

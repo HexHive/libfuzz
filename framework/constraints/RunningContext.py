@@ -182,6 +182,10 @@ class RunningContext(Context):
                 from IPython import embed; embed(); exit(1)
                 # else:
                 #     raise ConditionUnsat()
+        elif (isinstance(type, PointerType) and 
+            type.get_pointee_type() == self.stub_void):
+            new_buff = self.create_new_var(self.stub_char_array, cond, False)
+            val = new_buff.get_address()
         else:
             # print("else:")
             if isinstance(type, PointerType):
