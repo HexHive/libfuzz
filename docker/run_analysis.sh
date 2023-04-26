@@ -10,16 +10,16 @@ if [ -z "$TARGET" ]; then
     exit 1
 fi
 
-IMG_NAME="libpp-analysis-$TARGET"
+IMG_NAME="libpp-analysis"
 LIBPP=../
 
 set -x
 DOCKER_BUILDKIT=1 docker build -t "$IMG_NAME" \
     --target libfuzzpp_analysis \
-    --build-arg target_name="$TARGET" \
     -f "$LIBPP/Dockerfile" "$LIBPP"
 set +x
 
 echo "$IMG_NAME"
 
-docker run -v "$(pwd)/..:/workspaces/libfuzz" "$IMG_NAME"
+docker run --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" "$IMG_NAME"
+# docker run -it --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" "$IMG_NAME" bash

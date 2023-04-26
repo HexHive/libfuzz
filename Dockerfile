@@ -68,11 +68,6 @@ RUN cd ${HOME}/python && python3.9 -m pip install -r requirements.txt
 # TARGET FOR LIBRARY ANALYSIS
 FROM libfuzzpp_dev_image AS libfuzzpp_analysis
 
-# simple_connection is a toy example library (not even sure it works)
-ARG target_name=simple_connection
-
-ENV TARGET ${LIBFUZZ}/analysis/${target_name}
-ENV TARGET_NAME ${target_name}
 ENV TOOLS_DIR ${HOME}
 
 RUN mkdir -p ${TOOLS_DIR}/condition_extractor/
@@ -81,9 +76,8 @@ COPY --chown=${USERNAME}:${USERNAME} ./condition_extractor ${TOOLS_DIR}/conditio
 COPY --chown=${USERNAME}:${USERNAME} ./tool/misc/extract_included_functions.py ${TOOLS_DIR}/tool/misc/
 RUN cd ${TOOLS_DIR}/condition_extractor && ./bootstrap.sh && make
 
-WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
-
-CMD ${LIBFUZZ}/targets/${TARGET_NAME}/analysis.sh
+ENV PATH $PATH:${HOME}/.local/bin
+CMD ${LIBFUZZ}/targets/start_analysis.sh
 
 # TARGET FOR DRIVER GENERATION
 FROM libfuzzpp_dev_image AS libfuzzpp_drivergeneration

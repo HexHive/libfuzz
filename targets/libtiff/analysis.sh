@@ -3,9 +3,6 @@
 set -e
 set -x
 
-sudo ./preinstall.sh
-./fetch.sh
-
 # export LIBFUZZ=/workspaces/libfuzz/
 # export TARGET=$LIBFUZZ/analysis/libtiff/ 
 
