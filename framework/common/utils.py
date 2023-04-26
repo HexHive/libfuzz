@@ -128,7 +128,7 @@ class Utils:
         return apis_clang_list
 
     @staticmethod
-    def get_api_list(apis, minimum_apis) -> Set[JavaApi]:
+    def get_api_list(apis, minimum_apis, builtin_apis) -> Tuple[Set[JavaApi], Set[JavaApi]]:
 
         minimum_apis_list = []
         if os.path.isfile(minimum_apis):
@@ -137,16 +137,10 @@ class Utils:
                     l = l.strip()
                     if l:
                         minimum_apis_list += [l]
-        else:
-            print("WARNING, minimum_apis not found, considering all APIs")
 
-        if len(minimum_apis_list) != 0:
-            included_functions = minimum_apis_list
-        else:
-            included_functions = None
-
-        apis_list = set()
-        with open(apis) as  f:
+        api_list = set()
+        full_apis_list = set()
+        with open(apis) as f:
             for l in f:
                 if not l.strip():
                     continue
@@ -156,20 +150,48 @@ class Utils:
                     api = json.loads(l)
                 except Exception as e: 
                     from IPython import embed; embed(); exit()
-                function_name = api["functionName"]
-                if included_functions and not function_name in included_functions:
-                    continue
-                apis_list.add(Utils.normalize_args(api))
+                javaapi = Utils.normalize_args(api)
+                full_apis_list.add(javaapi)
                 # print(apis_list)
                 # exit()
 
-        return apis_list
+                if javaapi.get_signature() in minimum_apis_list:
+                    api_list.add(javaapi)
+
+        with open(builtin_apis) as f:
+            for l in f:
+                if not l.strip():
+                    continue
+                if l.startswith("#"):
+                    continue
+                try:
+                    api = json.loads(l)
+                except Exception as e: 
+                    from IPython import embed; embed(); exit()
+                javaapi = Utils.normalize_args(api)
+                full_apis_list.add(javaapi)
+
+        return full_apis_list, api_list
 
     @staticmethod
-    def get_subtypes(subtypes) -> Dict[Tuple[str, str], Set[str]]:
+    def get_subtypes(subtypes, builtin_subtypes) -> Dict[Tuple[str, str], Set[str]]:
         subtype_dict = {}
 
         with open(subtypes) as f:
+            for l in f:
+                if not l.strip():
+                    continue
+                if l.startswith("#"):
+                    continue
+                try:
+                    subtype = json.loads(l)
+                except Exception as e: 
+                    from IPython import embed; embed(); exit()
+                
+                type_name = subtype["name"]
+                subtype_dict[type_name["rawType"], str(type_name["argTypes"])] = set([item["rawType"] for item in subtype["subtypes"]])
+
+        with open(builtin_subtypes) as f:
             for l in f:
                 if not l.strip():
                     continue

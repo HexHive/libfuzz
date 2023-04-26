@@ -1,7 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Set
-
-from driver.ir.java.variable import Variable
 
 class JavaType(ABC):
 
@@ -27,6 +24,3 @@ class JavaType(ABC):
     @abstractmethod
     def has_subtype(self, type: 'JavaType') -> bool:
         pass
-
-    def check_type_compatible(self, var: Variable) -> bool:
-        return self.has_subtype(var.type)

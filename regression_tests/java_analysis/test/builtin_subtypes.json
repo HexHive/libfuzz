@@ -1,0 +1,1 @@
+{"name":{"rawType":"java.io.InputStream","argTypes":[]},"subtypes":[{"rawType":"java.io.ByteArrayInputStream","argTypes":[]},{"rawType":"FileInputStream","argTypes":[]}]}

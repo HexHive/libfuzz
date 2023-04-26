@@ -1,0 +1,8 @@
+root@7526c3bd2ae6:/workspaces/libfuzz# python test.py 
+[ArrayCreate(name=byte,dimension=1), ClassCreate(name=java.io.ByteArrayInputStream), ClassCreate(name=co.nstant.in.cbor.CborDecoder), ApiInvoke(name=co.nstant.in.cbor.CborDecoder.decode)]
+
+root@7526c3bd2ae6:/workspaces/libfuzz# python test.py 
+[ArrayCreate(name=byte,dimension=1), ClassCreate(name=java.io.ByteArrayInputStream), ClassCreate(name=co.nstant.in.cbor.CborDecoder), ApiInvoke(name=co.nstant.in.cbor.CborDecoder.decode)]
+
+root@7526c3bd2ae6:/workspaces/libfuzz# python test.py 
+[ArrayCreate(name=byte,dimension=1), ClassCreate(name=int), ClassCreate(name=co.nstant.in.cbor.model.Map), ApiInvoke(name=co.nstant.in.cbor.model.Map.hashCode), ClassCreate(name=java.io.ByteArrayInputStream), ClassCreate(name=co.nstant.in.cbor.CborDecoder), ApiInvoke(name=co.nstant.in.cbor.CborDecoder.decode)]

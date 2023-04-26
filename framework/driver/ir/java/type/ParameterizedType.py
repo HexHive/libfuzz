@@ -15,7 +15,7 @@ class ParameterizedType(JavaType):
             return False
         if not self.rawType.has_subtype(type.rawType):
             return False
-        if len(self.argType) != type.argType:
+        if len(self.argType) != len(type.argType):
             return False
         for i, t in enumerate(self.argType):
             if t != type.argType[i]:

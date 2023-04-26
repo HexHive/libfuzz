@@ -6,3 +6,4 @@ for func in ('debug', 'info', 'warning', 'error', 'critical'):
 from .Factory               import Factory
 
 import driver.factory.only_type
+import driver.factory.java_analysis

@@ -1,18 +1,15 @@
-from typing import Dict, Set
+from typing import Dict, Set, Tuple
 from . import JavaType
 
 class ClassType(JavaType):
-    def __init__(self, className: str, subtypes: Dict[str, Set[str]], is_primitive: bool):
+    def __init__(self, className: str, subtypes: Dict[Tuple[str, str], Set[str]], is_primitive: bool):
         self.className = className
-        # For convenience, we let classType with an empty package name has a '.' in the beginning. We need to remove this here.
-        if className[0] == ".":
-            self.className = className[1:]
         self.is_primitive = is_primitive
         
         if is_primitive:
             self.subtypes = []
         else:
-            self.subtypes = subtypes.get(className)
+            self.subtypes = subtypes.get((className, str([])))
 
     def has_subtype(self, type: JavaType) -> bool:
         if not isinstance(type, ClassType):

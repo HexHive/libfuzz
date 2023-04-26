@@ -1,11 +1,11 @@
 from typing import List
 from driver.ir import Statement
-from driver.ir.java.type import JavaType, ClassType
+from driver.ir.java.type import JavaType
 from driver.ir.java.variable import Variable
 
 
 class MethodCall(Statement):
-    def __init__(self, declaring_class: ClassType, arg_types: List[JavaType]):
+    def __init__(self, declaring_class: JavaType, arg_types: List[JavaType]):
         self.declaring_class = declaring_class
         self.arg_types = arg_types
 
@@ -20,13 +20,13 @@ class MethodCall(Statement):
             raise Exception(f"{pos} out of range [0, {len(self.arg_vars)}]")
 
         # I must ensure the value is coherent with the argument type
-        assert self.arg_types[pos].check_type_compatible(var)
+        assert self.arg_types[pos].has_subtype(var.type)
 
         self.arg_vars[pos] = var
 
     def set_class_var(self, class_var: Variable):
-        
-        assert self.declaring_class.check_type_compatible(class_var)
+
+        assert self.declaring_class.has_subtype(class_var.type)
         
         self.class_var = class_var
 

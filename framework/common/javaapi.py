@@ -51,6 +51,9 @@ class JavaApi:
     
     def is_abstract(self):
         return self.modifier & 0x400
+    
+    def get_signature(self):
+        return f"{self.declaring_class.rawType}.{self.function_name}(" + ",".join([x.rawType for x in self.arguments_info]) + ")"
 
     def __str__(self):
         return f"JavaApi(function_name={self.declaring_class.rawType}.{self.function_name})"

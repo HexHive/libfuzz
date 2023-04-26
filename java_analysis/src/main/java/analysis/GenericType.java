@@ -7,7 +7,9 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 public class GenericType {
-    private final String typeName;
+    // GenericType now does not support nested generic type. This means List<B> in A<List<B>> will be treated as a
+    // normal class type.
+    public final String typeName;
     public static final Integer nonExistIdx = -1;
     private ImmutableMap<String, ImmutableList<String>> alias;
     private ImmutableMap<String, ImmutableList<Integer>> typeIndex;

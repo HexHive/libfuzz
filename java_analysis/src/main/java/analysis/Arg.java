@@ -6,6 +6,7 @@ import sootup.core.types.ClassType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class Arg {
@@ -58,6 +59,27 @@ public class Arg {
     public String toString() {
         return String.format("{\"rawType\":\"%s\",\"argTypes\":%s}", formatName(rawType),
                 argType.stream().map(type -> "\"" + formatName(type) + "\"").toList());
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 17;
+        result = 31 * result + rawType.hashCode();
+        result = 31 * result + argType.hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+
+        if (!(o instanceof Arg a)) {
+            return false;
+        }
+
+        return a.rawType.equals(rawType) && a.argType.equals(argType);
     }
 
     private static String formatName(String name) {

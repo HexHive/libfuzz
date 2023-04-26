@@ -17,7 +17,7 @@ class ApiInvoke(MethodCall):
 
     def set_ret_var(self, ret_var: Variable):
 
-        assert self.return_type.check_type_compatible(ret_var)
+        assert self.return_type.has_subtype(ret_var.type)
 
         self.ret_var = ret_var
 

@@ -117,13 +117,17 @@ class Configuration:
 
         if not "minimum_apis" in analysis:
             raise Exception("'minimum_apis' not defined")
+        
+        if not "builtin_apis" in analysis:
+            raise Exception("'builtin_apis' not defined")
 
         apis = analysis["apis"]
         minimum_apis = analysis["minimum_apis"]
+        builtin_apis = analysis["builtin_apis"]
 
         # t = Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types)
         # from IPython import embed; embed(); exit()
-        return Utils.get_api_list(apis, minimum_apis)
+        return Utils.get_api_list(apis, minimum_apis, builtin_apis)
 
     @cached_property
     def subtypes(self):
@@ -135,9 +139,13 @@ class Configuration:
         if not "subtypes" in analysis:
             raise Exception("'subtypes' not defined")
         
+        if not "builtin_subtypes" in analysis:
+            raise Exception("'builtin_subtypes' not defined")
+        
         subtypes = analysis["subtypes"]
+        builtin_subtypes = analysis["builtin_subtypes"]
 
-        return Utils.get_subtypes(subtypes)
+        return Utils.get_subtypes(subtypes, builtin_subtypes)
 
     @cached_property
     def dependency_graph(self):

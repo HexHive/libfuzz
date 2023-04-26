@@ -16,4 +16,8 @@ public class SimpleClazz2 {
     protected String method3(String param1, Integer param2) throws IllegalArgumentException {
         return "Whatever";
     }
+
+    public String method4(SimpleClazz3 clazz, int param) {
+        return "Whatever";
+    }
 }

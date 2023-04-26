@@ -1,9 +1,10 @@
 [analysis]
-# apis = "/workspaces/libfuzz/regression_tests/java_analysis/test/apis.json"
-# subtypes = "/workspaces/libfuzz/regression_tests/java_analysis/test/subtypes.json"
-apis = "/workspaces/libfuzz/regression_tests/java_analysis/test/args4j_apis.json"
-subtypes = "/workspaces/libfuzz/regression_tests/java_analysis/test/args4j_subtypes.json"
-minimum_apis = ""
+apis = "/workspaces/libfuzz/regression_tests/java_analysis/test/apis.json"
+subtypes = "/workspaces/libfuzz/regression_tests/java_analysis/test/subtypes.json"
+minimum_apis = "/workspaces/libfuzz/regression_tests/java_analysis/test/minimum_apis.txt"
+# apis = "/workspaces/libfuzz/regression_tests/java_analysis/test/args4j_apis.json"
+# subtypes = "/workspaces/libfuzz/regression_tests/java_analysis/test/args4j_subtypes.json"
+# minimum_apis = "/workspaces/libfuzz/regression_tests/java_analysis/test/args4j_minimum_apis.txt"
 
 [generator]
 policy = "java"

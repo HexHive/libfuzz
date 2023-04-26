@@ -6,3 +6,4 @@ for func in ('debug', 'info', 'warning', 'error', 'critical'):
 from .MethodCall import MethodCall
 from .ApiInvoke import ApiInvoke
 from .ClassCreate import ClassCreate
+from .ArrayCreate import ArrayCreate

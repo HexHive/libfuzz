@@ -1,0 +1,6 @@
+{"name":{"rawType":".SimpleSuperInterface","argTypes":["java.lang.Integer", "java.util.Map<java.lang.Integer, java.lang.String>"]},"subtypes":[{"rawType":".SimpleClazz4","argTypes":[]}, {"rawType":".SimpleClazz3","argTypes":[]}]}
+{"name":{"rawType":".SimpleSuperInterface","argTypes":["java.lang.Boolean", "java.lang.String"]},"subtypes":[{"rawType":".SimpleClazz7","argTypes":[]}]}
+{"name":{"rawType":".SimpleInterface","argTypes":["java.util.Map<java.lang.Integer, java.lang.String>"]},"subtypes":[{"rawType":".SimpleClazz4","argTypes":[]}, {"rawType":".SimpleClazz3","argTypes":[]}]}
+{"name":{"rawType":".SimpleClazz3","argTypes":[]},"subtypes":[{"rawType":".SimpleClazz4","argTypes":[]}]}
+{"name":{"rawType":".SimpleClazz5","argTypes":["java.lang.Boolean"]},"subtypes":[{"rawType":".SimpleClazz7","argTypes":[]}]}
+{"name":{"rawType":".SimpleClazz6","argTypes":["java.lang.Boolean"]},"subtypes":[{"rawType":".SimpleClazz7","argTypes":[]}]}

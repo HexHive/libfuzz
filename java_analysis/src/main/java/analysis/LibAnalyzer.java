@@ -42,7 +42,10 @@ public class LibAnalyzer {
 
         clazzes = new ArrayList<>();
         for (JavaSootClass sootClass: view.getClasses()) {
-            clazzes.add(Class.forName(sootClass.getName(), false, loader));
+            Class<?> clazz = Class.forName(sootClass.getName(), false, loader);
+            if (!clazz.isSynthetic()) {
+                clazzes.add(clazz);
+            }
         }
     }
 
@@ -54,7 +57,7 @@ public class LibAnalyzer {
         return builder.build();
     }
 
-    private ImmutableList<ApiInfo> extractApiFromClazz(Class<?> klazz) {
+    public static ImmutableList<ApiInfo> extractApiFromClazz(Class<?> klazz) {
         if (!Modifier.isPublic(klazz.getModifiers())) {
             return ImmutableList.of();
         }
@@ -105,7 +108,7 @@ public class LibAnalyzer {
     }
 
     // The main point is to retrieve all subtype of a class and all implementer of an interface
-    public Map<Arg, Set<Arg>> retrieveSubTypes() throws ClassNotFoundException {
+    public Map<Arg, Set<Arg>> retrieveSubTypes() {
 
         Map<Class<?>, GenericType> mapping = new HashMap<>();
         Map<Arg, Set<Arg>> subtypeMap = new HashMap<>();
@@ -184,9 +187,15 @@ public class LibAnalyzer {
                 indexMap.putAll(genericType.fulfillTypeIndex(retrieveIndex(typeVariables, typeArgs)));
             }
         } else {
-            aliasMap.put(clazz.getName(), ImmutableList.of());
-            indexMap.put(clazz.getName(),
-                    Arrays.stream(typeVariables).map(v -> GenericType.nonExistIdx).collect(ImmutableList.toImmutableList()));
+            GenericType genericType = getGenericType(clazz, mapping);
+            if (genericType == null) {
+                aliasMap.put(clazz.getName(), ImmutableList.of());
+                indexMap.put(clazz.getName(),
+                        Arrays.stream(typeVariables).map(v -> GenericType.nonExistIdx).collect(ImmutableList.toImmutableList()));
+            } else {
+                aliasMap.putAll(genericType.fulfillAlias(new Type[]{}));
+                indexMap.putAll(genericType.fulfillTypeIndex(List.of()));
+            }
         }
     }
 

@@ -1,12 +1,11 @@
-from typing import Dict, Set
+from typing import Dict, Set, Tuple
 
-from driver.ir.java.variable import Variable
 from . import JavaType, ClassType
 
 import re
 
 class ArrayType(JavaType):
-    def __init__(self, className: str, subtypes: Dict[str, Set[str]]):
+    def __init__(self, className: str, subtypes: Dict[Tuple[str, str], Set[str]]):
         if not className.startswith("["):
             raise Exception("Not an ArrayType")
         
@@ -48,4 +47,4 @@ class ArrayType(JavaType):
         return f"{self.__class__.__name__}(name={self.rawType.className},dimension={self.dimension})"
     
     def __hash__(self):
-        return hash(self.__class__.__name__ + str(self.dimension) + hash(self.rawType))
+        return hash(self.__class__.__name__ + str(self.dimension) + str(hash(self.rawType)))
