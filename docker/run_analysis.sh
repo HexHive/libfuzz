@@ -5,8 +5,8 @@
 # - env TARGET: target name (from targets/)
 ##
 
-if [ -z $TARGET ]; then
-    echo '$TARGET must be specified as environment variables.'
+if [ -z "$TARGET" ]; then
+    echo "\$TARGET must be specified as environment variables."
     exit 1
 fi
 
@@ -22,4 +22,4 @@ set +x
 
 echo "$IMG_NAME"
 
-docker run -v $(pwd)/..:/workspaces/libfuzz $IMG_NAME
+docker run -v "$(pwd)/..:/workspaces/libfuzz" "$IMG_NAME"

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+set -e
+set -x
+
+sudo ./preinstall.sh
+./fetch.sh
+
 # export LIBFUZZ=/workspaces/libfuzz/
 # export TARGET=$LIBFUZZ/analysis/libtiff/ 
 
@@ -38,7 +44,7 @@ echo "./configure"
                                 CFLAGS="-mllvm -get-api-pass -g -O0"
 
 # configure compiles some shits for testing, better remove it
-rm $LIBFUZZ_LOG_PATH/apis.log
+rm -rf $LIBFUZZ_LOG_PATH/apis.log
 
 touch $LIBFUZZ_LOG_PATH/exported_functions.txt
 touch $LIBFUZZ_LOG_PATH/incomplete_types.txt

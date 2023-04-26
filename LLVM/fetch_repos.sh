@@ -2,9 +2,9 @@
 
 LLVM_VERSION=12.0.0
 
-cd $HOME
+cd "$HOME" || exit
 
-rm -r  clang lld llvm compiler-rt
+rm -rf  clang llvm compiler-rt
 
 #get LLVM
 if [ ! -d llvm ]; then
@@ -33,20 +33,11 @@ rm compiler-rt-$LLVM_VERSION.src.tar.xz
 fi
 echo "Done with compiler-rt"
 
-#get lld
-if [ ! -d lld ]; then
-wget -q --retry-connrefused --tries=100 https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVM_VERSION/lld-$LLVM_VERSION.src.tar.xz
-tar -xf lld-$LLVM_VERSION.src.tar.xz
-mv lld-$LLVM_VERSION.src lld
-rm lld-$LLVM_VERSION.src.tar.xz
-fi
-echo "Done with lld"
-
 #to install LLVM gold
 if [ ! -d binutils ]; then
 git clone --depth 1 git://sourceware.org/git/binutils-gdb.git binutils
 mkdir build
-cd build
+cd build || exit
 ../binutils/configure --enable-gold --enable-plugins --disable-werror --enable-debug
 make all-gold -j
 cd ..
@@ -54,12 +45,12 @@ fi
 echo "Done with LLVM gold"
 
 #Set up clang, compiler-rt
-cd llvm/tools
+cd llvm/tools || exit
 ln -s ../../clang .
 cd ../../
 
-cd llvm/projects
+cd llvm/projects || exit
 ln -s ../../compiler-rt .
 cd ../../
 
-cd -
+cd - || exit
