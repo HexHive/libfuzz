@@ -3,7 +3,7 @@
 PROJECTHOME=$(pwd)
 # LLVMHome="llvm-13.0.0.obj"
 Z3Home="z3.obj"
-SVF_DIR="/root/SVF"
+export SVF_DIR="${HOME}/SVF"
 # export LLVM_DIR=$SVF_DIR/$LLVMHome
 export Z3_DIR=$SVF_DIR/$Z3Home
 export PATH=$LLVM_DIR/bin:$PATH

@@ -2,9 +2,7 @@
 
 FROM ubuntu:20.04 AS libfuzzpp_dev_image
 
-WORKDIR /root
-
-RUN apt-get -q update && \
+RUN --mount=type=cache,target=/var/cache/apt apt-get -q update && \
     DEBIAN_FRONTEND="noninteractive" \ 
     apt-get -y install --no-install-suggests --no-install-recommends \
     sudo make ninja-build texinfo bison zsh ccache autoconf libtool \
@@ -15,34 +13,57 @@ RUN apt-get -q update && \
     bash-completion less apt-utils apt-transport-https curl  \
     ca-certificates gnupg dialog libpixman-1-dev gnuplot-nox \
     nodejs npm graphviz libtinfo-dev libz-dev zip unzip libclang-12-dev \
-    tmux tree gdb jq bc cloc \
+    tmux tree gdb jq bc cloc ccache \
     && rm -rf /var/lib/apt/lists/*
 
 # Clang dependencies
-RUN apt-get update && apt-get full-upgrade -y && \
-    apt-get -y install --no-install-suggests --no-install-recommends  \
+RUN --mount=type=cache,target=/var/cache/apt apt-get update && apt-get full-upgrade -y && \
+    DEBIAN_FRONTEND="noninteractive" \ 
+    apt-get -y install --no-install-suggests --no-install-recommends \
     clang-12 clang-tools-12 lldb llvm gcc g++ libncurses5 clang
 
+ARG USERNAME=libfuzz
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m -s/bin/zsh $USERNAME \
+    # [Optional] Add sudo support. Omit if you don't need to install software after connecting.
+    && apt-get update \
+    && apt-get install -y sudo \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME \
+    && chown -R root /usr/lib/sudo/sudoers.so /usr/bin/sudo /usr/lib/sudo \
+    && chmod 4755 /usr/bin/sudo \
+    && chown -R $USERNAME /home/$USERNAME
+
+ENV HOME=/home/${USERNAME}
+USER ${USERNAME}
+WORKDIR ${HOME}
+ENV CCACHE_DIR=${HOME}/.ccache
+RUN --mount=type=cache,target=${CCACHE_DIR} mkdir -p ${CCACHE_DIR} && sudo -E chown -R ${USERNAME}:${USERNAME} ${CCACHE_DIR}
+RUN echo "export PATH=\$PATH:${HOME}/.local/bin" >> ~/.bashrc
+
+RUN pip3 install ipython
+RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
 # LLVM from source code
-COPY ./LLVM /root/LLVM
-RUN cd /root/LLVM && ./fetch_repos.sh
-RUN cd /root/LLVM && ./build.sh
-ENV LLVM_DIR /root/llvm-build/
+COPY ./LLVM ${HOME}/LLVM
+RUN --mount=type=cache,target=${CCACHE_DIR} cd ${HOME}/LLVM && ./fetch_repos.sh
+RUN --mount=type=cache,target=${CCACHE_DIR} cd ${HOME}/LLVM && ./build.sh
 ENV LIBFUZZ /workspaces/libfuzz
 
 # SVF
-RUN git clone https://github.com/SVF-tools/SVF.git && \
+ENV LLVM_DIR ${HOME}/llvm-build/
+RUN --mount=type=cache,target=${HOME}/.ccache/ git clone https://github.com/SVF-tools/SVF.git && \
     cd SVF && \ 
     git checkout 1c09651a6c4089402b1c072a1b0ab901bc963846 && \
     sed -i 's/jobs=4/jobs=/g' build.sh && \
     ./build.sh
 RUN cd SVF && ./setup.sh
 
-COPY ./requirements.txt /root/python/requirements.txt
-RUN cd /root/python && python3.9 -m pip install -r requirements.txt
-RUN pip3 install ipython
-
-RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+COPY ./requirements.txt ${HOME}/python/requirements.txt
+RUN cd ${HOME}/python && python3.9 -m pip install -r requirements.txt
 
 # TARGET FOR LIBRARY ANALYSIS
 FROM libfuzzpp_dev_image AS libfuzzpp_analysis
@@ -52,17 +73,15 @@ ARG target_name=simple_connection
 
 ENV TARGET ${LIBFUZZ}/analysis/${target_name}
 ENV TARGET_NAME ${target_name}
-ENV TOOLS_DIR /root/
+ENV TOOLS_DIR ${HOME}
 
 RUN mkdir -p ${TOOLS_DIR}/condition_extractor/
 RUN mkdir -p ${TOOLS_DIR}/tool/misc/
-COPY ./condition_extractor ${TOOLS_DIR}/condition_extractor/
-COPY ./tool/misc/extract_included_functions.py ${TOOLS_DIR}/tool/misc/
+COPY --chown=${USERNAME}:${USERNAME} ./condition_extractor ${TOOLS_DIR}/condition_extractor/
+COPY --chown=${USERNAME}:${USERNAME} ./tool/misc/extract_included_functions.py ${TOOLS_DIR}/tool/misc/
 RUN cd ${TOOLS_DIR}/condition_extractor && ./bootstrap.sh && make
 
 WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
-RUN ./preinstall.sh
-RUN ./fetch.sh
 
 CMD ${LIBFUZZ}/targets/${TARGET_NAME}/analysis.sh
 
@@ -86,13 +105,13 @@ ARG target_name=simple_connection
 # ARG driver=*.cc
 
 ENV TARGET_NAME ${target_name}
-ENV TARGET /library
+ENV TARGET ${HOME}/library
 
 # I want to install the library at building time, so later I only need to build
 # the drivers
-COPY ./targets/${TARGET_NAME} ${LIBFUZZ}/targets/${TARGET_NAME}
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME} ${LIBFUZZ}/targets/${TARGET_NAME}  
 WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
-RUN ./preinstall.sh
+RUN sudo ./preinstall.sh
 RUN ./fetch.sh
 RUN ./build_library.sh
 
