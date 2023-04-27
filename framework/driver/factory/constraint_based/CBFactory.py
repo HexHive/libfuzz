@@ -227,10 +227,13 @@ class CBFactory(Factory):
 
             print(f"[INFO] Complete doable functions: {len(candidate_api)}")
 
-            # if api_n.function_name == "TIFFClose":
+            # if api_n.function_name == "TIFFUnRegisterCODEC":
             #     print("next to close?")
             #     from IPython import embed; embed(); exit(1)
 
+            if len(candidate_api) == 1 and candidate_api[0][2] == api_n:
+                candidate_api = []
+                
             if candidate_api:
                 # (ApiCall, RunningContext, Api)
                 (api_call, rng_ctx_1, api_n) = random.choice(candidate_api)
