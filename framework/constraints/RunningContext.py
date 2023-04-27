@@ -33,6 +33,8 @@ class RunningContext(Context):
         self.new_vars = set()
         self.const_strings = {}
 
+        self.poninter_strategies = [Context.POINTER_STRATEGY_ARRAY]
+
     # override of Context method
     def has_vars_type(self, type: Type, cond: ValueMetadata) -> bool:
 

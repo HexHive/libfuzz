@@ -246,11 +246,12 @@ class LFBackendDriver(BackendDriver):
         len_var = stmt.get_len_var()
 
         v = self.address_emit(buff.get_address())
-
         if len_var is None:
             return f"{v}[sizeof({v}) - 1] = 0;"
         else:
-            return f"{v}[{self.value_emit(len_var)} - 1] = 0;"
+            l = self.value_emit(len_var)
+            null_ckeck = f"if ({l} > 0) "
+            return f"{null_ckeck}{v}[{l} - 1] = 0;"
 
 
     # SetNull

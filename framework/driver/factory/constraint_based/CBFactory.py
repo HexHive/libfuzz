@@ -75,9 +75,9 @@ class CBFactory(Factory):
 
         unsat_vars = set()
 
-        # if api_call.function_name == "htp_connp_set_user_data":
-        #     print("hook htp_connp_set_user_data")
-        #     par_debug = 1
+        # if api_call.function_name == "TIFFWarning":
+        #     print("hook TIFFWarning")
+        #     par_debug = 0
         #     is_ret = False
         #     arg_type = api_call.arg_types[par_debug]
         #     arg_cond = conditions.argument_at[par_debug]
@@ -129,6 +129,9 @@ class CBFactory(Factory):
                     arg_var = rng_ctx.get_null_constant()
                 else:
                     arg_var = rng_ctx.try_to_get_var(arg_type, arg_cond)
+                # if isinstance(arg_var, NullConstant):
+                #     print("isinstance(arg_var, NullConstant)")
+                #     from IPython import embed; embed(); exit(1)
                 api_call.set_pos_arg_var(arg_pos, arg_var)
             except ConditionUnsat:
                 unsat_vars.add((arg_pos, arg_cond))
@@ -227,10 +230,12 @@ class CBFactory(Factory):
 
             print(f"[INFO] Complete doable functions: {len(candidate_api)}")
 
-            # if api_n.function_name == "TIFFUnRegisterCODEC":
+            # if api_n.function_name == "TIFFWarning":
             #     print("next to close?")
             #     from IPython import embed; embed(); exit(1)
 
+            # this check avoids the driver to degenerate in a list with the
+            # single APIs repetitively invoked
             if len(candidate_api) == 1 and candidate_api[0][2] == api_n:
                 candidate_api = []
                 
