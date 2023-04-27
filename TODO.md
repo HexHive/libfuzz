@@ -19,6 +19,7 @@
   configuraiton file || maybe remove/move non public headers fater analysis.sh/build_library.sh?
 - in dynamic array chars, include a check that len(array) > 0 before setting array[len-1] = 0
 - `htp_connp_req_data` and `htp_connp_res_data` I can't find dependencies betweeen data and len, investigate why
+- if next function is only 1 + next function == current function -> stop sequence
 
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init

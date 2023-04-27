@@ -84,9 +84,6 @@ FROM libfuzzpp_dev_image AS libfuzzpp_drivergeneration
 
 ARG target_name=simple_connection
 
-ENV TARGET_NAME ${target_name}
-ENV TARGET ${LIBFUZZ}/targets/${target_name}
-
 # NOTE: generate_drivers.sh finds out its configuration automatically
 WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
 CMD ${LIBFUZZ}/targets/generate_drivers.sh
