@@ -76,6 +76,7 @@ COPY --chown=${USERNAME}:${USERNAME} ./condition_extractor ${TOOLS_DIR}/conditio
 COPY --chown=${USERNAME}:${USERNAME} ./tool/misc/extract_included_functions.py ${TOOLS_DIR}/tool/misc/
 RUN cd ${TOOLS_DIR}/condition_extractor && ./bootstrap.sh && make
 
+# NOTE: start_analysis.sh finds out its configuration automatically
 ENV PATH $PATH:${HOME}/.local/bin
 CMD ${LIBFUZZ}/targets/start_analysis.sh
 
@@ -84,9 +85,9 @@ FROM libfuzzpp_dev_image AS libfuzzpp_drivergeneration
 
 ARG target_name=simple_connection
 
-# NOTE: generate_drivers.sh finds out its configuration automatically
+# NOTE: start_generate_drivers.sh finds out its configuration automatically
 WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
-CMD ${LIBFUZZ}/targets/generate_drivers.sh
+CMD ${LIBFUZZ}/targets/start_generate_drivers.sh
 
 # TARGET FOR FUZZING SESSION
 FROM libfuzzpp_dev_image AS libfuzzpp_fuzzing
@@ -97,6 +98,7 @@ ARG target_name=simple_connection
 
 ENV TARGET_NAME ${target_name}
 ENV TARGET ${HOME}/library
+ENV DRIVER_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
 
 # I want to install the library at building time, so later I only need to build
 # the drivers
@@ -106,5 +108,6 @@ RUN sudo ./preinstall.sh
 RUN ./fetch.sh
 RUN ./build_library.sh
 
+# NOTE: start_fuzz_driver.sh finds out its configuration automatically
 WORKDIR ${LIBFUZZ}
-CMD ${LIBFUZZ}/targets/${TARGET_NAME}/fuzz_driver.sh
+CMD ${LIBFUZZ}/targets/start_fuzz_driver.sh

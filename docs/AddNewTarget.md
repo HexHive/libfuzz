@@ -244,21 +244,24 @@ should not care.
 
 For more info refer to [here](FuzzingDrivers.md).
 
-**fuzz_driver.sh**
+**compile_driver.sh**
 
 This script is a simple loop that link drivers in `./workdir/${TARGET}/drivers` against the library compiled from `build_library.sh`.
 
-Similarly, copy `fuzz_driver.sh` from `libtiff` and adjust the compilation step
-(the firs loop).
+Similarly, copy `compile_driver.sh` from `libtiff` and adjust the compilation step.
 
 For reference, I left two `[TAG]` that contains the part of the script to modify
-in `libtiff`'s `fuzz_driver.sh` script. 
+in `libtiff`'s `compile_driver.sh` script. 
 
 The important thing is to compile drivers against the `.a` library from
 `./build_library.sh`, and save the output in the same `.cc` folder. The
 rest *should* work transparently.
 
-*Entry point for fuzz_driver.sh and build_library.sh*
+The actual fuzzin campaign is handled from the script
+`./targets/start_fuzz_driver.sh`, which will find the correct
+`compile_driver.sh` of the `$TARGET` library under testing.
+
+*Entry point for compile_driver.sh and build_library.sh*
 
 Thery are used together, just run:
 ```bash
@@ -271,7 +274,9 @@ TARGET=libtiff TIMEOUT=1m DRIVER=driver8 ./run_fuzzing.sh
 - `DRIVER` -- the actual driver to fuzz, if omitted compile/fuzz all drivres
   (equivalent to `DRIVER=*`)
 
-The script additionally creates a `crashes` folder for the, guess what, crashes! 
+The script additionally creates a `crashes` folder for the, guess what, crashes!
+Moreover, the script creates a new folder `corpus_new` containing new generated
+seed.
 
 For more info refer to [here](FuzzingDrivers.md).
 
