@@ -105,12 +105,27 @@ class Conditions:
     @staticmethod
     def is_unconstraint(cond: ValueMetadata) -> bool:
 
-        if len(cond.ats) == 0:
-            return True 
-            
-        if len(cond.ats) == 1:
-            at = list(cond.ats)[0]
+        for at in cond.ats:
             if at.access == Access.READ and at.fields == []:
-                return True
+                continue
+            elif at.access == Access.READ and at.fields == [-1]:
+                continue
+            elif at.access == Access.RETURN:
+                continue
+            elif at.access == Access.WRITE:
+                continue
+            else:
+                return False
+        
+        return True
 
-        return False
+        # OLD VERSION, NOT CORRECT
+        # if len(cond.ats) == 0:
+        #     return True 
+            
+        # if len(cond.ats) == 1:
+        #     at = list(cond.ats)[0]
+        #     if at.access == Access.READ and at.fields == []:
+        #         return True
+
+        # return False

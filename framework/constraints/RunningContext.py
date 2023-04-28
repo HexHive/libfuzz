@@ -197,6 +197,12 @@ class RunningContext(Context):
             # TODO: check if the ats allow to generate an object
             if tt.is_incomplete and not is_ret:
                 raise ConditionUnsat()
+            elif ((not Conditions.is_unconstraint(cond) or
+                tt.is_incomplete) and 
+                not DataLayout.has_user_define_init(tt.token)):
+                # print()
+                # from IPython import embed; embed(); exit(1)
+                raise ConditionUnsat()
             else:
                 val = self.create_new_var(type, cond, is_ret)
                 if (isinstance(val, Variable) and 

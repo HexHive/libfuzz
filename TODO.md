@@ -1,8 +1,9 @@
 # My todo:
 
 # ROAD MAP
-- emit X drivers for libtiff -> compile in libfuzzer -> check how many works
-- start 1h fuzzing campaing for each driver
+- add as many libraries as possible
+  - list incompatibilities, propose solutions
+- fix bugs
 
 # TODO driver generation framework
 - check poetry and documentation (pdoc3)

@@ -52,16 +52,37 @@ class CBFactory(Factory):
         source_api = set()
 
         for api in self.api_list:
-            if DataLayout.has_incomplete_type():
-                if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
-                    and api.return_info.is_type_incomplete):
-                    source_api.add(api)
-                if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
-                    and api.return_info.type == "void*"):
-                    source_api.add(api)
-            else:
+            # if DataLayout.has_incomplete_type():
+            #     if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
+            #         and api.return_info.is_type_incomplete):
+            #         source_api.add(api)
+            #     if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
+            #         and api.return_info.type == "void*"):
+            #         source_api.add(api)
+            # else:
+            #     source_api.add(api)
+
+            # if api.function_name == "uriParseUriA":
+            #     print("get_source_api")
+            #     from IPython import embed; embed(); exit(1)
+
+            num_arg_ok = 0
+            for arg in api.arguments_info:
+                the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, arg.is_type_incomplete, False)
+                if isinstance(the_type, PointerType):
+                    the_type = the_type.get_base_type()
+                tkn = the_type.token
+                if DataLayout.is_primitive_type(tkn):
+                    num_arg_ok += 1 
+                elif DataLayout.has_user_define_init(tkn):
+                    num_arg_ok += 1 
+
+
+            # I can initialize all the arguments
+            if len(api.arguments_info) == num_arg_ok:
                 source_api.add(api)
 
+        # print("get_source_api")
         # from IPython import embed; embed(); exit(1)
 
         return source_api
@@ -75,9 +96,9 @@ class CBFactory(Factory):
 
         unsat_vars = set()
 
-        # if api_call.function_name == "TIFFWarning":
-        #     print("hook TIFFWarning")
-        #     par_debug = 0
+        # if api_call.function_name == "uriToStringA":
+        #     print("hook uriToStringA")
+        #     par_debug = 1
         #     is_ret = False
         #     arg_type = api_call.arg_types[par_debug]
         #     arg_cond = conditions.argument_at[par_debug]
@@ -211,6 +232,10 @@ class CBFactory(Factory):
             candidate_api = []
 
             for next_possible in self.dependency_graph[api_n]:
+
+                if next_possible in source_api:
+                    continue
+
                 print(f"[INFO] Trying: {next_possible}")
 
                 next_condition = get_cond(next_possible)

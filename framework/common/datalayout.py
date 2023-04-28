@@ -113,10 +113,6 @@ class DataLayout:
         DataLayout.layout[tmp_type] = t_size
 
     @staticmethod
-    def get_type_size(type_clang):
-        return DataLayout.layout[type_clang]
-
-    @staticmethod
     def infer_type_size(type) -> int:
         # given a clang-like type, try to infer its size
         # NOTE: table written for x86 64
@@ -160,21 +156,41 @@ class DataLayout:
             raise Exception(f"I don't know the size of '{type}'")
 
     @staticmethod
-    def get_type_size(a_type):
+    def get_type_size(a_type: str) -> int:
         try:
             return DataLayout.infer_type_size(a_type)
         except:
             return DataLayout.layout[a_type]
 
     @staticmethod
-    def is_a_struct(a_type) -> bool:
+    def is_a_struct(a_type: str) -> bool:
         # for k, s in DataLayout.data_layout.items():
             # if 
         # if "TIFF" in a_type:
         #     print("is_a_struct")
         #     from IPython import embed; embed(); exit(1)
         return a_type in DataLayout.clang_to_llvm_struct
+    
+    @staticmethod
+    def is_primitive_type(a_type: str) -> bool:
+        try:
+            DataLayout.infer_type_size(a_type)
+            return True
+        except:
+            return False
 
     @staticmethod
     def has_incomplete_type() -> bool:
         return len(DataLayout.incomplete_types) != 0
+    
+    @staticmethod
+    def has_user_define_init(a_type: str) -> bool:
+        # NOTE: in somehow, I should define what types I can handle manually
+        
+        # if a_type == "UriParserStateA":
+        #     return True
+        
+        # # if a_type == "UriUriA":
+        # #     return True
+        
+        return False
