@@ -62,17 +62,27 @@ The exported functions are extracted by analyzing only the header files through:
 ```
 Options:
 - `-h` -- show the help prompt
-- `-i/include_folder <folder path>` -- folder containing the shipped library header files
-- `-e/exported_functions <flie path>` -- output file containing the exported functions from `-i`
-- `-t/incomplete_types <flie path>` -- output file containing the incomplete types
-- `-a/apis_list <flie path>` -- output file containing the exported functions from `-i` plus argument information
+- `-i/include_folder <folder path>` -- folder containing the shipped library
+  header files
+- `-p/public_headers <file path>` -- list of public header to be actually
+  included in the driver
+- `-e/exported_functions <flie path>` -- output file containing the exported
+  functions from `-i`
+- `-t/incomplete_types <flie path>` -- output file containing the incomplete
+  types
+- `-a/apis_list <flie path>` -- output file containing the exported functions
+  from `-i` plus argument information
 
-NOTE: we need both `apis_list` and `exported_functions`, just trust me
+NOTE: we need both `apis_list` and `exported_functions`, just trust me  
+NOTE2: not all the the shipped headers (`include_folder`) are meant to be
+included in the cunsumer/driver. Therefore, we require the developer to indicate
+the actual list of public headers (`public_headers`).
 
 Example of usage:
 ```bash
 $LIBFUZZ/tool/misc/extract_included_functions.py \
     -i "$WORK/include" \
+    -p "$LIBFUZZ/targets/${TARGET_NAME}/public_headers.txt" \
     -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
     -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
     -a "$LIBFUZZ_LOG_PATH/apis_clang.json"
@@ -196,6 +206,7 @@ extract-bc -b $WORK/lib/libtiff.a
 # extract the exported functions in a file
 $LIBFUZZ/tool/misc/extract_included_functions.py \
     -i "$WORK/include" \
+    -p "$LIBFUZZ/targets/${TARGET_NAME}/public_headers.txt" \
     -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
     -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
     -a "$LIBFUZZ_LOG_PATH/apis_clang.json"

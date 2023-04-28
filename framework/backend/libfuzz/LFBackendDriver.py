@@ -11,12 +11,19 @@ from typing import List, Set, Dict, Tuple, Optional
 
 class LFBackendDriver(BackendDriver):
 
-    def __init__(self, working_dir, seeds_dir, num_seeds, headers_dir):
+    def __init__(self, working_dir, seeds_dir, num_seeds, headers_dir, public_headers):
         self.working_dir = working_dir
         self.seeds_dir   = seeds_dir
         self.headers_dir = headers_dir
         self.num_seeds = num_seeds
         self._idx = 0
+
+        public_headers_lst = set()
+        with open(public_headers, 'r') as ph:
+            for l in ph:
+                l = l.strip()
+                if l:
+                    public_headers_lst.add(l)
 
         self.file_pointer_cnt = 0
 
@@ -25,7 +32,9 @@ class LFBackendDriver(BackendDriver):
         self.headers = [] # os.listdir(headers_dir)
         for root, _, f_names in os.walk(headers_dir):
             for f in f_names:
-                if f.endswith(".h") or f.endswith(".hpp") or f.endswith(".hxx"):
+                if ((f.endswith(".h") or f.endswith(".h++") or 
+                    f.endswith(".hpp") or f.endswith(".hxx")) and
+                    f in public_headers_lst):
                     f_full = os.path.join(root, f)
                     f_rel = os.path.relpath(f_full, headers_dir)
                     # from IPython import embed; embed(); exit(1)

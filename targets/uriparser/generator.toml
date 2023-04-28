@@ -10,7 +10,6 @@ minimum_apis = "/workspaces/libfuzz/analysis/uriparser/work/apipass/apis_minimiz
 # minimum_apis = ""
 data_layout = "/workspaces/libfuzz/analysis/uriparser/work/apipass/data_layout.txt"
 
-
 [generator]
 workdir = "/workspaces/libfuzz/workdir/uriparser"
 policy = "constraint_based"
@@ -23,3 +22,4 @@ backend = "libfuzz"
 
 [backend]
 headers = "/workspaces/libfuzz/analysis/uriparser/work/include/"
+public_headers = "/workspaces/libfuzz/targets/uriparser/public_headers.txt"

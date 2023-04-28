@@ -85,16 +85,25 @@ def traverse(node, include_folder):
 
 MAIN_STUB = "int main(int argc, char** argv) {return 0;}"
 
-def get_stub_file(include_folder):
+def get_stub_file(include_folder, public_headers):
 
     stub_file = tempfile.NamedTemporaryFile(suffix='.cc', delete=False).name
+
+    public_headers_lst = set()
+    with open(public_headers, 'r') as ph:
+        for l in ph:
+            l = l.strip()
+            if l:
+                public_headers_lst.add(l)
 
     # from IPython import embed; embed(); exit()
 
     with open(stub_file, 'w') as tmp:
-        for root, subdirs, files in os.walk(include_folder):
+        for root, _, files in os.walk(include_folder):
             for h in files:
-                if h.endswith(".h") or h.endswith(".h++") or h.endswith(".hh") or h.endswith(".hpp"):
+                print(f"candidate header: {h}")
+                if (h.endswith(".h") or h.endswith(".h++") or h.endswith(".hh") 
+                    or h.endswith(".hpp")) and h in public_headers_lst:
                     h_path = os.path.join(root, h)
                     tmp.write(f"#include \"{h_path}\"\n")
 
@@ -111,6 +120,7 @@ def _main():
     parser.add_argument('-exported_functions', '-e', type=str, help='List of exported functions', required=True)
     parser.add_argument('-incomplete_types', '-t', type=str, help='List of incomplete types', required=True)
     parser.add_argument('-apis_list', '-a', type=str, help='List of APIs with types from the AST', required=True)
+    parser.add_argument('-public_headers', '-p', type=str, help='List of public header files', required=True)
 
     args = parser.parse_args()
 
@@ -118,8 +128,9 @@ def _main():
     exported_functions = args.exported_functions
     incomplete_types = args.incomplete_types
     apis_list = args.apis_list
+    public_headers = args.public_headers
 
-    tmp_file = get_stub_file(include_folder)
+    tmp_file = get_stub_file(include_folder, public_headers)
 
     print(tmp_file)
 

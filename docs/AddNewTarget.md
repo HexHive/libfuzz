@@ -27,7 +27,7 @@ NEWLIBRARY=<a-library>
 mkdir -p ./target/$NEWLIBRARY
 ```
 **Scripts**  
-We need *six* scripts/files for the full pipeline:
+We need *seven* scripts/files for the full pipeline:
 
 ```bash
 analysis.sh
@@ -36,6 +36,7 @@ fetch.sh
 fuzz_driver.sh
 generator.toml
 preinstall.sh
+public_headers.txt
 ```
 
 **preinstall.sh**
@@ -68,6 +69,19 @@ If the library is not in git/mercury/svn, you may want to fallback to the old
 good wget+tar.
 
 The script will be automatically invoked in the docker building.
+
+**public_headers.txt**
+
+The file indicates which library headers are meant to be included in the
+consumer/driver. One just needs to indiates the actual file, no subfolder
+handled yet.  
+Example:
+```text
+htp.h
+htp_transaction.h
+bstr.h
+```
+
 
 **analysis.sh**
 
@@ -127,11 +141,14 @@ extract-bc -b $WORK/lib/libtiff.a
 - Invoke header analysis, e.g.,
 ```bash
 $TOOLS_DIR/tool/misc/extract_included_functions.py -i "$WORK/include" \
+    -p "$LIBFUZZ/targets/${TARGET_NAME}/public_headers.txt" \
     -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
     -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
     -a "$LIBFUZZ_LOG_PATH/apis_clang.json" 
 ```
-It is important that `-e`, `-t`, and `-a` flags refer to files in `$LIBFUZZ_LOG_PATH`.
+It is important that `-e`, `-t`, and `-a` flags refer to files in
+`$LIBFUZZ_LOG_PATH`. The option `-p`, insteaed, points to the `$TARGET_NAME` in
+folder.
 - Run the static analyzer, e.g., 
 ```bash
 $TOOLS_DIR/condition_extractor/bin/extractor \
@@ -184,17 +201,18 @@ This controls how to generate drivers. Simplest approach: copy-paste from
 `libtiff` and change the folder paths. The paths must be absolute and refer to
 the in-docker file system.
 
-To remember that some parameters could be overwritten by a global configuration.
-In `$LIBFUZZ`, there is a `overwrite.toml`. 
+**NOTE:** Remember that some parameters could be overwritten by a global
+configuration.  
+In `$LIBFUZZ`, there is `overwrite.toml`. 
 ```toml
 [generator]
 pool_size = 40
 driver_size = 10
 num_seeds = 20
 ```
-`./tool/main.py` checks also this
-file and replace the parameters. This is used to control bulk-driver generation.
-I am sure people will get confused, so I better write this here.
+`./tool/main.py` checks also this file and replaces the parameters. This is used
+to control bulk-driver generation. I am sure people will get confused, so I
+better write this here.
 
 *Entry point*
 
@@ -238,9 +256,9 @@ analysis part.
 Similar to `analysis.sh`, the scripts assumes `$TARGET` is an absolute path in
 the system, and `$WORK` is the installation path for the library. The Dockerfile
 changes the `$WORK` directory making it point to a different location. In
-practice, you will have two installation of the library, one for analysis and
-another for fuzzing. However, this should be transparent for you. Meaning you
-should not care.
+practice, you will have two library installations, one for analysis and another
+for fuzzing. However, this should be transparent for you. Meaning you should not
+care.
 
 For more info refer to [here](FuzzingDrivers.md).
 
@@ -257,9 +275,9 @@ The important thing is to compile drivers against the `.a` library from
 `./build_library.sh`, and save the output in the same `.cc` folder. The
 rest *should* work transparently.
 
-The actual fuzzin campaign is handled from the script
-`./targets/start_fuzz_driver.sh`, which will find the correct
-`compile_driver.sh` of the `$TARGET` library under testing.
+The actual fuzzing campaign is handled by the script
+`./targets/start_fuzz_driver.sh`, which will look up the correct
+`compile_driver.sh` according to the `$TARGET` set.
 
 *Entry point for compile_driver.sh and build_library.sh*
 
@@ -274,9 +292,9 @@ TARGET=libtiff TIMEOUT=1m DRIVER=driver8 ./run_fuzzing.sh
 - `DRIVER` -- the actual driver to fuzz, if omitted compile/fuzz all drivres
   (equivalent to `DRIVER=*`)
 
-The script additionally creates a `crashes` folder for the, guess what, crashes!
-Moreover, the script creates a new folder `corpus_new` containing new generated
-seed.
+The script additionally creates a `crashes` folder for the, guess what, crashes!  
+The initial corpus is also copied in a new folder `corpus_new` to divide
+generated and initial seeds.
 
 For more info refer to [here](FuzzingDrivers.md).
 

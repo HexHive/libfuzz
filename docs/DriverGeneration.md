@@ -43,9 +43,10 @@ The `generator` section contains parameters strictly for the driver generation:
     - `libfuzz` -- the driver is compatible with LibFuzzer
     - `mock` -- pseudocode for debug
 
-The `backend` section deals with specific backed options, so far only one
-parameter:
+The `backend` section deals with specific backed options:
 - `header` -- indicates the folder with the library headers
+- `public_headers` -- indicate what header files (from `header`) must be
+  included in the driver
 
 ## End-To-End Example
 
@@ -78,7 +79,8 @@ num_seeds = 1 # initial corpus size for reach driver
 backend = "libfuzz" # the driver is compatible with LibFuzzer
 
 [backend]
-headers = ".../library/include/" # options for the backend, i.e., the headers to include
+headers = ".../library/include/" # header files folder
+public_headers = ".../public_headers.txt" # what header files I really need to include
 ```
 
 Usage:

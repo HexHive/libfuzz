@@ -24,3 +24,4 @@ backend = "libfuzz"
 
 [backend]
 headers = "/workspaces/libfuzz/analysis/libhtp/work/include/"
+public_headers = "/workspaces/libfuzz/targets/libhtp/public_headers.txt"

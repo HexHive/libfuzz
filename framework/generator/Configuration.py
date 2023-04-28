@@ -109,6 +109,18 @@ class Configuration:
             raise Exception("'headers' not defined")
 
         return backend["headers"]
+    
+    @cached_property
+    def public_headers(self):
+        if not "backend" in self._config:
+            raise Exception("'backend' not defined")
+
+        backend = self._config["backend"]
+
+        if not "public_headers" in backend:
+            raise Exception("'public_headers' not defined")
+
+        return backend["public_headers"]
 
     @cached_property
     def reports_dir(self):
@@ -269,7 +281,7 @@ class Configuration:
             return MockBackendDriver(self.drivers_dir, self.seeds_dir, self.num_seeds)
 
         if backend == "libfuzz":
-            return LFBackendDriver(self.drivers_dir, self.seeds_dir, self.num_seeds, self.headers_dir)
+            return LFBackendDriver(self.drivers_dir, self.seeds_dir, self.num_seeds, self.headers_dir, self.public_headers)
 
         raise NotImplementedError
 

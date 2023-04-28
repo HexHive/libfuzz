@@ -11,12 +11,11 @@
 - change new variable synthesis with data layout info
 
 [MOST IMPORTANT:]
-- add headers allow-list in `extract_included_functions.py` and `.toml`
-  configuraiton file || maybe remove/move non public headers fater analysis.sh/build_library.sh?
 - `htp_connp_req_data` and `htp_connp_res_data` I can't find dependencies betweeen data and len, investigate why
 - use correct sink function in clean_up section
 - source apis -> drvgen knows how to instantiate the type (basic type or user defined)
-- infer which fields must be set manually?
+- infer which fields must be set manually? check if a struct has no WRITE access
+  type for some field (and it is a complete type)
 
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init
