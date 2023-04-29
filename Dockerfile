@@ -74,7 +74,7 @@ RUN mkdir -p ${TOOLS_DIR}/condition_extractor/
 RUN mkdir -p ${TOOLS_DIR}/tool/misc/
 COPY --chown=${USERNAME}:${USERNAME} ./condition_extractor ${TOOLS_DIR}/condition_extractor/
 COPY --chown=${USERNAME}:${USERNAME} ./tool/misc/extract_included_functions.py ${TOOLS_DIR}/tool/misc/
-RUN cd ${TOOLS_DIR}/condition_extractor && ./bootstrap.sh && make
+RUN cd ${TOOLS_DIR}/condition_extractor && rm -Rf CMakeCache.txt && ./bootstrap.sh && make -j
 
 # NOTE: start_analysis.sh finds out its configuration automatically
 ENV PATH $PATH:${HOME}/.local/bin

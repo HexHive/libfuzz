@@ -72,6 +72,9 @@ def traverse(node, include_folder):
         function_declarations.append(node)
         apis_definition.append(get_api(node))
 
+    # if node.type.kind == clang.cindex.TypeKind.FUNCTIONPROTO:
+    #     print(node.displayname)
+
     # # Print out information about the node
     # if "TIFF" == node.displayname:
     # #     print(node.displayname)
@@ -101,11 +104,14 @@ def get_stub_file(include_folder, public_headers):
     with open(stub_file, 'w') as tmp:
         for root, _, files in os.walk(include_folder):
             for h in files:
-                print(f"candidate header: {h}")
+                print(f"candidate header {h}: ", end='')
                 if (h.endswith(".h") or h.endswith(".h++") or h.endswith(".hh") 
                     or h.endswith(".hpp")) and h in public_headers_lst:
                     h_path = os.path.join(root, h)
                     tmp.write(f"#include \"{h_path}\"\n")
+                    print("chosen.")
+                else:
+                    print("ignored.")
 
         tmp.write("\n")
 
@@ -142,7 +148,7 @@ def _main():
     index = clang.cindex.Index.create()
 
     # Generate AST from filepath passed in the command line
-    tu = index.parse(tmp_file)
+    tu = index.parse(tmp_file, args=[f"-I{include_folder}"])
 
     root = tu.cursor        # Get the root of the AST
     traverse(root, include_folder)
@@ -155,6 +161,7 @@ def _main():
         for t in type_incomplete:
             out_f.write(f"{t}\n")
 
+    # print("functions:")
     with open(apis_list, 'w') as out_f:
         for a in apis_definition:
             out_f.write(f"{json.dumps(a)}\n")

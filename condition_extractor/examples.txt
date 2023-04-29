@@ -22,3 +22,4 @@
 
 ./condition_extractor/bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFGetField -output TIFFCleanup_O0.json -t json -v v1
 
+LIBFUZZ_LOG_PATH=/workspaces/libfuzz/analysis/libxml2/work/apipass ./bin/extractor  /workspaces/libfuzz/analysis/libxml2/work/lib/libxml2.a.bc -interface "/workspaces/libfuzz/analysis/libxml2/work/apipass/apis_clang.json" -output /workspaces/libfuzz/analysis/libxml2/work/apipass/apis_clang.json/conditions.json" -minimize_api "/workspaces/libfuzz/analysis/libxml2/work/apipass/apis_clang.json/apis_minimized.txt" -v v0 -t json -do_indirect_jumps -data_layout "/workspaces/libfuzz/analysis/libxml2/work/apipass/apis_clang.json/data_layout.txt"
