@@ -430,6 +430,9 @@ class Utils:
 
                 function_name = fc_json["function_name"]
 
+                if function_name not in api:
+                    continue
+
                 params_at = []
                 p_idx = 0
                 while True:
