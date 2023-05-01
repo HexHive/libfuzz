@@ -36,6 +36,8 @@ class DataLayout:
         # loop all the types in apis_clang (args + ret) and try to infer all the
         # types
         for function_name, api in apis_clang.items():
+            # if function_name == "GetX86CacheInfo":
+            #     from IPython import embed; embed(); exit(1)
             for arg_pos, arg in enumerate(api["arguments_info"]):
                 type_clang = arg["type_clang"]
                 DataLayout.populate_table(type_clang, function_name, arg_pos)
@@ -63,6 +65,10 @@ class DataLayout:
     def multi_level_size_infer(ttype, function_name, pos, is_original):
         t_size = 0
 
+        # if ttype == "cpu_features::CacheInfo" and pos == -1:
+        #     print("multi_level_size_infer")
+        #     from IPython import embed; embed(); exit(1)
+
         # first step, search in the tables
         known_type = False
         try:
@@ -81,7 +87,7 @@ class DataLayout:
 
             (type_llvm, size_llvm) = DataLayout.get_llvm_type(function_name, pos)
 
-            if is_original:
+            if is_original and size_llvm != -1:
                 t_size = size_llvm
             else:
                 type_llvm = type_llvm.replace("*", "")
@@ -96,6 +102,11 @@ class DataLayout:
     
     @staticmethod
     def populate_table(type_clang, function_name, arg_pos):
+
+        # if type_clang == "cpu_features::CacheInfo" and arg_pos == -1:
+        #     print("populate_table")
+        #     from IPython import embed; embed(); exit(1)
+
         # remove pointers
         tmp_type = type_clang
         pointer_level = tmp_type.count("*")

@@ -32,7 +32,7 @@ def get_info(type_str):
     return info
 
 # generate an API structur from the AST node
-def get_api(node):
+def get_api(node, namespace):
     # {"function_name": "NotConfigured", "is_vararg": false,
     #           "return_info": {"name": "return", "flag": "val", "size": 32, "type": "i32"},
     #           "arguments_info": [{"name": "tif", "flag": "ref", "size": 64, "type": "%struct.tiff*"}, {"name": "scheme", "flag": "val", "size": 32, "type": "i32"}]}
@@ -44,6 +44,7 @@ def get_api(node):
         print(f"Cant find '(' in {node.displayname}")
         return {}
     api_obj["function_name"] = function_name
+    api_obj["namespace"] = copy.deepcopy(namespace)
 
     nt = node.type
 
@@ -61,16 +62,21 @@ def get_api(node):
     return api_obj
 
 # Traverse the AST tree
-def traverse(node, include_folder):
+def traverse(node, include_folder, namespace):
+
+    if node.kind == clang.cindex.CursorKind.NAMESPACE:
+        namespace += [node.displayname]
 
     # Recurse for children of this node
     for child in node.get_children():
-        traverse(child, include_folder)
+        traverse(child, include_folder, copy.deepcopy(namespace))
+        # from IPython import embed; embed(); exit(1)
 
     # if node.type.kind == clang.cindex.TypeKind.FUNCTIONPROTO and str(node.location.file).startswith("./include/"):
     if node.type.kind == clang.cindex.TypeKind.FUNCTIONPROTO and include_folder in str(node.location.file):
         function_declarations.append(node)
-        apis_definition.append(get_api(node))
+        apis_definition.append(get_api(node, namespace))
+        # from IPython import embed; embed(); exit(1)
 
     # if node.type.kind == clang.cindex.TypeKind.FUNCTIONPROTO:
     #     print(node.displayname)
@@ -151,7 +157,7 @@ def _main():
     tu = index.parse(tmp_file, args=[f"-I{include_folder}"])
 
     root = tu.cursor        # Get the root of the AST
-    traverse(root, include_folder)
+    traverse(root, include_folder, [])
 
     with open(exported_functions, 'w') as out_f:
         for f in function_declarations:

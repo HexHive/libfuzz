@@ -231,27 +231,28 @@ class CBFactory(Factory):
             # List[(ApiCall, RunningContext, Api)]
             candidate_api = []
 
-            for next_possible in self.dependency_graph[api_n]:
+            if api_n in self.dependency_graph:
+                for next_possible in self.dependency_graph[api_n]:
 
-                if next_possible in source_api:
-                    continue
+                    if next_possible in source_api:
+                        continue
 
-                print(f"[INFO] Trying: {next_possible}")
+                    print(f"[INFO] Trying: {next_possible}")
 
-                next_condition = get_cond(next_possible)
-                call_next = to_api(next_possible)
+                    next_condition = get_cond(next_possible)
+                    call_next = to_api(next_possible)
 
-                rng_ctx_2, unsat_var_2 = self.try_to_instantiate_api_call(call_next, next_condition, rng_ctx_1)      # type: ignore
+                    rng_ctx_2, unsat_var_2 = self.try_to_instantiate_api_call(call_next, next_condition, rng_ctx_1)      # type: ignore
 
-                l_unsat_var = len(unsat_var_2)
-                if l_unsat_var == 0:
-                    print("[INFO] This works!")
-                    candidate_api += [(call_next, rng_ctx_2, next_possible)]
-                else:
-                    print(f"[INFO] Unsat vars: {l_unsat_var}")
-                    for p, c in unsat_var_2:
-                        arg_type = call_next.arg_types[p]
-                        print(f" => arg{p}: {arg_type} -> {c}")
+                    l_unsat_var = len(unsat_var_2)
+                    if l_unsat_var == 0:
+                        print("[INFO] This works!")
+                        candidate_api += [(call_next, rng_ctx_2, next_possible)]
+                    else:
+                        print(f"[INFO] Unsat vars: {l_unsat_var}")
+                        for p, c in unsat_var_2:
+                            arg_type = call_next.arg_types[p]
+                            print(f" => arg{p}: {arg_type} -> {c}")
 
             print(f"[INFO] Complete doable functions: {len(candidate_api)}")
 

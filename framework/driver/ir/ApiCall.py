@@ -6,17 +6,19 @@ from . import Statement, Type, Value, PointerType, Address, Variable
 class ApiCall(Statement):
     original_api:   Api
     function_name:  str
+    namespace:      str
     arg_types:      List[Type]
     arg_vars:       List[Optional[Value]]
     ret_type:       Type
     ret_var:        Optional[Value]
 
-    def __init__(self, api, function_name, arg_types, ret_type):
+    def __init__(self, api, function_name, namespace, arg_types, ret_type):
         super().__init__()
-        self.original_api = api
-        self.function_name = function_name
-        self.arg_types  = arg_types
-        self.ret_type   = ret_type
+        self.original_api   = api
+        self.function_name  = function_name
+        self.namespace      = namespace
+        self.arg_types      = arg_types
+        self.ret_type       = ret_type
 
         # these are the objects of the instance of the ApiCall
         self.arg_vars   = [None for x in arg_types]

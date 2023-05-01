@@ -290,7 +290,13 @@ class RunningContext(Context):
         # so far, only HEAP and STACK
         heap = "h" if alloctype == AllocType.HEAP else "s"
 
-        buff_name = f"{type.token}{pnt}_{cst}{heap}{buff_counter}"
+        namespace_sep = "::"
+        if namespace_sep in type.token:
+            namespace_idx = type.token.index(namespace_sep) + len(namespace_sep)
+            clean_token = type.token[namespace_idx:]
+        else:
+            clean_token = type.token
+        buff_name = f"{clean_token}{pnt}_{cst}{heap}{buff_counter}"
         buff_name = buff_name.replace(" ", "")
         # NOTE: char* => always considered as array!
         if ((cond.is_array or type.token in RunningContext.string_types) and
@@ -500,6 +506,7 @@ class RunningContext(Context):
                 if len(type_strs) == 1:
                     type_str = type_strs[0]
                 else:
+                    print(f"Really don't know what to do with {type_strings}")
                     from IPython import embed; embed(); exit(1)
                     raise Exception(f"Really don't know what to do with {type_strings}")
                 

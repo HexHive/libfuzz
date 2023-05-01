@@ -1,7 +1,7 @@
 #!/bin/bash
 
-set -e
-set -x
+# export LIBFUZZ=/workspaces/libfuzz/
+# export TARGET=$LIBFUZZ/analysis/uriparser/ 
 
 # NOTE: if TOOLD_DIR is unset, I assume to find stuffs in LIBFUZZ folder
 if [ -z $TOOLS_DIR ]; then
@@ -26,20 +26,14 @@ export LIBFUZZ_LOG_PATH=$WORK/apipass
 
 mkdir -p $LIBFUZZ_LOG_PATH
 
-echo "make 1"
 cd "$TARGET/repo"
-./autogen.sh
-echo "./configure"
-./configure --disable-shared --prefix="$WORK" \
-                                CC=wllvm CXX=wllvm++
-./configure --disable-shared --disable-docs --disable-tests \
-            --prefix="$WORK" \
-            CC=wllvm CXX=wllvm++ \
-            CXXFLAGS="-mllvm -get-api-pass -g -O0" \
-            CFLAGS="-mllvm -get-api-pass -g -O0"
+cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
+        -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_C_FLAGS_DEBUG="-g -O0 -mllvm -get-api-pass" \
+        -DCMAKE_CXX_FLAGS_DEBUG="-g -O0 -mllvm -get-api-pass" 
 
 # configure compiles some shits for testing, better remove it
-rm -rf $LIBFUZZ_LOG_PATH/apis.log
+rm $LIBFUZZ_LOG_PATH/apis.log
 
 touch $LIBFUZZ_LOG_PATH/exported_functions.txt
 touch $LIBFUZZ_LOG_PATH/incomplete_types.txt
@@ -54,20 +48,18 @@ make -j$(nproc)
 echo "make install"
 make install
 
-extract-bc -b $WORK/lib/libxml2.a
+extract-bc -b $WORK/lib/libcpu_features.a
 
-# this extracts the exported functions in a file, to be used later for grammar
-# generations
-$TOOLS_DIR/tool/misc/extract_included_functions.py -i "$WORK/include/libxml2" \
+# this extracts the exported functions in a file, to be used later for grammar generations
+$TOOLS_DIR/tool/misc/extract_included_functions.py -i "$WORK/include" \
     -p "$LIBFUZZ/targets/${TARGET_NAME}/public_headers.txt" \
     -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
     -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
-    -a "$LIBFUZZ_LOG_PATH/apis_clang.json" 
+    -a "$LIBFUZZ_LOG_PATH/apis_clang.json"
 
-# extract fields dependency from the library itself, repeat for each object
-# produced
+# extract fields dependency from the library itself, repeat for each object produced
 $TOOLS_DIR/condition_extractor/bin/extractor \
-    $WORK/lib/libxml2.a.bc \
+    $WORK/lib/libcpu_features.a.bc \
     -interface "$LIBFUZZ_LOG_PATH/apis_clang.json" \
     -output "$LIBFUZZ_LOG_PATH/conditions.json" \
     -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \

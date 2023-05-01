@@ -248,10 +248,14 @@ class Configuration:
 
         if not "conditions" in analysis:
             raise Exception("'conditions' not defined")
+        
+        if not "apis_llvm" in analysis:
+            raise Exception("'apis_llvm' not defined")
 
         conditions_file = analysis["conditions"]
+        apis_llvm = analysis["apis_llvm"]
         
-        return Utils.get_function_conditions(conditions_file)
+        return Utils.get_function_conditions(conditions_file, apis_llvm)
         
     @cached_property
     def num_seeds(self):

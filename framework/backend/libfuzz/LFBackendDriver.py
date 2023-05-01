@@ -418,14 +418,11 @@ class LFBackendDriver(BackendDriver):
         ret_type = apicall.ret_type
         arg_vars = apicall.arg_vars
         function_name = apicall.function_name
+        namespace = apicall.namespace
 
-        # if function_name == "get_data":
-        #     print("get_data backend")
-        #     from IPython import embed; embed(); exit(1)
+        if namespace is not None and len(namespace) > 0:
+            function_name = "::".join(namespace) + "::" + function_name
 
-        # if function_name == "create":
-        #     print("create backend")
-        #     from IPython import embed; embed(); exit(1)
 
         ret_var_code = self.value_emit(ret_var)
         arg_vars_code = ", ".join([self.value_emit(a) for a in arg_vars])

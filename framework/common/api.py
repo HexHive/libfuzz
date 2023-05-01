@@ -44,12 +44,16 @@ class Api:
     return_info: Arg
     arguments_info: List[Arg]
 
+    namespace: List[str]
+
     def __init__(self, function_name: str, is_vararg: bool, 
-                    return_info: Arg, arguments_info: List[Arg]):
+                    return_info: Arg, arguments_info: List[Arg],
+                    namespace: List[str]):
         self.function_name = function_name
         self.is_vararg = is_vararg
         self.return_info = return_info
         self.arguments_info = arguments_info
+        self.namespace = namespace
 
     def __str__(self):
         return f"Api(function_name={self.function_name})"
@@ -63,6 +67,7 @@ class Api:
         arg_lst += [self.is_vararg]
         arg_lst += [hash(self.return_info)]
         arg_lst += [hash(a) for a in self.arguments_info]
+        arg_lst += [hash(a) for a in self.namespace]
         return tuple(arg_lst)
 
     def __hash__(self):

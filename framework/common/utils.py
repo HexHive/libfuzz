@@ -135,6 +135,28 @@ class Utils:
 
                 # if function_name in apis_llvm_list:
                 #     raise Exception(f"Function '{function_name}' already extracted!")
+                arguments_info = api["arguments_info"]
+                return_info = api["return_info"]
+
+                # if function_name == "GetX86Info":
+                #     print("handle ret arg 2")
+                #     from IPython import embed; embed(); exit(1)
+
+                ret_args = [a for a in arguments_info if a["flag"] == "ret"]
+
+                if len(ret_args) > 1:
+                    raise Exception(f"Function {function_name} has more than 1 ret argument, that's weird")
+
+                if len(ret_args) == 1 and return_info["type"] == "void":
+                    r = ret_args[0]
+                    arguments_info.remove(r)
+                    # r["type"] = r["type"].replace("*", "")
+                    r["flag"] = "ref"
+                    return_info = r
+                    return_info["size"] = -1
+
+                api["arguments_info"] = arguments_info
+                api["return_info"] = return_info                
 
                 apis_llvm_list[function_name] = copy.deepcopy(api)
         
@@ -219,6 +241,23 @@ class Utils:
         arguments_info = api["arguments_info"]
         return_info = api["return_info"]
 
+        namespace = []
+        if function_name in apis_clang_list:
+            namespace = apis_clang_list[function_name]["namespace"]
+
+        ret_args = [a for a in arguments_info if a["flag"] == "ret"]
+
+        if len(ret_args) > 1:
+            raise Exception(f"Function {function_name} has more than 1 ret argument, that's weird")
+
+        if len(ret_args) == 1 and return_info["type"] == "void":
+            r = ret_args[0]
+            arguments_info.remove(r)
+            r["type"] = r["type"].replace("*", "")
+            r["flag"] = "val"
+            return_info = r
+            return_info["size"] = -1
+
         if function_name in coerce_info:
             coerce_arguments = coerce_info[function_name].arguments
 
@@ -292,7 +331,8 @@ class Utils:
         #     print("VOID*?")
         #     from IPython import embed; embed(); exit(1)
 
-        return Api(function_name, is_vararg, return_info, arguments_info)
+        return Api(function_name, is_vararg, return_info,
+                   arguments_info, namespace)
 
     @staticmethod
     def is_incomplete(a_type, incomplete_types_list):
@@ -377,9 +417,11 @@ class Utils:
         return AccessTypeSet(ats)
 
     @staticmethod
-    def get_function_conditions(conditions_file) -> FunctionConditionsSet:
+    def get_function_conditions(conditions_file, apis_llvm) -> FunctionConditionsSet:
 
         fcs = FunctionConditionsSet()
+
+        api = Utils.get_apis_llvm_list(apis_llvm)
 
         with open(conditions_file) as  f:
             conditions = json.load(f)
@@ -400,6 +442,11 @@ class Utils:
                     p_idx += 1
 
                 return_at = Utils.get_value_metadata(fc_json[f"return"])
+
+                if len(api[function_name]["arguments_info"]) != len(params_at):
+                    return_at = params_at[0]
+                    params_at = []
+
 
                 fc = FunctionConditions(function_name, params_at, return_at)
                 fcs.add_function_conditions(fc)

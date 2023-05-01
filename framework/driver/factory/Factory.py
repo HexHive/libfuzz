@@ -22,6 +22,11 @@ class Factory(ABC):
         function_name = api.function_name
         return_info = api.return_info
         arguments_info = api.arguments_info
+        namespace = api.namespace
+
+        # if function_name in ["GetX86CacheInfo", "TIFFOpen"]:
+        #     print(f"api_to_apicall: {function_name}")
+        #     from IPython import embed; embed(); exit(1)
 
         arg_list_type = []
         for _, arg in enumerate(arguments_info):
@@ -34,7 +39,7 @@ class Factory(ABC):
         else:
             ret_type = Factory.normalize_type(return_info.type, return_info.size, return_info.flag, return_info.is_type_incomplete, return_info.is_const)
         
-        return ApiCall(api, function_name, arg_list_type, ret_type)
+        return ApiCall(api, function_name, namespace, arg_list_type, ret_type)
 
     @staticmethod
     def normalize_type(a_type, a_size, a_flag, a_is_incomplete, a_is_const) -> Type:
