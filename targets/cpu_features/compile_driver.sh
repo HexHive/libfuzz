@@ -28,6 +28,6 @@ do
     echo "Driver: $d"
     # [TAG] THIS STEP MUST BE ADAPTED FOR EACH LIBRARY
     $CXX -g -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
-        $d ${TARGET}/work/lib/libtiff.a ${TARGET}/work/lib/libcpu_features.a \
+        $d ${TARGET}/work/lib/libcpu_features.a \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
 done
