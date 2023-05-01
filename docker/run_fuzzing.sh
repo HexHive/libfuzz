@@ -20,9 +20,10 @@ IMG_NAME="libpp-fuzzing-$TARGET"
 LIBPP=../
 
 set -x
-DOCKER_BUILDKIT=1 docker build -t "$IMG_NAME" \
-    --target libfuzzpp_fuzzing \
+DOCKER_BUILDKIT=1 docker build \
+    --build-arg USER_UID=$(id -u) --build-arg GROUP_UID=$(id -g) \
     --build-arg target_name="$TARGET" \
+    -t "$IMG_NAME" --target libfuzzpp_fuzzing \
     -f "$LIBPP/Dockerfile" "$LIBPP"
 set +x
 

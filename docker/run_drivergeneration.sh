@@ -14,8 +14,9 @@ IMG_NAME="libpp-drvgen"
 LIBPP=../
 
 set -x
-DOCKER_BUILDKIT=1 docker build -t "$IMG_NAME" \
-    --target libfuzzpp_drivergeneration \
+DOCKER_BUILDKIT=1 docker build \
+    --build-arg USER_UID=$(id -u) --build-arg GROUP_UID=$(id -g) \
+    -t "$IMG_NAME" --target libfuzzpp_drivergeneration \
     -f "$LIBPP/Dockerfile" "$LIBPP"
 set +x
 

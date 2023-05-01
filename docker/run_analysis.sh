@@ -14,8 +14,9 @@ IMG_NAME="libpp-analysis"
 LIBPP=../
 
 set -x
-DOCKER_BUILDKIT=1 docker build -t "$IMG_NAME" \
-    --target libfuzzpp_analysis \
+DOCKER_BUILDKIT=1 docker build \
+    --build-arg USER_UID=$(id -u) --build-arg GROUP_UID=$(id -g) \
+    -t "$IMG_NAME" --target libfuzzpp_analysis \
     -f "$LIBPP/Dockerfile" "$LIBPP"
 set +x
 
