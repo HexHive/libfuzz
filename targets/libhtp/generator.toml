@@ -10,6 +10,7 @@ minimum_apis = "/workspaces/libfuzz/analysis/libhtp/work/apipass/apis_minimized.
 # minimum_apis = "/workspaces/libfuzz/analysis/libhtp/work/apipass/apis_minimized_3.txt"
 # minimum_apis = ""
 data_layout = "/workspaces/libfuzz/analysis/libhtp/work/apipass/data_layout.txt"
+enum_types = "/workspaces/libfuzz/analysis/libhtp/work/apipass/enum_types.txt"
 
 
 [generator]
@@ -17,7 +18,7 @@ workdir = "/workspaces/libfuzz/workdir/libhtp"
 policy = "constraint_based"
 dep_graph = "type"
 # dep_graph = "undef"
-pool_size = 40
+pool_size = 1
 driver_size = 10
 num_seeds = 1
 backend = "libfuzz"

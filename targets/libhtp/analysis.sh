@@ -54,7 +54,8 @@ $TOOLS_DIR/tool/misc/extract_included_functions.py -i "$WORK/include" \
     -p "$LIBFUZZ/targets/${TARGET_NAME}/public_headers.txt" \
     -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
     -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
-    -a "$LIBFUZZ_LOG_PATH/apis_clang.json" 
+    -a "$LIBFUZZ_LOG_PATH/apis_clang.json" \
+    -n "$LIBFUZZ_LOG_PATH/enum_types.txt"
 
 # extract fields dependency from the library itself, repeat for each object produced
 $TOOLS_DIR/condition_extractor/bin/extractor \
