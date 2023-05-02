@@ -1,1 +1,4 @@
-GetX86CacheInfo
+// GetX86Info
+// GetX86Microarchitecture
+// GetX86FeaturesEnumName
+FillX86BrandString

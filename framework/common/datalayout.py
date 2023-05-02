@@ -12,12 +12,13 @@ from common import Utils
 #   - fourth, get type from LLVM definition through LLVM name (add extraction from condition_extraction)
 class DataLayout:
     # so far, only clang_str -> (size in bit)
-    layout:     Dict[str, int]
-    structs:    Set[str]
+    # layout:     Dict[str, int]
+    # structs:    Set[str]
+    # enum:       Set[str]
 
     @staticmethod
     def populate(apis_clang_p: str, apis_llvm_p: str,
-        incomplete_types_p: str, data_layout_p: str):
+        incomplete_types_p: str, data_layout_p: str, enum_types_p: str):
         print("DataLayout populate!")
 
         DataLayout.layout = {}
@@ -26,11 +27,13 @@ class DataLayout:
         apis_llvm = Utils.get_apis_llvm_list(apis_llvm_p)
         incomplete_types = Utils.get_incomplete_types_list(incomplete_types_p)
         data_layout = Utils.get_data_layout(data_layout_p)
+        enum_type = Utils.get_enum_types_list(enum_types_p)
 
         DataLayout.apis_clang = apis_clang
         DataLayout.apis_llvm = apis_llvm
         DataLayout.incomplete_types = incomplete_types
         DataLayout.data_layout = data_layout
+        DataLayout.enum_type = enum_type
         DataLayout.clang_to_llvm_struct = {}
 
         # loop all the types in apis_clang (args + ret) and try to infer all the
@@ -193,6 +196,10 @@ class DataLayout:
     @staticmethod
     def has_incomplete_type() -> bool:
         return len(DataLayout.incomplete_types) != 0
+    
+    @staticmethod
+    def is_enum_type(a_type: str) -> bool:
+        return a_type in DataLayout.enum_type
     
     @staticmethod
     def has_user_define_init(a_type: str) -> bool:

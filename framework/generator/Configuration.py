@@ -181,12 +181,17 @@ class Configuration:
         if not "data_layout" in analysis:
             raise Exception("'data_layout' not defined")
         
+        if not "enum_types" in analysis:
+            raise Exception("'enum_types' not defined")
+        
         apis_llvm = analysis["apis_llvm"]
         apis_clang = analysis["apis_clang"]
         incomplete_types = analysis["incomplete_types"]
         data_layout = analysis["data_layout"]
+        enum_types = analysis["enum_types"]
 
-        DataLayout.populate(apis_clang, apis_llvm, incomplete_types, data_layout)
+        DataLayout.populate(apis_clang, apis_llvm, incomplete_types, 
+                            data_layout, enum_types)
 
     @cached_property
     def dependency_graph(self):

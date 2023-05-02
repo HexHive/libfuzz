@@ -8,6 +8,7 @@ import clang.cindex
 function_declarations = [] # List of AST node objects that are fucntion declarations
 type_incomplete = set()    # List of incomplete types
 apis_definition = []       # List of APIs with original argument types and extra info (e.g., const)
+type_enum = set()
 
 def get_info(type_str):
 
@@ -91,6 +92,10 @@ def traverse(node, include_folder, namespace):
         for child in node.get_children():
             if child.kind == clang.cindex.CursorKind.TYPE_REF:
                 type_incomplete.add("%" + child.displayname.replace(" ","."))
+    elif node.type.kind == clang.cindex.TypeKind.TYPEDEF:
+        for child in node.get_children():
+            if child.kind == clang.cindex.CursorKind.TYPE_REF:
+                type_enum.add(child.displayname)
 
 MAIN_STUB = "int main(int argc, char** argv) {return 0;}"
 
@@ -133,6 +138,7 @@ def _main():
     parser.add_argument('-incomplete_types', '-t', type=str, help='List of incomplete types', required=True)
     parser.add_argument('-apis_list', '-a', type=str, help='List of APIs with types from the AST', required=True)
     parser.add_argument('-public_headers', '-p', type=str, help='List of public header files', required=True)
+    parser.add_argument('-enum_list', '-n', type=str, help='List of enum types', required=False)
 
     args = parser.parse_args()
 
@@ -141,6 +147,7 @@ def _main():
     incomplete_types = args.incomplete_types
     apis_list = args.apis_list
     public_headers = args.public_headers
+    enum_list = args.enum_list
 
     tmp_file = get_stub_file(include_folder, public_headers)
 
@@ -172,6 +179,10 @@ def _main():
         for a in apis_definition:
             out_f.write(f"{json.dumps(a)}\n")
 
+    if enum_list is not None:
+        with open(enum_list, "w") as out_f:
+            for e in type_enum:
+                out_f.write(f"{e}\n")
         
 
 if __name__ == "__main__":

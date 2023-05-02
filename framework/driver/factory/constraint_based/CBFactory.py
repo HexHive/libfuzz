@@ -76,7 +76,8 @@ class CBFactory(Factory):
                     num_arg_ok += 1 
                 elif DataLayout.has_user_define_init(tkn):
                     num_arg_ok += 1 
-
+                elif DataLayout.is_enum_type(tkn):
+                    num_arg_ok += 1 
 
             # I can initialize all the arguments
             if len(api.arguments_info) == num_arg_ok:
@@ -96,9 +97,9 @@ class CBFactory(Factory):
 
         unsat_vars = set()
 
-        # if api_call.function_name == "uriToStringA":
-        #     print("hook uriToStringA")
-        #     par_debug = 1
+        # if api_call.function_name == "GetX86Microarchitecture":
+        #     print(f"hook {api_call.function_name}")
+        #     par_debug = 0
         #     is_ret = False
         #     arg_type = api_call.arg_types[par_debug]
         #     arg_cond = conditions.argument_at[par_debug]
@@ -206,9 +207,6 @@ class CBFactory(Factory):
         # List[(ApiCall, RunningContext)]
         drv = list()
 
-        # print("after create_random_driver")
-        # from IPython import embed; embed(); exit(1)
-
         begin_api = random.choice(source_api)
         begin_condition = get_cond(begin_api)
         call_begin = to_api(begin_api)
@@ -224,6 +222,9 @@ class CBFactory(Factory):
 
         print(f"[INFO] starting with {call_begin.function_name}")
         drv += [(call_begin, rng_ctx_1)]
+
+        # print("after create_random_driver")
+        # from IPython import embed; embed(); exit(1)
 
         api_n = begin_api
         while len(drv) < self.driver_size:

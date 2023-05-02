@@ -11,6 +11,49 @@ See explanation in AccessType.cpp function: predefined_access_type_dispatcher
 You can define handlers for specific functions that will manually update the access type set.
 */
 
+bool isAnArray(const CallBase *c) {
+    // I assume c is at lteast a memcpy-like function
+    
+    Module *m = LLVMModuleSet::getLLVMModuleSet()->getMainLLVMModule();
+    const DataLayout &data_layout = m->getDataLayout();
+
+    // outs() << "isAnArray?\n";
+    // outs() << *c << "\n";
+
+    bool obj_size_found = false;
+    bool cpy_size_found = false;
+    uint64_t obj_size = 0;
+    uint64_t cpy_size = 0;
+
+    if (auto dest = SVFUtil::dyn_cast<BitCastInst>(c->getArgOperand(0))) {
+        // outs() << "id bitcast\n";
+        // outs() << *dest << "\n";
+        auto dst_tye = dest->getSrcTy();
+        if (auto pnt = SVFUtil::dyn_cast<PointerType>(dst_tye)) {
+            auto base_tye = pnt->getElementType();
+            // outs() << "base type\n";
+            // outs() << *base_tye << "\n";
+
+            // need size in bytes
+            obj_size = data_layout.getTypeStoreSizeInBits(base_tye);
+            obj_size /= 8;
+            // outs() << obj_size << "\n";
+            obj_size_found = true;
+        }
+    }
+
+    if (auto cs =dyn_cast<ConstantInt>(c->getArgOperand(2))) {
+        cpy_size = cs->getZExtValue();
+        // outs() << *copy_size << "\n";
+        cpy_size_found = true;
+    }
+
+    if (obj_size_found && cpy_size_found && obj_size == cpy_size)
+        return false;
+ 
+    return true;
+}
+
 typedef bool (*Handler)(ValueMetadata*, std::string, 
     const ICFGNode*, const CallICFGNode*, int, AccessType);
 typedef std::map<std::string, Handler> AccessTypeHandlerMap;
@@ -70,7 +113,8 @@ bool memcpy_hander(ValueMetadata *mdata, std::string fun_name,
         tmpAcNode.addField(-1);
         tmpAcNode.setAccess(AccessType::Access::read);
         mdata->getAccessTypeSet()->insert(tmpAcNode, icfgNode);
-        mdata->setIsArray(true);
+        auto c = SVFUtil::dyn_cast<CallBase>(cs->getCallSite());
+        mdata->setIsArray(isAnArray(c));
         if (param_num == 1) {
             auto i = SVFUtil::dyn_cast<CallBase>(cs->getCallSite());
             Value *v = i->getArgOperand(2);

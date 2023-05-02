@@ -10,6 +10,7 @@ minimum_apis = "/workspaces/libfuzz/analysis/cpu_features/work/apipass/apis_mini
 # minimum_apis = "/workspaces/libfuzz/analysis/cpu_features/work/apipass/apis_minimized_3.txt"
 # minimum_apis = ""
 data_layout = "/workspaces/libfuzz/analysis/cpu_features/work/apipass/data_layout.txt"
+enum_types = "/workspaces/libfuzz/analysis/cpu_features/work/apipass/enum_types.txt"
 
 
 [generator]
@@ -17,7 +18,7 @@ workdir = "/workspaces/libfuzz/workdir/cpu_features"
 policy = "constraint_based"
 dep_graph = "type"
 # dep_graph = "undef"
-pool_size = 10
+pool_size = 40
 driver_size = 10
 num_seeds = 1
 backend = "libfuzz"

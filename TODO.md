@@ -17,10 +17,7 @@
 - source apis -> drvgen knows how to instantiate the type (basic type or user defined)
 - infer which fields must be set manually? check if a struct has no WRITE access
   type for some field (and it is a complete type)
-- handle namespace:
-  - add namespace to APIs (and extract from clang!)
-  - handl namespace in drv generator: remove from var name, keep for type and functions
-  - fix type side for cpu_features
+- maybe avoid free() if API does not has malloc?
 
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init

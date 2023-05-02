@@ -455,3 +455,17 @@ class Utils:
                 fcs.add_function_conditions(fc)
 
         return fcs
+    
+
+    @staticmethod
+    def get_enum_types_list(enum_types_file: str) -> List[str]:
+
+        enum_list = []
+
+        with open(enum_types_file) as  f:
+            for l in f:
+                l = l.strip()
+                if l:
+                    enum_list += [l]
+
+        return enum_list

@@ -891,8 +891,9 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
     //     outs() << x << "\n";
     // }
 
-    if (!mdata.isArray())
+    if (!mdata.isArray()) {
         mdata.setIsArray(is_array);
+    }
 
     return mdata;
 }
