@@ -7,3 +7,6 @@ builtin_subtypes = "/workspaces/libfuzz/regression_tests/java_analysis/test/buil
 
 [generator]
 policy = "java"
+workdir = "/workspaces/libfuzz/regression_tests/java_analysis/test/simplelibrary/workdir"
+num_seeds = 1
+backend = "java_backend"

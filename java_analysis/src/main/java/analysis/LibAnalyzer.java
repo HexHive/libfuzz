@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import sootup.core.model.SourceType;
 import sootup.core.typehierarchy.ViewTypeHierarchy;
 import sootup.java.bytecode.inputlocation.PathBasedAnalysisInputLocation;
-import sootup.java.core.JavaProject;
+//import sootup.java.core.JavaProject;
 import sootup.java.core.JavaSootClass;
 import sootup.java.core.language.JavaLanguage;
 import sootup.java.core.views.JavaView;
@@ -21,7 +21,8 @@ public class LibAnalyzer {
     private static final JavaLanguage language = new JavaLanguage(8);
     private static final String objectName = "java.lang.Object";
     private final ClassLoader loader;
-    private final JavaProject project;
+//    private final JavaProject project;
+    private final sootup.java.core.JavaProject project;
     private final JavaView view;
     private final List<Class<?>> clazzes;
 
@@ -36,7 +37,8 @@ public class LibAnalyzer {
 
         loader = URLClassLoader.newInstance(new URL[] {url}, getClass().getClassLoader());
 
-        project = JavaProject.builder(language).addInputLocation(new PathBasedAnalysisInputLocation(path, SourceType.Library)).build();
+//        project = JavaProject.builder(language).addInputLocation(new PathBasedAnalysisInputLocation(path, SourceType.Library)).build();
+        project = sootup.java.core.JavaProject.builder(language).addInputLocation(new PathBasedAnalysisInputLocation(path, SourceType.Library)).build();
 
         view = project.createFullView();
 

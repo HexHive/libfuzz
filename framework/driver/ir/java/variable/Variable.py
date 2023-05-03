@@ -14,10 +14,23 @@ class Variable:
         Variable.type_count[type] += 1
 
         if isinstance(type, ArrayType):
-            self.token = f"{type.rawType.className}_d{type.dimension}_{cnt}"
+            self.token = f"{Variable.normalize_classname(type.rawType.className)}_d{type.dimension}_{cnt}"
         elif isinstance(type, ClassType):
-            self.token = f"{type.className}_{cnt}"
+            self.token = f"{Variable.normalize_classname(type.className)}_{cnt}"
         elif isinstance(type, ParameterizedType):
-            self.token = f"{type.rawType.className}_" + "_".join([x.className for x in type.argType]) + f"_{cnt}"
+            self.token = f"{Variable.normalize_classname(type.rawType.className)}_" + "_".join([Variable.normalize_classname(x.className) for x in type.argType]) + f"_{cnt}"
         else:
             raise Exception("Unsupported type")
+        
+    def __eq__(self, __value: object) -> bool:
+        if not isinstance(__value, Variable):
+            return False
+        return self.token == __value.token
+    
+    def __hash__(self) -> int:
+        return hash(self.token)
+        
+    @staticmethod
+    def normalize_classname(className: str):
+        name = className.split(".")[-1]
+        return name.lower()

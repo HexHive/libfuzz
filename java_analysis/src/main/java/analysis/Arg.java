@@ -8,6 +8,8 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Arg {
     // This class now only support normal class and simple generic type (e.g. List<String>)
@@ -83,10 +85,20 @@ public class Arg {
     }
 
     private static String formatName(String name) {
-        if (!primitive.contains(name) && !name.contains(".")) {
-            // This indicates an empty package Name
-            return "." + name;
+        String s = name;
+        String h = "";
+        if (name.startsWith("[")) {
+            int idx = name.indexOf("[L");
+            if (idx == -1) {
+                return name;
+            }
+            s = name.substring(idx + 2);
+            h = name.substring(0, idx + 2);
         }
-        return name;
+
+        if (!primitive.contains(s) && !s.contains(".")) {
+            return h + "." + s;
+        }
+        return h + s;
     }
 }

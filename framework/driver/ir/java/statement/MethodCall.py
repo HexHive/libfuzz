@@ -9,8 +9,8 @@ class MethodCall(Statement):
         self.declaring_class = declaring_class
         self.arg_types = arg_types
 
-        self.class_var = None
-        self.arg_vars = [None for _ in arg_types]
+        self.class_var: Variable = None
+        self.arg_vars: List[Variable] = [None for _ in arg_types]
 
     def get_pos_args_types(self):
         return enumerate(self.arg_types)
@@ -27,6 +27,9 @@ class MethodCall(Statement):
     def set_class_var(self, class_var: Variable):
 
         assert self.declaring_class.has_subtype(class_var.type)
+
+        for v in self.arg_vars:
+            assert class_var != v
         
         self.class_var = class_var
 

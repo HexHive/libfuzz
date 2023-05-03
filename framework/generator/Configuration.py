@@ -8,7 +8,7 @@ from dependency import TypeDependencyGraphGenerator
 from dependency import UndefDependencyGraphGenerator
 from grammar import GrammarGenerator, NonTerminal, Terminal
 
-from backend import BackendDriver, MockBackendDriver, LFBackendDriver
+from backend import BackendDriver, MockBackendDriver, LFBackendDriver, JavaBackendDriver
 from common import Utils
 
 from driver.factory.only_type import *
@@ -244,6 +244,9 @@ class Configuration:
 
         if backend == "libfuzz":
             return LFBackendDriver(self.drivers_dir, self.seeds_dir, self.num_seeds, self.headers_dir)
+        
+        if backend == "java_backend":
+            return JavaBackendDriver(self.drivers_dir, self.seeds_dir, self.num_seeds)
 
         raise NotImplementedError
 

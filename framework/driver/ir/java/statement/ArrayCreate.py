@@ -1,6 +1,5 @@
 from typing import List
 from driver.ir.java.type import ArrayType
-from driver.ir.java.variable import Variable
 from . import MethodCall
 
 class ArrayCreate(MethodCall):

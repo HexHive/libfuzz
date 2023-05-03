@@ -8,3 +8,4 @@ from .BackendDriver     import BackendDriver
 
 from .mock.MockBackendDriver    import MockBackendDriver
 from .libfuzz.LFBackendDriver   import LFBackendDriver
+from .java_fuzz.JavaBackendDriver import JavaBackendDriver
