@@ -1,0 +1,6 @@
+htp_config_create
+htp_config_destroy
+htp_connp_create
+htp_connp_set_user_data
+htp_connp_open
+htp_connp_req_data

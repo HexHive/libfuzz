@@ -219,7 +219,7 @@ class LFBackendDriver(BackendDriver):
 
         if isinstance(type, PointerType):
             # idx     = variable.get_index()
-            if buffer.get_alloctype() == AllocType.HEAP:
+            if buffer.get_alloctype() in [AllocType.HEAP, AllocType.GLOBAL]:
                 return f"{self.variable_emit(variable)}"
             else:
                 return f"{token}"
@@ -329,13 +329,13 @@ class LFBackendDriver(BackendDriver):
         
         # if buffer in heap, add a * and remove a [1], i.e., trasform the buffer
         # in an array of pointers instead of variables
-        if alloctype == AllocType.HEAP:
+        if alloctype in [AllocType.HEAP, AllocType.GLOBAL]:
             str_stars = "*"
             n_brackets = "[1]"*(n_stars-1)
 
         const_attr = "const " if type.is_const else ""
 
-        if buffer.get_alloctype() == AllocType.HEAP:
+        if buffer.get_alloctype() in [AllocType.HEAP, AllocType.GLOBAL]:
             return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}] = {{ 0 }};"
         else:
             return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}];"

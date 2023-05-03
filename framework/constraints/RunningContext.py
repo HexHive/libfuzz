@@ -253,9 +253,20 @@ class RunningContext(Context):
         return (self.create_new_var(len_type, mdata, False), mdata)
 
     def create_new_buffer(self, type: Type, cond: ValueMetadata, force_pointer: bool):
-        # if isinstance(type, PointerType):
-        #     raise Exception(f"This function creates buffers only for base types (no pointers!) {type}")
+        
+        # if type.token == "char*":
+        #     # print("create_new_buffer")
+            # from IPython import embed; embed(); exit(1)
 
+            # "access": "create",
+            # "fields": [],
+
+
+        default_alloctype = AllocType.HEAP
+        if len([at for at in cond.ats 
+                if at.access == Access.CREATE and at.fields == []]) == 0:
+            default_alloctype = AllocType.GLOBAL
+            
         alloctype = AllocType.STACK
         if isinstance(type, PointerType):
             # if "UriQueryListW" in type.token:
@@ -263,18 +274,18 @@ class RunningContext(Context):
             #     from IPython import embed; embed(); exit(1)
             if (type.get_base_type().is_incomplete and 
                 type.get_base_type().tag == TypeTag.STRUCT):
-                alloctype = AllocType.HEAP
+                alloctype = default_alloctype
             if cond.len_depends_on != "":
-                alloctype = AllocType.HEAP
+                alloctype = default_alloctype
             if type.is_const:
-                alloctype = AllocType.HEAP
+                alloctype = default_alloctype
             if force_pointer:
-                alloctype = AllocType.HEAP
+                alloctype = default_alloctype
 
         # double pointers -> always in heap
         if (isinstance(type, PointerType) and 
             isinstance(type.get_pointee_type(), PointerType)):
-            alloctype = AllocType.HEAP
+            alloctype = default_alloctype
 
         buff_counter = self.buffs_counter.get(type, 0)
         
@@ -288,7 +299,13 @@ class RunningContext(Context):
             pnt = f"_{ps}"
         cst = "c" if type.is_const else ""
         # so far, only HEAP and STACK
-        heap = "h" if alloctype == AllocType.HEAP else "s"
+        decrt = ""
+        if alloctype == AllocType.HEAP:
+            decrt = "h" 
+        elif alloctype == AllocType.STACK:
+            decrt = "s"
+        elif alloctype == AllocType.GLOBAL:
+            decrt = "g"
 
         namespace_sep = "::"
         if namespace_sep in type.token:
@@ -296,7 +313,7 @@ class RunningContext(Context):
             clean_token = type.token[namespace_idx:]
         else:
             clean_token = type.token
-        buff_name = f"{clean_token}{pnt}_{cst}{heap}{buff_counter}"
+        buff_name = f"{clean_token}{pnt}_{cst}{decrt}{buff_counter}"
         buff_name = buff_name.replace(" ", "")
         # NOTE: char* => always considered as array!
         if ((cond.is_array or type.token in RunningContext.string_types) and
@@ -618,7 +635,7 @@ class RunningContext(Context):
             if t.is_const:
                 continue
             
-            if x.get_alloctype() == AllocType.HEAP:
+            if x.get_alloctype() in [AllocType.HEAP, AllocType.GLOBAL]:
                 continue
 
             fix_buff.add(x)
