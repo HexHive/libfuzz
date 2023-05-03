@@ -29,5 +29,5 @@ do
     # [TAG] THIS STEP MUST BE ADAPTED FOR EACH LIBRARY
     $CXX -g -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
         $d ${TARGET}/work/lib/libminijail.pie.a \
-        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
+        -lcap -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
 done

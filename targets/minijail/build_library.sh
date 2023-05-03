@@ -30,6 +30,6 @@ echo "make clean"
 make -j$(nproc) clean
 echo "make"
 make -j$(nproc) OUT="$WORK/lib" CC_STATIC_LIBRARY\(libminijail.pie.a\)
-cp $WORK/*.h $WORK/include
+cp *.h $WORK/include
 
 echo "[INFO] Library installed in: $WORK"

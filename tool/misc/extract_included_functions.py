@@ -5,7 +5,7 @@ import sys, os, re
 import clang.cindex
 
 
-function_declarations = [] # List of AST node objects that are fucntion declarations
+function_declarations = [] # List of AST node objects that are function declarations
 type_incomplete = set()    # List of incomplete types
 apis_definition = []       # List of APIs with original argument types and extra info (e.g., const)
 type_enum = set()
@@ -14,16 +14,21 @@ def get_info(type_str):
 
     info = {}
 
-    if type_str.startswith("const "):
+    if "const" in type_str:
         info["const"] = True
-        info["type_clang"] = type_str[len("const "):]
+        info["type_clang"] = type_str.replace("const", "")
     else:
         info["const"] = False
         info["type_clang"] = type_str
 
     # ducking ugly
-    info["type_clang"] = info["type_clang"].replace("enum ", "")
+    if type_str.startswith("enum "):
+        info["type_clang"] = info["type_clang"].replace("enum ", "")
+    if type_str.startswith("struct "):
+        info["type_clang"] = info["type_clang"].replace("struct ", "")
     info["type_clang"] = info["type_clang"].replace(" ", "")
+    # unsigned is an additional type attribute that should be separated from the type. 
+    # Since we removed all spaces they would be concatenated otherwise
     info["type_clang"] = info["type_clang"].replace("unsigned", "unsigned ")
     
     # stuffs like char[100] into char*
@@ -32,7 +37,7 @@ def get_info(type_str):
 
     return info
 
-# generate an API structur from the AST node
+# generate an API structure from the AST node
 def get_api(node, namespace):
     # {"function_name": "NotConfigured", "is_vararg": false,
     #           "return_info": {"name": "return", "flag": "val", "size": 32, "type": "i32"},
@@ -88,10 +93,15 @@ def traverse(node, include_folder, namespace):
     # # print('Found %s [line=%s, col=%s] %s' % (node.displayname, node.location.line, node.location.column, node.type))
     #     from IPython import embed; embed(); exit()
 
-    if node.type.kind == clang.cindex.TypeKind.TYPEDEF and node.type.get_size() == -2:
-        for child in node.get_children():
-            if child.kind == clang.cindex.CursorKind.TYPE_REF:
-                type_incomplete.add("%" + child.displayname.replace(" ","."))
+    # type of size -2 is a special case for incomplete types
+    if node.type.get_size() == -2:
+        if node.type.kind == clang.cindex.TypeKind.RECORD:
+            type_incomplete.add("%" + node.displayname.replace(" ","."))
+            print(node.displayname)
+        if node.type.kind == clang.cindex.TypeKind.TYPEDEF:
+            for child in node.get_children():
+                if child.kind == clang.cindex.CursorKind.TYPE_REF:
+                    type_incomplete.add("%" + child.displayname.replace(" ","."))
     elif node.type.kind == clang.cindex.TypeKind.TYPEDEF:
         for child in node.get_children():
             if child.kind == clang.cindex.CursorKind.TYPE_REF:
