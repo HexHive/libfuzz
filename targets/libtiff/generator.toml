@@ -10,7 +10,7 @@ minimum_apis = "/workspaces/libfuzz/analysis/libtiff/work/apipass/apis_minimized
 # minimum_apis = "/workspaces/libfuzz/analysis/libtiff/work/apipass/apis_minimized_3.txt"
 # minimum_apis = ""
 data_layout = "/workspaces/libfuzz/analysis/libtiff/work/apipass/data_layout.txt"
-
+enum_types = "/workspaces/libfuzz/analysis/libtiff/work/apipass/enum_types.txt"
 
 [generator]
 workdir = "/workspaces/libfuzz/workdir/libtiff"

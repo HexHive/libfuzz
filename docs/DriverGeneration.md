@@ -68,6 +68,7 @@ incomplete_types = ".../incomplete_types.txt" # list of incomplete types
 conditions = ".../conditions.json" # API constraints 
 minimum_apis = ".../apis_minimized.txt" # minimize APIs
 data_layout = ".../data_layout.txt" # data layout info
+enum_types = ".../enum_types.txt" # enum types info
 
 [generator]
 workdir = ".../workdir/" # output dir for drivers and corpus

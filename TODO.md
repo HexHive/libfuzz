@@ -12,12 +12,14 @@
 - change new variable synthesis with data layout info
 
 [MOST IMPORTANT:]
+- maybe avoid free() if API does not has malloc?
+- investigate memory leak in libhtp
+- infer which structs can be fed by fuzzer seeds (those without pointers -- extract them from condition_extractor? how?)
 - `htp_connp_req_data` and `htp_connp_res_data` I can't find dependencies betweeen data and len, investigate why
 - use correct sink function in clean_up section
 - source apis -> drvgen knows how to instantiate the type (basic type or user defined)
 - infer which fields must be set manually? check if a struct has no WRITE access
   type for some field (and it is a complete type)
-- maybe avoid free() if API does not has malloc?
 
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init

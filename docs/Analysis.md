@@ -72,6 +72,7 @@ Options:
   types
 - `-a/apis_list <flie path>` -- output file containing the exported functions
   from `-i` plus argument information
+- `-n/-enum_list <file_path>` -- contains enum types
 
 NOTE: we need both `apis_list` and `exported_functions`, just trust me  
 NOTE2: not all the the shipped headers (`include_folder`) are meant to be
@@ -85,7 +86,8 @@ $LIBFUZZ/tool/misc/extract_included_functions.py \
     -p "$LIBFUZZ/targets/${TARGET_NAME}/public_headers.txt" \
     -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
     -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
-    -a "$LIBFUZZ_LOG_PATH/apis_clang.json"
+    -a "$LIBFUZZ_LOG_PATH/apis_clang.json" \
+    -n "$LIBFUZZ_LOG_PATH/enum_types.txt"
 ```
 
 ## Condition Extractor
@@ -209,7 +211,8 @@ $LIBFUZZ/tool/misc/extract_included_functions.py \
     -p "$LIBFUZZ/targets/${TARGET_NAME}/public_headers.txt" \
     -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
     -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
-    -a "$LIBFUZZ_LOG_PATH/apis_clang.json"
+    -a "$LIBFUZZ_LOG_PATH/apis_clang.json" \
+    -a "$LIBFUZZ_LOG_PATH/enum_types.txt"
 
 # extract fields dependency from the library itself, repeat for each object produced
 $LIBFUZZ/condition_extractor/bin/extractor \
