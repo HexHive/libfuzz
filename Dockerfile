@@ -48,8 +48,9 @@ RUN pip3 install ipython
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 # LLVM from source code
-COPY ./LLVM ${HOME}/LLVM
+COPY ./LLVM/fetch_repos.sh ${HOME}/LLVM/fetch_repos.sh
 RUN --mount=type=cache,target=${CCACHE_DIR} cd ${HOME}/LLVM && ./fetch_repos.sh
+COPY ./LLVM ${HOME}/LLVM
 RUN --mount=type=cache,target=${CCACHE_DIR} cd ${HOME}/LLVM && ./build.sh
 ENV LIBFUZZ /workspaces/libfuzz
 

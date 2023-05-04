@@ -4,7 +4,7 @@ To add a new target one can take inspiration from `libtiff`.
 
 **Preliminary steps**
 
-One needs first to understand how to succesefully compile a library. This may
+One needs first to understand how to successfully compile a library. This may
 mean to deal with different building systems, e.g., CMake, make, ninja. I
 recommend to spend some time to build the library in your local machine, and run
 a minimal example (a simple hello.cc that links against the library).
