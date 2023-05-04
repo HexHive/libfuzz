@@ -12,6 +12,8 @@ do
     DRIVER_CORPUS=${LIBFUZZ}/workdir/${TARGET_NAME}/corpus/${DRIVER_NAME}
     DRIVER_CORNEW=${LIBFUZZ}/workdir/${TARGET_NAME}/corpus_new/${DRIVER_NAME}
     CRASHES_DIR=${LIBFUZZ}/workdir/${TARGET_NAME}/crashes/${DRIVER_NAME}
+    rm -Rf ${CRASHES_DIR} || true
+    rm -Rf ${DRIVER_CORNEW} || true
     mkdir -p ${CRASHES_DIR}
     mkdir -p ${DRIVER_CORNEW}
 

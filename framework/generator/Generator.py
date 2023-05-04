@@ -10,6 +10,10 @@ class Generator:
         config.build_data_layout()
 
     def run(self):
+        # print("Cleaning previous drivers...")
+        # shutil.rmtree(self._backend.working_dir + "/*")
+        # shutil.rmtree(self._backend.seeds_dir + "/*")
+
         print("Generating drivers...")
 
         while not self._pool.full():

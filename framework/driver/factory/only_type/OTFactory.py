@@ -10,7 +10,7 @@ from driver.ir import Statement, ApiCall, BuffDecl, Type, PointerType, Variable
 class OTFactory(Factory):
     concretization_logic: Dict[Terminal, ApiCall]
 
-    def __init__(self, api_list: List[Api], driver_size: int,
+    def __init__(self, api_list: Set[Api], driver_size: int,
                     grammar: Grammar, max_nonterminals: int = 3):
         self.concretization_logic = self.load_concretization_logic(api_list)
         self.max_nonterminals = max_nonterminals

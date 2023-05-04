@@ -1,6 +1,6 @@
 # so I overwrite only these params
 
 [generator]
-pool_size = 40
+pool_size = 10
 driver_size = 10
 num_seeds = 20

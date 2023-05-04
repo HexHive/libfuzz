@@ -184,6 +184,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
         }  
 
         // We'll go throught the children and add unknown ones to our work list.
+        // outs() << "NODE: " << node->toString() << "\n";
         if (node->hasOutgoingEdge()) {
             ICFGNode::const_iterator it = node->OutEdgeBegin();
             ICFGNode::const_iterator eit = node->OutEdgeEnd();
@@ -194,6 +195,19 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
 
                 if (visited.find(dst) != visited.end()) {
                     // We've seen it already
+
+                    // BUG: if CallCFGEdge and already visited, then skip the
+                    // call and go to the next return                
+                    if(auto call_edge = SVFUtil::dyn_cast<CallCFGEdge>(edge)) {
+                        ICFGEdge *next_ret = phi[call_edge];
+                        ICFGNode *dst_new = next_ret->getDstNode();
+                        // next_ret
+                        // curr_stack.push(next_ret);
+                        working.push(std::make_pair(dst_new, curr_stack));
+                    }
+
+                    // outs() << "\talready visited: ";
+                    // outs() << dst->toString() << "\n";
                     continue;
                 }
                 

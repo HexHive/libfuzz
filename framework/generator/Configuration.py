@@ -2,7 +2,7 @@ from functools import cached_property
 
 import os
 from os import path
-import tomli
+import tomli, shutil
 
 from dependency import TypeDependencyGraphGenerator
 from dependency import UndefDependencyGraphGenerator
@@ -89,12 +89,14 @@ class Configuration:
     @cached_property
     def drivers_dir(self):
         d = os.path.join(self.work_dir, "drivers")
+        shutil.rmtree(d)
         os.makedirs(d, exist_ok=True)
         return d
 
     @cached_property
     def seeds_dir(self):
         d = os.path.join(self.work_dir, "corpus")
+        shutil.rmtree(d)
         os.makedirs(d, exist_ok=True)
         return d
 
@@ -127,6 +129,40 @@ class Configuration:
         d = os.path.join(self.work_dir, "reports")
         os.makedirs(d, exist_ok=True)
         return d
+
+    @cached_property
+    def api_list_all(self):
+
+        if not "analysis" in self._config:
+            raise Exception("'analysis' not defined")
+
+        analysis = self._config["analysis"]
+
+        if not "apis_llvm" in analysis:
+            raise Exception("'apis_llvm' not defined")
+
+        if not "apis_clang" in analysis:
+            raise Exception("'apis_clang' not defined")
+        
+        if not "headers" in analysis:
+            raise Exception("'headers' not defined")
+
+        if not "coercemap" in analysis:
+            raise Exception("'coercemap' not defined")
+
+        # if not "minimum_apis" in analysis:
+        #     raise Exception("'minimum_apis' not defined")
+
+        apis_llvm = analysis["apis_llvm"]
+        apis_clang = analysis["apis_clang"]
+        hedader_folder = analysis["headers"]
+        coerce_map = analysis["coercemap"]
+        incomplete_types = analysis["incomplete_types"]
+        # minimum_apis = analysis["minimum_apis"]
+
+        # t = Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types)
+        # from IPython import embed; embed(); exit()
+        return Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types, "")
 
     @cached_property
     def api_list(self):
@@ -240,7 +276,7 @@ class Configuration:
 
         if policy == "constraint_based":
             dep_graph = self.dependency_graph
-            return CBFactory(self.api_list, self.driver_size, dep_graph, self.function_conditions)
+            return CBFactory(self.api_list, self.driver_size, dep_graph, self.function_conditions, self.api_list_all)
 
         raise NotImplementedError
 

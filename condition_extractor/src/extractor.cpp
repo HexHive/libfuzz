@@ -112,6 +112,15 @@ static llvm::cl::opt<std::string> minimizeApi("minimize_api",
 
 Verbosity verbose;
 
+bool is_fuzzing_compatible(llvm::StructType *st) {
+
+    for (auto el: st->elements())
+        if (el->isPointerTy())
+            return false;
+
+    return true;
+}
+
 // at1 over_dom at2 iif
 // for each i2 in at2 . exists i1 in at1 s.t. i1 dom i2
 bool dominatesAccessType(GenericDominatorTy *dom, AccessType at1, AccessType at2) {
@@ -451,14 +460,10 @@ int main(int argc, char ** argv)
     icfg = pag->getICFG();
     icfg->updateCallGraph(callgraph);
 
-    outs() << "[INFO] First block\n";
-
     /// Sparse value-flow graph (SVFG)
     SVFGBuilder svfBuilder;
     SVFG* svfg = svfBuilder.buildFullSVFG(point_to_analysys);
     svfg->updateCallGraph(point_to_analysys);
-
-    outs() << "[INFO] Second block\n";
 
     // I want to find a minimized set of APIs to analyze
     if (minimizeApi != "") {
@@ -691,9 +696,10 @@ int main(int argc, char ** argv)
                 if (st->isSized()) {
                     uint64_t storeSize = data_layout.getTypeStoreSizeInBits(st);
                     fw << storeSize << " ";
-                    fw << TypeMatcher::compute_hash(st) << "\n";
+                    fw << TypeMatcher::compute_hash(st) << " ";
+                    fw << is_fuzzing_compatible(st) << "\n";
                 } else {
-                    fw << "0 <random>\n";
+                    fw << "0 <random> 0\n";
                 }
             }
             fw.close();

@@ -12,8 +12,7 @@
 - change new variable synthesis with data layout info
 
 [MOST IMPORTANT:]
-- maybe avoid free() if API does not has malloc?
-- investigate memory leak in libhtp
+- libtiff, free not for tiffopen? 
 - infer which structs can be fed by fuzzer seeds (those without pointers -- extract them from condition_extractor? how?)
 - `htp_connp_req_data` and `htp_connp_res_data` I can't find dependencies betweeen data and len, investigate why
 - use correct sink function in clean_up section

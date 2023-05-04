@@ -97,7 +97,7 @@ class DataLayout:
                 if type_llvm in DataLayout.incomplete_types:
                     t_size = 0
                 elif type_llvm in DataLayout.data_layout:
-                    t_size, _ = DataLayout.data_layout[type_llvm]
+                    t_size = DataLayout.data_layout[type_llvm][0]
                     
                 DataLayout.clang_to_llvm_struct[ttype] = type_llvm
 
@@ -105,10 +105,6 @@ class DataLayout:
     
     @staticmethod
     def populate_table(type_clang, function_name, arg_pos):
-
-        # if type_clang == "cpu_features::CacheInfo" and arg_pos == -1:
-        #     print("populate_table")
-        #     from IPython import embed; embed(); exit(1)
 
         # remove pointers
         tmp_type = type_clang
@@ -178,13 +174,34 @@ class DataLayout:
 
     @staticmethod
     def is_a_struct(a_type: str) -> bool:
+        return a_type in DataLayout.clang_to_llvm_struct
+    
+    @staticmethod
+    def is_fuzz_friendly(a_type: str) -> bool:
         # for k, s in DataLayout.data_layout.items():
             # if 
         # if "TIFF" in a_type:
         #     print("is_a_struct")
         #     from IPython import embed; embed(); exit(1)
-        return a_type in DataLayout.clang_to_llvm_struct
-    
+
+        # if not DataLayout.is_a_struct(a_type):
+        #     return True
+
+        if a_type not in DataLayout.clang_to_llvm_struct:
+            return False
+        
+        # from IPython import embed; embed(); exit(1)
+        llvm_type = DataLayout.clang_to_llvm_struct[a_type]
+
+        # if llvm_type == "%struct.htp_hook_t":
+        #     from IPython import embed; embed(); exit(1)
+
+        if llvm_type not in DataLayout.data_layout:
+            return False
+
+        # 2nd position -> can feed from fuzzing seeds
+        return DataLayout.data_layout[llvm_type][2]
+
     @staticmethod
     def is_primitive_type(a_type: str) -> bool:
         try:

@@ -4,12 +4,13 @@ import re
 from typing import Dict, List, Optional, Set, Tuple
 
 from common import Api, FunctionConditionsSet, FunctionConditions, DataLayout
-from constraints import Conditions, ConditionUnsat, RunningContext
+from constraints import ConditionUnsat, RunningContext
 from dependency import DependencyGraph
 from driver import Context, Driver
 from driver.factory import Factory
-from driver.ir import ApiCall, PointerType, Statement, Type, Variable
+from driver.ir import ApiCall, PointerType, Variable, TypeTag
 from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
+from constraints import Conditions
 
 
 class CBFactory(Factory):
@@ -18,9 +19,11 @@ class CBFactory(Factory):
     # dependency_graph    : DependencyGraph
     conditions          : FunctionConditionsSet
     dependency_graph    : Dict[Api, Set[Api]]
+    sinks               : Set[Api]
     
     def __init__(self, api_list: Set[Api], driver_size: int, 
-                    dgraph: DependencyGraph, conditions: FunctionConditionsSet):
+                    dgraph: DependencyGraph, conditions: FunctionConditionsSet,
+                    api_list_all: Set[Api]):
         self.api_list = api_list
         self.driver_size = driver_size
         # self.dependency_graph = dgraph
@@ -44,12 +47,34 @@ class CBFactory(Factory):
                 inv_dep_graph[dep].add(api)
         self.dependency_graph = inv_dep_graph
 
-        # print("dep graph?")
+        get_cond = lambda x: self.conditions.get_function_conditions(x.function_name)
+
+        # get all sink APIs
+        self.sinks = set()
+        for api in self.api_list:
+            fun_cond = get_cond(api)
+            if (len(api.arguments_info) == 1 and 
+                RunningContext.is_sink(fun_cond.argument_at[0])):
+                self.sinks.add(api)
+
+        # get all sink APIs
+        sinks2 = set()
+        for api in api_list_all:
+            fun_cond = get_cond(api)
+            if (len(api.arguments_info) == 1 and 
+                RunningContext.is_sink(fun_cond.argument_at[0])):
+                sinks2.add(api)
+
+        self.sinks_all = sinks2
+        
+        # print("self.sinks")
         # from IPython import embed; embed(); exit(1)
 
     def get_source_api(self) -> Set[Api]:
 
         source_api = set()
+
+        get_cond = lambda x: self.conditions.get_function_conditions(x.function_name)
 
         for api in self.api_list:
             # if DataLayout.has_incomplete_type():
@@ -62,13 +87,20 @@ class CBFactory(Factory):
             # else:
             #     source_api.add(api)
 
-            # if api.function_name == "uriParseUriA":
+            # if api.function_name == "bstr_builder_create":
             #     print("get_source_api")
             #     from IPython import embed; embed(); exit(1)
 
+            fun_cond = get_cond(api)
+
+            # if api.function_name == "htp_tx_req_get_param":
+            #     print(f"get_source_api {api.function_name}")
+            #     from IPython import embed; embed(); exit(1)
+
             num_arg_ok = 0
-            for arg in api.arguments_info:
+            for arg_p, arg in enumerate(api.arguments_info):
                 the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, arg.is_type_incomplete, False)
+                arg_cond = fun_cond.argument_at[arg_p]
                 if isinstance(the_type, PointerType):
                     the_type = the_type.get_base_type()
                 tkn = the_type.token
@@ -78,6 +110,11 @@ class CBFactory(Factory):
                     num_arg_ok += 1 
                 elif DataLayout.is_enum_type(tkn):
                     num_arg_ok += 1 
+                # elif (the_type.tag == TypeTag.STRUCT and
+                #       DataLayout.is_fuzz_friendly(tkn) and
+                #       Conditions.is_unconstraint(arg_cond)):
+                #     num_arg_ok += 1
+
 
             # I can initialize all the arguments
             if len(api.arguments_info) == num_arg_ok:
@@ -96,15 +133,6 @@ class CBFactory(Factory):
         # context = rng_ctx.context
 
         unsat_vars = set()
-
-        # if api_call.function_name == "GetX86Microarchitecture":
-        #     print(f"hook {api_call.function_name}")
-        #     par_debug = 0
-        #     is_ret = False
-        #     arg_type = api_call.arg_types[par_debug]
-        #     arg_cond = conditions.argument_at[par_debug]
-        #     type = arg_type
-        #     from IPython import embed; embed(); exit(1)
 
         # first round to initialize dependency args
         for arg_pos, arg_type in api_call.get_pos_args_types():
@@ -138,6 +166,17 @@ class CBFactory(Factory):
                     rng_ctx.update(api_call.arg_vars[arg_pos], arg_cond)
                     rng_ctx.update(api_call.arg_vars[idx], idx_cond)
                     rng_ctx.var_to_cond[x].len_depends_on = b_len
+
+
+        # if api_call.function_name == "bstr_adjust_realptr":
+        #     print(f"hook {api_call.function_name}")
+        #     # import pdb; pdb.set_trace()
+        #     par_debug = 0
+        #     is_ret = False
+        #     arg_type = api_call.arg_types[par_debug]
+        #     arg_cond = conditions.argument_at[par_debug]
+        #     type = arg_type
+        #     from IPython import embed; embed(); exit(1)
 
         # second round to initialize all the other args
         for arg_pos, arg_type in api_call.get_pos_args_types():
@@ -307,22 +346,22 @@ class CBFactory(Factory):
                 statements_apicall += [AssertNull(var.get_buffer())]
             cond = get_cond(api_call)
             for cond_pos, cond_arg in enumerate(cond.argument_at):
-                if context.is_sink(cond_arg):
+                if RunningContext.is_sink(cond_arg):
                     arg = api_call.arg_vars[cond_pos]
                     if isinstance(arg, Address):
                         buff = arg.get_variable().get_buffer()
                     elif isinstance(arg, Variable):
                         buff = arg.get_buffer()
                     statements_apicall += [SetNull(buff)]
-            # if context.is_sink(api_call.ret_type, PointerType):
+            # if RunningContext.is_sink(api_call.ret_type, PointerType):
 
         statements = []
         statements += context.generate_buffer_decl()
         statements += context.generate_buffer_init()
         statements += statements_apicall 
 
-        clean_up_sec = context.generate_clean_up()
-
+        # clean_up_sec = context.generate_clean_up(self.sinks)
+        clean_up_sec = context.generate_clean_up(self.sinks_all)
         counter_size = context.get_counter_size()
 
         # from IPython import embed; embed(); 

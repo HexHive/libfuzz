@@ -6,9 +6,9 @@ from . import Statement, Type, Variable, Buffer, PointerType, AllocType
 
 class CleanBuffer(Statement):
     buffer:     Buffer
-    string_val: str
+    cleanup_method: str
 
-    def __init__(self, buffer: Buffer):
+    def __init__(self, buffer: Buffer, cleanup_method: str):
         super().__init__()
 
         type = buffer.get_type()
@@ -20,7 +20,9 @@ class CleanBuffer(Statement):
             from IPython import embed; embed(); exit(1)
             raise Exception(f"CleanBuffer accepts only PointerType to heap, {type} received")
 
+        self.token = buffer.token
         self.buffer = buffer
+        self.cleanup_method = cleanup_method
 
     # for an element, the hash is just the key + type
     def __hash__(self):
@@ -31,3 +33,6 @@ class CleanBuffer(Statement):
 
     def get_buffer(self):
         return self.buffer
+
+    def get_cleanup_method(self):
+        return self.cleanup_method

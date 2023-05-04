@@ -272,7 +272,8 @@ class LFBackendDriver(BackendDriver):
 
     # CleanBuffer
     def cleanbuffer_emit(self, cleanbuffer: CleanBuffer) -> str:
-        buff = cleanbuffer.get_buffer()
+        buff            = cleanbuffer.get_buffer()
+        cleanup_method  = cleanbuffer.get_cleanup_method()
 
         v = self.value_emit(buff[0])
 
@@ -282,7 +283,7 @@ class LFBackendDriver(BackendDriver):
         # from IPython import embed; embed(); exit(1)
 
         extra_brackets = "[0]" * num_extra_brackets
-        return f"if ({v}{extra_brackets} != 0) free({v}{extra_brackets});"
+        return f"if ({v}{extra_brackets} != 0) {cleanup_method}({v}{extra_brackets});"
 
     # ConstStringDecl
     def conststringdecl_emit(self, cnststrdecl: ConstStringDecl) -> str:

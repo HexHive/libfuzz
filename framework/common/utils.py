@@ -111,12 +111,14 @@ class Utils:
             for l in f:
                 l = l.strip()
                 if l:
-                    (type, size, hash) = l.split(" ")
+                    (type, size, hash, fuzz_friendly) = l.split(" ")
+                    # 1 => fuzz friendly, 0 => otherwise
+                    fuzz_friendly = fuzz_friendly == "1"
                     if hash == "<random>":
                         length = 20
                         letters = string.ascii_lowercase
                         hash = ''.join(random.choice(letters) for i in range(length))
-                    data_layout["%" + type] = (int(size), hash)
+                    data_layout["%" + type] = (int(size), hash, fuzz_friendly)
         return data_layout
 
     @staticmethod

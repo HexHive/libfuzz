@@ -10,6 +10,7 @@ from driver.ir import SetStringNull, TypeTag
 from . import Conditions
 from common.conditions import *
 from common import Utils, DataLayout
+from common import Api
 
 class RunningContext(Context):
     variables_alive:    List[Variable]
@@ -146,10 +147,12 @@ class RunningContext(Context):
     def try_to_get_var(self, type: Type, cond: ValueMetadata,
                         is_ret: bool = False) -> Value:
 
-        # if isinstance(type, PointerType) and type.get_base_type().tag == TypeTag.STRUCT:
+        # if isinstance(type, PointerType) and type.get_base_type().token == "bstr" and not is_ret:
+        #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
 
-        is_sink = self.is_sink(cond)
+        is_sink = RunningContext.is_sink(cond)
+        is_source = RunningContext.is_source(cond)
 
         val = None
 
@@ -160,6 +163,11 @@ class RunningContext(Context):
             # if I need a void for return, don't bother too much
             if type == self.stub_void:
                 val = NullConstant(self.stub_void)
+            elif is_source:
+                val = self.create_new_var(type, cond, is_ret)
+                if (isinstance(val, Variable) and 
+                    isinstance(val.get_type(), PointerType)):
+                    val = val.get_address()
             else:
                 val = self.randomly_gimme_a_var(type, cond, is_ret)
 
@@ -184,6 +192,7 @@ class RunningContext(Context):
                 from IPython import embed; embed(); exit(1)
                 # else:
                 #     raise ConditionUnsat()
+        # special case for void* types
         elif (isinstance(type, PointerType) and 
             type.get_pointee_type() == self.stub_void):
             new_buff = self.create_new_var(self.stub_char_array, cond, False)
@@ -195,7 +204,10 @@ class RunningContext(Context):
             else:
                 tt = type
             # TODO: check if the ats allow to generate an object
-            if tt.is_incomplete and not is_ret:
+            if (not is_ret and 
+                (tt.is_incomplete or 
+                 (tt.tag == TypeTag.STRUCT and 
+                  not DataLayout.is_fuzz_friendly(tt.token)))):
                 raise ConditionUnsat()
             elif ((not Conditions.is_unconstraint(cond) or
                 tt.is_incomplete) and 
@@ -263,8 +275,7 @@ class RunningContext(Context):
 
 
         default_alloctype = AllocType.HEAP
-        if len([at for at in cond.ats 
-                if at.access == Access.CREATE and at.fields == []]) == 0:
+        if not RunningContext.is_source(cond):
             default_alloctype = AllocType.GLOBAL
             
         alloctype = AllocType.STACK
@@ -272,9 +283,13 @@ class RunningContext(Context):
             # if "UriQueryListW" in type.token:
             #     print("what allocatype I need?")
             #     from IPython import embed; embed(); exit(1)
-            if (type.get_base_type().is_incomplete and 
-                type.get_base_type().tag == TypeTag.STRUCT):
+            t_base = type.get_base_type()
+            if (t_base.is_incomplete and 
+                t_base.tag == TypeTag.STRUCT):
                 alloctype = default_alloctype
+            # if (DataLayout.is_fuzz_friendly(t_base.get_token()) and
+            #     t_base.tag == TypeTag.STRUCT):
+            #     alloctype = default_alloctype
             if cond.len_depends_on != "":
                 alloctype = default_alloctype
             if type.is_const:
@@ -383,20 +398,36 @@ class RunningContext(Context):
                 v = NullConstant(tt)
             # a vector
             elif a_choice == Context.POINTER_STRATEGY_ARRAY:
-                # print("a_choice == Context.POINTER_STRATEGY_ARRAY")
-                # if is_ret:
-                #     from IPython import embed; embed(); exit(1)
-                # if random.getrandbits(1) == 0 or not self.has_buffer_type(tt):
-                if ((random.getrandbits(1) == 0 or
-                    not self.has_vars_type(type, cond)) and 
-                    not is_incomplete):
-                    try:
-                        vp = self.create_new_buffer(type, cond, is_ret)
-                    except Exception as e:
-                        print("within 'a_choice == Context.POINTER_STRATEGY_ARRAY'")
-                        from IPython import embed; embed(); exit()
-                else:
+                pick_random = random.getrandbits(1) == 0
+
+                if not self.has_vars_type(type, cond):
+                    pick_random = False
+                elif not DataLayout.is_fuzz_friendly(tt.token):
+                    pick_random = True
+                # elif not is_incomplete:
+                #     pick_random = False
+                # elif is_ret:
+                #     pick_random = False
+
+                vp = None
+                if pick_random:
                     vp = self.get_random_buffer(type, cond)
+                else:
+                    vp = self.create_new_buffer(type, cond, is_ret)
+                 
+                if vp is None:
+                    raise ConditionUnsat()
+
+                # if ((random.getrandbits(1) == 0 or
+                #     not self.has_vars_type(type, cond)) and 
+                #     not is_incomplete):
+                #     try:
+                #         vp = self.create_new_buffer(type, cond, is_ret)
+                #     except Exception as e:
+                #         print("within 'a_choice == Context.POINTER_STRATEGY_ARRAY'")
+                #         from IPython import embed; embed(); exit()
+                # else:
+                #     vp = self.get_random_buffer(type, cond)
 
                 v = vp.get_address()
 
@@ -563,7 +594,7 @@ class RunningContext(Context):
         else:
             raise Exception(f"I don't know this val: {val}")
             
-        is_sink = self.is_sink(cond)
+        is_sink = RunningContext.is_sink(cond)
 
         if is_ret and var in self.variables_alive:
             del self.var_to_cond[var]
@@ -701,24 +732,45 @@ class RunningContext(Context):
 
         return counter_size
 
-    def generate_clean_up(self):
+    def generate_clean_up(self, sinks: Set[Api]):
         clean_up = []
 
-        for b in self.buffs_alive:
+        for b in self.buffs_alive: # type: ignore
             if (b.get_alloctype() == AllocType.HEAP and 
                 not b.get_type().is_const):
-                clean_up += [CleanBuffer(b)]
+                cm = self.find_cleanup_method(b, sinks)
+                clean_up += [CleanBuffer(b, cm)]
 
         return clean_up
 
+    def find_cleanup_method(self, buff: Buffer, sinks: Set[Api]):
+
+        buff_type_token = buff.get_type().get_token()
+
+        # sinks have only one argument
+        for s in sinks:
+            s_type = s.arguments_info[0].type
+            if buff_type_token == s_type:
+                return s.function_name
+
+        # print("find_cleanup_method")
+        # from IPython import embed; embed(); exit(1)
+        return "free"
+
     # NOTE: this oracle infers if the variable with the access types (cond) can
     # be considered a sink
-    def is_sink(self, cond: ValueMetadata):
+    @staticmethod
+    def is_sink(cond: ValueMetadata):
         deletes_root = any([c.access == Access.DELETE and c.fields == [] 
                             for c in cond.ats])
         creates_root = any([c.access == Access.CREATE and c.fields == [] 
                             for c in cond.ats])
         return deletes_root and not creates_root
+    
+    @staticmethod
+    def is_source(cond: ValueMetadata):
+        return (len([at for at in cond.ats
+                if at.access == Access.CREATE and at.fields == []]) != 0)
 
     def __copy__(self):
         raise Exception("__copy__ not implemented")
