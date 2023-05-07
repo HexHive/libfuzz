@@ -1,0 +1,6 @@
+minijail_new
+minijail_change_user
+minijail_change_group
+minijail_set_supplementary_gids
+minijail_use_caps
+minijail_enter

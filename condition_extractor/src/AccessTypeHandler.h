@@ -54,6 +54,33 @@ bool isAnArray(const CallBase *c) {
     return true;
 }
 
+void addWrteToAllFields(ValueMetadata *mdata, AccessType atNode, 
+    const ICFGNode* icfgNode) {
+    auto t = atNode.getType();
+    if (auto pt = SVFUtil::dyn_cast<llvm::PointerType>(t)) {
+
+        AccessType tmpAcNode = atNode;
+        tmpAcNode.addField(-1);
+        tmpAcNode.setAccess(AccessType::Access::write);
+        mdata->getAccessTypeSet()->insert(tmpAcNode, icfgNode);
+
+        t = pt->getElementType();
+    }
+
+    if (auto st = SVFUtil::dyn_cast<llvm::StructType>(t)) {
+        
+        for (int f = 0; f < st->getNumElements(); f++) {
+            auto ft = st->getElementType(f);
+            AccessType atField = atNode;
+            atField.setAccess(AccessType::Access::write);
+            atField.addField(f);
+            atField.setType(ft);
+            mdata->getAccessTypeSet()->insert(atField, icfgNode);
+        }
+    }
+
+}
+
 typedef bool (*Handler)(ValueMetadata*, std::string, 
     const ICFGNode*, const CallICFGNode*, int, AccessType);
 typedef std::map<std::string, Handler> AccessTypeHandlerMap;
@@ -165,7 +192,7 @@ bool memset_hander(ValueMetadata *mdata, std::string fun_name,
     AccessType atNode) {
 
     if (param_num == 0 && atNode.getNumFields() == 0) {
-
+        
         AccessType tmpAcNode = atNode;
         tmpAcNode.addField(-1);
         tmpAcNode.setAccess(AccessType::Access::read);
@@ -175,6 +202,8 @@ bool memset_hander(ValueMetadata *mdata, std::string fun_name,
         auto i = SVFUtil::dyn_cast<CallBase>(cs->getCallSite());
         Value *v = i->getArgOperand(2);
         mdata->addFunParam(v);
+
+        addWrteToAllFields(mdata, atNode, icfgNode);
     }
 
     return false;
@@ -189,28 +218,7 @@ bool calloc_handler(ValueMetadata *mdata, std::string fun_name,
         atNode.setAccess(AccessType::Access::create);
         mdata->getAccessTypeSet()->insert(atNode, icfgNode);
 
-        auto t = atNode.getType();
-        if (auto pt = SVFUtil::dyn_cast<llvm::PointerType>(t)) {
-
-            AccessType tmpAcNode = atNode;
-            tmpAcNode.addField(-1);
-            tmpAcNode.setAccess(AccessType::Access::write);
-            mdata->getAccessTypeSet()->insert(tmpAcNode, icfgNode);
-
-            t = pt->getElementType();
-        }
-
-        if (auto st = SVFUtil::dyn_cast<llvm::StructType>(t)) {
-            
-            for (int f = 0; f < st->getNumElements(); f++) {
-                auto ft = st->getElementType(f);
-                AccessType atField = atNode;
-                atField.setAccess(AccessType::Access::write);
-                atField.addField(f);
-                atField.setType(ft);
-                mdata->getAccessTypeSet()->insert(atField, icfgNode);
-            }
-        }
+        addWrteToAllFields(mdata, atNode, icfgNode);
 
         return true;
     }
@@ -224,6 +232,20 @@ bool calloc_handler(ValueMetadata *mdata, std::string fun_name,
     return false;
 }
 
+bool posix_memalign_handler(ValueMetadata *mdata, std::string fun_name, 
+    const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num,
+    AccessType atNode) {
+
+    if (param_num == 0) {
+        // no need to set field, empty field set is what I need
+        atNode.setAccess(AccessType::Access::create);
+        mdata->getAccessTypeSet()->insert(atNode, icfgNode);
+
+        return true;
+    }
+
+    return false;
+}
 
 static AccessTypeHandlerMap accessTypeHandlers = {
     {"malloc", &malloc_handler},
@@ -234,7 +256,8 @@ static AccessTypeHandlerMap accessTypeHandlers = {
     {"strcpy", &strcpy_handler},
     {"strlen", &strlen_handler},
     {"llvm.memset.*", &memset_hander},
-    {"calloc", &calloc_handler}
+    {"calloc", &calloc_handler},
+    {"posix_memalign", &posix_memalign_handler}
 };
 
 #endif /* INCLUDE_DOM_ACCESSTYPE_HANDLER_H_ */

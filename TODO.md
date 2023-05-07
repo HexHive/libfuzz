@@ -12,10 +12,9 @@
 - change new variable synthesis with data layout info
 
 [MOST IMPORTANT:]
-- libtiff, free not for tiffopen? 
-- infer which structs can be fed by fuzzer seeds (those without pointers -- extract them from condition_extractor? how?)
+# Problems
+
 - `htp_connp_req_data` and `htp_connp_res_data` I can't find dependencies betweeen data and len, investigate why
-- use correct sink function in clean_up section
 - source apis -> drvgen knows how to instantiate the type (basic type or user defined)
 - infer which fields must be set manually? check if a struct has no WRITE access
   type for some field (and it is a complete type)

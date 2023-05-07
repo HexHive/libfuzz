@@ -89,14 +89,12 @@ class Configuration:
     @cached_property
     def drivers_dir(self):
         d = os.path.join(self.work_dir, "drivers")
-        shutil.rmtree(d)
         os.makedirs(d, exist_ok=True)
         return d
 
     @cached_property
     def seeds_dir(self):
         d = os.path.join(self.work_dir, "corpus")
-        shutil.rmtree(d)
         os.makedirs(d, exist_ok=True)
         return d
 

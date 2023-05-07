@@ -10,30 +10,34 @@ type_incomplete = set()    # List of incomplete types
 apis_definition = []       # List of APIs with original argument types and extra info (e.g., const)
 type_enum = set()
 
-def get_info(type_str):
+def get_info(type):
 
     info = {}
 
-    if "const" in type_str:
-        info["const"] = True
-        info["type_clang"] = type_str.replace("const", "")
+    # this trick expands typedef into their real types
+    atd = type.get_declaration()
+    if atd.kind.is_declaration():
+        type_str = atd.underlying_typedef_type.spelling
     else:
-        info["const"] = False
-        info["type_clang"] = type_str
+        type_str = type.spelling
 
-    # ducking ugly
-    if type_str.startswith("enum "):
-        info["type_clang"] = info["type_clang"].replace("enum ", "")
-    if type_str.startswith("struct "):
-        info["type_clang"] = info["type_clang"].replace("struct ", "")
-    info["type_clang"] = info["type_clang"].replace(" ", "")
-    # unsigned is an additional type attribute that should be separated from the type. 
-    # Since we removed all spaces they would be concatenated otherwise
-    info["type_clang"] = info["type_clang"].replace("unsigned", "unsigned ")
+    # clean any form of [] and *
+    n_asterix = type_str.count("*") + type_str.count("[")
+    if "[" in type_str:
+        # stuffs like char[100] into char*
+        type_str = re.sub('\[\d*\]', '', type_str)
+    type_str = type_str.replace("*","")
     
-    # stuffs like char[100] into char*
-    if "[" in info["type_clang"]:
-        info["type_clang"] = re.sub('\[\d*\]', '*', info["type_clang"])
+    info["const"] = False
+    type_str_token = type_str.strip().split(" ")
+    for bad_token in ["enum", "struct", "const"]:
+        if bad_token in type_str_token:
+            type_str_token.remove(bad_token)
+            if bad_token == "const":
+                info["const"] = True
+
+    # re-append the * at the end of the type
+    info["type_clang"] = " ".join(type_str_token) + "*"*n_asterix
 
     return info
 
@@ -55,17 +59,41 @@ def get_api(node, namespace):
     nt = node.type
 
     rt = nt.get_result()
-    rt_str = rt.spelling
-    api_obj["return_info"] = get_info(rt_str)
+    api_obj["return_info"] = get_info(rt)
+    # rt_str = rt.spelling
+    # api_obj["return_info"] = get_info(rt_str)
 
     arguments_info = []
     for a in nt.argument_types():
-        a_str = a.spelling
-        info = get_info(a_str)
+        info = get_info(a)
+        # a_str = a.spelling
+        # info = get_info(a_str)
         arguments_info.append(copy.deepcopy(info))
     api_obj["arguments_info"] = arguments_info
 
     return api_obj
+
+# SOME NOTES HOW TO NAVIGATE THE CURSOR
+# a = [f for f in node.get_arguments()][0]
+# at = a.type
+# atd = at.get_declaration()
+# at = a.type
+# a = [f for f in node.get_arguments()][0]
+# a.spelling
+# ## Out[120]: 'threadpool'
+# at.spelling
+# ## Out[121]: 'pthreadpool_t'
+# atd.underlying_typedef_type.spelling
+# ## 122]: 'struct pthreadpool *'
+
+# ENUM
+# In [6]: node.type.spelling
+# Out[6]: 'minijail_hook_event_t'
+# In [7]: node.type
+# Out[7]: <clang.cindex.Type at 0x7f78ff3f51c0>
+
+# In [8]: node.type.kind
+# Out[8]: TypeKind.ENUM
 
 # Traverse the AST tree
 def traverse(node, include_folder, namespace):
@@ -76,36 +104,20 @@ def traverse(node, include_folder, namespace):
     # Recurse for children of this node
     for child in node.get_children():
         traverse(child, include_folder, copy.deepcopy(namespace))
-        # from IPython import embed; embed(); exit(1)
 
     # if node.type.kind == clang.cindex.TypeKind.FUNCTIONPROTO and str(node.location.file).startswith("./include/"):
-    if node.type.kind == clang.cindex.TypeKind.FUNCTIONPROTO and include_folder in str(node.location.file):
+    if (node.type.kind == clang.cindex.TypeKind.FUNCTIONPROTO and 
+        include_folder in str(node.location.file)):
         function_declarations.append(node)
         apis_definition.append(get_api(node, namespace))
         # from IPython import embed; embed(); exit(1)
 
-    # if node.type.kind == clang.cindex.TypeKind.FUNCTIONPROTO:
-    #     print(node.displayname)
-
-    # # Print out information about the node
-    # if "TIFF" == node.displayname:
-    # #     print(node.displayname)
-    # # print('Found %s [line=%s, col=%s] %s' % (node.displayname, node.location.line, node.location.column, node.type))
-    #     from IPython import embed; embed(); exit()
-
     # type of size -2 is a special case for incomplete types
     if node.type.get_size() == -2:
-        if node.type.kind == clang.cindex.TypeKind.RECORD:
-            type_incomplete.add("%" + node.displayname.replace(" ","."))
-            print(node.displayname)
-        if node.type.kind == clang.cindex.TypeKind.TYPEDEF:
-            for child in node.get_children():
-                if child.kind == clang.cindex.CursorKind.TYPE_REF:
-                    type_incomplete.add("%" + child.displayname.replace(" ","."))
-    elif node.type.kind == clang.cindex.TypeKind.TYPEDEF:
-        for child in node.get_children():
-            if child.kind == clang.cindex.CursorKind.TYPE_REF:
-                type_enum.add(child.displayname)
+        type_incomplete.add("%" + node.type.spelling)
+
+    if node.kind == clang.cindex.CursorKind.ENUM_DECL:
+        type_enum.add(node.type.spelling)
 
 MAIN_STUB = "int main(int argc, char** argv) {return 0;}"
 
@@ -125,14 +137,11 @@ def get_stub_file(include_folder, public_headers):
     with open(stub_file, 'w') as tmp:
         for root, _, files in os.walk(include_folder):
             for h in files:
-                print(f"candidate header {h}: ", end='')
+                # print(f"candidate header {h}: ", end='')
                 if (h.endswith(".h") or h.endswith(".h++") or h.endswith(".hh") 
                     or h.endswith(".hpp")) and h in public_headers_lst:
                     h_path = os.path.join(root, h)
                     tmp.write(f"#include \"{h_path}\"\n")
-                    print("chosen.")
-                else:
-                    print("ignored.")
 
         tmp.write("\n")
 

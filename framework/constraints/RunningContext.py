@@ -266,12 +266,12 @@ class RunningContext(Context):
 
     def create_new_buffer(self, type: Type, cond: ValueMetadata, force_pointer: bool):
         
-        # if type.token == "char*":
-        #     # print("create_new_buffer")
-            # from IPython import embed; embed(); exit(1)
+        # if "pthreadpool" in type.token:
+        #     print("create_new_buffer")
+        #     from IPython import embed; embed(); exit(1)
 
-            # "access": "create",
-            # "fields": [],
+        #     # "access": "create",
+        #     # "fields": [],
 
 
         default_alloctype = AllocType.HEAP
@@ -551,7 +551,10 @@ class RunningContext(Context):
                 type_hash = ''.join(random.choice(letters) for i in range(length))
             
             if type_str is None:
-                if len(type_strs) == 1:
+                if isinstance(type, PointerType):
+                    tkn = type.get_token()
+                    type_str = tkn.replace("*", "", 1)
+                elif len(type_strs) == 1:
                     type_str = type_strs[0]
                 else:
                     print(f"Really don't know what to do with {type_strings}")

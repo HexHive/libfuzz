@@ -178,8 +178,14 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                 std::string fun = callee->getName();
                 // malloc handler
                 AccessType acNode(retType);
-                bool _ = handlerDispatcher(&mdata, fun, node, call_node, -1, 
-                                            acNode);
+                handlerDispatcher(&mdata, fun, node, call_node, -1, 
+                                    acNode);
+
+                for (unsigned p = 0; p < ftype->getNumParams(); p++) {
+                    handlerDispatcher(&mdata, fun, node, call_node, p, 
+                                        acNode);
+                }
+
             }
         }  
 

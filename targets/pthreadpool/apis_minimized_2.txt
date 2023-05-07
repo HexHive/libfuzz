@@ -1,0 +1,3 @@
+pthreadpool_create
+pthreadpool_get_threads_count
+pthreadpool_parallelize_1d
