@@ -165,7 +165,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                     continue;
 
             auto callee = SVFUtil::getCallee(call_node->getCallSite());
-            auto inst = SVFUtil::dyn_cast<CallInst>(call_node->getCallSite());
+            auto inst = SVFUtil::dyn_cast<CallBase>(call_node->getCallSite());
             // outs() << "[INFO] callinst2 " << *inst << "\n";
             FunctionType *ftype = inst->getFunctionType();
             if (ftype->getReturnType() == retType) {
