@@ -138,7 +138,7 @@ class Utils:
                     if l:
                         minimum_apis_list += [l]
 
-        api_list = set()
+        api_list = [None for _ in minimum_apis_list]
         full_apis_list = set()
         with open(apis) as f:
             for l in f:
@@ -155,8 +155,9 @@ class Utils:
                 # print(apis_list)
                 # exit()
 
-                if javaapi.get_signature() in minimum_apis_list:
-                    api_list.add(javaapi)
+                sig = javaapi.get_signature()
+                if sig in minimum_apis_list:
+                    api_list[minimum_apis_list.index(sig)] = (javaapi)
 
         with open(builtin_apis) as f:
             for l in f:

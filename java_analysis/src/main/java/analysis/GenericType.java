@@ -25,6 +25,8 @@ public class GenericType {
             List<String> typeList = new ArrayList<>(alias.get(typeString));
             List<Integer> idxList = typeIndex.get(typeString);
 
+            assert(idxList.size() == types.length);
+
             for (int i = 0; i < types.length; i++) {
                 Integer idx = idxList.get(i);
                 if (!idx.equals(nonExistIdx)) {

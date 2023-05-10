@@ -1,13 +1,14 @@
 from typing import List
 from driver.ir import Statement
-from driver.ir.java.type import JavaType
+from driver.ir.java.type import JavaType, ClassType
 from driver.ir.java.variable import Variable
 
 
 class MethodCall(Statement):
-    def __init__(self, declaring_class: JavaType, arg_types: List[JavaType]):
+    def __init__(self, declaring_class: JavaType, arg_types: List[JavaType], exceptions: List[ClassType]):
         self.declaring_class = declaring_class
         self.arg_types = arg_types
+        self.exceptions = exceptions
 
         self.class_var: Variable = None
         self.arg_vars: List[Variable] = [None for _ in arg_types]

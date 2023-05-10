@@ -1,0 +1,4 @@
+com.google.zxing.BinaryBitmap(com.google.zxing.common.HybridBinarizer)
+com.google.zxing.MultiFormatReader.decode(com.google.zxing.BinaryBitmap)
+com.google.zxing.Result.getText()
+com.google.zxing.Result.getResultMetadata()

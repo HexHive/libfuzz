@@ -1,0 +1,12 @@
+[analysis]
+apis = "/workspaces/libfuzz/regression_tests/java_analysis/test/jackson-core/apis.json"
+subtypes = "/workspaces/libfuzz/regression_tests/java_analysis/test/jackson-core/subtypes.json"
+minimum_apis = "/workspaces/libfuzz/regression_tests/java_analysis/test/jackson-core/minimum_apis.txt"
+builtin_apis = "/workspaces/libfuzz/regression_tests/java_analysis/test/builtin.json"
+builtin_subtypes = "/workspaces/libfuzz/regression_tests/java_analysis/test/builtin_subtypes.json"
+
+[generator]
+policy = "java"
+workdir = "/workspaces/libfuzz/regression_tests/java_analysis/test/jackson-core/workdir"
+num_seeds = 1
+backend = "java_backend"

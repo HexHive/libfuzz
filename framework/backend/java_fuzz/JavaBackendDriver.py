@@ -1,7 +1,7 @@
 import os
 from backend import BackendDriver
 from driver import Driver
-from driver.ir.java.statement import ClassCreate, ApiInvoke, ArrayCreate
+from driver.ir.java.statement import ClassCreate, ApiInvoke, ArrayCreate, MethodCall
 from driver.ir.java.type import ClassType, ArrayType, ParameterizedType
 
 class JavaBackendDriver(BackendDriver):
@@ -46,16 +46,12 @@ class JavaBackendDriver(BackendDriver):
 
         driver_content = ""
         for stmt in driver:
-            if isinstance(stmt, ClassCreate):
-                driver_content += "    " + self.emit_classcreate(stmt) + "\n"
-            elif isinstance(stmt, ArrayCreate):
-                driver_content += "    " + self.emit_arraycreate(stmt) + "\n"
-            elif isinstance(stmt, ApiInvoke):
-                driver_content += "    " + self.emit_apiinvoke(stmt) + "\n"
+            if isinstance(stmt, MethodCall):
+                driver_content += "    " + self.emit_methodcall(stmt) + "\n"
             else:
                 raise Exception("Unsupported Statement")
             
-        # print(driver_content)
+        print(driver_content)
         with open(os.path.join(self.working_dir, driver_filename), "w") as f:
             f.write(header)
             f.write(driver_content)
@@ -63,6 +59,25 @@ class JavaBackendDriver(BackendDriver):
 
     def emit_seeds(self, driver, driver_filename):
         pass
+
+    def emit_methodcall(self, stmt: MethodCall) -> str:
+        if isinstance(stmt, ArrayCreate):
+            return self.emit_arraycreate(stmt)
+        
+        if isinstance(stmt, ClassCreate):
+            content = self.emit_classcreate(stmt)
+        elif isinstance(stmt, ApiInvoke):
+            content = self.emit_apiinvoke(stmt)
+        else:
+            raise Exception("Unsupported Statement")
+        
+        if not stmt.exceptions:
+            return content
+        return "try {\n" \
+               f"      {content}\n" \
+               "    } catch (" + ", ".join([x.className for x in stmt.exceptions]) + ") {\n" \
+               "      return;\n" \
+               "    }"
 
     def emit_classcreate(self, stmt: ClassCreate) -> str:
         declaring_class = stmt.declaring_class
@@ -87,7 +102,12 @@ class JavaBackendDriver(BackendDriver):
         declaring_class = stmt.declaring_class
         if declaring_class.rawType.is_primitive and declaring_class.dimension == 1:
             # handle array data which can be directly provided by fuzzedData
-            return f"{declaring_class.rawType.className}[] {stmt.class_var.token} = data.{self.jazzer_base_dict[declaring_class.rawType.className]}s({stmt.init_len});"
+            if declaring_class.rawType.className in self.jazzer_base_dict:
+                return f"{declaring_class.rawType.className}[] {stmt.class_var.token} = data.{self.jazzer_base_dict[declaring_class.rawType.className]}s({stmt.init_len});"
+            elif declaring_class.rawType.className in self.jazzer_addition_dict:
+                return f"{declaring_class.rawType.className}[] {stmt.class_var.token} = new {declaring_class.rawType.className}[data.consumeInt(1, 100)];\n" + f"    for (int i = 0; i < {stmt.class_var.token}.length; ++i) " + "{\n      " + f"{stmt.class_var.token}[i] = data.{self.jazzer_addition_dict[declaring_class.rawType.className]}();\n" + "    }"
+            else:
+                raise Exception("Unsupported primitive type")
         else:
             return JavaBackendDriver.normalize_className(declaring_class.rawType.className) + "[]" * declaring_class.dimension + f" {stmt.class_var} = new {JavaBackendDriver.normalize_className(declaring_class.rawType.className)}[{stmt.init_len}]" + "[]" * (declaring_class.dimension - 1) + ";"
 

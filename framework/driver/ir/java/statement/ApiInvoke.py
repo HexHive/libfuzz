@@ -7,8 +7,8 @@ from . import MethodCall
 # This statement is used to generate sentence like "m = x.method(param...)"
 # class_var in this statement represents the argument "x"
 class ApiInvoke(MethodCall):
-    def __init__(self, function_name: str, declaring_class: ClassType, return_type: JavaType, arg_types: List[JavaType], is_static: bool):
-        super().__init__(declaring_class, arg_types)
+    def __init__(self, function_name: str, declaring_class: ClassType, return_type: JavaType, arg_types: List[JavaType], exceptions: List[ClassType], is_static: bool):
+        super().__init__(declaring_class, arg_types, exceptions)
         self.function_name = function_name
         self.return_type = return_type
         self.is_static = is_static

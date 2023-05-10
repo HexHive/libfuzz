@@ -41,7 +41,12 @@ class JavaFactory:
             the_type = JavaFactory.normalize_type(arg, subtypes)
             arg_list_type += [the_type]
 
-        return ClassCreate(JavaFactory.normalize_type(api.declaring_class, subtypes), arg_list_type)
+        exception_list_type = []
+        for exception in api.exceptions:
+            the_type = JavaFactory.normalize_type(exception, subtypes)
+            exception_list_type += [the_type]
+
+        return ClassCreate(JavaFactory.normalize_type(api.declaring_class, subtypes), arg_list_type, exception_list_type)
 
     @staticmethod
     def api_to_apiinvoke(api: JavaApi, subtypes: Dict[Tuple[str, str], Set[str]]) -> ApiInvoke:
@@ -53,7 +58,12 @@ class JavaFactory:
             the_type = JavaFactory.normalize_type(arg, subtypes)
             arg_list_type += [the_type]
 
-        return ApiInvoke(function_name, JavaFactory.normalize_type(api.declaring_class, subtypes), JavaFactory.normalize_type(api.return_info, subtypes), arg_list_type, api.is_static())
+        exception_list_type = []
+        for exception in api.exceptions:
+            the_type = JavaFactory.normalize_type(exception, subtypes)
+            exception_list_type += [the_type]
+
+        return ApiInvoke(function_name, JavaFactory.normalize_type(api.declaring_class, subtypes), JavaFactory.normalize_type(api.return_info, subtypes), arg_list_type, exception_list_type, api.is_static())
 
     @staticmethod
     def normalize_type(arg: JavaArg, subtypes: Dict[Tuple[str, str], Set[str]]) -> JavaType:

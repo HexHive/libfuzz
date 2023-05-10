@@ -60,7 +60,7 @@ class JavaContext:
                 # construct a new object
                 if self.is_builtin(type):
                     var = Variable(type)
-                    stmt = ClassCreate(type, [])
+                    stmt = ClassCreate(type, [], [])
                     stmt.set_class_var(var)
                     self.initial_stmts.append(stmt)
                     self.add_var(var)

@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import sootup.core.model.SourceType;
 import sootup.core.typehierarchy.ViewTypeHierarchy;
 import sootup.java.bytecode.inputlocation.PathBasedAnalysisInputLocation;
-//import sootup.java.core.JavaProject;
+import sootup.java.core.JavaProject;
 import sootup.java.core.JavaSootClass;
 import sootup.java.core.language.JavaLanguage;
 import sootup.java.core.views.JavaView;
@@ -21,8 +21,7 @@ public class LibAnalyzer {
     private static final JavaLanguage language = new JavaLanguage(8);
     private static final String objectName = "java.lang.Object";
     private final ClassLoader loader;
-//    private final JavaProject project;
-    private final sootup.java.core.JavaProject project;
+    private final JavaProject project;
     private final JavaView view;
     private final List<Class<?>> clazzes;
 
@@ -37,13 +36,16 @@ public class LibAnalyzer {
 
         loader = URLClassLoader.newInstance(new URL[] {url}, getClass().getClassLoader());
 
-//        project = JavaProject.builder(language).addInputLocation(new PathBasedAnalysisInputLocation(path, SourceType.Library)).build();
-        project = sootup.java.core.JavaProject.builder(language).addInputLocation(new PathBasedAnalysisInputLocation(path, SourceType.Library)).build();
+        project = JavaProject.builder(language).addInputLocation(new PathBasedAnalysisInputLocation(path, SourceType.Library)).build();
 
         view = project.createFullView();
 
         clazzes = new ArrayList<>();
         for (JavaSootClass sootClass: view.getClasses()) {
+            if (sootClass.getName().startsWith("META-INF")) {
+                // This is strange to me
+                continue;
+            }
             Class<?> clazz = Class.forName(sootClass.getName(), false, loader);
             if (!clazz.isSynthetic()) {
                 clazzes.add(clazz);
@@ -196,7 +198,7 @@ public class LibAnalyzer {
                         Arrays.stream(typeVariables).map(v -> GenericType.nonExistIdx).collect(ImmutableList.toImmutableList()));
             } else {
                 aliasMap.putAll(genericType.fulfillAlias(new Type[]{}));
-                indexMap.putAll(genericType.fulfillTypeIndex(List.of()));
+                indexMap.putAll(genericType.fulfillTypeIndex(Arrays.stream(typeVariables).map(v -> GenericType.nonExistIdx).toList()));
             }
         }
     }
@@ -205,7 +207,7 @@ public class LibAnalyzer {
         ArrayList<Integer> result = new ArrayList<>();
 
         for (TypeVariable<?> v: typeParams) {
-            Integer idx = null;
+            int idx = GenericType.nonExistIdx;
             for (int i = 0; i < typeArgs.length; i++) {
                 if (v.equals(typeArgs[i])) {
                     idx = i;
