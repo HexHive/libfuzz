@@ -113,11 +113,14 @@ def traverse(node, include_folder, namespace):
         # from IPython import embed; embed(); exit(1)
 
     # type of size -2 is a special case for incomplete types
-    if node.type.get_size() == -2:
+    # from IPython import embed; embed(); exit(1)
+    if (node.kind == clang.cindex.CursorKind.TYPEDEF_DECL and
+        node.type.get_size() == -2):
         type_incomplete.add("%" + node.type.spelling)
 
     if node.kind == clang.cindex.CursorKind.ENUM_DECL:
         type_enum.add(node.type.spelling)
+    # pass
 
 MAIN_STUB = "int main(int argc, char** argv) {return 0;}"
 

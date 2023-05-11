@@ -436,8 +436,8 @@ int main(int argc, char ** argv)
     ICFG* icfg = pag->getICFG();
 
     /// Create Andersen's pointer analysis
-    // Andersen* point_to_analysys = AndersenWaveDiff::createAndersenWaveDiff(pag);
-    FlowSensitive* point_to_analysys = FlowSensitive::createFSWPA(pag);
+    Andersen* point_to_analysys = AndersenWaveDiff::createAndersenWaveDiff(pag);
+    // FlowSensitive* point_to_analysys = FlowSensitive::createFSWPA(pag);
     // AndersenSCD* point_to_analysys = AndersenSCD::createAndersenSCD(pag);
     // TypeAnalysis* point_to_analysys = new TypeAnalysis(pag);
     // point_to_analysys->analyze();

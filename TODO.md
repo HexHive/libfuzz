@@ -19,6 +19,15 @@
 - infer which fields must be set manually? check if a struct has no WRITE access
   type for some field (and it is a complete type)
 
+# Porting to last SVF
+- using last npm version of SVF
+- change include namespace and class names
+- no need custom LLVM, just use llvm-14 standard from SVF (we shuold update OSS-Fuzz and Utopia?) try woth llvm-12
+- no need `-mllvm -get-api-pass` in compilation => extract LLVM function signatures from .bc
+  - add new option to export LLVM-apis
+  - update analysis.sh in other projects
+- still need wllvm to compile
+
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init
   initializes `MD5Context`. The gist is that md5Init just writes into fields but
