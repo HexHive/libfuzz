@@ -43,6 +43,7 @@ WORKDIR ${HOME}
 ENV CCACHE_DIR=${HOME}/.ccache
 RUN --mount=type=cache,target=${CCACHE_DIR} mkdir -p ${CCACHE_DIR} && sudo -E chown -R ${USERNAME}:${USERNAME} ${CCACHE_DIR}
 RUN echo "export PATH=\$PATH:${HOME}/.local/bin" >> ~/.bashrc
+RUN echo "export PATH=\$PATH:${HOME}/.local/bin" >> ~/.zshrc
 
 RUN pip3 install ipython
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
@@ -56,9 +57,9 @@ ENV LIBFUZZ /workspaces/libfuzz
 
 # SVF
 ENV LLVM_DIR ${HOME}/llvm-build/
-RUN --mount=type=cache,target=${HOME}/.ccache/ git clone https://github.com/SVF-tools/SVF.git && \
+RUN --mount=type=cache,target=${HOME}/.ccache/ git clone https://github.com/HexHive/SVF.git && \
     cd SVF && \ 
-    git checkout 1c09651a6c4089402b1c072a1b0ab901bc963846 && \
+    git checkout libfuzz && \
     sed -i 's/jobs=4/jobs=/g' build.sh && \
     ./build.sh
 RUN cd SVF && ./setup.sh
