@@ -130,7 +130,11 @@ def get_stub_file(include_folder, public_headers):
 
     public_headers_lst = set()
     with open(public_headers, 'r') as ph:
-        for l in ph:
+        lines = ph.readlines()
+        if(len(lines) == 0):
+            print(f"No header in {public_headers}. Aborting...")
+            exit(1)
+        for l in lines:
             l = l.strip()
             if l:
                 public_headers_lst.add(l)
