@@ -43,6 +43,7 @@ WORKDIR ${HOME}
 ENV CCACHE_DIR=${HOME}/.ccache
 RUN --mount=type=cache,target=${CCACHE_DIR} mkdir -p ${CCACHE_DIR} && sudo -E chown -R ${USERNAME}:${USERNAME} ${CCACHE_DIR}
 RUN echo "export PATH=\$PATH:${HOME}/.local/bin" >> ~/.bashrc
+RUN echo "export PATH=\$PATH:${HOME}/.local/bin" >> ~/.zshrc
 
 RUN pip3 install ipython
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
