@@ -46,14 +46,16 @@ touch $LIBFUZZ_LOG_PATH/apis_clang.json
 touch $LIBFUZZ_LOG_PATH/apis_llvm.json
 touch $LIBFUZZ_LOG_PATH/coerce.log
 
+LIBNAME=libminijail.pie.a
+LIBLOCATION=$WORK/lib/$LIBNAME
+
 echo "make clean"
 make -j$(nproc) clean
 echo "make"
-make -j$(nproc) OUT="$WORK/lib" CC_STATIC_LIBRARY\(libminijail.pie.a\)
+make -j$(nproc) OUT="$WORK/lib" CC_STATIC_LIBRARY\($LIBNAME\)
 cp $REPO/*.h $WORK/include
 
-extract-bc -b $WORK/lib/libminijail.pie.a
-ls $WORK/lib/libminijail.pie.a
+extract-bc -b $LIBLOCATION
 
 # this extracts the exported functions in a file, to be used later for grammar
 # generations
@@ -67,7 +69,7 @@ $TOOLS_DIR/tool/misc/extract_included_functions.py -i "$WORK/include" \
 # extract fields dependency from the library itself, repeat for each object
 # produced
 $TOOLS_DIR/condition_extractor/bin/extractor \
-    $WORK/lib/libminijail.pie.a.bc \
+    $LIBLOCATION.bc \
     -interface "$LIBFUZZ_LOG_PATH/apis_clang.json" \
     -output "$LIBFUZZ_LOG_PATH/conditions.json" \
     -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
