@@ -22,13 +22,19 @@ export CFLAGS=$CFLAGS" -Wno-unused-command-line-argument -mllvm -get-api-pass -g
 export CXX=wllvm++
 export CXXFLAGS=$CXXFLAGS" -Wno-unused-command-line-argument -mllvm -get-api-pass -g -O0" \
 export LLVM_COMPILER=clang
-export LLVM_COMPILER_PATH=$LLVM_DIR/bin
+export LLVM_COMPILER_PATH=${LLVM_DIR}bin
 
 # export CC=$LIBFUZZ/LLVM/build/bin/clang
 # export CXX=$LIBFUZZ/LLVM/build/bin/clang++
 export LIBFUZZ_LOG_PATH=$WORK/apipass
 # export CFLAGS="-mllvm -get-api-pass"
 
+function join_by {
+  local d=${1-} f=${2-}
+  if shift 2; then
+    printf %s "$f" "${@/#/$d}"
+  fi
+}
 
 mkdir -p "$LIBFUZZ_LOG_PATH"
 
@@ -57,10 +63,15 @@ cmake . -G Ninja -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
 echo "make clean"
 ninja
 ninja install
-LIBNAME=libcpuinfo.a
-LIBLOCATION=$WORK/lib/$LIBNAME
 
-extract-bc -b $LIBLOCATION
+# Spent two hours trying to do bash string array concatenation, giving up
+extract-bc -b $WORK/lib/libcpuinfo.a 
+extract-bc -b $WORK/lib/libclog.a 
+extract-bc -b $WORK/lib/libbenchmark.a 
+
+LIB_BC_LOCATION=library.bc
+ls ${WORK}/lib/
+$LLVM_COMPILER_PATH/llvm-link -o $LIB_BC_LOCATION ${WORK}/lib/libcpuinfo.a.bc ${WORK}/lib/libclog.a.bc ${WORK}/lib/libbenchmark.a.bc 
 
 # this extracts the exported functions in a file, to be used later for grammar
 # generations
@@ -74,7 +85,7 @@ $TOOLS_DIR/tool/misc/extract_included_functions.py -i "$WORK/include" \
 # extract fields dependency from the library itself, repeat for each object
 # produced
 $TOOLS_DIR/condition_extractor/bin/extractor \
-    $LIBLOCATION.bc \
+    $LIB_BC_LOCATION \
     -interface "$LIBFUZZ_LOG_PATH/apis_clang.json" \
     -output "$LIBFUZZ_LOG_PATH/conditions.json" \
     -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
