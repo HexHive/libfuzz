@@ -41,9 +41,9 @@ ENV HOME=/home/${USERNAME}
 USER ${USERNAME}
 WORKDIR ${HOME}
 ENV CCACHE_DIR=${HOME}/.ccache
-RUN --mount=type=cache,target=${CCACHE_DIR} mkdir -p ${CCACHE_DIR} && sudo -E chown -R ${USERNAME}:${USERNAME} ${CCACHE_DIR}
 RUN echo "export PATH=\$PATH:${HOME}/.local/bin" >> ~/.bashrc
 RUN echo "export PATH=\$PATH:${HOME}/.local/bin" >> ~/.zshrc
+RUN --mount=type=cache,target=${CCACHE_DIR} mkdir -p ${CCACHE_DIR} && sudo -E chown -R ${USERNAME}:${USERNAME} ${CCACHE_DIR}
 
 RUN pip3 install ipython
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
@@ -104,10 +104,12 @@ ENV DRIVER_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
 
 # I want to install the library at building time, so later I only need to build
 # the drivers
-COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME} ${LIBFUZZ}/targets/${TARGET_NAME}  
 WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/preinstall.sh ${LIBFUZZ}/targets/${TARGET_NAME}  
 RUN sudo ./preinstall.sh
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/fetch.sh ${LIBFUZZ}/targets/${TARGET_NAME}  
 RUN ./fetch.sh
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/build_library.sh ${LIBFUZZ}/targets/${TARGET_NAME}  
 RUN ./build_library.sh
 
 # NOTE: start_fuzz_driver.sh finds out its configuration automatically
