@@ -8,18 +8,12 @@ import java.util.Set;
 
 public class Main {
     public static void main(String[] args) {
+        String dirName = "h2database";
+        String libName = "h2-2.1.214.jar";
+
         try {
             LibAnalyzer analyzer = new LibAnalyzer("C:\\EPFL\\thesis\\libfuzz\\regression_tests\\java_analysis\\test" +
-                    "\\lib" +
-//                    "\\SimpleLibrary" +
-//                    "\\args4j-2.33" +
-//                    "\\cbor-0.9" +
-//                    "\\zxing-3.5.1" +
-//                    "\\spring-boot-3.0.6" +
-                    "\\hamcrest-2.2" +
-                    ".jar");
-
-            String dirName = "hamcrest";
+                    "\\" + dirName + "\\jars/", libName);
             writeApiInfo(analyzer, dirName);
             writeSubTypes(analyzer, dirName);
         } catch (Exception e) {

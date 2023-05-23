@@ -75,7 +75,7 @@ class JavaBackendDriver(BackendDriver):
             return content
         return "try {\n" \
                f"      {content}\n" \
-               "    } catch (" + ", ".join([x.className for x in stmt.exceptions]) + ") {\n" \
+               "    } catch (" + "| ".join([x.className for x in stmt.exceptions]) + " e ) {\n" \
                "      return;\n" \
                "    }"
 

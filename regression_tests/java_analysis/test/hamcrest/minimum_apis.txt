@@ -1,3 +1,1 @@
-com.fasterxml.jackson.core.JsonFactory.createParser([B)
-com.fasterxml.jackson.core.JsonParser.getValueAsString()
-com.fasterxml.jackson.core.JsonParser.nextToken()
+org.hamcrest.MatcherAssert.assertThat

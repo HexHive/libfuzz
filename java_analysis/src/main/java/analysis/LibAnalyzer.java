@@ -2,20 +2,22 @@ package analysis;
 
 import com.google.common.collect.ImmutableList;
 import sootup.core.model.SourceType;
-import sootup.core.typehierarchy.ViewTypeHierarchy;
 import sootup.java.bytecode.inputlocation.PathBasedAnalysisInputLocation;
 import sootup.java.core.JavaProject;
 import sootup.java.core.JavaSootClass;
 import sootup.java.core.language.JavaLanguage;
 import sootup.java.core.views.JavaView;
 
+import java.io.IOException;
 import java.lang.reflect.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class LibAnalyzer {
     private static final JavaLanguage language = new JavaLanguage(8);
@@ -25,18 +27,24 @@ public class LibAnalyzer {
     private final JavaView view;
     private final List<Class<?>> clazzes;
 
-    public LibAnalyzer(String libPath) throws ClassNotFoundException {
+    public LibAnalyzer(String libPath, String libName) throws ClassNotFoundException {
         Path path = Paths.get(libPath);
-        URL url;
-        try {
-            url = path.toUri().toURL();
-        } catch (MalformedURLException e) {
+        URL[] urls;
+        try (Stream<Path> s = Files.list(path)) {
+            urls = s.map(p -> {
+                try {
+                    return p.toUri().toURL();
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
+            }).toArray(URL[]::new);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        loader = URLClassLoader.newInstance(new URL[] {url}, getClass().getClassLoader());
+        loader = URLClassLoader.newInstance(urls, getClass().getClassLoader());
 
-        project = JavaProject.builder(language).addInputLocation(new PathBasedAnalysisInputLocation(path, SourceType.Library)).build();
+        project = JavaProject.builder(language).addInputLocation(new PathBasedAnalysisInputLocation(Paths.get(libPath, libName), SourceType.Library)).build();
 
         view = project.createFullView();
 
@@ -46,6 +54,14 @@ public class LibAnalyzer {
                 // This is strange to me
                 continue;
             }
+
+//            String clazzName = sootClass.getName();
+//            try {
+//                loader.loadClass(clazzName);
+//            } catch (ClassNotFoundException e) {
+//                continue;
+//            }
+
             Class<?> clazz = Class.forName(sootClass.getName(), false, loader);
             if (!clazz.isSynthetic()) {
                 clazzes.add(clazz);

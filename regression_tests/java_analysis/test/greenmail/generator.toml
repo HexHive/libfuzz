@@ -1,0 +1,12 @@
+[analysis]
+apis = "/workspaces/libfuzz/regression_tests/java_analysis/test/greenmail/apis.json"
+subtypes = "/workspaces/libfuzz/regression_tests/java_analysis/test/greenmail/subtypes.json"
+minimum_apis = "/workspaces/libfuzz/regression_tests/java_analysis/test/greenmail/minimum_apis.txt"
+builtin_apis = "/workspaces/libfuzz/regression_tests/java_analysis/test/builtin.json"
+builtin_subtypes = "/workspaces/libfuzz/regression_tests/java_analysis/test/builtin_subtypes.json"
+
+[generator]
+policy = "java"
+workdir = "/workspaces/libfuzz/regression_tests/java_analysis/test/greenmail/workdir"
+num_seeds = 1
+backend = "java_backend"

@@ -1,6 +1,6 @@
 from framework.generator import Configuration
 
-test_dir = "jackson-core"
+test_dir = "h2database"
 # test_dir = "cbor"
 
 c = Configuration(f"/workspaces/libfuzz/regression_tests/java_analysis/test/{test_dir}/generator.toml")

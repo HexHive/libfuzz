@@ -1,0 +1,2 @@
+com.icegreen.greenmail.util.GreenMail.getUserManager()
+com.icegreen.greenmail.user.UserManager.createUser(java.lang.String,java.lang.String,java.lang.String)

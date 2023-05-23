@@ -105,7 +105,11 @@ class JavaContext:
 
     def generate_constructor_dict(self, constructors: List[JavaApi]) -> Dict[JavaType, List[JavaApi]]:
         constructor_dict: Dict[str, List[JavaApi]] = {}
+
         for constructor in constructors:
+            if not constructor.is_public():
+                continue
+
             declaring_clazz = constructor.declaring_class
             # constructor is not possible to have argType
             key = declaring_clazz.rawType
@@ -132,7 +136,11 @@ class JavaContext:
 
     def generate_return_dict(self, methods: List[JavaApi]) -> Dict[JavaType, List[JavaApi]]:
         method_dict: Dict[Tuple[str, str], List[JavaApi]] = {}
+
         for method in methods:
+            if not method.is_public():
+                continue
+
             ret_type = method.return_info
             key = ret_type.rawType, str(ret_type.argType)
             if not key in method_dict:
