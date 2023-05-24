@@ -111,7 +111,11 @@ class Utils:
             for l in f:
                 l = l.strip()
                 if l:
-                    (type, size, hash, fuzz_friendly) = l.split(" ")
+                    splitted = l.split(" ") # a space can be prensent in template type names. The last 3 elements are for sure size, hash and fuzzfriendly, the rest is the type name.
+                    fuzz_friendly = splitted[-1]
+                    hash = splitted[-2]
+                    size = splitted[-3]
+                    type = " ".join(splitted[:-4])
                     # 1 => fuzz friendly, 0 => otherwise
                     fuzz_friendly = fuzz_friendly == "1"
                     if hash == "<random>":
