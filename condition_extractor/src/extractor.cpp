@@ -41,6 +41,7 @@
 #include "PhiFunction.h"
 #include "IBBG.h"
 #include "TypeMatcher.h"
+#include "LibfuzzUtil.h"
 
 // for random sampling
 #include <random>
@@ -56,6 +57,7 @@
 using namespace llvm;
 using namespace std;
 using namespace SVF;
+using namespace libfuzz;
 
 
 // std because stdout gives conflict
@@ -360,6 +362,13 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
 //     outs() << "exit for debug\n";
 //     exit(1);
 // }
+DataLayout *DL = nullptr;
+
+void setDataLayout(Function &F) {
+  if (DL == nullptr)
+    DL = new DataLayout(F.getParent());
+}
+
 
 int main(int argc, char ** argv)
 {
@@ -430,6 +439,34 @@ int main(int argc, char ** argv)
     SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
     svfModule->buildSymbolTableInfo();
 
+    // Dump LLVM apis function per function
+    for(const SVFFunction* svfFun : svfModule->getFunctionSet() ){
+        llvm::Function* F = svfFun->getLLVMFun();
+
+        setDataLayout(*F);
+        libfuzz::function_record my_fun;
+
+        Type * retType = F->getReturnType();
+        StringRef function_name = F->getName();
+        bool is_vararg = F->isVarArg();
+    
+        errs() << "Doing: " << function_name << "\n";
+
+        my_fun.function_name = function_name.str();
+        my_fun.is_vararg = is_vararg ? "true" : "false";
+        my_fun.return_info.set_from_type(retType);
+        my_fun.return_info.size = libfuzz::estimate_size(retType, false, DL);
+        my_fun.return_info.name = "return";
+
+        for(auto &arg : F->args()) {
+            libfuzz::argument_record an_argument;
+            an_argument.set_from_argument(&arg);
+            an_argument.size = libfuzz::estimate_size(arg.getType(), arg.hasByValAttr(), DL);
+            my_fun.arguments_info.push_back(an_argument);
+        }
+      
+      libfuzz::dumpApiInfo(my_fun);
+    }
     /// Build Program Assignment Graph (SVFIR)
     SVFIRBuilder builder;
     SVFIR* pag = builder.build(svfModule);
