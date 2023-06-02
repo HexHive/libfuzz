@@ -42,7 +42,7 @@ class ParamNamesExtractor:
 
     def _get_ast_root(self, include_folder):
         tmp_file = self._get_stub_file(include_folder)
-        clang.cindex.Config.set_library_file(os.path.join(os.path.expanduser('~'), ".local/lib/python3.9/site-packages/clang/native/libclang.so"))
+        clang.cindex.Config.set_library_file(os.path.join(os.path.expanduser('~'), ".local/lib/python3.10/site-packages/clang/native/libclang.so"))
         index = clang.cindex.Index.create()
         tu = index.parse(tmp_file)
         root = tu.cursor  # Get the root of the AST

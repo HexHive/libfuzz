@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM ubuntu:20.04 AS libfuzzpp_dev_image
+FROM ubuntu:22.04 AS libfuzzpp_dev_image
 
 RUN --mount=type=cache,target=/var/cache/apt apt-get -q update && \
     DEBIAN_FRONTEND="noninteractive" \ 
@@ -20,7 +20,8 @@ RUN --mount=type=cache,target=/var/cache/apt apt-get -q update && \
 RUN --mount=type=cache,target=/var/cache/apt apt-get update && apt-get full-upgrade -y && \
     DEBIAN_FRONTEND="noninteractive" \ 
     apt-get -y install --no-install-suggests --no-install-recommends \
-    clang-12 clang-tools-12 lldb llvm gcc g++ libncurses5 clang
+        gcc g++ libncurses5 
+
 
 ARG USERNAME=libfuzz
 ARG USER_UID=1000
@@ -33,7 +34,7 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && apt-get install -y sudo \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME \
-    && chown -R root /usr/lib/sudo/sudoers.so /usr/bin/sudo /usr/lib/sudo \
+        && chown -R root /usr/bin/sudo \
     && chmod 4755 /usr/bin/sudo \
     && chown -R $USERNAME /home/$USERNAME
 
@@ -48,15 +49,9 @@ RUN --mount=type=cache,target=${CCACHE_DIR} mkdir -p ${CCACHE_DIR} && sudo -E ch
 RUN pip3 install ipython
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-# LLVM from source code
-COPY ./LLVM/fetch_repos.sh ${HOME}/LLVM/fetch_repos.sh
-RUN --mount=type=cache,target=${CCACHE_DIR} cd ${HOME}/LLVM && ./fetch_repos.sh
-COPY ./LLVM ${HOME}/LLVM
-RUN --mount=type=cache,target=${CCACHE_DIR} cd ${HOME}/LLVM && ./build.sh
 ENV LIBFUZZ /workspaces/libfuzz
 
 # SVF
-ENV LLVM_DIR ${HOME}/llvm-build/
 RUN --mount=type=cache,target=${HOME}/.ccache/ git clone https://github.com/HexHive/SVF.git && \
     cd SVF && \ 
     git checkout libfuzz && \
@@ -65,20 +60,30 @@ RUN --mount=type=cache,target=${HOME}/.ccache/ git clone https://github.com/HexH
 RUN cd SVF && ./setup.sh
 
 COPY ./requirements.txt ${HOME}/python/requirements.txt
-RUN cd ${HOME}/python && python3.9 -m pip install -r requirements.txt
+RUN cd ${HOME}/python && python3.10 -m pip install -r requirements.txt
+
+
+RUN --mount=type=cache,target=/var/cache/apt sudo apt-get update && sudo apt-get full-upgrade -y && \
+    DEBIAN_FRONTEND="noninteractive" \ 
+    sudo apt-get -y install --no-install-suggests --no-install-recommends \
+        gcc g++ libncurses5  clang-13 llvm-13-dev
 
 # TARGET FOR LIBRARY ANALYSIS
 FROM libfuzzpp_dev_image AS libfuzzpp_analysis
 
 ENV TOOLS_DIR ${HOME}
 
+ENV LLVM_DIR /usr/
 RUN mkdir -p ${TOOLS_DIR}/condition_extractor/
 RUN mkdir -p ${TOOLS_DIR}/tool/misc/
 COPY --chown=${USERNAME}:${USERNAME} ./condition_extractor ${TOOLS_DIR}/condition_extractor/
 COPY --chown=${USERNAME}:${USERNAME} ./tool/misc/extract_included_functions.py ${TOOLS_DIR}/tool/misc/
-RUN cd ${TOOLS_DIR}/condition_extractor && rm -Rf CMakeCache.txt && ./bootstrap.sh && make -j
+RUN cd ${TOOLS_DIR}/condition_extractor && rm -Rf CMakeCache.txt && ./bootstrap.sh && make -j 
 
 # NOTE: start_analysis.sh finds out its configuration automatically
+
+COPY LLVM/update-alternatives-clang.sh .
+RUN sudo ./update-alternatives-clang.sh 13 200
 ENV PATH $PATH:${HOME}/.local/bin
 CMD ${LIBFUZZ}/targets/start_analysis.sh
 

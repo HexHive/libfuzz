@@ -37,8 +37,8 @@ echo "./configure"
 #                                 CC=wllvm CXX=wllvm++
 ./configure --disable-shared --prefix="$WORK" \
                                 CC=wllvm CXX=wllvm++ \
-                                CXXFLAGS="-mllvm -get-api-pass -g -O0" \
-                                CFLAGS="-mllvm -get-api-pass -g -O0"
+                                CXXFLAGS="-g -O0" \
+                                CFLAGS="-g -O0"
 
 # configure compiles some shits for testing, better remove it
 rm -rf $LIBFUZZ_LOG_PATH/apis.log

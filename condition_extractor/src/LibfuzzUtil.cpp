@@ -15,8 +15,9 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Argument.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
-#include "llvm/Transforms/Utils/LibfuzzUtil.h"
+#include "LibfuzzUtil.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #include <sys/types.h>

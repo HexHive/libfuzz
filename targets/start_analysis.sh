@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+set -x
 
 export TARGET_NAME=${TARGET}
 export TARGET=${LIBFUZZ}/analysis/${TARGET}

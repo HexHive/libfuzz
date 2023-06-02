@@ -17,7 +17,7 @@ mkdir -p "$WORK"
 mkdir -p "$WORK/lib" "$WORK/include"
 
 export CC=wllvm
-export CFLAGS=$CFLAGS" -Wno-unused-command-line-argument -mllvm -get-api-pass -g -O0"
+export CFLAGS=$CFLAGS" -Wno-unused-command-line-argument -g -O0"
 export CXX=wllvm++
 #export CXXFLAGS=$CXXFLAGS" -Wno-unused-command-line-argument -mllvm -get-api-pass -g -O0" \
 export LLVM_COMPILER=clang
