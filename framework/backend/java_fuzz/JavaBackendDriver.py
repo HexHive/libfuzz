@@ -2,7 +2,7 @@ import os
 from backend import BackendDriver
 from driver import Driver
 from driver.ir.java.statement import ClassCreate, ApiInvoke, ArrayCreate, MethodCall
-from driver.ir.java.type import ClassType, ArrayType, ParameterizedType
+from driver.ir.java.type import ClassType, ArrayType, ParameterizedType, JavaType
 
 class JavaBackendDriver(BackendDriver):
     def __init__(self, working_dir, seeds_dir, num_seeds):
@@ -10,7 +10,7 @@ class JavaBackendDriver(BackendDriver):
         self.seeds_dir = seeds_dir
         self.num_seeds = num_seeds
 
-        self._idx = 0
+        self._idx = 1
         self.builtin_dict = {
             "java.util.List": "java.util.ArrayList"
         }
@@ -65,17 +65,24 @@ class JavaBackendDriver(BackendDriver):
             return self.emit_arraycreate(stmt)
         
         if isinstance(stmt, ClassCreate):
-            content = self.emit_classcreate(stmt)
+            content, typename, token = self.emit_classcreate(stmt)
         elif isinstance(stmt, ApiInvoke):
-            content = self.emit_apiinvoke(stmt)
+            content, typename, token = self.emit_apiinvoke(stmt)
         else:
             raise Exception("Unsupported Statement")
         
         if not stmt.exceptions:
-            return content
-        return "try {\n" \
+            if JavaBackendDriver.void_return(stmt):
+                return content
+            return f"{typename} {content}"
+        if JavaBackendDriver.void_return(stmt):
+            stmt_header = "\n"
+        else:
+            stmt_header = f"{typename} {token};\n"
+        return f"{stmt_header}" \
+               "    try {\n" \
                f"      {content}\n" \
-               "    } catch (" + "| ".join([x.className for x in stmt.exceptions]) + " e ) {\n" \
+               "    } catch (" + "| ".join([x.className for x in stmt.exceptions]) + " e) {\n" \
                "      return;\n" \
                "    }"
 
@@ -86,15 +93,15 @@ class JavaBackendDriver(BackendDriver):
         
         if isinstance(declaring_class, ClassType):
             if declaring_class.is_primitive:
-                type_dict = self.jazzer_addition_dict | self.jazzer_base_dict
-                return f"{declaring_class.className} {stmt.class_var.token} = data.{type_dict[declaring_class.className]}();"
-            elif declaring_class.className == "java.lang.String":
+                type_dict = {**self.jazzer_addition_dict, **self.jazzer_base_dict}
+                return f"{stmt.class_var.token} = data.{type_dict[declaring_class.className]}();", declaring_class.className, stmt.class_var.token
+            elif declaring_class.className == "java.lang.String" or declaring_class.className == "java.lang.CharSequence":
                 # This one is a little bit tricky
-                return f"String {stmt.class_var.token} = data.consumeString(100);"
-            return f"{JavaBackendDriver.normalize_className(declaring_class.className)} {stmt.class_var.token} = new {JavaBackendDriver.normalize_className(declaring_class.className)}(" + ", ".join([var.token for var in stmt.arg_vars]) + ");"
+                return f"{stmt.class_var.token} = data.consumeString(100);", "String", stmt.class_var.token
+            return f"{stmt.class_var.token} = new {JavaBackendDriver.normalize_className(declaring_class.className)}(" + ", ".join([var.token for var in stmt.arg_vars]) + ");", JavaBackendDriver.normalize_typeName(declaring_class), stmt.class_var.token
         elif isinstance(declaring_class, ParameterizedType):
             if declaring_class.rawType.className in self.builtin_dict:
-                return f"{declaring_class.rawType.className}<" + ", ".join([x.className for x in declaring_class.argType]) + f"> {stmt.class_var.token} = new {self.builtin_dict[declaring_class.rawType.className]}<>();"
+                return f"{stmt.class_var.token} = new {self.builtin_dict[declaring_class.rawType.className]}<>();", JavaBackendDriver.normalize_typeName(declaring_class), stmt.class_var.token
             else:
                 raise Exception("Not Support ParameterizedType Creation")
 
@@ -109,15 +116,45 @@ class JavaBackendDriver(BackendDriver):
             else:
                 raise Exception("Unsupported primitive type")
         else:
-            return JavaBackendDriver.normalize_className(declaring_class.rawType.className) + "[]" * declaring_class.dimension + f" {stmt.class_var} = new {JavaBackendDriver.normalize_className(declaring_class.rawType.className)}[{stmt.init_len}]" + "[]" * (declaring_class.dimension - 1) + ";"
+            return JavaBackendDriver.normalize_className(declaring_class.rawType.className) + "[]" * declaring_class.dimension + f" {stmt.class_var.token} = new {JavaBackendDriver.normalize_className(declaring_class.rawType.className)}[{stmt.init_len}]" + "[]" * (declaring_class.dimension - 1) + ";"
 
     def emit_apiinvoke(self, stmt: ApiInvoke) -> str:
         if stmt.is_static:
-            return f"var {stmt.ret_var.token} = {JavaBackendDriver.normalize_className(stmt.declaring_class.className)}.{stmt.function_name}(" + ", ".join([var.token for var in stmt.arg_vars])  + ");"
-        return f"var {stmt.ret_var.token} = {stmt.class_var.token}.{stmt.function_name}(" + ", ".join([var.token for var in stmt.arg_vars])  + ");"
+            if JavaBackendDriver.is_void(stmt.return_type):
+                return f"{JavaBackendDriver.normalize_className(stmt.declaring_class.className)}.{stmt.function_name}(" + ", ".join([var.token for var in stmt.arg_vars])  + ");", None, None
+            else:
+                return f"{stmt.ret_var.token} = {JavaBackendDriver.normalize_className(stmt.declaring_class.className)}.{stmt.function_name}(" + ", ".join([var.token for var in stmt.arg_vars])  + ");", JavaBackendDriver.normalize_typeName(stmt.return_type), stmt.ret_var.token
+        if JavaBackendDriver.is_void(stmt.return_type):
+            return f"{stmt.class_var.token}.{stmt.function_name}(" + ", ".join([var.token for var in stmt.arg_vars])  + ");", None, None
+        else:
+            return f"{stmt.ret_var.token} = {stmt.class_var.token}.{stmt.function_name}(" + ", ".join([var.token for var in stmt.arg_vars])  + ");", JavaBackendDriver.normalize_typeName(stmt.return_type), stmt.ret_var.token
     
     @staticmethod
     def normalize_className(className: str):
         if className.startswith("."):
             return className[1:]
         return className
+    
+    @staticmethod
+    def normalize_typeName(type: JavaType):
+        if isinstance(type, ClassType):
+            return JavaBackendDriver.normalize_className(type.className)
+        if isinstance(type, ParameterizedType):
+            return f"{type.rawType.className}<" + ", ".join([x.className for x in type.argType]) + ">"
+        if isinstance(type, ArrayType):
+            return type.rawType.className + type.dimension * "[]"
+        raise Exception("Not Supported Type")
+    
+    @staticmethod
+    def is_void(type: JavaType):
+        if isinstance(type, ClassType):
+            if type.is_primitive and type.className == "void":
+                return True
+        return False
+    
+    @staticmethod
+    def void_return(api: MethodCall):
+        if isinstance(api, ApiInvoke):
+            if JavaBackendDriver.is_void(api.return_type):
+                return True
+        return False

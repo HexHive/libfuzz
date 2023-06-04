@@ -1,21 +1,27 @@
 package analysis;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class Main {
+    private static final String jarDir = "/jars/";
+    private static final String apiFile = "/apis.json";
+    private static final String subtypeFile = "/subtypes.json";
+
     public static void main(String[] args) {
-        String dirName = "h2database";
-        String libName = "h2-2.1.214.jar";
+        if (args.length != 2) {
+            System.out.println("jarDir and jarFile are not specified");
+            return;
+        }
+
+        String libDir = args[0];
+        String jarFile = args[1];
 
         try {
-            LibAnalyzer analyzer = new LibAnalyzer("C:\\EPFL\\thesis\\libfuzz\\regression_tests\\java_analysis\\test" +
-                    "\\" + dirName + "\\jars/", libName);
-            writeApiInfo(analyzer, dirName);
-            writeSubTypes(analyzer, dirName);
+            LibAnalyzer analyzer = new LibAnalyzer(libDir + jarDir, jarFile);
+            writeApiInfo(analyzer, libDir);
+            writeSubTypes(analyzer, libDir);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -27,8 +33,7 @@ public class Main {
 
     public static void writeApiInfo(LibAnalyzer analyzer, String dirName) {
         try (FileWriter writer =
-                     new FileWriter("C:\\EPFL\\thesis\\libfuzz\\regression_tests\\java_analysis\\test\\" + dirName +
-                             "\\apis.json")) {
+                     new FileWriter(dirName + apiFile)) {
             analyzer.extractAPIs().forEach(apiinfo -> {
                 try {
                     writer.write(apiinfo.toString() + "\n");
@@ -43,8 +48,7 @@ public class Main {
 
     public static void writeSubTypes(LibAnalyzer analyzer, String dirName) {
         try (FileWriter writer =
-                     new FileWriter("C:\\EPFL\\thesis\\libfuzz\\regression_tests\\java_analysis\\test\\" + dirName +
-                             "\\subtypes.json")) {
+                     new FileWriter(dirName + subtypeFile)) {
             for (Map.Entry<Arg, Set<Arg>> entry: analyzer.retrieveSubTypes().entrySet()) {
                 writer.write(String.format("{\"name\":%s,\"subtypes\":%s}%n", entry.getKey().toString(),
                         entry.getValue().toString()));

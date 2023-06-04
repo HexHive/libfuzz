@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class GenericType {
     // GenericType now does not support nested generic type. This means List<B> in A<List<B>> will be treated as a
@@ -73,6 +74,6 @@ public class GenericType {
     }
 
     public List<Arg> aliasToArgs() {
-        return alias.entrySet().stream().map(entry -> new Arg(entry.getKey(), entry.getValue())).toList();
+        return alias.entrySet().stream().map(entry -> new Arg(entry.getKey(), entry.getValue())).collect(Collectors.toList());
     }
 }

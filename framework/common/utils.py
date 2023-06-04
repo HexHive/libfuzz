@@ -171,6 +171,10 @@ class Utils:
                     from IPython import embed; embed(); exit()
                 javaapi = Utils.normalize_args(api)
                 full_apis_list.add(javaapi)
+        
+        if None in api_list:
+            print(api_list)
+            raise Exception("Api not found in apis.json")
 
         return full_apis_list, api_list
 

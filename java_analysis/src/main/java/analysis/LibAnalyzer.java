@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class LibAnalyzer {
@@ -27,7 +28,7 @@ public class LibAnalyzer {
     private final JavaView view;
     private final List<Class<?>> clazzes;
 
-    public LibAnalyzer(String libPath, String libName) throws ClassNotFoundException {
+    public LibAnalyzer(String libPath, String jarFile) throws ClassNotFoundException {
         Path path = Paths.get(libPath);
         URL[] urls;
         try (Stream<Path> s = Files.list(path)) {
@@ -44,7 +45,7 @@ public class LibAnalyzer {
 
         loader = URLClassLoader.newInstance(urls, getClass().getClassLoader());
 
-        project = JavaProject.builder(language).addInputLocation(new PathBasedAnalysisInputLocation(Paths.get(libPath, libName), SourceType.Library)).build();
+        project = JavaProject.builder(language).addInputLocation(new PathBasedAnalysisInputLocation(Paths.get(libPath, jarFile), SourceType.Library)).build();
 
         view = project.createFullView();
 
@@ -115,12 +116,14 @@ public class LibAnalyzer {
             }
         }
 
-        for (Constructor<?> constructor: klazz.getDeclaredConstructors()) {
-            Optional<ApiInfo> result = ApiInfo.buildApiInfo(constructor);
-            if (result.isPresent()) {
-                ApiInfo info = result.get();
-                info.setDeclaringClazz(klazz);
-                builder.add(info);
+        if (!Modifier.isAbstract(klazz.getModifiers())) {
+            for (Constructor<?> constructor: klazz.getDeclaredConstructors()) {
+                Optional<ApiInfo> result = ApiInfo.buildApiInfo(constructor);
+                if (result.isPresent()) {
+                    ApiInfo info = result.get();
+                    info.setDeclaringClazz(klazz);
+                    builder.add(info);
+                }
             }
         }
 
@@ -194,7 +197,8 @@ public class LibAnalyzer {
             return;
         }
 
-        if (type instanceof ParameterizedType paramType) {
+        if (type instanceof ParameterizedType) {
+            ParameterizedType paramType = (ParameterizedType) type;
             GenericType genericType = getGenericType(clazz, mapping);
             Type[] typeArgs = paramType.getActualTypeArguments();
 
@@ -214,7 +218,7 @@ public class LibAnalyzer {
                         Arrays.stream(typeVariables).map(v -> GenericType.nonExistIdx).collect(ImmutableList.toImmutableList()));
             } else {
                 aliasMap.putAll(genericType.fulfillAlias(new Type[]{}));
-                indexMap.putAll(genericType.fulfillTypeIndex(Arrays.stream(typeVariables).map(v -> GenericType.nonExistIdx).toList()));
+                indexMap.putAll(genericType.fulfillTypeIndex(Arrays.stream(typeVariables).map(v -> GenericType.nonExistIdx).collect(Collectors.toList())));
             }
         }
     }

@@ -1,15 +1,12 @@
 package analysis;
 
 import com.google.common.collect.ImmutableList;
-import sootup.core.types.ClassType;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Arg {
     // This class now only support normal class and simple generic type (e.g. List<String>)
@@ -35,14 +32,17 @@ public class Arg {
 
     public static Arg buildArg(Type type) throws UnsupportedOperationException {
         Arg arg = new Arg();
-        if (type instanceof Class<?> classType) {
+        if (type instanceof Class) {
+            Class<?> classType = (Class<?>) type;
             arg.rawType = classType.getName();
             arg.argType = ImmutableList.of();
             return arg;
-        } else if (type instanceof ParameterizedType parameterizedType) {
+        } else if (type instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) type;
             ImmutableList.Builder<String> builder = ImmutableList.builder();
             for (Type argType: parameterizedType.getActualTypeArguments()) {
-                if (argType instanceof Class<?> classType) {
+                if (argType instanceof Class) {
+                    Class<?> classType = (Class<?>) argType;
                     builder.add(classType.getName());
                 } else {
                     throw new UnsupportedOperationException("");
@@ -60,7 +60,7 @@ public class Arg {
     @Override
     public String toString() {
         return String.format("{\"rawType\":\"%s\",\"argTypes\":%s}", formatName(rawType),
-                argType.stream().map(type -> "\"" + formatName(type) + "\"").toList());
+                argType.stream().map(type -> "\"" + formatName(type) + "\"").collect(Collectors.toList()));
     }
 
     @Override
@@ -77,10 +77,11 @@ public class Arg {
             return true;
         }
 
-        if (!(o instanceof Arg a)) {
+        if (!(o instanceof Arg)) {
             return false;
         }
 
+        Arg a = (Arg) o;
         return a.rawType.equals(rawType) && a.argType.equals(argType);
     }
 

@@ -12,9 +12,10 @@ from .factory.java_analysis import JavaFactory
 class JavaContext:
     type_map = {}
 
-    def __init__(self, subtypes: Dict[Tuple[str, str], Set[str]], full_api_list: Set[JavaApi], prob_gen=0.2) -> None:
+    def __init__(self, subtypes: Dict[Tuple[str, str], Set[str]], full_api_list: Set[JavaApi], prob_gen_builtin=0.5, prob_gen=0.1) -> None:
         self.variable_alive: Dict[JavaType, Set[Variable]] = {}
-        self.prob_gen = prob_gen # This is the probability of generating new variable when we already have this type of variable
+        self.prob_gen_builtin = prob_gen_builtin # This is the probability of generating new variable when we already have this type of variable for builtin type
+        self.prob_gen = prob_gen # This is the probability of generating new variable when we already have this type of variable for non-builtin type
         self.initial_stmts: List[Statement] = [] # This records the statements used to generate new variable
         self.subtypes = subtypes
 
@@ -44,45 +45,47 @@ class JavaContext:
             stmt.set_class_var(class_var)
     
     def get_random_var(self, type: JavaType) -> Variable:
-        if type in self.variable_alive and random.random() > self.prob_gen:
+        if type in self.variable_alive:
+            prob = random.random()
+            builtin = self.is_builtin(type)
+            if (builtin and prob > self.prob_gen_builtin) or ((not builtin) and prob > self.prob_gen):
                 variable_list = self.variable_alive[type]
                 return random.choice(list(variable_list))
+        if type in self.ret_dict and random.randint(0, 1) == 0:
+            # get variable from return value
+            apis = self.ret_dict[type]
+            api = JavaContext.select_api(apis)
+            stmt = JavaFactory.api_to_apiinvoke(api, self.subtypes)
+            self.fulfill_statement(stmt)
+            self.initial_stmts.append(stmt)
+            return stmt.ret_var
         else:
-            if type in self.ret_dict and random.randint(0, 1) == 0:
-                # get variable from return value
-                apis = self.ret_dict[type]
-                api = JavaContext.select_api(apis)
-                stmt = JavaFactory.api_to_apiinvoke(api, self.subtypes)
-                self.fulfill_statement(stmt)
+            # construct a new object
+            if self.is_builtin(type):
+                var = Variable(type)
+                stmt = ClassCreate(type, [], [])
+                stmt.set_class_var(var)
                 self.initial_stmts.append(stmt)
-                return stmt.ret_var
+                self.add_var(var)
+                return var
             else:
-                # construct a new object
-                if self.is_builtin(type):
+                if isinstance(type, ArrayType):
+                    stmt = ArrayCreate(type)
                     var = Variable(type)
-                    stmt = ClassCreate(type, [], [])
                     stmt.set_class_var(var)
                     self.initial_stmts.append(stmt)
                     self.add_var(var)
                     return var
-                else:
-                    if isinstance(type, ArrayType):
-                        stmt = ArrayCreate(type)
-                        var = Variable(type)
-                        stmt.set_class_var(var)
-                        self.initial_stmts.append(stmt)
-                        self.add_var(var)
-                        return var
-                    
-                    if not type in self.constructor_dict:
-                        raise Exception(f"Unsupported Type: {type}")
-                    
-                    apis = self.constructor_dict[type]
-                    api = JavaContext.select_api(apis)
-                    stmt = JavaFactory.api_to_classcreate(api, self.subtypes)
-                    self.fulfill_statement(stmt)
-                    self.initial_stmts.append(stmt)
-                    return stmt.class_var
+                
+                if not type in self.constructor_dict:
+                    raise Exception(f"Unsupported Type: {type}")
+                
+                apis = self.constructor_dict[type]
+                api = JavaContext.select_api(apis)
+                stmt = JavaFactory.api_to_classcreate(api, self.subtypes)
+                self.fulfill_statement(stmt)
+                self.initial_stmts.append(stmt)
+                return stmt.class_var
     
     def add_var(self, var: Variable):
         type = var.type
@@ -98,7 +101,8 @@ class JavaContext:
         constructors, methods = [], []
         for api in full_api_list:
             if api.is_constructor:
-                constructors.append(api)
+                if not api.is_abstract():
+                    constructors.append(api)
             else:
                 methods.append(api)
         return constructors, methods
@@ -107,7 +111,7 @@ class JavaContext:
         constructor_dict: Dict[str, List[JavaApi]] = {}
 
         for constructor in constructors:
-            if not constructor.is_public():
+            if not constructor.is_public() or constructor.is_abstract():
                 continue
 
             declaring_clazz = constructor.declaring_class
@@ -167,7 +171,7 @@ class JavaContext:
     def is_builtin(self, type: JavaType) -> bool:
         if isinstance(type, ClassType):
             # String is a special class. We treat it as primitive
-            if type.is_primitive or type.className == ("java.lang.String"):
+            if type.is_primitive or type.className == ("java.lang.String") or type.className == ("java.lang.CharSequence"):
                 return True
         elif isinstance(type, ParameterizedType):
             className = type.rawType.className
