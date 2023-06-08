@@ -7,7 +7,7 @@ RUN --mount=type=cache,target=/var/cache/apt apt-get -q update && \
     apt-get -y install --no-install-suggests --no-install-recommends \
     sudo make ninja-build texinfo bison zsh ccache autoconf libtool \
     zlib1g-dev liblzma-dev libjpeg-turbo8-dev automake cmake nasm \ 
-    build-essential git openssh-client python3 python3.9 python3-dev \
+    build-essential git openssh-client python3 python3-dev \
     python3-setuptools python-is-python3 python3-venv python3-pip \
     libtool libtool-bin libglib2.0-dev wget vim jupp nano \
     bash-completion less apt-utils apt-transport-https curl  \
