@@ -21,10 +21,10 @@ export CXX=wllvm++
 export LLVM_COMPILER=clang
 export LLVM_COMPILER_PATH=$LLVM_DIR/bin
 
-export CC=$LIBFUZZ/LLVM/build/bin/clang
-export CXX=$LIBFUZZ/LLVM/build/bin/clang++
+# export CC=$LIBFUZZ/LLVM/build/bin/clang
+# export CXX=$LIBFUZZ/LLVM/build/bin/clang++
 export LIBFUZZ_LOG_PATH=$WORK/apipass
-export CFLAGS="-mllvm -get-api-pass"
+export CFLAGS=""
 
 
 mkdir -p $LIBFUZZ_LOG_PATH
@@ -34,8 +34,8 @@ cd "$TARGET/repo"
 echo "cmake"
 cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
         -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_C_FLAGS_DEBUG="-g -O0 -mllvm -get-api-pass" \
-        -DCMAKE_CXX_FLAGS_DEBUG="-g -O0 -mllvm -get-api-pass" \
+        -DCMAKE_C_FLAGS_DEBUG="-g -O0" \
+        -DCMAKE_CXX_FLAGS_DEBUG="-g -O0" \
         -DBENCHMARK_ENABLE_GTEST_TESTS=off \
         -DBENCHMARK_ENABLE_INSTALL=off 
 

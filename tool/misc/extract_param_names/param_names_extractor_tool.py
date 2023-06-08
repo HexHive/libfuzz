@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3
 
 import argparse
 from param_names_extractor import ParamNamesExtractor

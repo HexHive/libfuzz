@@ -16,7 +16,7 @@ export CXX=wllvm++
 export LLVM_COMPILER=clang
 export LLVM_COMPILER_PATH=$LLVM_DIR/bin
 export LIBFUZZ_LOG_PATH=$WORK/apipass
-CFLAGS="-mllvm -get-api-pass -g -O0"
+CFLAGS="-g -O0"
 
 mkdir -p "$LIBFUZZ_LOG_PATH"
 

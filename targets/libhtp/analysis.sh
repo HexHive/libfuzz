@@ -13,10 +13,11 @@ mkdir -p "$WORK/lib" "$WORK/include"
 export CC=wllvm
 export CXX=wllvm++
 export LLVM_COMPILER=clang
-export LLVM_COMPILER_PATH=$LLVM_DIR/bin
+export LLVM_COMPILER_PATH=/usr/bin
 
 export LIBFUZZ_LOG_PATH=$WORK/apipass
 
+wllvm --version
 mkdir -p $LIBFUZZ_LOG_PATH
 
 echo "make 1"
@@ -25,8 +26,8 @@ cd "$TARGET/repo"
 echo "./configure"
 ./configure --disable-shared --prefix="$WORK" \
                                 CC=wllvm CXX=wllvm++ \
-                                CXXFLAGS="-mllvm -get-api-pass -g -O0" \
-                                CFLAGS="-mllvm -get-api-pass -g -O0"
+                                CXXFLAGS="-g -O0" \
+                                CFLAGS="-g -O0"
 
 # WATCH OUT PADAWAN! SOMETIME SETTING -O0 IN C{XX}FLAGS MIGHT NOT BE ENOUGH!
 find . -name Makefile -exec sed -i 's/-O2/-O0/g' {} \;

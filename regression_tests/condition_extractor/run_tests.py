@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3
 
 import os, json, shutil, filecmp, tempfile
 from subprocess import STDOUT, check_output

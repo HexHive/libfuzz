@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3
 
 PROJECT_FOLDER="/workspaces/libfuzz"
 
@@ -39,4 +39,3 @@ def __main():
 
 if __name__ == "__main__":
     __main()
-

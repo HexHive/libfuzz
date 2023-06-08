@@ -25,6 +25,8 @@
 #include <list>
 #include <vector>
 
+using namespace llvm;
+
 namespace libfuzz {
 
   // extern cl::opt<bool> ClCreateCastRelatedTypeList;

@@ -66,3 +66,8 @@ Module.symvers
 Mkfile.old
 dkms.conf
 tests/libfuzzer/driver0
+tool/main.py
+tool/misc/extract_included_functions.py
+tool/misc/extract_param_names/check_debug_info.py
+tool/misc/extract_param_names/param_names_extractor_tool.py
+tool/misc/extract_param_names/param_names_extractor.py

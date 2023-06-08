@@ -1,4 +1,6 @@
 #!/bin/bash
+set -x
+set -e
 
 # export LIBFUZZ=/workspaces/libfuzz/
 # export TARGET=$LIBFUZZ/analysis/uriparser/ 
@@ -16,7 +18,7 @@ mkdir -p "$WORK/lib" "$WORK/include"
 export CC=wllvm
 export CXX=wllvm++
 export LLVM_COMPILER=clang
-export LLVM_COMPILER_PATH=$LLVM_DIR/bin
+export LLVM_COMPILER_PATH=/usr/bin
 
 # export CC=$LIBFUZZ/LLVM/build/bin/clang
 # export CXX=$LIBFUZZ/LLVM/build/bin/clang++
@@ -29,11 +31,11 @@ mkdir -p $LIBFUZZ_LOG_PATH
 cd "$TARGET/repo"
 cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
         -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_C_FLAGS_DEBUG="-g -O0 -mllvm -get-api-pass" \
-        -DCMAKE_CXX_FLAGS_DEBUG="-g -O0 -mllvm -get-api-pass" 
+        -DCMAKE_C_FLAGS_DEBUG="-g -O0" \
+        -DCMAKE_CXX_FLAGS_DEBUG="-g -O0" 
 
 # configure compiles some shits for testing, better remove it
-rm $LIBFUZZ_LOG_PATH/apis.log
+rm -rf $LIBFUZZ_LOG_PATH/apis.log
 
 touch $LIBFUZZ_LOG_PATH/exported_functions.txt
 touch $LIBFUZZ_LOG_PATH/incomplete_types.txt
@@ -44,7 +46,7 @@ touch $LIBFUZZ_LOG_PATH/coerce.log
 echo "make clean"
 make -j$(nproc) clean
 echo "make"
-make -j$(nproc)
+make -j$(nproc) VERBOSE=1
 echo "make install"
 make install
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3
 
 import argparse, tempfile, json, copy
 import sys, os, re
@@ -183,7 +183,7 @@ def _main():
 
     # Eventually, tell clang.cindex where libclang.dylib is -- or else apt install and good luck
     # clang.cindex.Config.set_library_path("/Users/tomgong/Desktop/build/lib")
-    clang.cindex.Config.set_library_file(os.path.join(os.path.expanduser('~'), ".local/lib/python3.9/site-packages/clang/native/libclang.so"))
+    clang.cindex.Config.set_library_file(os.path.join(os.path.expanduser('~'), ".local/lib/python3.8/site-packages/clang/native/libclang.so"))
     index = clang.cindex.Index.create()
 
     # Generate AST from filepath passed in the command line
