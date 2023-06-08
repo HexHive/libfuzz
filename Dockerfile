@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM ubuntu:22.04 AS libfuzzpp_dev_image
+FROM ubuntu:20.04 AS libfuzzpp_dev_image
 
 RUN --mount=type=cache,target=/var/cache/apt apt-get -q update && \
     DEBIAN_FRONTEND="noninteractive" \ 
@@ -51,7 +51,14 @@ RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/inst
 
 ENV LIBFUZZ /workspaces/libfuzz
 
+RUN --mount=type=cache,target=/var/cache/apt sudo apt-get update && sudo apt-get full-upgrade -y && \
+    DEBIAN_FRONTEND="noninteractive" \ 
+    sudo apt-get -y install --no-install-suggests --no-install-recommends \
+        gcc g++ libncurses5  clang-12 llvm-12-dev
+
 # SVF
+ENV LLVM_DIR=/usr/
+
 RUN --mount=type=cache,target=${HOME}/.ccache/ git clone https://github.com/HexHive/SVF.git && \
     cd SVF && \ 
     git checkout libfuzz && \
@@ -60,13 +67,8 @@ RUN --mount=type=cache,target=${HOME}/.ccache/ git clone https://github.com/HexH
 RUN cd SVF && ./setup.sh
 
 COPY ./requirements.txt ${HOME}/python/requirements.txt
-RUN cd ${HOME}/python && python3.10 -m pip install -r requirements.txt
+RUN cd ${HOME}/python && python3 -m pip install -r requirements.txt
 
-
-RUN --mount=type=cache,target=/var/cache/apt sudo apt-get update && sudo apt-get full-upgrade -y && \
-    DEBIAN_FRONTEND="noninteractive" \ 
-    sudo apt-get -y install --no-install-suggests --no-install-recommends \
-        gcc g++ libncurses5  clang-13 llvm-13-dev
 
 # TARGET FOR LIBRARY ANALYSIS
 FROM libfuzzpp_dev_image AS libfuzzpp_analysis
@@ -83,7 +85,7 @@ RUN cd ${TOOLS_DIR}/condition_extractor && rm -Rf CMakeCache.txt && ./bootstrap.
 # NOTE: start_analysis.sh finds out its configuration automatically
 
 COPY LLVM/update-alternatives-clang.sh .
-RUN sudo ./update-alternatives-clang.sh 13 200
+RUN sudo ./update-alternatives-clang.sh 12 200
 ENV PATH $PATH:${HOME}/.local/bin
 CMD ${LIBFUZZ}/targets/start_analysis.sh
 

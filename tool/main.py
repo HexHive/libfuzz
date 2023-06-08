@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.10
+#!/usr/bin/env python3
 
 PROJECT_FOLDER="/workspaces/libfuzz"
 

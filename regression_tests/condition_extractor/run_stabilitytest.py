@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.10
+#!/usr/bin/env python3
 
 import sys, os, argparse, json, shutil
 from subprocess import STDOUT, check_output
