@@ -1,7 +1,7 @@
 #include "GenericDominatorTy.h"
 #include "PhiFunction.h"
 
-#include "SVF-FE/LLVMUtil.h"
+#include "SVF-LLVM/LLVMUtil.h"
 
 // FLAVIO: I intentionally left the burned of creating the Dom relation in a
 // separate function. I did not want to do everything in the constructor 
@@ -121,7 +121,7 @@ void GenericDominatorTy::pruneUnreachableFunctions() {
     SVFModule *svfModule = this->getModule();
     PTACallGraph* callgraph = this->getPTACallGraph();
 
-    SVF::SVFModule::llvm_iterator it, eit;
+    SVF::SVFModule::const_iterator it, eit;
 
     SVFFunctionSet functions_done;
 
@@ -130,11 +130,11 @@ void GenericDominatorTy::pruneUnreachableFunctions() {
 
         uncalled_functions = false;
         
-        it = svfModule->llvmFunBegin();
-        eit = svfModule->llvmFunEnd();
+        it = svfModule->begin();
+        eit = svfModule->end();
 
         for (;it != eit; ++it) {
-            const SVFFunction *fun = svfModule->getSVFFunction(*it);
+            const SVFFunction *fun = *it;
 
             ICFGEdgeSet tmp_dumped_edges;
 

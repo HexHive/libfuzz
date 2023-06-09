@@ -26,12 +26,12 @@
  // Author: Yulei Sui,
  */
 
-#include "SVF-FE/LLVMUtil.h"
+#include "SVF-LLVM/LLVMUtil.h"
 #include "Graphs/SVFG.h"
 #include "WPA/Andersen.h"
 #include "WPA/AndersenPWC.h"
 #include "WPA/TypeAnalysis.h"
-#include "SVF-FE/SVFIRBuilder.h"
+#include "SVF-LLVM/SVFIRBuilder.h"
 #include "Util/Options.h"
 
 #include "GenericDominatorTy.h"
@@ -364,9 +364,9 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
 // }
 DataLayout *DL = nullptr;
 
-void setDataLayout(Function &F) {
+void setDataLayout(const Function* F) {
   if (DL == nullptr)
-    DL = new DataLayout(F.getParent());
+    DL = new DataLayout(F->getParent());
 }
 
 
@@ -431,19 +431,18 @@ int main(int argc, char ** argv)
     if (OutputType == OutType::stdo)
         outs() << "[WARNING] outputting in stdout, ignoring OutputFile\n";
 
-    if (Options::WriteAnder == "ir_annotator")
+    if (Options::WriteAnder() == "ir_annotator")
     {
         LLVMModuleSet::getLLVMModuleSet()->preProcessBCs(moduleNameVec);
     }
 
     SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
-    svfModule->buildSymbolTableInfo();
 
     // Dump LLVM apis function per function
     for(const SVFFunction* svfFun : svfModule->getFunctionSet() ){
-        llvm::Function* F = svfFun->getLLVMFun();
+        const llvm::Function* F = dyn_cast<llvm::Function>(svfFun);
 
-        setDataLayout(*F);
+        setDataLayout(F);
         libfuzz::function_record my_fun;
 
         Type * retType = F->getReturnType();
@@ -458,9 +457,9 @@ int main(int argc, char ** argv)
         my_fun.return_info.size = libfuzz::estimate_size(retType, false, DL);
         my_fun.return_info.name = "return";
 
-        for(auto &arg : F->args()) {
+        for(const auto& arg : F->args()) {
             libfuzz::argument_record an_argument;
-            an_argument.set_from_argument(&arg);
+            an_argument.set_from_argument(arg);
             an_argument.size = libfuzz::estimate_size(arg.getType(), arg.hasByValAttr(), DL);
             my_fun.arguments_info.push_back(an_argument);
         }
@@ -468,13 +467,12 @@ int main(int argc, char ** argv)
       libfuzz::dumpApiInfo(my_fun);
     }
     /// Build Program Assignment Graph (SVFIR)
-    SVFIRBuilder builder;
-    SVFIR* pag = builder.build(svfModule);
+    SVFIRBuilder builder(svfModule);
+    SVFIR* pag = builder.build();
     ICFG* icfg = pag->getICFG();
-
     /// Create Andersen's pointer analysis
-    //Andersen* point_to_analysys = AndersenWaveDiff::createAndersenWaveDiff(pag);
-    FlowSensitive* point_to_analysys = FlowSensitive::createFSWPA(pag);
+    Andersen* point_to_analysys = AndersenWaveDiff::createAndersenWaveDiff(pag);
+    //FlowSensitive* point_to_analysys = FlowSensitive::createFSWPA(pag);
     // AndersenSCD* point_to_analysys = AndersenSCD::createAndersenSCD(pag);
     // TypeAnalysis* point_to_analysys = new TypeAnalysis(pag);
     // point_to_analysys->analyze();
@@ -507,10 +505,10 @@ int main(int argc, char ** argv)
 
         std::set<std::string> minimize_functions;
 
-        SVF::SVFModule::llvm_iterator it = svfModule->llvmFunBegin();
-        SVF::SVFModule::llvm_iterator eit = svfModule->llvmFunEnd();
+        SVF::SVFModule::const_iterator it = svfModule->begin();
+        SVF::SVFModule::const_iterator eit = svfModule->end();
         for (;it != eit; ++it) {
-            const SVFFunction *fun = svfModule->getSVFFunction(*it);
+            const SVFFunction *fun = *it;
             std::string fun_name = fun->getName();
             if (functions.find(fun_name) != functions.end()) {
                 auto cg_node = callgraph->getCallGraphNode(fun);
@@ -571,7 +569,7 @@ int main(int argc, char ** argv)
                 auto seek_type = val->getType();
                 ValueMetadata paramMetadata = 
                     ValueMetadata::extractParameterMetadata(
-                        svfg, val, seek_type);
+                        svfg, dyn_cast<Value>(val), dyn_cast<Type>(seek_type));
 
                 // auto param_key = "param_" + std::to_string(pn);
                 // functionResult[param_key] = paramMetadata.toJson();
@@ -598,7 +596,7 @@ int main(int argc, char ** argv)
             if (verbose >= Verbosity::v1)
                 outs() << "[INFO] return: " << p->toString() << "\n";
             ValueMetadata returnMetadata =
-                ValueMetadata::extractReturnMetadata(svfg, p->getValue());
+                ValueMetadata::extractReturnMetadata(svfg, dyn_cast<Value>(p->getValue()));
 
             // functionResult["return"] = returnAccessTypeSet.toJson();
             // jsonResult.append(functionResult);
@@ -606,10 +604,10 @@ int main(int argc, char ** argv)
         }
 
         if (useDominator) {
-            SVF::SVFModule::llvm_iterator it = svfModule->llvmFunBegin();
-            SVF::SVFModule::llvm_iterator eit = svfModule->llvmFunEnd();
+            SVF::SVFModule::const_iterator it = svfModule->begin();
+            SVF::SVFModule::const_iterator eit = svfModule->end();
             for (;it != eit; ++it) {
-                const SVFFunction *fun = svfModule->getSVFFunction(*it);
+                const SVFFunction *fun = *it;
                 if ( fun->getName() != f)
                     continue;
 

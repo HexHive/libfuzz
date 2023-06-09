@@ -57,13 +57,11 @@ RUN --mount=type=cache,target=/var/cache/apt sudo apt-get update && sudo apt-get
         gcc g++ libncurses5  clang-12 llvm-12-dev
 
 # SVF
-ENV LLVM_DIR=/usr/
 
-RUN --mount=type=cache,target=${HOME}/.ccache/ git clone https://github.com/HexHive/SVF.git && \
+RUN --mount=type=cache,target=${HOME}/.ccache/ git clone https://github.com/SVF-tools/SVF.git && \
     cd SVF && \ 
-    git checkout libfuzz && \
     sed -i 's/jobs=4/jobs=/g' build.sh && \
-    ./build.sh
+    ./build.sh debug
 RUN cd SVF && ./setup.sh
 
 COPY ./requirements.txt ${HOME}/python/requirements.txt
@@ -75,19 +73,22 @@ FROM libfuzzpp_dev_image AS libfuzzpp_analysis
 
 ENV TOOLS_DIR ${HOME}
 
-ENV LLVM_DIR /usr/
 RUN mkdir -p ${TOOLS_DIR}/condition_extractor/
 RUN mkdir -p ${TOOLS_DIR}/tool/misc/
+RUN sudo apt-get install zlib1g-dev unzip cmake gcc g++ libtinfo5 nodejs 
 COPY --chown=${USERNAME}:${USERNAME} ./condition_extractor ${TOOLS_DIR}/condition_extractor/
 COPY --chown=${USERNAME}:${USERNAME} ./tool/misc/extract_included_functions.py ${TOOLS_DIR}/tool/misc/
-RUN cd ${TOOLS_DIR}/condition_extractor && rm -Rf CMakeCache.txt && ./bootstrap.sh && make -j 
+ENV SVF_DIR /home/libfuzz/SVF
+ENV LLVM_DIR /home/libfuzz/SVF
+CMD cd ${TOOLS_DIR}/condition_extractor && rm -Rf CMakeCache.txt && ./bootstrap.sh && make -j 
 
 # NOTE: start_analysis.sh finds out its configuration automatically
 
 COPY LLVM/update-alternatives-clang.sh .
 RUN sudo ./update-alternatives-clang.sh 12 200
 ENV PATH $PATH:${HOME}/.local/bin
-CMD ${LIBFUZZ}/targets/start_analysis.sh
+RUN echo $PATH
+#CMD ${LIBFUZZ}/targets/start_analysis.sh
 
 # TARGET FOR DRIVER GENERATION
 FROM libfuzzpp_dev_image AS libfuzzpp_drivergeneration

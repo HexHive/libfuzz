@@ -56,13 +56,13 @@ namespace libfuzz {
         llvm::raw_string_ostream ostream(type);
         arg_type->print(ostream);
       };
-      void set_from_argument(llvm::Argument* arg) {
+      void set_from_argument(const llvm::Argument &arg) {
 
-        this->name = arg->getName().str();
+        this->name = arg.getName().str();
 
-        llvm::Type *a_type = arg->getType();
+        llvm::Type *a_type = arg.getType();
 
-        if (arg->hasPointeeInMemoryValueAttr())
+        if (arg.hasPointeeInMemoryValueAttr())
           this->flag = "ret";
         else {
           if (a_type->isPtrOrPtrVectorTy()) {

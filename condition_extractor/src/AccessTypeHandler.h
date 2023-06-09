@@ -140,13 +140,14 @@ bool memcpy_hander(ValueMetadata *mdata, std::string fun_name,
         tmpAcNode.addField(-1);
         tmpAcNode.setAccess(AccessType::Access::read);
         mdata->getAccessTypeSet()->insert(tmpAcNode, icfgNode);
+                /* NICOLAS NOT COMMIT 
         auto c = SVFUtil::dyn_cast<CallBase>(cs->getCallSite());
         mdata->setIsArray(isAnArray(c));
         if (param_num == 1) {
             auto i = SVFUtil::dyn_cast<CallBase>(cs->getCallSite());
             Value *v = i->getArgOperand(2);
             mdata->addFunParam(v);
-        }
+        }*/
     }
 
     return false;
@@ -199,10 +200,11 @@ bool memset_hander(ValueMetadata *mdata, std::string fun_name,
         mdata->getAccessTypeSet()->insert(tmpAcNode, icfgNode);
         mdata->setIsArray(true);
         
+                /* NICOLAS NOT COMMIT 
         auto i = SVFUtil::dyn_cast<CallBase>(cs->getCallSite());
         Value *v = i->getArgOperand(2);
         mdata->addFunParam(v);
-
+*/
         addWrteToAllFields(mdata, atNode, icfgNode);
     }
 

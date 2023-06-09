@@ -4,11 +4,11 @@
 void getPhiFunction(SVFModule *svfModule, ICFG* icfg, 
                     PHIFun *phi, PHIFunInv *phi_inv) {
 
-    SVF::SVFModule::llvm_iterator it = svfModule->llvmFunBegin();
-    SVF::SVFModule::llvm_iterator eit = svfModule->llvmFunEnd();
+    SVF::SVFModule::const_iterator it = svfModule->begin();
+    SVF::SVFModule::const_iterator eit = svfModule->end();
 
     for (;it != eit; ++it) {
-        const SVFFunction *fun = svfModule->getSVFFunction(*it);
+        const SVFFunction *fun = *it;
     
         // outs() << fun->getName() << " [in DOM]\n";
         CallCFGEdge* call_edge;

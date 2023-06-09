@@ -22,5 +22,5 @@ set +x
 
 echo "$IMG_NAME"
 
-docker run --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" "$IMG_NAME" 
-# docker run --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" "$IMG_NAME" -it bash
+#docker run --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" "$IMG_NAME" 
+docker run --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" -t "$IMG_NAME"

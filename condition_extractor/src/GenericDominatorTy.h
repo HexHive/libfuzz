@@ -1,8 +1,9 @@
 #ifndef INCLUDE_GENDOM_DOMINATORS_H_
 #define INCLUDE_GENDOM_DOMINATORS_H_
 
-#include <Graphs/ICFG.h>
-#include <Graphs/SVFG.h>
+#include "SVF-LLVM/LLVMUtil.h"
+#include "Graphs/ICFG.h"
+#include "Graphs/SVFG.h"
 #include <Graphs/GenericGraph.h>
 #include "WPA/Andersen.h"
 
@@ -233,7 +234,7 @@ private:
     IBBNode *node;
 };
 
-namespace llvm
+namespace SVF
 {
     template <>
     struct DOTGraphTraits<GenericDominatorTy *> : public DOTGraphTraits<ICFG *>
@@ -349,25 +350,25 @@ namespace llvm
     };
 } // End namespace llvm
 
-namespace llvm
+namespace SVF
 {
     /* !
      * GraphTraits specializations for generic graph algorithms.
      * Provide graph traits for traversing from a constraint node using standard graph traversals.
      */
     template <>
-    struct GraphTraits<DomNode *> : public GraphTraits<SVF::GenericNode<DomNode, DomEdge> *>
+    struct GenericGraphTraits<DomNode *> : public GenericGraphTraits<SVF::GenericNode<DomNode, DomEdge> *>
     {
     };
 
     /// Inverse GraphTraits specializations for call graph node, it is used for inverse traversal.
     template <>
-    struct GraphTraits<Inverse<DomNode *>> : public GraphTraits<Inverse<SVF::GenericNode<DomNode, DomEdge> *>>
+    struct GenericGraphTraits<Inverse<DomNode *>> : public GenericGraphTraits<Inverse<SVF::GenericNode<DomNode, DomEdge> *>>
     {
     };
 
     template <>
-    struct GraphTraits<GenericDominatorTy *> : public GraphTraits<SVF::GenericGraph<DomNode, DomEdge> *>
+    struct GenericGraphTraits<GenericDominatorTy *> : public GenericGraphTraits<SVF::GenericGraph<DomNode, DomEdge> *>
     {
         typedef DomNode *NodeRef;
     };

@@ -4,7 +4,7 @@
 TypeMatcher::TypeStringMap TypeMatcher::type_hash_map;
 TypeMatcher::TypeStringMap TypeMatcher::type_id_map;
 
-std::string TypeMatcher::compute_id(llvm::StructType* t) {
+std::string TypeMatcher::compute_id(const llvm::StructType* t) {
 
     if (type_id_map.find(t) != type_id_map.end())
         return type_id_map[t];
@@ -21,7 +21,7 @@ std::string TypeMatcher::compute_id(llvm::StructType* t) {
     return name;
 }
 
-std::string TypeMatcher::compute_hash(llvm::Type* t,
+std::string TypeMatcher::compute_hash(const llvm::Type* t,
     std::set<std::string> ids_done) {
 
     if (type_hash_map.find(t) != type_hash_map.end())
@@ -77,13 +77,13 @@ std::string TypeMatcher::compute_hash(llvm::Type* t,
             break;
         case llvm::Type::TypeID::PointerTyID: 
             {
-            llvm::PointerType* pt = SVFUtil::dyn_cast<PointerType>(t);
+            const llvm::PointerType* pt = SVFUtil::dyn_cast<PointerType>(t);
             hash += "PN[" + compute_hash(pt->getElementType(), ids_done) + "]";
             }
             break;
         case llvm::Type::TypeID::StructTyID:
             {
-            llvm::StructType* st = SVFUtil::dyn_cast<StructType>(t);
+            const llvm::StructType* st = SVFUtil::dyn_cast<StructType>(t);
 
             std::string t_id = compute_id(st);
 
@@ -108,7 +108,7 @@ std::string TypeMatcher::compute_hash(llvm::Type* t,
             break;
         case llvm::Type::TypeID::ArrayTyID:
             {
-            llvm::ArrayType* ar = SVFUtil::dyn_cast<ArrayType>(t);
+            const llvm::ArrayType* ar = SVFUtil::dyn_cast<ArrayType>(t);
             hash += "AR[" + std::to_string(ar->getNumElements());
             hash += "," + compute_hash(ar->getElementType(), ids_done);
             hash += "]";
@@ -116,7 +116,7 @@ std::string TypeMatcher::compute_hash(llvm::Type* t,
             break;
         case llvm::Type::TypeID::FixedVectorTyID:
             {
-            llvm::FixedVectorType* fv = SVFUtil::dyn_cast<FixedVectorType>(t);
+            const llvm::FixedVectorType* fv = SVFUtil::dyn_cast<FixedVectorType>(t);
             hash += "FV[" + std::to_string(fv->getNumElements());
             hash += "," + compute_hash(fv->getElementType(), ids_done);
             hash += "]";
@@ -124,7 +124,7 @@ std::string TypeMatcher::compute_hash(llvm::Type* t,
             break;
         case llvm::Type::TypeID::ScalableVectorTyID:
             {
-            llvm::ScalableVectorType* fv = 
+            const llvm::ScalableVectorType* fv = 
                 SVFUtil::dyn_cast<ScalableVectorType>(t);
             hash += "SV[" + std::to_string(fv->getMinNumElements());
             hash += "," + compute_hash(fv->getElementType(), ids_done);
@@ -146,7 +146,7 @@ std::string TypeMatcher::compute_hash(llvm::Type* t,
     return hash;
 }
 
-bool TypeMatcher::compare_types(llvm::Type* t1, llvm::Type* t2) {
+bool TypeMatcher::compare_types(const llvm::Type* t1, const llvm::Type* t2) {
     return compute_hash(t1) == compute_hash(t2);
 }
 

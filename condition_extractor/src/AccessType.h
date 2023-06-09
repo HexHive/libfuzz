@@ -1,8 +1,8 @@
 #ifndef INCLUDE_DOM_ACCESSTYPE_H_
 #define INCLUDE_DOM_ACCESSTYPE_H_
 
-#include <Graphs/ICFG.h>
-#include <Graphs/SVFG.h>
+#include "Graphs/ICFG.h"
+#include "Graphs/SVFG.h"
 #include <Graphs/GenericGraph.h>
 #include "WPA/Andersen.h"
 #include <llvm/Support/raw_ostream.h>
@@ -29,29 +29,29 @@ class AccessType {
         std::set<const ICFGNode*> icfg_set;
         std::vector<int> fields;
         Access access;
-        llvm::Type* type;
+        const llvm::Type* type;
 
         // fake parent
         bool has_parent;
         std::vector<int> p_fields;
         Access p_access;
-        llvm::Type* p_type;
+        const llvm::Type* p_type;
         
         // remember the types extracted from previous GEP
-        std::set<llvm::Type*> visited_types;
+        std::set<const llvm::Type*> visited_types;
 
-        static std::string type_to_string(llvm::Type* typ) {
+        static std::string type_to_string(const llvm::Type* typ) {
             std::string str;
             llvm::raw_string_ostream(str) << *typ;
             return str;
         }
 
-        static std::string type_to_hash(llvm::Type* typ) {
+        static std::string type_to_hash(const llvm::Type* typ) {
             return TypeMatcher::compute_hash(typ);
         }
 
     public:
-        AccessType(llvm::Type* t) {
+        AccessType(const llvm::Type* t) {
             access = none;
             p_access = none;
             has_parent = false;
@@ -134,11 +134,11 @@ class AccessType {
             return access;
         }
 
-        void setType(llvm::Type* typ) {
+        void setType(const llvm::Type* typ) {
             type = typ;
         }
 
-        llvm::Type* getType() {
+        const llvm::Type* getType() {
             return type;
         }
 
@@ -477,7 +477,7 @@ class Path {
         //     prevValue = nullptr;
         // }
 
-        Path(const VFGNode* p_node, const llvm::Value* val, llvm::Type* type) :
+        Path(const VFGNode* p_node, const llvm::Value* val, const llvm::Type* type) :
             access_type(type) {
             node = p_node;
             prevValue = nullptr;
@@ -674,7 +674,7 @@ class ValueMetadata {
         static bool consider_indirect_calls;
 
         static ValueMetadata extractParameterMetadata(
-            const SVFG*, const Value*, Type*);
+            const SVFG*, const Value*, const Type*);
         static ValueMetadata extractReturnMetadata(
             const SVFG*, const Value*);
         static std::string extractDependentParameter(

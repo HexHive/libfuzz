@@ -1,7 +1,7 @@
 #include "AccessType.h"
 #include "AccessTypeHandler.h"
 
-#include "SVF-FE/LLVMUtil.h"
+#include "SVF-LLVM/LLVMUtil.h"
 
 #define MAX_STACKSIZE 20
 
@@ -73,8 +73,8 @@ bool areCompatible(FunctionType* caller,FunctionType* callee) {
 }
 
 ValueMetadata ValueMetadata::extractReturnMetadata(
-    const SVFG* vfg, const Value* val) {
-
+    const SVFG* vfg, const Value* llvmval) {
+    SVFValue* val = LLVMModuleSet::getLLVMModuleSet()->getSVFValue(llvmval);
     SVFIR* pag = SVFIR::getPAG();
 
     PointerAnalysis* pta = vfg->getPTA(); 
@@ -89,14 +89,14 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
     // worklist.push_back(Path(vNode));
 
     ValueMetadata mdata;
-    mdata.setValue(val);
+    mdata.setValue(llvmval);
 
     SVFModule *svfModule = pag->getModule();
 
     ICFG* icfg = pag->getICFG();
 
-    const Function *fun = pNode->getFunction();
-    const SVFFunction *svfun = svfModule->getSVFFunction(fun);
+    const Function *fun = dyn_cast<Function>((llvm::Value*)pNode->getFunction());
+    const SVFFunction *svfun = pNode->getFunction();
 
     FunExitICFGNode *fun_exit = icfg->getFunExitICFGNode(svfun);
 
@@ -132,7 +132,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
         std::stack<ICFGEdge*> curr_stack = el.second;
 
         if (auto intra_stmt = SVFUtil::dyn_cast<IntraICFGNode>(node)) {
-            if (auto alloca = SVFUtil::dyn_cast<AllocaInst>(
+            if (auto alloca = SVFUtil::dyn_cast<AllocaInst>((Value*)
                 intra_stmt->getInst())) {
                 // outs() << "[INFO] alloca " << *alloca << "\n";
                 if (alloca->getAllocatedType() == retType) {
@@ -327,7 +327,7 @@ std::string ValueMetadata::extractDependentParameter(
             auto v = &e->back();
             // outs() << "Exit Cond:\n" << *v << "\n";
 
-            PAGNode* pV = pag->getGNode(pag->getValueNode(v));
+            PAGNode* pV = pag->getGNode(pag->getValueNode(dyn_cast<SVF::SVFValue>(v)));
             const VFGNode* vV = svfg->getDefSVFGNode(pV);
             PAGNode* pI = nullptr;
             PAGNode* pP = nullptr;
@@ -335,7 +335,7 @@ std::string ValueMetadata::extractDependentParameter(
             bool index_control_loop = false;
             bool param_control_loop = false;
             for (auto i: mdata->getIndexes()) {
-                pI = pag->getGNode(pag->getValueNode(i));
+                pI = pag->getGNode(pag->getValueNode(dyn_cast<SVF::SVFValue>(i)));
                 const VFGNode* vI = svfg->getDefSVFGNode(pI);
 
                 if (areConnected(vI,vV)) {
@@ -379,7 +379,7 @@ std::string ValueMetadata::extractDependentParameter(
         for (auto fs: mdata->getFunParams()) {
             // outs() << *fs << "\n";
 
-            PAGNode* pS = pag->getGNode(pag->getValueNode(fs));
+            PAGNode* pS = pag->getGNode(pag->getValueNode(dyn_cast<SVF::SVFValue>(fs)));
             const VFGNode* vS = svfg->getDefSVFGNode(pS);
 
             int p_idx = 0;
@@ -467,7 +467,7 @@ bool areConnected(const VFGNode *a, const VFGNode *b) {
 
 
 ValueMetadata ValueMetadata::extractParameterMetadata(
-    const SVFG* vfg, const Value* val, Type *seek_type)
+    const SVFG* vfg, const Value* val, const Type *seek_type)
 {
     SVFIR* pag = SVFIR::getPAG();
 
@@ -477,7 +477,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
     LLVMContext &cxt = LLVMModuleSet::getLLVMModuleSet()->getContext();
     auto i8ptr_typ = PointerType::getInt8PtrTy(cxt);
 
-    PAGNode* pNode = pag->getGNode(pag->getValueNode(val));
+    PAGNode* pNode = pag->getGNode(pag->getValueNode(dyn_cast<SVF::SVFValue>(val)));
     const VFGNode* vNode = vfg->getDefSVFGNode(pNode);
 
     ValueMetadata mdata;
@@ -591,7 +591,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Store) {
 
                 const Value* prevValue = p.getPrevValue();
-
+                /* NICOLAS NOT COMMIT 
                 if (prevValue != nullptr &&
                     SVFUtil::isa<StoreInst>(vNode->getValue())) {
                         
@@ -609,9 +609,13 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                     // auto dest = inst->getPointerOperand();
                     // // outs() << *(inst->getPointerOperand()) << "\n";
                 }
+                */
 
-            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Gep &&
-                      SVFUtil::isa<GetElementPtrInst>(vNode->getValue())) {
+            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Gep 
+                /* NICOLAS NOT COMMIT 
+            &&
+                      SVFUtil::isa<GetElementPtrInst>(vNode->getValue())
+                      */) {
                 
                 // auto inst = (GetElementPtrInst *)vNode->getValue();
                 auto inst = SVFUtil::dyn_cast<GetElementPtrInst>(vNode->getValue());
@@ -717,8 +721,11 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                 //     outs() << "\n";
                 //     exit(1);
                 // }
-            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Copy &&
-                    SVFUtil::isa<Instruction>(vNode->getValue())) {
+            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Copy 
+                /* NICOLAS NOT COMMIT 
+            &&
+                    SVFUtil::isa<Instruction>(vNode->getValue())
+                    */) {
                 auto inst = SVFUtil::dyn_cast<Instruction>(vNode->getValue());
 
                 acNode.setAccess(AccessType::Access::read);
@@ -771,7 +778,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
             }
 
             p.setAccessType(acNode);
-            p.setPrevValue(vNode->getValue());
+            p.setPrevValue(dyn_cast<Value>(vNode->getValue()));
 
             if (vNode->hasOutgoingEdge()) {
                 // outs() << "Children of: \n";
