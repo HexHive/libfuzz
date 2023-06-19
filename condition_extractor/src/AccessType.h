@@ -630,10 +630,10 @@ class ValueMetadata {
             Json::Value medataResult;
 
             medataResult["access_type_set"] = ats.toJson(verbose);
-            medataResult["is_array"] = is_array;
-            medataResult["is_malloc_size"] = is_malloc_size;
-            medataResult["is_file_path"] = is_file_path;
-            medataResult["len_depends_on"] = len_depends_on;
+            medataResult["is_array"] = this->is_array;
+            medataResult["is_malloc_size"] = this->is_malloc_size;
+            medataResult["is_file_path"] = this->is_file_path;
+            medataResult["len_depends_on"] = this->len_depends_on;
 
             return medataResult;
         }
@@ -642,12 +642,12 @@ class ValueMetadata {
 
             std::stringstream sstream;
 
-            sstream << "is_array: " << std::to_string(is_array) << "\n";
+            sstream << "is_array: " << std::to_string(this->is_array) << "\n";
             sstream << "is_malloc_size: " 
-                    << std::to_string(is_malloc_size) << "\n";
+                    << std::to_string(this->is_malloc_size) << "\n";
             sstream << "is_file_path: " 
-                    << std::to_string(is_file_path) << "\n";
-            sstream << "len_depends_on: " << len_depends_on << "\n";
+                    << std::to_string(this->is_file_path) << "\n";
+            sstream << "len_depends_on: " << this->len_depends_on << "\n";
             sstream << "access_type_set:\n" << ats.toString(verbose) << "\n";
 
             return sstream.str();
@@ -657,14 +657,42 @@ class ValueMetadata {
 
             std::stringstream sstream;
 
-            sstream << "ATS " << ats.size() << ", ";
-            sstream << "array " << std::to_string(is_array) << ", ";
-            sstream << "malloc " << std::to_string(is_malloc_size) << ", ";
-            sstream << "path " << std::to_string(is_file_path) << ", ";
+            sstream << "ATS " << this->ats.size() << ", ";
+            sstream << "array " << std::to_string(this->is_array) << ", ";
+            sstream << "malloc " << std::to_string(this->is_malloc_size) << ", ";
+            sstream << "path " << std::to_string(this->is_file_path) << ", ";
             sstream << "depends '" << len_depends_on << "'\n";
 
             return sstream.str();
         }
+
+        // // copy assignment operator
+        // ValueMetadata& operator=(const ValueMetadata &rhs) {
+
+        //     this->val = rhs.val;
+        //     this->is_array = rhs.is_array;
+        //     this->is_malloc_size = rhs.is_malloc_size;
+        //     this->is_file_path = rhs.is_file_path;
+        //     this->len_depends_on = rhs.len_depends_on;
+
+        //     // this->fields = rhs.fields;
+        //     // this->access = rhs.access;
+        //     // this->type = rhs.type;
+
+        //     // // hope this does not make a mess!
+        //     // this->icfg_set = rhs.icfg_set;
+
+        //     // // parent
+        //     // this->has_parent = rhs.has_parent;
+        //     // this->p_fields = rhs.p_fields;
+        //     // this->p_access = rhs.p_access;
+        //     // this->p_type = rhs.p_type;
+
+        //     // // visited types for GEP recursion
+        //     // this->visited_types = rhs.visited_types;
+
+        //     return *this;
+        // };
 
     public: // static functions/data!
 

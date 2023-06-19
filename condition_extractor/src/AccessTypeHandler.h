@@ -2,6 +2,7 @@
 #define INCLUDE_DOM_ACCESSTYPE_HANDLER_H_
 
 #include <map>
+#include <utility>
 #include "AccessType.h"
 #include <unordered_map>
 
@@ -81,9 +82,14 @@ void addWrteToAllFields(ValueMetadata *mdata, AccessType atNode,
 
 }
 
+#define C_RETURN 1 // 01
+#define C_PARAM 2  // 10
+
 typedef bool (*Handler)(ValueMetadata*, std::string, 
     const ICFGNode*, const CallICFGNode*, int, AccessType);
-typedef std::map<std::string, Handler> AccessTypeHandlerMap;
+typedef std::pair<Handler, unsigned short> HandlerConfig;
+typedef std::map<std::string, HandlerConfig> AccessTypeHandlerMap;
+// typedef std::map<std::string, Handler> AccessTypeHandlerMap;
 
 bool malloc_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num,
@@ -125,6 +131,10 @@ bool open_handler(ValueMetadata *mdata, std::string fun_name,
         atNode.setAccess(AccessType::Access::read);
         mdata->getAccessTypeSet()->insert(atNode, icfgNode);
         mdata->setIsFilePath(true);
+
+        // outs() << "icfgNode: " << icfgNode->toString() << "\n";
+        // outs() << "cs: " << cs->toString() << "\n";
+        // exit(1);
     }
 
     return false;
@@ -248,16 +258,16 @@ bool posix_memalign_handler(ValueMetadata *mdata, std::string fun_name,
 }
 
 static AccessTypeHandlerMap accessTypeHandlers = {
-    {"malloc", &malloc_handler},
-    {"free", &free_handler},
-    {"open", &open_handler},
-    {"fopen", &open_handler},
-    {"llvm.memcpy.*", &memcpy_hander},
-    {"strcpy", &strcpy_handler},
-    {"strlen", &strlen_handler},
-    {"llvm.memset.*", &memset_hander},
-    {"calloc", &calloc_handler},
-    {"posix_memalign", &posix_memalign_handler}
+    {"malloc", {&malloc_handler, C_RETURN | C_PARAM}},
+    {"free", {&free_handler, C_PARAM}},
+    {"open", {&open_handler, C_PARAM}},
+    {"fopen", {&open_handler, C_PARAM}},
+    {"llvm.memcpy.*", {&memcpy_hander, C_PARAM}},
+    {"strcpy", {&strcpy_handler, C_PARAM}},
+    {"strlen", {&strlen_handler, C_PARAM}},
+    {"llvm.memset.*", {&memset_hander, C_PARAM}},
+    {"calloc", {&calloc_handler, C_RETURN | C_PARAM}},
+    {"posix_memalign", {&posix_memalign_handler, C_RETURN}}
 };
 
 #endif /* INCLUDE_DOM_ACCESSTYPE_HANDLER_H_ */

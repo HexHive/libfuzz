@@ -168,7 +168,7 @@ class CBFactory(Factory):
                     rng_ctx.var_to_cond[x].len_depends_on = b_len
 
 
-        # if api_call.function_name == "bstr_adjust_realptr":
+        # if api_call.function_name == "TIFFGetField":
         #     print(f"hook {api_call.function_name}")
         #     # import pdb; pdb.set_trace()
         #     par_debug = 0
@@ -355,6 +355,10 @@ class CBFactory(Factory):
                     statements_apicall += [SetNull(buff)]
             # if RunningContext.is_sink(api_call.ret_type, PointerType):
 
+        # print("Before ")
+        # from IPython import embed; embed(); 
+        # exit()
+
         statements = []
         statements += context.generate_buffer_decl()
         statements += context.generate_buffer_init()
@@ -363,8 +367,5 @@ class CBFactory(Factory):
         # clean_up_sec = context.generate_clean_up(self.sinks)
         clean_up_sec = context.generate_clean_up(self.sinks_all)
         counter_size = context.get_counter_size()
-
-        # from IPython import embed; embed(); 
-        # exit()
 
         return Driver(statements, context).add_clean_up(clean_up_sec).add_counter_size(counter_size)
