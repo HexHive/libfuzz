@@ -10,13 +10,14 @@ bool ValueMetadata::debug = false;
 std::string ValueMetadata::debug_condition = "";
 bool ValueMetadata::consider_indirect_calls = false;
 
+typedef unsigned short H_SCOPE;
 
 // NOT EXPOSED FUNCTIONS -- THESE FUNCTIONS ARE MEANT FOR ONLY INTERNAL USAGE!
 bool areConnected(const VFGNode*, const VFGNode*);
 std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
 bool areCompatible(FunctionType*,FunctionType*);
 bool handlerDispatcher(ValueMetadata*, std::string,
-    const ICFGNode*, const CallICFGNode*, int, AccessType);
+    const ICFGNode*, const CallICFGNode*, int, AccessType, H_SCOPE h_scope);
 // NOT EXPOSED FUNCTIONS -- END!
 
 /**
@@ -32,21 +33,28 @@ If exists, call the predefined handler for function fun.
 */
 bool handlerDispatcher(ValueMetadata *mdata, std::string fun, 
     const ICFGNode * icfgNode, const CallICFGNode* cs, int param_num,
-    AccessType atNode) {
+    AccessType atNode, H_SCOPE h_scope) {
 
     std::string suffix = "*";
     for (auto f: accessTypeHandlers) {
         std::string fk = f.first;
+        auto t = f.second;
+        auto handler = t.first;
+        auto scope = t.second;
+
+        if ( (scope & h_scope) != h_scope )
+            continue;
+
         int fk_size = fk.length() - suffix.length();
         if (fk.compare(fk_size, suffix.length(), suffix) == 0 && 
             fun.size() >= fk_size) {
             std::string fk_clean = fk.substr(0, fk_size);
             std::string fun_clean = fun.substr(0, fk_size);
             if (fk_clean == fun_clean)
-                f.second(mdata, fun, icfgNode, cs, param_num, atNode);
+                handler(mdata, fun, icfgNode, cs, param_num, atNode);
         }
         else if (fun == f.first) {
-            f.second(mdata, fun, icfgNode, cs, param_num, atNode);
+            handler(mdata, fun, icfgNode, cs, param_num, atNode);
         }
     }
     return true;
@@ -189,11 +197,11 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                 // malloc handler
                 AccessType acNode(retType);
                 handlerDispatcher(&mdata, fun, node, call_node, -1, 
-                                    acNode);
+                                    acNode, C_RETURN);
 
                 for (unsigned p = 0; p < ftype->getNumParams(); p++) {
                     handlerDispatcher(&mdata, fun, node, call_node, p, 
-                                        acNode);
+                                        acNode, C_RETURN);
                 }
 
             }
@@ -254,6 +262,15 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
     }
     // We have visited all the nodes
 
+    // outs() << "[INFO] extractParameterMetadata part\n";
+
+    // outs() << "mdata [1] " << mdata.getSummary();
+    // if (mdata.isFilePath()) {
+    //     outs() << "IsFilePath -> True \n";
+    // } else {
+    //     outs() << "IsFilePath -> False \n";
+    // }
+
     // std::map<const Instruction*, AccessTypeSet> all_ats;
     std::map<const Instruction*, ValueMetadata> all_ats;
     for (auto a: allocainst_set) {
@@ -262,17 +279,27 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
         ValueMetadata mdata = ValueMetadata::extractParameterMetadata(
             vfg, a, retType);
 
+        // outs() << "mdata_xx [2] " << mdata_xx.getSummary();
+        // if (mdata_xx.isFilePath()) {
+        //     outs() << "IsFilePath -> True \n";
+        // } else {
+        //     outs() << "IsFilePath -> False \n";
+        // }
+
         // outs() << "[STARTING POINT] " << *a << "\n";
         // outs() << " result -> " << mdata.getAccessNum() << "AT\n";
         // // exit(1);
 
+        // XXX: TO REMOVE LATER
         bool do_not_return = true;
         for (auto at: *mdata.getAccessTypeSet()) {
+        // for (auto at: *mdata_xx.getAccessTypeSet()) {
             if (at.getAccess() == AccessType::Access::ret) {
                 auto l_ats_all_nodes = at.getICFGNodes();
                 for (auto inst: l_ats_all_nodes) {
                     if (inst == fun_exit) {
                         for (auto at2: *mdata.getAccessTypeSet())
+                        // for (auto at2: *mdata_xx.getAccessTypeSet())
                             for (auto inst2:  at.getICFGNodes())
                                 ats->insert(at2, inst2);
                         do_not_return = false;
@@ -914,7 +941,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
 
                                     ok_continue = handlerDispatcher(
                                         &mdata, fun, vNode->getICFGNode(), cs,
-                                        n_param, acNode);
+                                        n_param, acNode, C_PARAM);
                                 }
                             }
                         }
