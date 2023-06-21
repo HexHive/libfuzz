@@ -439,36 +439,37 @@ int main(int argc, char ** argv)
         LLVMModuleSet::getLLVMModuleSet()->preProcessBCs(moduleNameVec);
     }
 
+    LLVMModuleSet* llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
     SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
 
-    // Dump LLVM apis function per function
-    for(const SVFFunction* svfFun : svfModule->getFunctionSet() ){
-        const llvm::Function* F = (llvm::Function*)svfFun; 
+    // // Dump LLVM apis function per function
+    // for(const SVFFunction* svfFun : svfModule->getFunctionSet() ){
+    //     const llvm::Function* F = (llvm::Function*)svfFun; 
 
-        setDataLayout(F);
-        libfuzz::function_record my_fun;
+    //     setDataLayout(F);
+    //     libfuzz::function_record my_fun;
 
-        Type * retType = F->getReturnType();
-        StringRef function_name = F->getName();
-        bool is_vararg = F->isVarArg();
+    //     Type * retType = F->getReturnType();
+    //     StringRef function_name = F->getName();
+    //     bool is_vararg = F->isVarArg();
     
-        SVFUtil::errs() << "Doing: " << function_name.str() << "\n";
+    //     SVFUtil::errs() << "Doing: " << function_name.str() << "\n";
 
-        my_fun.function_name = function_name.str();
-        my_fun.is_vararg = is_vararg ? "true" : "false";
-        my_fun.return_info.set_from_type(retType);
-        my_fun.return_info.size = libfuzz::estimate_size(retType, false, DL);
-        my_fun.return_info.name = "return";
+    //     my_fun.function_name = function_name.str();
+    //     my_fun.is_vararg = is_vararg ? "true" : "false";
+    //     my_fun.return_info.set_from_type(retType);
+    //     my_fun.return_info.size = libfuzz::estimate_size(retType, false, DL);
+    //     my_fun.return_info.name = "return";
 
-        for(const auto& arg : F->args()) {
-            libfuzz::argument_record an_argument;
-            an_argument.set_from_argument(arg);
-            an_argument.size = libfuzz::estimate_size(arg.getType(), arg.hasByValAttr(), DL);
-            my_fun.arguments_info.push_back(an_argument);
-        }
+    //     for(const auto& arg : F->args()) {
+    //         libfuzz::argument_record an_argument;
+    //         an_argument.set_from_argument(arg);
+    //         an_argument.size = libfuzz::estimate_size(arg.getType(), arg.hasByValAttr(), DL);
+    //         my_fun.arguments_info.push_back(an_argument);
+    //     }
       
-      libfuzz::dumpApiInfo(my_fun);
-    }
+    //   libfuzz::dumpApiInfo(my_fun);
+    // }
     /// Build Program Assignment Graph (SVFIR)
     SVFIRBuilder builder(svfModule);
     SVFIR* pag = builder.build();
@@ -569,10 +570,11 @@ int main(int argc, char ** argv)
                     SVFUtil::outs() << "[INFO] param: " << p->toString() << "\n";
 
                 auto val = p->getValue();
-                auto seek_type = val->getType();
+                auto llvm_val = llvmModuleSet->getLLVMValue(val);
+                auto seek_type = llvm_val->getType();
                 ValueMetadata paramMetadata = 
                     ValueMetadata::extractParameterMetadata(
-                        svfg, SVFUtil::dyn_cast<Value>(val), SVFUtil::dyn_cast<Type>(seek_type));
+                        svfg, llvm_val, seek_type);
 
                 // auto param_key = "param_" + std::to_string(pn);
                 // functionResult[param_key] = paramMetadata.toJson();
@@ -598,8 +600,9 @@ int main(int argc, char ** argv)
             auto p = x.second;
             if (verbose >= Verbosity::v1)
                 SVFUtil::outs() << "[INFO] return: " << p->toString() << "\n";
+            auto llvm_value = llvmModuleSet->getLLVMValue(p->getValue());
             ValueMetadata returnMetadata =
-                ValueMetadata::extractReturnMetadata(svfg, SVFUtil::dyn_cast<Value>(p->getValue()));
+                ValueMetadata::extractReturnMetadata(svfg, llvm_value);
 
             // functionResult["return"] = returnAccessTypeSet.toJson();
             // jsonResult.append(functionResult);

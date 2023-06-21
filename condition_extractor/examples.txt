@@ -31,3 +31,6 @@ LIBFUZZ_LOG_PATH=/workspaces/libfuzz/analysis/libxml2/work/apipass
 ./bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFOpen -output TIFFOpen.json -t json -v v0 -do_indirect_jumps
 
 ./bin/extractor /workspaces/libfuzz/analysis/libtiff/work/lib/libtiff.a.bc -function TIFFFdOpen -output TIFFFdOpen.json -t json -v v0 -do_indirect_jumps
+
+
+./bin/extractor /workspaces/libfuzz/analysis/pthreadpool/work/lib/libpthreadpool.a.bc -function pthreadpool_create -output pthreadpool_create.json -t json -v v0 -do_indirect_jumps

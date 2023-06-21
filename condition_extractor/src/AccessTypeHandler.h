@@ -134,20 +134,23 @@ bool memcpy_hander(ValueMetadata *mdata, std::string fun_name,
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num, 
     AccessType atNode) {
 
+    LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
+
     if ((param_num == 0 || param_num == 1) && atNode.getNumFields() == 0) {
 
         AccessType tmpAcNode = atNode;
         tmpAcNode.addField(-1);
         tmpAcNode.setAccess(AccessType::Access::read);
         mdata->getAccessTypeSet()->insert(tmpAcNode, icfgNode);
-                /* NICOLAS NOT COMMIT 
-        auto c = SVFUtil::dyn_cast<CallBase>(cs->getCallSite());
+
+        auto llvm_val = llvmModuleSet->getLLVMValue(cs->getCallSite());
+        auto c = SVFUtil::dyn_cast<CallBase>(llvm_val);
         mdata->setIsArray(isAnArray(c));
         if (param_num == 1) {
-            auto i = SVFUtil::dyn_cast<CallBase>(cs->getCallSite());
+            auto i = SVFUtil::dyn_cast<CallBase>(llvm_val);
             Value *v = i->getArgOperand(2);
             mdata->addFunParam(v);
-        }*/
+        }
     }
 
     return false;
@@ -192,6 +195,8 @@ bool memset_hander(ValueMetadata *mdata, std::string fun_name,
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num, 
     AccessType atNode) {
 
+    LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
+
     if (param_num == 0 && atNode.getNumFields() == 0) {
         
         AccessType tmpAcNode = atNode;
@@ -200,11 +205,11 @@ bool memset_hander(ValueMetadata *mdata, std::string fun_name,
         mdata->getAccessTypeSet()->insert(tmpAcNode, icfgNode);
         mdata->setIsArray(true);
         
-                /* NICOLAS NOT COMMIT 
-        auto i = SVFUtil::dyn_cast<CallBase>(cs->getCallSite());
+        auto llvm_val = llvmModuleSet->getLLVMValue(cs->getCallSite());
+        auto i = SVFUtil::dyn_cast<CallBase>(llvm_val);
         Value *v = i->getArgOperand(2);
         mdata->addFunParam(v);
-*/
+
         addWrteToAllFields(mdata, atNode, icfgNode);
     }
 
