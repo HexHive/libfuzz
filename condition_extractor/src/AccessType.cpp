@@ -1,7 +1,7 @@
 #include "AccessType.h"
 #include "AccessTypeHandler.h"
 
-#include "SVF-FE/LLVMUtil.h"
+#include "SVF-LLVM/LLVMUtil.h"
 
 #define MAX_STACKSIZE 20
 
@@ -81,10 +81,8 @@ bool areCompatible(FunctionType* caller,FunctionType* callee) {
 }
 
 ValueMetadata ValueMetadata::extractReturnMetadata(
-    const SVFG* vfg, const Value* val) {
-
-    // outs() << "[STARTING] extractReturnMetadata\n";
-
+    const SVFG* vfg, const Value* llvmval) {
+    SVFValue* val = LLVMModuleSet::getLLVMModuleSet()->getSVFValue(llvmval);
     SVFIR* pag = SVFIR::getPAG();
 
     PointerAnalysis* pta = vfg->getPTA(); 
@@ -98,15 +96,19 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
     // S.push(v)
     // worklist.push_back(Path(vNode));
 
+    LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
+
     ValueMetadata mdata;
-    mdata.setValue(val);
+    mdata.setValue(llvmval);
 
     SVFModule *svfModule = pag->getModule();
 
     ICFG* icfg = pag->getICFG();
 
-    const Function *fun = pNode->getFunction();
-    const SVFFunction *svfun = svfModule->getSVFFunction(fun);
+    auto svf_function = pNode->getFunction();
+    const Function *fun = SVFUtil::dyn_cast<Function>(
+        llvmModuleSet->getLLVMValue(svf_function));
+    const SVFFunction *svfun = pNode->getFunction();
 
     FunExitICFGNode *fun_exit = icfg->getFunExitICFGNode(svfun);
 
@@ -142,16 +144,18 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
         std::stack<ICFGEdge*> curr_stack = el.second;
 
         if (auto intra_stmt = SVFUtil::dyn_cast<IntraICFGNode>(node)) {
-            if (auto alloca = SVFUtil::dyn_cast<AllocaInst>(
-                intra_stmt->getInst())) {
-                // outs() << "[INFO] alloca " << *alloca << "\n";
+
+            auto svfinst = intra_stmt->getInst();
+            auto llvminst = llvmModuleSet->getLLVMValue(svfinst);
+
+            if (auto alloca = SVFUtil::dyn_cast<AllocaInst>(llvminst)) {
+                // // outs() << "[INFO] alloca " << *alloca << "\n";
                 if (alloca->getAllocatedType() == retType) {
                     // outs() << "[INFO] => type ok!\n";
                     // alloca_set.insert(vfgnode);
                     allocainst_set.insert(alloca);
                 }
-            } else if (auto callinst = SVFUtil::dyn_cast<CallInst>(
-                intra_stmt->getInst())) {
+            } else if (auto callinst = SVFUtil::dyn_cast<CallInst>(llvminst)) {
                 // outs() << "[INFO] callinst " << *callinst << "\n";
                 FunctionType *ftype = callinst->getFunctionType();
                 if (ftype->getReturnType() == retType) {
@@ -159,8 +163,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                     // alloca_set.insert(vfgnode);
                     allocainst_set.insert(callinst);
                 }
-            } else if (auto bitcastinst = SVFUtil::dyn_cast<BitCastInst>(
-                intra_stmt->getInst())) {
+            } else if (auto bitcastinst = SVFUtil::dyn_cast<BitCastInst>(llvminst)) {
                 if (bitcastinst->getDestTy() == retType) {
                     // outs() << "[INFO] bitcastinst " << *bitcastinst << "\n";
                     // outs() << "[INFO] => type ok!\n";
@@ -169,13 +172,18 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                     // bitcastinst_set.insert(bitcastinst);
                 }
             }
-        } else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
+        }
+         else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
             // Handling calls
             if (!consider_indirect_calls && call_node->isIndirectCall())
                     continue;
 
             auto callee = SVFUtil::getCallee(call_node->getCallSite());
-            auto inst = SVFUtil::dyn_cast<CallBase>(call_node->getCallSite());
+
+            auto svfinst = call_node->getCallSite();
+            auto llvminst = llvmModuleSet->getLLVMValue(svfinst);
+
+            auto inst = SVFUtil::dyn_cast<CallBase>(llvminst);
             // outs() << "[INFO] callinst2 " << *inst << "\n";
             FunctionType *ftype = inst->getFunctionType();
             if (ftype->getReturnType() == retType) {
@@ -322,8 +330,8 @@ std::string ValueMetadata::extractDependentParameter(
     const SVF::SVFVar* current_parm, ValueMetadata* mdata, SVF::SVFG* svfg, 
     const SVFFunction* fun) {
 
-    // outs() << "CURRENT PARAM: \n";
-    // outs() << current_parm->toString() << "\n";
+    // // outs() << "CURRENT PARAM: \n";
+    // // outs() << current_parm->toString() << "\n";
 
     std::string dependent_param = "";
 
@@ -331,6 +339,8 @@ std::string ValueMetadata::extractDependentParameter(
 
     PAG::FunToArgsListMap funmap_par = pag->getFunArgsMap();
     PAG::SVFVarList fun_params = funmap_par[fun];    
+
+    LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
 
     // seek dependencies through loops
     for (auto i: mdata->getIndexes()) {
@@ -356,7 +366,8 @@ std::string ValueMetadata::extractDependentParameter(
             auto v = &e->back();
             // outs() << "Exit Cond:\n" << *v << "\n";
 
-            PAGNode* pV = pag->getGNode(pag->getValueNode(v));
+            PAGNode* pV = pag->getGNode(
+                pag->getValueNode(llvmModuleSet->getSVFValue(v)));
             const VFGNode* vV = svfg->getDefSVFGNode(pV);
             PAGNode* pI = nullptr;
             PAGNode* pP = nullptr;
@@ -364,7 +375,8 @@ std::string ValueMetadata::extractDependentParameter(
             bool index_control_loop = false;
             bool param_control_loop = false;
             for (auto i: mdata->getIndexes()) {
-                pI = pag->getGNode(pag->getValueNode(i));
+                pI = pag->getGNode(pag->getValueNode(
+                    llvmModuleSet->getSVFValue(i)));
                 const VFGNode* vI = svfg->getDefSVFGNode(pI);
 
                 if (areConnected(vI,vV)) {
@@ -408,7 +420,8 @@ std::string ValueMetadata::extractDependentParameter(
         for (auto fs: mdata->getFunParams()) {
             // outs() << *fs << "\n";
 
-            PAGNode* pS = pag->getGNode(pag->getValueNode(fs));
+            auto llvm_val = llvmModuleSet->getSVFValue(fs);
+            PAGNode* pS = pag->getGNode(pag->getValueNode(llvm_val));
             const VFGNode* vS = svfg->getDefSVFGNode(pS);
 
             int p_idx = 0;
@@ -496,9 +509,10 @@ bool areConnected(const VFGNode *a, const VFGNode *b) {
 
 
 ValueMetadata ValueMetadata::extractParameterMetadata(
-    const SVFG* vfg, const Value* val, Type *seek_type)
+    const SVFG* vfg, const Value* val, const Type *seek_type)
 {
     SVFIR* pag = SVFIR::getPAG();
+    LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
 
     PointerAnalysis* pta = vfg->getPTA(); 
 
@@ -506,7 +520,8 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
     LLVMContext &cxt = LLVMModuleSet::getLLVMModuleSet()->getContext();
     auto i8ptr_typ = PointerType::getInt8PtrTy(cxt);
 
-    PAGNode* pNode = pag->getGNode(pag->getValueNode(val));
+    auto llvm_val = llvmModuleSet->getSVFValue(val);
+    PAGNode* pNode = pag->getGNode(pag->getValueNode(llvm_val));
     const VFGNode* vNode = vfg->getDefSVFGNode(pNode);
 
     ValueMetadata mdata;
@@ -621,10 +636,13 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
 
                 const Value* prevValue = p.getPrevValue();
 
+                auto val = vNode->getValue();
+                auto llvm_val = llvmModuleSet->getLLVMValue(val);
+                
                 if (prevValue != nullptr &&
-                    SVFUtil::isa<StoreInst>(vNode->getValue())) {
+                    SVFUtil::isa<StoreInst>(llvm_val)) {
                         
-                    auto inst = SVFUtil::dyn_cast<StoreInst>(vNode->getValue());
+                    auto inst = SVFUtil::dyn_cast<StoreInst>(llvm_val);
 
                     if (inst->getPointerOperand() == prevValue) {
                         acNode.setAccess(AccessType::Access::write);
@@ -639,116 +657,127 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                     // // outs() << *(inst->getPointerOperand()) << "\n";
                 }
 
-            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Gep &&
-                      SVFUtil::isa<GetElementPtrInst>(vNode->getValue())) {
+            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Gep && 
+                SVFUtil::isa<StmtVFGNode>(vNode)) {
                 
-                // auto inst = (GetElementPtrInst *)vNode->getValue();
-                auto inst = SVFUtil::dyn_cast<GetElementPtrInst>(vNode->getValue());
+                auto stmt_vfg_node = SVFUtil::dyn_cast<StmtVFGNode>(vNode);
+                auto lllvm_inst = llvmModuleSet->getLLVMValue(
+                    stmt_vfg_node->getInst());
+                auto inst = SVFUtil::dyn_cast<GetElementPtrInst>(lllvm_inst);
 
-                // outs() << "[DEBUG] GEP under analysis:\n";
-                // outs() << *inst << "\n";
-                // outs() << vNode->toString() << "\n";
+                if (inst != nullptr) {
 
-                auto sType = inst->getSourceElementType();
-                auto dType = inst->getResultElementType();
-                auto pType = inst->getPointerOperandType();
+                    // outs() << "[DEBUG] GEP under analysis:\n";
+                    // outs() << *inst << "\n";
+                    // outs() << vNode->toString() << "\n";
 
-                // outs() << "[DEBUG]\n";
+                    auto sType = inst->getSourceElementType();
+                    auto dType = inst->getResultElementType();
+                    auto pType = inst->getPointerOperandType();
 
-                // outs() << "sType:\n";
-                // outs() << *sType << "\n";
-                // outs() << TypeMatcher::compute_hash(sType) << "\n";
+                    // outs() << "[DEBUG]\n";
 
-                // outs() << "dType:\n";
-                // outs() << *dType << "\n";
-                // outs() << TypeMatcher::compute_hash(dType) << "\n";
+                    // outs() << "sType:\n";
+                    // outs() << *sType << "\n";
+                    // outs() << TypeMatcher::compute_hash(sType) << "\n";
 
-                // outs() << "pType:\n";
-                // outs() << *pType << "\n";
-                // outs() << TypeMatcher::compute_hash(pType) << "\n";
-                
-                // outs() << "acNode.getType():\n";
-                // outs() << *acNode.getType() << "\n";
-                // outs() << TypeMatcher::compute_hash(acNode.getType()) << "\n";
+                    // outs() << "dType:\n";
+                    // outs() << *dType << "\n";
+                    // outs() << TypeMatcher::compute_hash(dType) << "\n";
 
-                // outs() << "compare_types(pType, acNode.getType()) "
-                //     << TypeMatcher::compare_types(pType, acNode.getType()) 
-                //     << "\n";
+                    // outs() << "pType:\n";
+                    // outs() << *pType << "\n";
+                    // outs() << TypeMatcher::compute_hash(pType) << "\n";
+                    
+                    // outs() << "acNode.getType():\n";
+                    // outs() << *acNode.getType() << "\n";
+                    // outs() << TypeMatcher::compute_hash(acNode.getType()) << "\n";
 
-                // outs() << "[DEBUG END]\n";
+                    // outs() << "compare_types(pType, acNode.getType()) "
+                    //     << TypeMatcher::compare_types(pType, acNode.getType()) 
+                    //     << "\n";
 
-                // this avoids us to move into strange pointer-offset opreations
-                // that look like field access
-                // if (SVFUtil::isa<llvm::StructType>(sType) && 
-                //  AccessTypeSet::isSameType(pType, acNode.getType()) ) {
-                if (TypeMatcher::compare_types(pType, acNode.getType()) &&
-                    !acNode.is_visited(pType)) {
-                    if (inst->hasAllConstantIndices() &&
-                        inst->getNumIndices() > 1) {
+                    // outs() << "[DEBUG END]\n";
 
-                        for (int pos = 1; pos <= inst->getNumIndices(); pos++) {
-                            
-                            if (pos == 1) {
-                                AccessType tmpAcNode = acNode;
-                                tmpAcNode.addField(-1);
-                                tmpAcNode.setAccess(AccessType::Access::read);
-                                ats->insert(tmpAcNode, vNode->getICFGNode());
-                            } else {
-                                ConstantInt *CI=dyn_cast<ConstantInt>(
-                                            inst->getOperand(pos));
-                                uint64_t idx = CI->getZExtValue();
-                                acNode.addField(idx);
-                                acNode.setType(dType);
+                    // this avoids us to move into strange pointer-offset opreations
+                    // that look like field access
+                    // if (SVFUtil::isa<llvm::StructType>(sType) && 
+                    //  AccessTypeSet::isSameType(pType, acNode.getType()) ) {
+                    if (TypeMatcher::compare_types(pType, acNode.getType()) &&
+                        !acNode.is_visited(pType)) {
+                        if (inst->hasAllConstantIndices() &&
+                            inst->getNumIndices() > 1) {
+
+                            for (int pos = 1; pos <= inst->getNumIndices(); pos++) {
+                                
+                                if (pos == 1) {
+                                    AccessType tmpAcNode = acNode;
+                                    tmpAcNode.addField(-1);
+                                    tmpAcNode.setAccess(AccessType::Access::read);
+                                    ats->insert(tmpAcNode, vNode->getICFGNode());
+                                } else {
+                                    ConstantInt *CI=dyn_cast<ConstantInt>(
+                                                inst->getOperand(pos));
+                                    uint64_t idx = CI->getZExtValue();
+                                    acNode.addField(idx);
+                                    acNode.setType(dType);
+                                }
+
+                            }
+                        } else if (acNode.getNumFields() == 0) {
+
+                            // is_array = !SVFUtil::isa<ConstantInt>(
+                            //     inst->getOperand(1)) || 
+                            //     inst->getNumIndices() == 1;
+                            // if (is_array) {
+                            //     auto d = inst->getOperand(1);
+                            //     mdata.addIndex(d);
+                            // }
+
+                            is_array = false;
+
+                            auto d = inst->getOperand(1);
+                            if (!SVFUtil::isa<ConstantInt>(d)) {
+                                is_array = true;
+                                mdata.addIndex(d);
+                            } else if (inst->getNumIndices() == 1) {
+                                is_array = true;
+                                mdata.addIndex(inst);
                             }
 
                         }
-                    } else if (acNode.getNumFields() == 0) {
-
-                        // is_array = !SVFUtil::isa<ConstantInt>(
-                        //     inst->getOperand(1)) || 
-                        //     inst->getNumIndices() == 1;
-                        // if (is_array) {
-                        //     auto d = inst->getOperand(1);
-                        //     mdata.addIndex(d);
-                        // }
-
-                        is_array = false;
-
-                        auto d = inst->getOperand(1);
-                        if (!SVFUtil::isa<ConstantInt>(d)) {
-                            is_array = true;
-                            mdata.addIndex(d);
-                        } else if (inst->getNumIndices() == 1) {
-                            is_array = true;
-                            mdata.addIndex(inst);
-                        }
-
+                        acNode.add_visited_type(pType);
                     }
-                    acNode.add_visited_type(pType);
+                    // else {
+                    //     outs() << "[DEBUG] GEP incoherent: \n";
+
+                    //     outs() << "instruction:\n";
+                    //     outs() << vNode->toString() << "\n";
+
+                    //     outs() << "sType:\n";
+                    //     outs() << *sType << "\n";
+
+                    //     outs() << "dType:\n";
+                    //     outs() << *dType << "\n";
+
+                    //     outs() << "pType:\n";
+                    //     outs() << *pType << "\n";
+
+                    //     outs() << "acNode.getType():\n";
+                    //     outs() << *acNode.getType() << "\n";
+                    //     outs() << "\n";
+                    //     exit(1);
+                    // }
                 }
-                // else {
-                //     outs() << "[DEBUG] GEP incoherent: \n";
-
-                //     outs() << "instruction:\n";
-                //     outs() << vNode->toString() << "\n";
-
-                //     outs() << "sType:\n";
-                //     outs() << *sType << "\n";
-
-                //     outs() << "dType:\n";
-                //     outs() << *dType << "\n";
-
-                //     outs() << "pType:\n";
-                //     outs() << *pType << "\n";
-
-                //     outs() << "acNode.getType():\n";
-                //     outs() << *acNode.getType() << "\n";
-                //     outs() << "\n";
-                //     exit(1);
-                // }
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Copy &&
-                    SVFUtil::isa<Instruction>(vNode->getValue())) {
-                auto inst = SVFUtil::dyn_cast<Instruction>(vNode->getValue());
+                SVFUtil::isa<StmtVFGNode>(vNode)) {
+                
+                auto stmt_vfg_node = SVFUtil::dyn_cast<StmtVFGNode>(vNode);
+                auto inst = llvmModuleSet->getLLVMValue(
+                    stmt_vfg_node->getInst());
+                // auto inst = SVFUtil::dyn_cast<GetElementPtrInst>(lllvm_inst);
+
+                // auto inst = SVFUtil::dyn_cast<Instruction>(vNode->getValue());
 
                 acNode.setAccess(AccessType::Access::read);
                 ats->insert(acNode, vNode->getICFGNode());
@@ -800,7 +829,10 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
             }
 
             p.setAccessType(acNode);
-            p.setPrevValue(vNode->getValue());
+            if (vNode->getValue() == nullptr)
+                p.setPrevValue(nullptr);
+            else
+                p.setPrevValue(llvmModuleSet->getLLVMValue(vNode->getValue()));
 
             if (vNode->hasOutgoingEdge()) {
                 // outs() << "Children of: \n";

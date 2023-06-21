@@ -2,8 +2,9 @@
 #ifndef INCLUDE_PHI_FUNCTION_H_
 #define INCLUDE_PHI_FUNCTION_H_
 
-#include <Graphs/ICFG.h>
-#include <Graphs/SVFG.h>
+#include "SVF-LLVM/LLVMUtil.h"
+#include "Graphs/ICFG.h"
+#include "Graphs/SVFG.h"
 #include <Graphs/GenericGraph.h>
 #include "WPA/Andersen.h"
 

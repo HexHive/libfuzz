@@ -26,13 +26,14 @@
  // Author: Yulei Sui,
  */
 
-#include "SVF-FE/LLVMUtil.h"
 #include "Graphs/SVFG.h"
 #include "WPA/Andersen.h"
 #include "WPA/AndersenPWC.h"
 #include "WPA/TypeAnalysis.h"
-#include "SVF-FE/SVFIRBuilder.h"
+#include "SVF-LLVM/SVFIRBuilder.h"
 #include "Util/Options.h"
+#include "Util/SVFUtil.h"
+#include "SVF-LLVM/LLVMUtil.h"
 
 #include "GenericDominatorTy.h"
 #include "Dominators.h"
@@ -54,9 +55,11 @@
 #include "md5/md5.h"
 
 
-using namespace llvm;
 using namespace std;
 using namespace SVF;
+using namespace SVFUtil;
+using namespace LLVMUtil;
+
 using namespace libfuzz;
 
 
@@ -233,8 +236,8 @@ std::string computeHash(std::string file_path) {
 }
 
 inline bool doesFileExists(const std::string& name) {
-    // outs() << "does it exists?\n";
-    // outs() << name << "\n";
+    // SVFUtil::outs() << "does it exists?\n";
+    // SVFUtil::outs() << name << "\n";
     // exit(1);
     ifstream myfile;
     myfile.open(name);
@@ -277,7 +280,7 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
     for (auto i: meta.getAccessTypeSet()->getAllICFGNodes())
             cond_nodes.insert(i);
 
-    outs() << "[DEBUG] All nodes from ATS: " << cond_nodes.size() << "\n";
+    SVFUtil::outs() << "[DEBUG] All nodes from ATS: " << cond_nodes.size() << "\n";
 
     std::set<const ICFGNode*> not_found;
     for (auto i: cond_nodes) {
@@ -285,15 +288,15 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
             not_found.insert(i);
     }
 
-    outs() << "[DEBUG] Not found " << not_found.size() << "\n";
+    SVFUtil::outs() << "[DEBUG] Not found " << not_found.size() << "\n";
     // std::set<const SVFFunction*> funs;
     // for (auto i: not_found) {
-    //     // outs() << i->toString() << "\n";
+    //     // SVFUtil::outs() << i->toString() << "\n";
     //     funs.insert(i->getFun());
     // }
 
     // for (auto f: funs)
-    //     outs() << f->getName() << "\n";
+    //     SVFUtil::outs() << f->getName() << "\n";
     // exit(1);
 }
 
@@ -306,7 +309,7 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
 
 //     // find common subset (if any) and check if the 2 doms are coherent
 
-//     outs() << "[DOING DOM TESTING]\n";
+//     SVFUtil::outs() << "[DOING DOM TESTING]\n";
 
 //     // std::set<ICFGNode*> all_nodes = dom->getRelevantNodes();
 //     IBBGraph::NodeIDSet all_nodes_id = ibbg->getNodeIdAllocated();
@@ -334,7 +337,7 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
 //             SVFUtil::isa<FunEntryICFGNode>(node2))
 //             continue;
 
-//         outs() << "[INFO] TEST " << i << "/" << MAX_TEST << ")\r";
+//         SVFUtil::outs() << "[INFO] TEST " << i << "/" << MAX_TEST << ")\r";
 
 //         bool n1_d_n2_a = dom->dominates(node1, node2);
 //         bool n2_d_n1_a = dom->dominates(node2, node1);
@@ -344,29 +347,29 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
 //         if (n1_d_n2_a == n1_d_n2_b && n2_d_n1_a == n2_d_n1_b)
 //             ok_nodes++;
 //         else {
-//             outs() << "\n";
-//             outs() << "Node1: " << node1->toString() << "\n";
-//             outs() << "Node2: " << node2->toString() << "\n";
-//             outs() << "n1_d_n2_a" << n1_d_n2_a << "\n";
-//             outs() << "n2_d_n1_a" << n2_d_n1_a << "\n";
-//             outs() << "n1_d_n2_b" << n1_d_n2_b << "\n";
-//             outs() << "n2_d_n1_b" << n2_d_n1_b << "\n";
-//             outs() << "early stop!\n";
+//             SVFUtil::outs() << "\n";
+//             SVFUtil::outs() << "Node1: " << node1->toString() << "\n";
+//             SVFUtil::outs() << "Node2: " << node2->toString() << "\n";
+//             SVFUtil::outs() << "n1_d_n2_a" << n1_d_n2_a << "\n";
+//             SVFUtil::outs() << "n2_d_n1_a" << n2_d_n1_a << "\n";
+//             SVFUtil::outs() << "n1_d_n2_b" << n1_d_n2_b << "\n";
+//             SVFUtil::outs() << "n2_d_n1_b" << n2_d_n1_b << "\n";
+//             SVFUtil::outs() << "early stop!\n";
 //             exit(1);
         
 //         }
 //     }
 
-//     outs() << "\n";
-//     outs() << "OK nodes: " << ok_nodes << "\n";
-//     outs() << "exit for debug\n";
+//     SVFUtil::outs() << "\n";
+//     SVFUtil::outs() << "OK nodes: " << ok_nodes << "\n";
+//     SVFUtil::outs() << "exit for debug\n";
 //     exit(1);
 // }
 DataLayout *DL = nullptr;
 
-void setDataLayout(Function &F) {
+void setDataLayout(const Function* F) {
   if (DL == nullptr)
-    DL = new DataLayout(F.getParent());
+    DL = new DataLayout(F->getParent());
 }
 
 
@@ -399,7 +402,7 @@ int main(int argc, char ** argv)
     std::set<std::string> functions;
     // read all the functions from apis_clang.json
     if (all_functions) {
-        outs() << "[INFO] I analyze all the functions\n";
+        SVFUtil::outs() << "[INFO] I analyze all the functions\n";
 
         ifstream f(LibInterface);
 
@@ -408,11 +411,11 @@ int main(int argc, char ** argv)
 
         std::string line;
         while (std::getline(f, line)) {
-            // outs() << line << "\n";
+            // SVFUtil::outs() << line << "\n";
             bool parsingSuccessful = reader.parse( line.c_str(), root );
             if ( !parsingSuccessful )
             {
-                outs() << "Failed to parse "
+                SVFUtil::outs() << "Failed to parse "
                     << reader.getFormattedErrorMessages();
                 exit(1);
             }
@@ -423,34 +426,35 @@ int main(int argc, char ** argv)
         f.close();
     }
     else {
-        outs() << "[INFO] analyzing function: " << function << "\n";
+        SVFUtil::outs() << "[INFO] analyzing function: " << function << "\n";
         // functions.push_back(function);
         functions.insert(function);
     }
 
     if (OutputType == OutType::stdo)
-        outs() << "[WARNING] outputting in stdout, ignoring OutputFile\n";
+        SVFUtil::outs() << "[WARNING] outputting in stdout, ignoring OutputFile\n";
 
-    if (Options::WriteAnder == "ir_annotator")
+    if (Options::WriteAnder() == "ir_annotator")
     {
         LLVMModuleSet::getLLVMModuleSet()->preProcessBCs(moduleNameVec);
     }
 
+    LLVMModuleSet* llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
     SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
-    svfModule->buildSymbolTableInfo();
 
     // Dump LLVM apis function per function
     for(const SVFFunction* svfFun : svfModule->getFunctionSet() ){
-        llvm::Function* F = svfFun->getLLVMFun();
+        auto llvm_val = llvmModuleSet->getLLVMValue(svfFun);
+        const llvm::Function* F = SVFUtil::dyn_cast<Function>(llvm_val);
 
-        setDataLayout(*F);
+        setDataLayout(F);
         libfuzz::function_record my_fun;
 
         Type * retType = F->getReturnType();
         StringRef function_name = F->getName();
         bool is_vararg = F->isVarArg();
     
-        errs() << "Doing: " << function_name << "\n";
+        SVFUtil::errs() << "Doing: " << function_name.str() << "\n";
 
         my_fun.function_name = function_name.str();
         my_fun.is_vararg = is_vararg ? "true" : "false";
@@ -458,9 +462,9 @@ int main(int argc, char ** argv)
         my_fun.return_info.size = libfuzz::estimate_size(retType, false, DL);
         my_fun.return_info.name = "return";
 
-        for(auto &arg : F->args()) {
+        for(const auto& arg : F->args()) {
             libfuzz::argument_record an_argument;
-            an_argument.set_from_argument(&arg);
+            an_argument.set_from_argument(arg);
             an_argument.size = libfuzz::estimate_size(arg.getType(), arg.hasByValAttr(), DL);
             my_fun.arguments_info.push_back(an_argument);
         }
@@ -468,13 +472,12 @@ int main(int argc, char ** argv)
       libfuzz::dumpApiInfo(my_fun);
     }
     /// Build Program Assignment Graph (SVFIR)
-    SVFIRBuilder builder;
-    SVFIR* pag = builder.build(svfModule);
+    SVFIRBuilder builder(svfModule);
+    SVFIR* pag = builder.build();
     ICFG* icfg = pag->getICFG();
-
     /// Create Andersen's pointer analysis
-    //Andersen* point_to_analysys = AndersenWaveDiff::createAndersenWaveDiff(pag);
-    FlowSensitive* point_to_analysys = FlowSensitive::createFSWPA(pag);
+    Andersen* point_to_analysys = AndersenWaveDiff::createAndersenWaveDiff(pag);
+    //FlowSensitive* point_to_analysys = FlowSensitive::createFSWPA(pag);
     // AndersenSCD* point_to_analysys = AndersenSCD::createAndersenSCD(pag);
     // TypeAnalysis* point_to_analysys = new TypeAnalysis(pag);
     // point_to_analysys->analyze();
@@ -485,8 +488,8 @@ int main(int argc, char ** argv)
     PAG::FunToArgsListMap funmap_par = pag->getFunArgsMap();
 
     // for (auto x: funmap_par) {
-    //     outs() << x.first << "\n";
-    //     outs() << x.second.size() << "\n";
+    //     SVFUtil::outs() << x.first << "\n";
+    //     SVFUtil::outs() << x.second.size() << "\n";
     // }
     // exit(1);
 
@@ -507,10 +510,10 @@ int main(int argc, char ** argv)
 
         std::set<std::string> minimize_functions;
 
-        SVF::SVFModule::llvm_iterator it = svfModule->llvmFunBegin();
-        SVF::SVFModule::llvm_iterator eit = svfModule->llvmFunEnd();
+        SVF::SVFModule::const_iterator it = svfModule->begin();
+        SVF::SVFModule::const_iterator eit = svfModule->end();
         for (;it != eit; ++it) {
-            const SVFFunction *fun = svfModule->getSVFFunction(*it);
+            const SVFFunction *fun = *it;
             std::string fun_name = fun->getName();
             if (functions.find(fun_name) != functions.end()) {
                 auto cg_node = callgraph->getCallGraphNode(fun);
@@ -529,27 +532,27 @@ int main(int argc, char ** argv)
             }
         }
 
-        // outs() << "[INFO] The minimize set of function\n";
+        // SVFUtil::outs() << "[INFO] The minimize set of function\n";
         std::ofstream minimizeApiFile(minimizeApi);
         for (auto f: minimize_functions) {
             minimizeApiFile << f << "\n";
         }
         minimizeApiFile.close();
-        // outs() << "[INFO] All function\n";
+        // SVFUtil::outs() << "[INFO] All function\n";
         // for (auto f: functions)
-        //     outs() << f << "\n";
+        //     SVFUtil::outs() << f << "\n";
     
-        // outs() << "[INFO] Total: " << minimize_functions.size() << "\n";
-        // outs() << "[INFO] Original: " << functions.size() << "\n";
+        // SVFUtil::outs() << "[INFO] Total: " << minimize_functions.size() << "\n";
+        // SVFUtil::outs() << "[INFO] Original: " << functions.size() << "\n";
 
     }
 
-    // outs() << " === EXIT FOR DEBUG ===\n";
+    // SVFUtil::outs() << " === EXIT FOR DEBUG ===\n";
     // exit(1);
 
     FunctionConditionsSet fun_cond_set;
 
-    outs() << "[INFO] running analysis...\n";
+    SVFUtil::outs() << "[INFO] running analysis...\n";
     for (auto f: functions) {
 
         FunctionConditions fun_conds;
@@ -560,18 +563,19 @@ int main(int argc, char ** argv)
             if ( fun->getName() != f)
                 continue;
 
-            outs() << "[INFO] processing params for: " << 
+            SVFUtil::outs() << "[INFO] processing params for: " << 
                         fun->getName() << "\n";
                         
             for (auto const& p : x.second) {
                 if (verbose >= Verbosity::v1)
-                    outs() << "[INFO] param: " << p->toString() << "\n";
+                    SVFUtil::outs() << "[INFO] param: " << p->toString() << "\n";
 
                 auto val = p->getValue();
-                auto seek_type = val->getType();
+                auto llvm_val = llvmModuleSet->getLLVMValue(val);
+                auto seek_type = llvm_val->getType();
                 ValueMetadata paramMetadata = 
                     ValueMetadata::extractParameterMetadata(
-                        svfg, val, seek_type);
+                        svfg, llvm_val, seek_type);
 
                 // auto param_key = "param_" + std::to_string(pn);
                 // functionResult[param_key] = paramMetadata.toJson();
@@ -596,9 +600,10 @@ int main(int argc, char ** argv)
 
             auto p = x.second;
             if (verbose >= Verbosity::v1)
-                outs() << "[INFO] return: " << p->toString() << "\n";
+                SVFUtil::outs() << "[INFO] return: " << p->toString() << "\n";
+            auto llvm_value = llvmModuleSet->getLLVMValue(p->getValue());
             ValueMetadata returnMetadata =
-                ValueMetadata::extractReturnMetadata(svfg, p->getValue());
+                ValueMetadata::extractReturnMetadata(svfg, llvm_value);
 
             // functionResult["return"] = returnAccessTypeSet.toJson();
             // jsonResult.append(functionResult);
@@ -606,16 +611,16 @@ int main(int argc, char ** argv)
         }
 
         if (useDominator) {
-            SVF::SVFModule::llvm_iterator it = svfModule->llvmFunBegin();
-            SVF::SVFModule::llvm_iterator eit = svfModule->llvmFunEnd();
+            SVF::SVFModule::const_iterator it = svfModule->begin();
+            SVF::SVFModule::const_iterator eit = svfModule->end();
             for (;it != eit; ++it) {
-                const SVFFunction *fun = svfModule->getSVFFunction(*it);
+                const SVFFunction *fun = *it;
                 if ( fun->getName() != f)
                     continue;
 
                 std::string fun_name = fun->getName();
 
-                outs()  << "[INFO] computing dominators for: " <<
+                SVFUtil::outs()  << "[INFO] computing dominators for: " <<
                             fun_name << "\n";
 
                 FunEntryICFGNode *fun_entry = icfg->getFunEntryICFGNode(fun);
@@ -625,23 +630,23 @@ int main(int argc, char ** argv)
                 std::string postdom_cache_file = getCachePostDomFile(fun_name);
 
                 dom = new Dominator(point_to_analysys, fun_entry, doIndJump);
-                // outs() << "[INFO] Running pruneUnreachableFunctions()\n";
+                // SVFUtil::outs() << "[INFO] Running pruneUnreachableFunctions()\n";
                 // dom->pruneUnreachableFunctions();
-                // outs() << "[INFO] Running buildPhiFun()\n";
+                // SVFUtil::outs() << "[INFO] Running buildPhiFun()\n";
                 // dom->buildPhiFun();
-                // outs() << "[INFO] Running inferSubGraph()\n";
+                // SVFUtil::outs() << "[INFO] Running inferSubGraph()\n";
                 // dom->inferSubGraph();
                 if (cacheFolder != "" && doesFileExists(dom_cache_file)) {
-                    outs() << "[INFO] There is DOM cache, loading it\n";
+                    SVFUtil::outs() << "[INFO] There is DOM cache, loading it\n";
                     dom->loadDom(dom_cache_file);
                 } else {
-                    outs() << "[INFO] No DOM cache, computing from scratch and save\n";
+                    SVFUtil::outs() << "[INFO] No DOM cache, computing from scratch and save\n";
                     auto begin = chrono::high_resolution_clock::now();    
                     dom->createDom();
                     auto end = chrono::high_resolution_clock::now();    
                     auto dur = end - begin;
                     auto min = std::chrono::duration_cast<std::chrono::minutes>(dur).count();
-                    outs() << "[TIME] Dom: " << min << "min\n";
+                    SVFUtil::outs() << "[TIME] Dom: " << min << "min\n";
                     // dom->saveIBBGraph("ibbgraph_2");
                     
                     if (cacheFolder != "")
@@ -651,16 +656,16 @@ int main(int argc, char ** argv)
                 pDom = new PostDominator(point_to_analysys, fun_entry, 
                                         fun_exit, doIndJump);
                 if (cacheFolder != "" && doesFileExists(postdom_cache_file)) {
-                    outs() << "[INFO] There is POSTDOM cache, loading it\n";
+                    SVFUtil::outs() << "[INFO] There is POSTDOM cache, loading it\n";
                     pDom->loadDom(postdom_cache_file);
                 } else {
-                    outs() << "[INFO] No POSTDOM cache, computing from scratch and save\n";
+                    SVFUtil::outs() << "[INFO] No POSTDOM cache, computing from scratch and save\n";
                     auto begin = chrono::high_resolution_clock::now();    
                     pDom->createDom();
                     auto end = chrono::high_resolution_clock::now();    
                     auto dur = end - begin;
                     auto min = std::chrono::duration_cast<std::chrono::minutes>(dur).count();
-                    outs() << "[TIME] Postdom: " << min << "min\n";
+                    SVFUtil::outs() << "[TIME] Postdom: " << min << "min\n";
                     // pDom->saveIBBGraph("ibbgraph_3");
 
                     if (cacheFolder != "")
@@ -668,7 +673,7 @@ int main(int argc, char ** argv)
                 }
 
                 if (printDominator) {
-                    outs() << "[INFO] dumping dominators...\n";
+                    SVFUtil::outs() << "[INFO] dumping dominators...\n";
                     std::string str1, str2;
                     if (dom) {
                         dom->dumpTransRed("./" + dom_cache_file);
@@ -713,14 +718,14 @@ int main(int argc, char ** argv)
         FunctionConditionsSet::storeIntoJsonFile(
             fun_cond_set, OutputFile, verbose >= Verbosity::v1);
     } else if (OutputType == OutType::stdo) {
-        outs() << fun_cond_set.toString(verbose >= Verbosity::v1);
+        SVFUtil::outs() << fun_cond_set.toString(verbose >= Verbosity::v1);
     }
 
-    outs() << fun_cond_set.getSummary();
+    SVFUtil::outs() << fun_cond_set.getSummary();
 
     // extract data layout
     if (ExtractDataLayout != "") {
-        outs() << "\n[INFO] extract structs data layout!\n";
+        SVFUtil::outs() << "\n[INFO] extract structs data layout!\n";
 
         Module *m = LLVMModuleSet::getLLVMModuleSet()->getMainLLVMModule();
         const DataLayout &data_layout = m->getDataLayout();
@@ -742,7 +747,7 @@ int main(int argc, char ** argv)
             fw.close();
         }        
 
-        outs() << "[INFO] struct data layout done!\n";
+        SVFUtil::outs() << "[INFO] struct data layout done!\n";
     }
 
     // clean up memory

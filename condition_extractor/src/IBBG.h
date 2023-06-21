@@ -1,8 +1,9 @@
 #ifndef INCLUDE_IBBG_H_
 #define INCLUDE_IBBG_H_
 
-#include <Graphs/ICFG.h>
-#include <Graphs/SVFG.h>
+#include "SVF-LLVM/LLVMUtil.h"
+#include "Graphs/ICFG.h"
+#include "Graphs/SVFG.h"
 #include <Graphs/GenericGraph.h>
 #include "WPA/Andersen.h"
 
@@ -60,7 +61,7 @@ public:
 
     const std::string toString() const {
         std::string str;
-        raw_string_ostream rawstr(str);
+        llvm::raw_string_ostream rawstr(str);
         rawstr << "IBBEdge ";
         if (isCallEdge())
             rawstr << "Call";
@@ -107,7 +108,7 @@ public:
 
     const std::string toString() const {
         std::string str;
-        raw_string_ostream rawstr(str);
+        llvm::raw_string_ostream rawstr(str);
         rawstr << "IBBNode " << getId() << "\n\n";
 
         for (auto n: nodes)
@@ -188,7 +189,7 @@ public:
     bool hasIBBEdge(NodeID,NodeID);
 };
 
-namespace llvm
+namespace SVF
 {
     template <>
     struct DOTGraphTraits<IBBGraph *> : public DOTGraphTraits<ICFG *>
@@ -220,7 +221,7 @@ namespace llvm
         {
 
             std::string str;
-            raw_string_ostream rawstr(str);
+            llvm::raw_string_ostream rawstr(str);
 
             if (node == nullptr) {
                 rawstr << "color=black";
@@ -274,7 +275,7 @@ namespace llvm
                     rawstr << "color=purple";
                 }
                 else {
-                    outs() << node->toString() << "\n";
+                    llvm::outs() << node->toString() << "\n";
                     assert(false && "not sure how to color this node!");
                 }
                 
@@ -316,7 +317,7 @@ namespace llvm
 
 } // End namespace llvm
 
-namespace llvm
+namespace SVF
 {
 
     /* !
@@ -324,18 +325,18 @@ namespace llvm
      * Provide graph traits for traversing from a constraint node using standard graph traversals.
      */
     template <>
-    struct GraphTraits<IBBNode *> : public GraphTraits<SVF::GenericNode<IBBNode, IBBEdge> *>
+    struct GenericGraphTraits<IBBNode *> : public GenericGraphTraits<SVF::GenericNode<IBBNode, IBBEdge> *>
     {
     };
 
     /// Inverse GraphTraits specializations for call graph node, it is used for inverse traversal.
     template <>
-    struct GraphTraits<Inverse<IBBNode *>> : public GraphTraits<Inverse<SVF::GenericNode<IBBNode, IBBEdge> *>>
+    struct GenericGraphTraits<Inverse<IBBNode *>> : public GenericGraphTraits<Inverse<SVF::GenericNode<IBBNode, IBBEdge> *>>
     {
     };
 
     template <>
-    struct GraphTraits<IBBGraph *> : public GraphTraits<SVF::GenericGraph<IBBNode, IBBEdge> *>
+    struct GenericGraphTraits<IBBGraph *> : public GenericGraphTraits<SVF::GenericGraph<IBBNode, IBBEdge> *>
     {
         typedef IBBNode *NodeRef;
     };
