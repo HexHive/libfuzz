@@ -78,9 +78,9 @@ RUN mkdir -p ${TOOLS_DIR}/tool/misc/
 RUN sudo apt-get install zlib1g-dev unzip cmake gcc g++ libtinfo5 nodejs 
 COPY --chown=${USERNAME}:${USERNAME} ./condition_extractor ${TOOLS_DIR}/condition_extractor/
 COPY --chown=${USERNAME}:${USERNAME} ./tool/misc/extract_included_functions.py ${TOOLS_DIR}/tool/misc/
-ENV SVF_DIR /home/libfuzz/SVF
-ENV LLVM_DIR /home/libfuzz/SVF
-CMD cd ${TOOLS_DIR}/condition_extractor && rm -Rf CMakeCache.txt && ./bootstrap.sh && make -j 
+# ENV SVF_DIR /home/libfuzz/SVF
+# ENV LLVM_DIR /home/libfuzz/SVF
+RUN cd ${TOOLS_DIR}/condition_extractor && rm -Rf CMakeCache.txt CMakeFiles && ./bootstrap.sh && make -j 
 
 # NOTE: start_analysis.sh finds out its configuration automatically
 
@@ -88,7 +88,7 @@ COPY LLVM/update-alternatives-clang.sh .
 RUN sudo ./update-alternatives-clang.sh 12 200
 ENV PATH $PATH:${HOME}/.local/bin
 RUN echo $PATH
-#CMD ${LIBFUZZ}/targets/start_analysis.sh
+CMD ${LIBFUZZ}/targets/start_analysis.sh
 
 # TARGET FOR DRIVER GENERATION
 FROM libfuzzpp_dev_image AS libfuzzpp_drivergeneration
