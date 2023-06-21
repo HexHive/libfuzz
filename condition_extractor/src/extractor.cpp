@@ -442,34 +442,35 @@ int main(int argc, char ** argv)
     LLVMModuleSet* llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
     SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
 
-    // // Dump LLVM apis function per function
-    // for(const SVFFunction* svfFun : svfModule->getFunctionSet() ){
-    //     const llvm::Function* F = (llvm::Function*)svfFun; 
+    // Dump LLVM apis function per function
+    for(const SVFFunction* svfFun : svfModule->getFunctionSet() ){
+        auto llvm_val = llvmModuleSet->getLLVMValue(svfFun);
+        const llvm::Function* F = SVFUtil::dyn_cast<Function>(llvm_val);
 
-    //     setDataLayout(F);
-    //     libfuzz::function_record my_fun;
+        setDataLayout(F);
+        libfuzz::function_record my_fun;
 
-    //     Type * retType = F->getReturnType();
-    //     StringRef function_name = F->getName();
-    //     bool is_vararg = F->isVarArg();
+        Type * retType = F->getReturnType();
+        StringRef function_name = F->getName();
+        bool is_vararg = F->isVarArg();
     
-    //     SVFUtil::errs() << "Doing: " << function_name.str() << "\n";
+        SVFUtil::errs() << "Doing: " << function_name.str() << "\n";
 
-    //     my_fun.function_name = function_name.str();
-    //     my_fun.is_vararg = is_vararg ? "true" : "false";
-    //     my_fun.return_info.set_from_type(retType);
-    //     my_fun.return_info.size = libfuzz::estimate_size(retType, false, DL);
-    //     my_fun.return_info.name = "return";
+        my_fun.function_name = function_name.str();
+        my_fun.is_vararg = is_vararg ? "true" : "false";
+        my_fun.return_info.set_from_type(retType);
+        my_fun.return_info.size = libfuzz::estimate_size(retType, false, DL);
+        my_fun.return_info.name = "return";
 
-    //     for(const auto& arg : F->args()) {
-    //         libfuzz::argument_record an_argument;
-    //         an_argument.set_from_argument(arg);
-    //         an_argument.size = libfuzz::estimate_size(arg.getType(), arg.hasByValAttr(), DL);
-    //         my_fun.arguments_info.push_back(an_argument);
-    //     }
+        for(const auto& arg : F->args()) {
+            libfuzz::argument_record an_argument;
+            an_argument.set_from_argument(arg);
+            an_argument.size = libfuzz::estimate_size(arg.getType(), arg.hasByValAttr(), DL);
+            my_fun.arguments_info.push_back(an_argument);
+        }
       
-    //   libfuzz::dumpApiInfo(my_fun);
-    // }
+      libfuzz::dumpApiInfo(my_fun);
+    }
     /// Build Program Assignment Graph (SVFIR)
     SVFIRBuilder builder(svfModule);
     SVFIR* pag = builder.build();
