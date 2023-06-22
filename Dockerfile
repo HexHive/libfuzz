@@ -106,6 +106,10 @@ ARG target_name=simple_connection
 # ARG timeout=10m
 # ARG driver=*.cc
 
+COPY LLVM/update-alternatives-clang.sh .
+RUN sudo ./update-alternatives-clang.sh 12 200
+ENV LLVM_DIR /usr
+
 ENV TARGET_NAME ${target_name}
 ENV TARGET ${HOME}/library
 ENV DRIVER_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
