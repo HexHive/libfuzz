@@ -24,12 +24,6 @@
   - TIFFRegisterCODEC -> memory error sometime?
   - TIFFCleanup -> why this is choosen for cleanup? double check it
 
-- minijail:
-  - minijail_set_supplementary_gids <- 2nd + 3rd dependency
-
-# Porting to last SVF
-- change include namespace and class names
-- still need wllvm to compile
 
 # TODO for condition_extractor:
 - Add additional policies to recognize source APIs. Here [1], md5Init

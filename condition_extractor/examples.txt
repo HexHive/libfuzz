@@ -37,3 +37,6 @@ LIBFUZZ_LOG_PATH=/workspaces/libfuzz/analysis/libxml2/work/apipass
 
 
 make -j && ./bin/extractor /workspaces/libfuzz/analysis/minijail/work/lib/libminijail.pie.a.bc -function minijail_namespace_enter_net -output minijail_namespace_enter_net.json -t json -v v1 -do_indirect_jumps
+
+
+make -j && ./bin/extractor /workspaces/libfuzz/analysis/minijail/work/lib/libminijail.pie.a.bc -function minijail_set_supplementary_gids -output minijail_set_supplementary_gids.json -t json -v v1 -do_indirect_jumps
