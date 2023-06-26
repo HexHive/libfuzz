@@ -22,6 +22,7 @@
 - strange function for libtiff:
   - TIFFGetConfiguredCODECs -> alwayrs return error?
   - TIFFRegisterCODEC -> memory error sometime?
+  - TIFFCleanup -> why this is choosen for cleanup? double check it
 
 # Porting to last SVF
 - change include namespace and class names

@@ -10,8 +10,6 @@ bool ValueMetadata::debug = false;
 std::string ValueMetadata::debug_condition = "";
 bool ValueMetadata::consider_indirect_calls = false;
 
-typedef unsigned short H_SCOPE;
-
 // NOT EXPOSED FUNCTIONS -- THESE FUNCTIONS ARE MEANT FOR ONLY INTERNAL USAGE!
 bool areConnected(const VFGNode*, const VFGNode*);
 std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
@@ -38,12 +36,7 @@ bool handlerDispatcher(ValueMetadata *mdata, std::string fun,
     std::string suffix = "*";
     for (auto f: accessTypeHandlers) {
         std::string fk = f.first;
-        auto t = f.second;
-        auto handler = t.first;
-        auto scope = t.second;
-
-        if ( (scope & h_scope) != h_scope )
-            continue;
+        auto handler = f.second;
 
         int fk_size = fk.length() - suffix.length();
         if (fk.compare(fk_size, suffix.length(), suffix) == 0 && 
@@ -51,10 +44,10 @@ bool handlerDispatcher(ValueMetadata *mdata, std::string fun,
             std::string fk_clean = fk.substr(0, fk_size);
             std::string fun_clean = fun.substr(0, fk_size);
             if (fk_clean == fun_clean)
-                handler(mdata, fun, icfgNode, cs, param_num, atNode);
+                handler(mdata, fun, icfgNode, cs, param_num, atNode, h_scope);
         }
         else if (fun == f.first) {
-            handler(mdata, fun, icfgNode, cs, param_num, atNode);
+            handler(mdata, fun, icfgNode, cs, param_num, atNode, h_scope);
         }
     }
     return true;

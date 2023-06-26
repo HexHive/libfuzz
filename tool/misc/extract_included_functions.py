@@ -10,13 +10,13 @@ type_incomplete = set()    # List of incomplete types
 apis_definition = []       # List of APIs with original argument types and extra info (e.g., const)
 type_enum = set()
 
-def get_info(type):
+def get_argument_info(type):
 
     info = {}
 
     # this trick expands typedef into their real types
     atd = type.get_declaration()
-    if atd.kind.is_declaration():
+    if atd.kind.is_declaration() and "::" not in type.spelling:
         type_str = atd.underlying_typedef_type.spelling
     else:
         type_str = type.spelling
@@ -59,15 +59,15 @@ def get_api(node, namespace):
     nt = node.type
 
     rt = nt.get_result()
-    api_obj["return_info"] = get_info(rt)
+    api_obj["return_info"] = get_argument_info(rt)
     # rt_str = rt.spelling
-    # api_obj["return_info"] = get_info(rt_str)
+    # api_obj["return_info"] = get_argument_info(rt_str)
 
     arguments_info = []
     for a in nt.argument_types():
-        info = get_info(a)
+        info = get_argument_info(a)
         # a_str = a.spelling
-        # info = get_info(a_str)
+        # info = get_argument_info(a_str)
         arguments_info.append(copy.deepcopy(info))
     api_obj["arguments_info"] = arguments_info
 

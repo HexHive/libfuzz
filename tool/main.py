@@ -21,8 +21,8 @@ def __main():
     # default_config = PROJECT_FOLDER + "/regression_tests/condition_extractor/test_full/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/uriparser/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libhtp/generator.toml"
-    default_config = PROJECT_FOLDER + "/targets/libtiff/generator.toml"
-    # default_config = PROJECT_FOLDER + "/targets/cpu_features/generator.toml"
+    # default_config = PROJECT_FOLDER + "/targets/libtiff/generator.toml"
+    default_config = PROJECT_FOLDER + "/targets/cpu_features/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/minijail/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/pthreadpool/generator.toml"
 

@@ -82,26 +82,28 @@ void addWrteToAllFields(ValueMetadata *mdata, AccessType atNode,
 
 }
 
+// H_SCOPE is a masked with C_RETURN and C_PARAM  asdf
+// C_RETURN -> the handler is invoked by extractReturnMetadata
+// C_PARAM -> the handler is invoked by extractParameterMetadata
 #define C_RETURN 1 // 01
 #define C_PARAM 2  // 10
+typedef unsigned short H_SCOPE;
 
 typedef bool (*Handler)(ValueMetadata*, std::string, 
-    const ICFGNode*, const CallICFGNode*, int, AccessType);
-typedef std::pair<Handler, unsigned short> HandlerConfig;
-typedef std::map<std::string, HandlerConfig> AccessTypeHandlerMap;
-// typedef std::map<std::string, Handler> AccessTypeHandlerMap;
+    const ICFGNode*, const CallICFGNode*, int, AccessType, H_SCOPE);
+typedef std::map<std::string, Handler> AccessTypeHandlerMap;
 
 bool malloc_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num,
-    AccessType atNode) {
+    AccessType atNode, H_SCOPE scope) {
 
-    if (param_num == -1) {
+    if (param_num == -1 && scope & C_RETURN) {
         // no need to set field, empty field set is what I need
         atNode.setAccess(AccessType::Access::create);
         mdata->getAccessTypeSet()->insert(atNode, icfgNode);
         return true;
     }
-    if (param_num == 0 && atNode.getNumFields() == 0) {
+    if (param_num == 0 && atNode.getNumFields() == 0 && scope & C_PARAM) {
         atNode.setAccess(AccessType::Access::read);
         mdata->getAccessTypeSet()->insert(atNode, icfgNode);
         mdata->setMallocSize(true);
@@ -113,9 +115,9 @@ bool malloc_handler(ValueMetadata *mdata, std::string fun_name,
 
 bool free_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num,
-    AccessType atNode) {
+    AccessType atNode, H_SCOPE scope) {
 
-    if (param_num == 0 && atNode.getNumFields() == 0) {
+    if (param_num == 0 && atNode.getNumFields() == 0 && scope & C_PARAM) {
         atNode.setAccess(AccessType::Access::del);
         mdata->getAccessTypeSet()->insert(atNode, icfgNode);
     }
@@ -125,9 +127,10 @@ bool free_handler(ValueMetadata *mdata, std::string fun_name,
 
 bool open_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num, 
-    AccessType atNode) {
+    AccessType atNode, H_SCOPE scope) {
 
-    if ((param_num == 0 || param_num == 1) && atNode.getNumFields() == 0) {
+    if ((param_num == 0 || param_num == 1) && atNode.getNumFields() == 0 &&
+        scope & C_PARAM) {
         atNode.setAccess(AccessType::Access::read);
         mdata->getAccessTypeSet()->insert(atNode, icfgNode);
         mdata->setIsFilePath(true);
@@ -142,11 +145,12 @@ bool open_handler(ValueMetadata *mdata, std::string fun_name,
 
 bool memcpy_hander(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num, 
-    AccessType atNode) {
+    AccessType atNode, H_SCOPE scope) {
 
     LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
 
-    if ((param_num == 0 || param_num == 1) && atNode.getNumFields() == 0) {
+    if ((param_num == 0 || param_num == 1) && atNode.getNumFields() == 0 && 
+        scope & C_PARAM) {
 
         AccessType tmpAcNode = atNode;
         tmpAcNode.addField(-1);
@@ -168,11 +172,11 @@ bool memcpy_hander(ValueMetadata *mdata, std::string fun_name,
 
 bool strlen_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num, 
-    AccessType atNode) {
+    AccessType atNode, H_SCOPE scope) {
 
     // outs() << "strlen_handler\n";
 
-    if (param_num == 0 && atNode.getNumFields() == 0) {
+    if (param_num == 0 && atNode.getNumFields() == 0 && scope & C_PARAM) {
         AccessType tmpAcNode = atNode;
         tmpAcNode.addField(-1);
         tmpAcNode.setAccess(AccessType::Access::read);
@@ -188,9 +192,10 @@ bool strlen_handler(ValueMetadata *mdata, std::string fun_name,
 
 bool strcpy_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num, 
-    AccessType atNode) {
+    AccessType atNode, H_SCOPE scope) {
 
-    if ((param_num == 0 || param_num == 1) && atNode.getNumFields() == 0) {
+    if ((param_num == 0 || param_num == 1) && atNode.getNumFields() == 0 &&
+        scope & C_PARAM) {
         AccessType tmpAcNode = atNode;
         tmpAcNode.addField(-1);
         tmpAcNode.setAccess(AccessType::Access::read);
@@ -203,11 +208,11 @@ bool strcpy_handler(ValueMetadata *mdata, std::string fun_name,
 
 bool memset_hander(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num, 
-    AccessType atNode) {
+    AccessType atNode, H_SCOPE scope) {
 
     LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
 
-    if (param_num == 0 && atNode.getNumFields() == 0) {
+    if (param_num == 0 && atNode.getNumFields() == 0 && scope & C_PARAM) {
         
         AccessType tmpAcNode = atNode;
         tmpAcNode.addField(-1);
@@ -228,9 +233,9 @@ bool memset_hander(ValueMetadata *mdata, std::string fun_name,
 
 bool calloc_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num,
-    AccessType atNode) {
+    AccessType atNode, H_SCOPE scope) {
 
-    if (param_num == -1) {
+    if (param_num == -1 && scope & C_RETURN) {
         // no need to set field, empty field set is what I need
         atNode.setAccess(AccessType::Access::create);
         mdata->getAccessTypeSet()->insert(atNode, icfgNode);
@@ -239,7 +244,7 @@ bool calloc_handler(ValueMetadata *mdata, std::string fun_name,
 
         return true;
     }
-    if (param_num == 1 && atNode.getNumFields() == 0) {
+    if (param_num == 1 && atNode.getNumFields() == 0 && scope & C_PARAM) {
         atNode.setAccess(AccessType::Access::read);
         mdata->getAccessTypeSet()->insert(atNode, icfgNode);
         mdata->setMallocSize(true);
@@ -251,9 +256,9 @@ bool calloc_handler(ValueMetadata *mdata, std::string fun_name,
 
 bool posix_memalign_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num,
-    AccessType atNode) {
+    AccessType atNode, H_SCOPE scope) {
 
-    if (param_num == 0) {
+    if (param_num == 0 && scope & C_RETURN) {
         // no need to set field, empty field set is what I need
         atNode.setAccess(AccessType::Access::create);
         mdata->getAccessTypeSet()->insert(atNode, icfgNode);
@@ -265,16 +270,16 @@ bool posix_memalign_handler(ValueMetadata *mdata, std::string fun_name,
 }
 
 static AccessTypeHandlerMap accessTypeHandlers = {
-    {"malloc", {&malloc_handler, C_RETURN | C_PARAM}},
-    {"free", {&free_handler, C_PARAM}},
-    {"open", {&open_handler, C_PARAM}},
-    {"fopen", {&open_handler, C_PARAM}},
-    {"llvm.memcpy.*", {&memcpy_hander, C_PARAM}},
-    {"strcpy", {&strcpy_handler, C_PARAM}},
-    {"strlen", {&strlen_handler, C_PARAM}},
-    {"llvm.memset.*", {&memset_hander, C_PARAM}},
-    {"calloc", {&calloc_handler, C_RETURN | C_PARAM}},
-    {"posix_memalign", {&posix_memalign_handler, C_RETURN}}
+    {"malloc", &malloc_handler},
+    {"free", &free_handler},
+    {"open", &open_handler},
+    {"fopen", &open_handler},
+    {"llvm.memcpy.*", &memcpy_hander}, 
+    {"strcpy", &strcpy_handler}, 
+    {"strlen", &strlen_handler}, 
+    {"llvm.memset.*", &memset_hander},
+    {"calloc", &calloc_handler}, 
+    {"posix_memalign", &posix_memalign_handler} 
 };
 
 #endif /* INCLUDE_DOM_ACCESSTYPE_HANDLER_H_ */

@@ -1,0 +1,4 @@
+TIFFOpen
+TIFFGetField
+TIFFTileSize64
+TIFFClose
