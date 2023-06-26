@@ -50,6 +50,10 @@ make install
 # # make -j$(nproc) 
 
 extract-bc -b $WORK/lib/libssl.a
+extract-bc -b $WORK/lib/libcrypto.a
+
+# for later
+# $LLVM_DIR/bin/llvm-link libcrypto.a.bc libssl.a.bc -o libfull.bc
 
 # this extracts the exported functions in a file, to be used later for grammar generations
 $LIBFUZZ/tool/misc/extract_included_functions.py -i "$WORK/include/openssl" \
@@ -59,11 +63,19 @@ $LIBFUZZ/tool/misc/extract_included_functions.py -i "$WORK/include/openssl" \
     -a "$LIBFUZZ_LOG_PATH/apis_clang.json" \
     -n "$LIBFUZZ_LOG_PATH/enum_types.txt"
 
-# TODO: this should get the list of apis, not a single functions
 $TOOLS_DIR/condition_extractor/bin/extractor \
     $WORK/lib/libssl.a.bc \
     -interface "$LIBFUZZ_LOG_PATH/apis_clang.json" \
-    -output "$LIBFUZZ_LOG_PATH/conditions.json" \
-    -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
+    -output "$LIBFUZZ_LOG_PATH/conditions_libssl.json" \
+    -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized_libssl.txt" \
     -v v0 -t json -do_indirect_jumps \
-    -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
+    -data_layout "$LIBFUZZ_LOG_PATH/data_layout_libssl.txt"
+
+# TODO: this should get the list of apis, not a single functions
+$TOOLS_DIR/condition_extractor/bin/extractor \
+    $WORK/lib/libcrypto.a.bc \
+    -interface "$LIBFUZZ_LOG_PATH/apis_clang.json" \
+    -output "$LIBFUZZ_LOG_PATH/conditions_libcrypto.json" \
+    -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized_libcrypto.txt" \
+    -v v0 -t json -do_indirect_jumps \
+    -data_layout "$LIBFUZZ_LOG_PATH/data_layout_libcrypto.txt"
