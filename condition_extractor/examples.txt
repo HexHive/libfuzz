@@ -34,3 +34,6 @@ LIBFUZZ_LOG_PATH=/workspaces/libfuzz/analysis/libxml2/work/apipass
 
 
 ./bin/extractor /workspaces/libfuzz/analysis/pthreadpool/work/lib/libpthreadpool.a.bc -function pthreadpool_create -output pthreadpool_create.json -t json -v v0 -do_indirect_jumps
+
+
+make -j && ./bin/extractor /workspaces/libfuzz/analysis/minijail/work/lib/libminijail.pie.a.bc -function minijail_namespace_enter_net -output minijail_namespace_enter_net.json -t json -v v1 -do_indirect_jumps

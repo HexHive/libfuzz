@@ -25,6 +25,9 @@ mkdir -p "$WORK/lib" "$WORK/include"
 
 echo "make 1"
 cd "$TARGET/repo"
+
+export CFLAGS=$CFLAGS" -fsanitize=fuzzer-no-link,address -g"
+export CXXFLAGS=$CXXFLAGS" -fsanitize=fuzzer-no-link,address -g"
         
 echo "make clean"
 make -j$(nproc) clean
