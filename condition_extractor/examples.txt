@@ -40,3 +40,6 @@ make -j && ./bin/extractor /workspaces/libfuzz/analysis/minijail/work/lib/libmin
 
 
 make -j && ./bin/extractor /workspaces/libfuzz/analysis/minijail/work/lib/libminijail.pie.a.bc -function minijail_set_supplementary_gids -output minijail_set_supplementary_gids.json -t json -v v1 -do_indirect_jumps
+
+
+make -j && ./bin/extractor /workspaces/libfuzz/analysis/uriparser/work/lib/liburiparser.a.bc -function uriDissectQueryMallocA -output uriDissectQueryMallocA.json -t json -v v0 -do_indirect_jumps

@@ -8,7 +8,7 @@ from constraints import ConditionUnsat, RunningContext
 from dependency import DependencyGraph
 from driver import Context, Driver
 from driver.factory import Factory
-from driver.ir import ApiCall, PointerType, Variable, TypeTag
+from driver.ir import ApiCall, PointerType, Variable, TypeTag, Type
 from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
 from constraints import Conditions
 
@@ -93,7 +93,7 @@ class CBFactory(Factory):
 
             fun_cond = get_cond(api)
 
-            # if api.function_name == "htp_tx_req_get_param":
+            # if api.function_name == "uriDissectQueryMallocA":
             #     print(f"get_source_api {api.function_name}")
             #     from IPython import embed; embed(); exit(1)
 
@@ -143,18 +143,22 @@ class CBFactory(Factory):
                 idx = int(arg_cond.len_depends_on.replace("param_", ""))
                 idx_type = api_call.arg_types[idx]
 
-                if isinstance(idx_type, PointerType):
-                    arg_cond.len_depends_on = ""
-                else:
+                # if isinstance(idx_type, PointerType):
+                #     arg_cond.len_depends_on = ""
+                # else:
+                if arg_type.token in Type.string_types and \
+                    idx_type.token in Type.size_types:
+
+                    print("old dep [begin]")
+                    from IPython import embed; embed(); exit(1)
+
                     arg_var = rng_ctx.create_new_var(arg_type, arg_cond, False)
-                    x = arg_var
+                    # x = arg_var
                     if (isinstance(arg_var, Variable) and 
                         isinstance(arg_type, PointerType)):
                         arg_var = arg_var.get_address()
                     api_call.set_pos_arg_var(arg_pos, arg_var)
 
-                    # idx = int(arg_cond.len_depends_on.replace("param_", ""))
-                    # idx_type = api_call.arg_types[idx]
                     idx_cond = conditions.argument_at[idx]
                     b_len = rng_ctx.create_new_var(idx_type, idx_cond, False)
                     try:
@@ -166,9 +170,34 @@ class CBFactory(Factory):
                     rng_ctx.update(api_call.arg_vars[arg_pos], arg_cond)
                     rng_ctx.update(api_call.arg_vars[idx], idx_cond)
                     rng_ctx.var_to_cond[x].len_depends_on = b_len
+                elif arg_type.token in Type.string_types and \
+                    idx_type.token in Type.string_types:
+
+                    # print("new dep [begin]")
+                    # from IPython import embed; embed(); exit(1)
+
+                    arg_var = rng_ctx.try_to_get_var(arg_type, arg_cond, False)
+                    # x = arg_var
+                    if (isinstance(arg_var, Variable) and 
+                        isinstance(arg_type, PointerType)):
+                        arg_var = arg_var.get_address()
+                    api_call.set_pos_arg_var(arg_pos, arg_var)
+
+                    buff = arg_var.variable.buffer
+                    n_el = buff.n_element
+                    idx_var = buff[n_el - 1]
+
+                    # idx = int(arg_cond.len_depends_on.replace("param_", ""))
+                    # idx_type = api_call.arg_types[idx]
+                    
+                    api_call.set_pos_arg_var(idx, idx_var.get_address())
+
+                    rng_ctx.update(api_call.arg_vars[arg_pos], arg_cond)
+                else:
+                    arg_cond.len_depends_on = ""
 
 
-        # if api_call.function_name == "TIFFGetField":
+        # if api_call.function_name == "uriFreeQueryListA":
         #     print(f"hook {api_call.function_name}")
         #     # import pdb; pdb.set_trace()
         #     par_debug = 0

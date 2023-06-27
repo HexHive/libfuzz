@@ -7,8 +7,6 @@ class FileInit(Statement):
     buffer:     Buffer
     len_var:    Variable
 
-    size_types = ["size_t", "int", "uint32_t", "uint64_t"]
-
     def __init__(self, buffer, len_var):
         super().__init__()
 

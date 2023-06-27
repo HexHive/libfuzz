@@ -22,9 +22,6 @@ class RunningContext(Context):
     # static dictionary
     type_to_hash:        Dict[str, str]
 
-    string_types = ["char*", "unsigned char*", "wchar_t*", \
-                    "char**", "unsigned char**", "wchar_t**"]
-
     def __init__(self):
         super().__init__()
         self.variables_alive = []
@@ -331,7 +328,7 @@ class RunningContext(Context):
         buff_name = f"{clean_token}{pnt}_{cst}{decrt}{buff_counter}"
         buff_name = buff_name.replace(" ", "")
         # NOTE: char* => always considered as array!
-        if ((cond.is_array or type.token in RunningContext.string_types) and
+        if ((cond.is_array or type.token in Type.string_types) and
             alloctype == AllocType.STACK):
             new_buffer = Buffer(buff_name, self.MAX_ARRAY_SIZE, type, alloctype)
         else:

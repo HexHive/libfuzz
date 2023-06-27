@@ -11,6 +11,12 @@ class Type:
     is_incomplete: bool
     is_const: bool
     tag: TypeTag
+
+    string_types = ["char*", "unsigned char*", "wchar_t*", \
+                    "char**", "unsigned char**", "wchar_t**"]
+
+    size_types = ["size_t", "int", "uint32_t", "uint64_t"]
+    
     
     def __init__(self, token, size = 0, is_incomplete = False, is_const = False, tag = TypeTag.PRIMITIVE):
         self.token          = token

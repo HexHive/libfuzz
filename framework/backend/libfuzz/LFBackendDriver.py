@@ -221,6 +221,8 @@ class LFBackendDriver(BackendDriver):
             # idx     = variable.get_index()
             if buffer.get_alloctype() in [AllocType.HEAP, AllocType.GLOBAL]:
                 return f"{self.variable_emit(variable)}"
+            elif variable.index != 0:
+                return f"{token}+{variable.index}"
             else:
                 return f"{token}"
         else:
@@ -424,6 +426,9 @@ class LFBackendDriver(BackendDriver):
         if namespace is not None and len(namespace) > 0:
             function_name = "::".join(namespace) + "::" + function_name
 
+        # if "uriDissectQueryMallocA" in function_name:
+        #     print("apicall_emit")
+        #     from IPython import embed; embed(); exit(1)
 
         ret_var_code = self.value_emit(ret_var)
         arg_vars_code = ", ".join([self.value_emit(a) for a in arg_vars])
