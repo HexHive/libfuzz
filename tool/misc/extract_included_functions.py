@@ -52,7 +52,9 @@ def get_api(node, namespace):
         function_name = node.displayname[:node.displayname.index("(")]
     except ValueError:
         print(f"Cant find '(' in {node.displayname}")
-        return {}
+        function_name = node.displayname
+        # from IPython import embed; embed(); exit(1)
+        # return {}
     api_obj["function_name"] = function_name
     api_obj["namespace"] = copy.deepcopy(namespace)
 

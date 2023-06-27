@@ -1,0 +1,7 @@
+vp8.h
+# vpx/vp8dx.h
+vpx_codec.h
+# vpx/vpx_decoder.h
+# vpx/vpx_frame_buffer.h
+vpx_image.h
+# vpx/vpx_integer.h
