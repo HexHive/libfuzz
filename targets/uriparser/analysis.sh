@@ -29,8 +29,8 @@ mkdir -p $LIBFUZZ_LOG_PATH
 cd "$TARGET/repo"
 cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
         -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_C_FLAGS_DEBUG="-g -O0 -mllvm -get-api-pass" \
-        -DCMAKE_CXX_FLAGS_DEBUG="-g -O0 -mllvm -get-api-pass" 
+        -DCMAKE_C_FLAGS_DEBUG="-g -O0" \
+        -DCMAKE_CXX_FLAGS_DEBUG="-g -O0" 
 
 # configure compiles some shits for testing, better remove it
 rm $LIBFUZZ_LOG_PATH/apis.log
@@ -55,7 +55,8 @@ $TOOLS_DIR/tool/misc/extract_included_functions.py -i "$WORK/include" \
     -p "$LIBFUZZ/targets/${TARGET_NAME}/public_headers.txt" \
     -e "$LIBFUZZ_LOG_PATH/exported_functions.txt" \
     -t "$LIBFUZZ_LOG_PATH/incomplete_types.txt" \
-    -a "$LIBFUZZ_LOG_PATH/apis_clang.json"
+    -a "$LIBFUZZ_LOG_PATH/apis_clang.json" \
+    -n "$LIBFUZZ_LOG_PATH/enum_types.txt"
 
 # extract fields dependency from the library itself, repeat for each object produced
 $TOOLS_DIR/condition_extractor/bin/extractor \

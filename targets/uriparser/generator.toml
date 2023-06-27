@@ -9,6 +9,7 @@ conditions = "/workspaces/libfuzz/analysis/uriparser/work/apipass/conditions.jso
 minimum_apis = "/workspaces/libfuzz/analysis/uriparser/work/apipass/apis_minimized_2.txt"
 # minimum_apis = ""
 data_layout = "/workspaces/libfuzz/analysis/uriparser/work/apipass/data_layout.txt"
+enum_types = "/workspaces/libfuzz/analysis/uriparser/work/apipass/enum_types.txt"
 
 [generator]
 workdir = "/workspaces/libfuzz/workdir/uriparser"
