@@ -25,6 +25,6 @@ echo "Compiling: ${DRIVER_FOLDER}/${DRIVER}.cc"
 for d in `ls ${DRIVER_FOLDER}/${DRIVER}.cc`
 do
     echo "Driver: $d"
-    $CXX -g -std=c++11 -fsanitize=fuzzer,address I/${TARGET}/work/include \
-    ${TARGET}/work/lib/liburiparser.a -o "${d%%.*}"
+    $CXX -g -std=c++11 -fsanitize=fuzzer,address -I/${TARGET}/work/include \
+    $d ${TARGET}/work/lib/liburiparser.a -lstdc++ -o "${d%%.*}"
 done
