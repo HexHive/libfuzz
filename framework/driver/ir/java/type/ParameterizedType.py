@@ -6,7 +6,7 @@ class ParameterizedType(JavaType):
     def __init__(self, rawType: str, argType: List[str], subtypes: Dict[Tuple[str, str], Set[str]]):
         self.rawType = ClassType(rawType, subtypes, False)
         self.argType = [ClassType(arg, subtypes, not "." in arg) for arg in argType]
-        self.subtypes = subtypes.get((rawType, str(argType)))
+        self.subtypes = subtypes.get((rawType, str(argType)), set())
     
     def has_subtype(self, type: JavaType) -> bool:
         if isinstance(type, ClassType) and type.className in self.subtypes:

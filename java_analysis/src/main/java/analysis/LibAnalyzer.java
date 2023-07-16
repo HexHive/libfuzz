@@ -17,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class LibAnalyzer {
@@ -56,16 +55,13 @@ public class LibAnalyzer {
                 continue;
             }
 
-//            String clazzName = sootClass.getName();
-//            try {
-//                loader.loadClass(clazzName);
-//            } catch (ClassNotFoundException e) {
-//                continue;
-//            }
-
-            Class<?> clazz = Class.forName(sootClass.getName(), false, loader);
-            if (!clazz.isSynthetic()) {
-                clazzes.add(clazz);
+            try {
+                Class<?> clazz = Class.forName(sootClass.getName(), false, loader);
+                if (!clazz.isSynthetic()) {
+                    clazzes.add(clazz);
+                }
+            } catch (IllegalAccessError e) {
+                e.printStackTrace();
             }
         }
     }
@@ -103,13 +99,15 @@ public class LibAnalyzer {
                 // These are inherited from Object, I don't think we need to consider them
                 continue;
             }
+            if (method.isAnnotationPresent(Deprecated.class)) {
+                continue;
+            }
 
             Optional<ApiInfo> result = ApiInfo.buildApiInfo(method);
 
             // We ignore the API with complex generic types
             if (result.isPresent()) {
-                // Declaring class of inherited methods is the inherited class. So the declaring class field
-                // is set separately
+                // Declaring class of inherited methods is the inherited class. So the declaring class field is set separately
                 ApiInfo info = result.get();
                 info.setDeclaringClazz(klazz);
                 builder.add(info);
@@ -197,8 +195,7 @@ public class LibAnalyzer {
             return;
         }
 
-        if (type instanceof ParameterizedType) {
-            ParameterizedType paramType = (ParameterizedType) type;
+        if (type instanceof ParameterizedType paramType) {
             GenericType genericType = getGenericType(clazz, mapping);
             Type[] typeArgs = paramType.getActualTypeArguments();
 
@@ -218,7 +215,7 @@ public class LibAnalyzer {
                         Arrays.stream(typeVariables).map(v -> GenericType.nonExistIdx).collect(ImmutableList.toImmutableList()));
             } else {
                 aliasMap.putAll(genericType.fulfillAlias(new Type[]{}));
-                indexMap.putAll(genericType.fulfillTypeIndex(Arrays.stream(typeVariables).map(v -> GenericType.nonExistIdx).collect(Collectors.toList())));
+                indexMap.putAll(genericType.fulfillTypeIndex(Arrays.stream(typeVariables).map(v -> GenericType.nonExistIdx).toList()));
             }
         }
     }

@@ -3,7 +3,7 @@ from typing import Dict, List, Set, Tuple
 
 from driver import Driver
 from common import JavaApi, JavaArg
-from driver.ir.java.statement import *
+from driver.ir.java.statement import ClassCreate, MethodCall, ApiInvoke
 from driver.ir.java.type import *
 
 class JavaFactory:
@@ -19,10 +19,12 @@ class JavaFactory:
         api_stmts = [JavaFactory.api_to_apicall(api, self.subtypes) for api in self.api_list]
         
         ctx = JavaContext(self.subtypes, self.full_api_list)
+
+        stmts = []
         for stmt in api_stmts:
-            ctx.fulfill_statement(stmt)
-        print(ctx.generate_initialization_statements() + api_stmts)
-        return Driver(ctx.generate_initialization_statements() + api_stmts, ctx)      
+            stmts += ctx.complete_statement(stmt)
+            #print(stmts)
+        return Driver(stmts, ctx)      
 
     @staticmethod
     def api_to_apicall(api: JavaApi, subtypes: Dict[Tuple[str, str], Set[str]]) -> MethodCall:
@@ -46,7 +48,7 @@ class JavaFactory:
             the_type = JavaFactory.normalize_type(exception, subtypes)
             exception_list_type += [the_type]
 
-        return ClassCreate(JavaFactory.normalize_type(api.declaring_class, subtypes), arg_list_type, exception_list_type)
+        return ClassCreate(JavaFactory.normalize_type(api.declaring_class, subtypes), arg_list_type, JavaFactory.filter_exceptions(exception_list_type, subtypes))
 
     @staticmethod
     def api_to_apiinvoke(api: JavaApi, subtypes: Dict[Tuple[str, str], Set[str]]) -> ApiInvoke:
@@ -63,7 +65,7 @@ class JavaFactory:
             the_type = JavaFactory.normalize_type(exception, subtypes)
             exception_list_type += [the_type]
 
-        return ApiInvoke(function_name, JavaFactory.normalize_type(api.declaring_class, subtypes), JavaFactory.normalize_type(api.return_info, subtypes), arg_list_type, exception_list_type, api.is_static())
+        return ApiInvoke(function_name, JavaFactory.normalize_type(api.declaring_class, subtypes), JavaFactory.normalize_type(api.return_info, subtypes), arg_list_type, JavaFactory.filter_exceptions(exception_list_type, subtypes), api.is_static())
 
     @staticmethod
     def normalize_type(arg: JavaArg, subtypes: Dict[Tuple[str, str], Set[str]]) -> JavaType:
@@ -82,3 +84,15 @@ class JavaFactory:
         if rawType.startswith("["):
             return ArrayType(rawType, subtypes)
         return ClassType(rawType, subtypes, not "." in rawType)
+    
+    @staticmethod
+    def filter_exceptions(exceptions: List[JavaType], subtypes: Dict[Tuple[str, str], Set[str]]) -> List[JavaType]:
+        all_exceptions = set()
+        filtered_exceptions = []
+        for exc in exceptions:
+            assert isinstance(exc, ClassType)
+            if exc.className in all_exceptions:
+                continue
+            filtered_exceptions.append(exc)
+            all_exceptions.update(subtypes.get((exc.className, str([])), set()))
+        return filtered_exceptions

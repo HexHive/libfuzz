@@ -1,20 +1,23 @@
 from typing import List
 from driver.ir.java.type import ArrayType
+from framework.driver.ir.java.type import JavaType
 from . import MethodCall
 
 class ArrayCreate(MethodCall):
     def __init__(self, declaring_class: ArrayType, init_len=10):
-        self.declaring_class = declaring_class
-        self.arg_types = []
+        super().__init__(declaring_class, declaring_class, [], [])
         self.init_len = init_len
+        self.next_fulfill_pos = 0
 
-        self.class_var = None
-        self.arg_vars = []
+    def get_all_type(self) -> List[JavaType]:
+        return []
+    
+    def copy(self):
+        return ArrayCreate(self.declaring_class, self.init_len)
 
     def __hash__(self):
         arg_lst = [super().__hash__()]
         arg_lst += [self.__class__.__name__]
-        arg_lst += [self.declaring_class.dimension]
         arg_lst += [self.init_len]
         return hash(tuple(arg_lst))
 

@@ -6,9 +6,17 @@ from . import MethodCall
 # class_var in this statement represents the created instance "a"
 class ClassCreate(MethodCall):
     def __init__(self, declaring_class: JavaType, arg_types: List[JavaType], exceptions: List[ClassType], is_static: bool=False):
-        super().__init__(declaring_class, arg_types, exceptions)
+        super().__init__(declaring_class, declaring_class, arg_types, exceptions)
         self.is_static = is_static
+
+        self.next_fulfill_pos = 0
         
+    def get_all_type(self) -> List[JavaType]:
+        return self.arg_types
+
+    def copy(self):
+        return ClassCreate(self.declaring_class, self.arg_types, self.exceptions, self.is_static)
+
     def __hash__(self):
         return hash((self.__class__.__name__, super().__hash__()))
 

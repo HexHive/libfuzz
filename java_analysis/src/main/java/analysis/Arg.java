@@ -6,7 +6,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class Arg {
     // This class now only support normal class and simple generic type (e.g. List<String>)
@@ -32,17 +31,14 @@ public class Arg {
 
     public static Arg buildArg(Type type) throws UnsupportedOperationException {
         Arg arg = new Arg();
-        if (type instanceof Class) {
-            Class<?> classType = (Class<?>) type;
+        if (type instanceof Class<?> classType) {
             arg.rawType = classType.getName();
             arg.argType = ImmutableList.of();
             return arg;
-        } else if (type instanceof ParameterizedType) {
-            ParameterizedType parameterizedType = (ParameterizedType) type;
+        } else if (type instanceof ParameterizedType parameterizedType) {
             ImmutableList.Builder<String> builder = ImmutableList.builder();
             for (Type argType: parameterizedType.getActualTypeArguments()) {
-                if (argType instanceof Class) {
-                    Class<?> classType = (Class<?>) argType;
+                if (argType instanceof Class<?> classType) {
                     builder.add(classType.getName());
                 } else {
                     throw new UnsupportedOperationException("");
@@ -60,7 +56,7 @@ public class Arg {
     @Override
     public String toString() {
         return String.format("{\"rawType\":\"%s\",\"argTypes\":%s}", formatName(rawType),
-                argType.stream().map(type -> "\"" + formatName(type) + "\"").collect(Collectors.toList()));
+                argType.stream().map(type -> "\"" + formatName(type) + "\"").toList());
     }
 
     @Override
@@ -77,11 +73,9 @@ public class Arg {
             return true;
         }
 
-        if (!(o instanceof Arg)) {
+        if (!(o instanceof Arg a)) {
             return false;
         }
-
-        Arg a = (Arg) o;
         return a.rawType.equals(rawType) && a.argType.equals(argType);
     }
 

@@ -9,7 +9,7 @@ class ClassType(JavaType):
         if is_primitive:
             self.subtypes = []
         else:
-            self.subtypes = subtypes.get((className, str([])))
+            self.subtypes = subtypes.get((className, str([])), [])
 
     def has_subtype(self, type: JavaType) -> bool:
         if not isinstance(type, ClassType):
