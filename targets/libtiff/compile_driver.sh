@@ -21,11 +21,14 @@ CXX=$LLVM_DIR/bin/clang++
 CC=$LLVM_DIR/bin/clang
 
 echo "Compiling: ${DRIVER_FOLDER}/${DRIVER}.cc"
+mkdir -p ${DRIVER_FOLDER}/../profiles
+
 
 # [TAG] FIRST LOOP FOR COMPILATION!!!
 for d in `ls ${DRIVER_FOLDER}/${DRIVER}.cc`
 do
     echo "Driver: $d"
+    DRIVER_NAME=$(basename $d)
     # [TAG] THIS STEP MUST BE ADAPTED FOR EACH LIBRARY
     # Compile driver for fuzzing
     $CXX -g -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
