@@ -5,25 +5,20 @@
 # - env TARGET: target name (from targets/)
 ##
 
-if [ -z $TARGET ] || [ -z $TIMEOUT ]; then
-    echo '$TARGET, and $TIMEOUT must be specified as environment variables.'
+if [ -z $TARGET ]; then
+    echo '$TARGET must be specified as environment variable.'
     exit 1
 fi
 
-# if DRIVER unset, we consider all the driver.cc in the folder
-if [ -z $DRIVER ]; then
-    echo "[INFO] DRIVER unset, selecting all the driver.cc produced"
-    DRIVER="*"
-fi
 
-IMG_NAME="libpp-fuzzing-$TARGET"
+IMG_NAME="libpp-coverage-$TARGET"
 LIBPP=../
 
 set -x
 DOCKER_BUILDKIT=1 docker build \
     --build-arg USER_UID=$(id -u) --build-arg GROUP_UID=$(id -g) \
     --build-arg target_name="$TARGET" \
-    -t "$IMG_NAME" --target libfuzzpp_fuzzing \
+    -t "$IMG_NAME" --target libfuzzpp_coverage \
     -f "$LIBPP/Dockerfile" "$LIBPP"
 set +x
 
