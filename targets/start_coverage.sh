@@ -17,11 +17,9 @@ echo $DRIVER_FOLDER
 
 for d in $FUZZ_TARGETS
 do
-    echo "hi"
     echo $d
     DRIVER_NAME=$(basename $d)
     echo "COVERAGE: ${DRIVER_NAME}"
-
 
     DRIVER_COVERAGE=${PROJECT_COVERAGE}/${DRIVER_NAME}
     DRIVER_COR=${LIBFUZZ}/workdir/${TARGET_NAME}/corpus_new/${DRIVER_NAME}
@@ -44,8 +42,6 @@ do
     mv report $DRIVER_COVERAGE
     # mv functions $DRIVER_COVERAGE
     mv export.json $DRIVER_COVERAGE
-
-
 done
 
 OBJECTS=""

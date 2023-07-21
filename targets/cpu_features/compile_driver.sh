@@ -29,10 +29,12 @@ do
     echo "Driver: $d"
     DRIVER_NAME=$(basename $d)
     # [TAG] THIS STEP MUST BE ADAPTED FOR EACH LIBRARY
+    # Compile driver for fuzzing
     $CXX -g -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
         $d ${TARGET}/work/lib/libcpu_features.a \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
-    # Compile profile
+
+    # Compile driver for coverage
     $CXX -g -std=c++11  -fsanitize=fuzzer -fprofile-instr-generate -fcoverage-mapping -I/${TARGET}/work/include \
         $d ${TARGET}/work/lib/libcpu_features_profile.a \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${DRIVER_FOLDER}/../profiles/${DRIVER_NAME%%.*}_profile"
