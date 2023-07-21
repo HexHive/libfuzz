@@ -27,11 +27,28 @@ export LIBFUZZ_LOG_PATH=$WORK/apipass
 
 echo "make 1"
 cd "$TARGET/repo"
+
+cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
+        -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_C_FLAGS_DEBUG="-fprofile-instr-generate -fcoverage-mapping -g" \
+        -DCMAKE_CXX_FLAGS_DEBUG="-fprofile-instr-generate -fcoverage-mapping -g"
+
+echo "make clean"
+make -j$(nproc) clean
+echo "make"
+make -j$(nproc)
+echo "make install"
+make install
+
+mv $WORK/lib/libcpu_features.a $WORK/lib/libcpu_features_profile.a
+
+
+
 cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
         -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_C_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g" \
-        -DCMAKE_CXX_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g" 
-        
+        -DCMAKE_CXX_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g"
+
 echo "make clean"
 make -j$(nproc) clean
 echo "make"
