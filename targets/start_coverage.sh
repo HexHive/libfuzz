@@ -10,8 +10,9 @@ PROJECT_COVERAGE=${LIBFUZZ}/workdir/${TARGET_NAME}/coverage_data
 rm -Rf ${PROJECT_COVERAGE} || true
 mkdir -p ${PROJECT_COVERAGE}
 
+REPO="/home/libfuzz/library/repo"
 FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
-SOURCES="$(find ./analysis/${TARGET_NAME}/repo -iname '*.h' -or -iname '*.cpp' -or -iname '*.c' -or -iname '*.cc')"
+SOURCES="$(find $REPO -iname '*.h' -or -iname '*.cpp' -or -iname '*.c' -or -iname '*.cc')"
 
 echo $DRIVER_FOLDER
 
@@ -36,11 +37,11 @@ do
     llvm-profdata-12 merge -sparse $PROJECT_COVERAGE/${DRIVER_NAME}.profraw -o $PROJECT_COVERAGE/${DRIVER_NAME}.profdata
     llvm-cov-12 show $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > show
     llvm-cov-12 report $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > report
-    # llvm-cov-12 report -show-functions $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata $SOURCES > functions
+    llvm-cov-12 report -show-functions $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata $SOURCES > functions
     llvm-cov-12 export -format=text $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > export.json
     mv show $DRIVER_COVERAGE
     mv report $DRIVER_COVERAGE
-    # mv functions $DRIVER_COVERAGE
+    mv functions $DRIVER_COVERAGE
     mv export.json $DRIVER_COVERAGE
 done
 
@@ -58,7 +59,7 @@ for d in $FUZZ_TARGETS; do
 done
 llvm-cov-12 show $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata > show
 llvm-cov-12 report $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata > report
-# llvm-cov-12 report -show-functions $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata $SOURCES > functions
+llvm-cov-12 report -show-functions $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata $SOURCES > functions
 mv show $PROJECT_COVERAGE
 mv report $PROJECT_COVERAGE
-# mv functions $PROJECT_COVERAGE
+mv functions $PROJECT_COVERAGE
