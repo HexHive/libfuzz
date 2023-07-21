@@ -22,12 +22,18 @@ CC=$LLVM_DIR/bin/clang
 
 echo "Compiling: ${DRIVER_FOLDER}/${DRIVER}.cc"
 
-# [TAG] FIRST LOOP FOR COMPILATION!!! 
+# [TAG] FIRST LOOP FOR COMPILATION!!!
 for d in `ls ${DRIVER_FOLDER}/${DRIVER}.cc`
 do
     echo "Driver: $d"
     # [TAG] THIS STEP MUST BE ADAPTED FOR EACH LIBRARY
+    # Compile driver for fuzzing
     $CXX -g -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
         $d ${TARGET}/work/lib/libtiff.a ${TARGET}/work/lib/libtiffxx.a \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
+
+    # Compile driver for coverage
+    $CXX -g -std=c++11  --fsanitize=fuzzer -fprofile-instr-generate -fcoverage-mapping \
+        -I/${TARGET}/work/include $d ${TARGET}/work/lib/libtiff.a ${TARGET}/work/lib/libtiffxx.a \
+        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${DRIVER_FOLDER}/../profiles/${DRIVER_NAME%%.*}_profile"
 done
