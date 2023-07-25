@@ -6,11 +6,11 @@ echo "[INFO] COVERAGE METRICS: ${TARGET_NAME}"
 
 
 PROJECT_COVERAGE=${LIBFUZZ}/workdir/${TARGET_NAME}/coverage_data
+DRIVER_FOLDER=${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
 
 rm -Rf ${PROJECT_COVERAGE} || true
 mkdir -p ${PROJECT_COVERAGE}
 
-REPO="/home/libfuzz/library/repo"
 FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
 SOURCES="$(find $REPO -iname '*.h' -or -iname '*.cpp' -or -iname '*.c' -or -iname '*.cc')"
 

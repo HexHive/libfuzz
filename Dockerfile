@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/var/cache/apt apt-get -q update && \
     bash-completion less apt-utils apt-transport-https curl  \
     ca-certificates gnupg dialog libpixman-1-dev gnuplot-nox \
     nodejs npm graphviz libtinfo-dev libz-dev zip unzip libclang-12-dev \
-    tmux tree gdb jq bc cloc ccache \
+    tmux tree gdb jq bc cloc ccache lsb-release \
     && rm -rf /var/lib/apt/lists/*
 
 # Clang dependencies
@@ -48,6 +48,9 @@ RUN --mount=type=cache,target=${CCACHE_DIR} mkdir -p ${CCACHE_DIR} && sudo -E ch
 
 RUN pip3 install ipython
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+RUN $HOME/.cargo/bin/cargo install casr
 
 ENV LIBFUZZ /workspaces/libfuzz
 
@@ -134,3 +137,10 @@ FROM libfuzzpp_fuzzing AS libfuzzpp_coverage
 
 WORKDIR ${LIBFUZZ}
 CMD ${LIBFUZZ}/targets/start_coverage.sh
+
+
+# TARGET FOR CRASH CLUSTERING
+FROM libfuzzpp_fuzzing AS libfuzzpp_crash_cluster
+
+WORKDIR ${LIBFUZZ}
+CMD ${LIBFUZZ}/targets/start_clustering.sh
