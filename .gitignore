@@ -74,3 +74,6 @@ tool/misc/extract_param_names/check_debug_info.py
 tool/misc/extract_param_names/param_names_extractor_tool.py
 tool/misc/extract_param_names/param_names_extractor.py
 condition_extractor/package-lock.json
+
+# Fuzzing Campaigns
+fuzzing_campaigns/workdir_*
