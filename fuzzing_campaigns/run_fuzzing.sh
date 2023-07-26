@@ -20,17 +20,18 @@ CPU_ID=0
 
 for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
     for napis in "${NUM_OF_APIs[@]}"; do
-        for i in $( eval echo {0..$ITERATIONS} ); do
+        for i in $( eval echo {1..$ITERATIONS} ); do
             for project in "${PROJECTS[@]}"; do
                 PROJECT_FOLDER="./workdir_${ndrivers}_${napis}/${project}"
                 DRIVER_FOLDER="${PROJECT_FOLDER}/drivers"
+                RESULTS_FOLDER="${PROJECT_FOLDER}/results/iter_${i}"
                 FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -maxdepth 1 -type f -executable -printf '%P\n')"
                 for fuzz_target in $FUZZ_TARGETS; do
                     echo "Fuzzing ${project}/${fuzz_target}"
 
                     DRIVER_CORPUS=${PROJECT_FOLDER}/corpus/${fuzz_target}
-                    DRIVER_CORNEW=${PROJECT_FOLDER}/corpus_new/${fuzz_target}
-                    CRASHES_DIR=${PROJECT_FOLDER}/crashes/${fuzz_target}
+                    DRIVER_CORNEW=${RESULTS_FOLDER}/corpus_new/${fuzz_target}
+                    CRASHES_DIR=${RESULTS_FOLDER}/crashes/${fuzz_target}
                     rm -Rf ${CRASHES_DIR} || true
                     rm -Rf ${DRIVER_CORNEW} || true
                     mkdir -p ${CRASHES_DIR}
@@ -50,18 +51,14 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                         -t $IMG_NAME \
                         timeout $TIMEOUT $FUZZ_BINARY $FUZZ_CORPUS -artifact_prefix=${CRASHES}/ -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 -fork=1
 
+                    CPU_ID=$(( CPU_ID + 1 ))
                     if [ $CPU_ID -eq $MAX_CPUs ]
                     then
                         echo "Running ${MAX_CPUs} fuzzers in parallel, sleeping for now."
                         sleep $TIMEOUT
                         CPU_ID=0
                     fi
-                    CPU_ID=$(( CPU_ID + 1 ))
                 done
-                RESULTS=${PROJECT_FOLDER}/iter_${i}
-                mkdir -p $RESULTS
-                mv ${PROJECT_FOLDER}/corpus_new $RESULTS/
-                mv ${PROJECT_FOLDER}/crashes $RESULTS/
             done
         done
     done
