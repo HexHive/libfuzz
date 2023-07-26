@@ -27,10 +27,27 @@ echo "make 1"
 cd "$TARGET/repo"
 ./autogen.sh
 echo "./configure"
+
+# Compile library for coverage
+./configure --disable-shared --prefix="$WORK" \
+        CXXFLAGS="-fprofile-instr-generate -fcoverage-mapping -g" \
+        CFLAGS="-fprofile-instr-generate -fcoverage-mapping -g"
+
+echo "make clean"
+make -j$(nproc) clean
+echo "make"
+make -j$(nproc)
+echo "make install"
+make install
+
+mv $WORK/lib/libtiff.a $WORK/lib/libtiff_profile.a
+mv $WORK/lib/libtiffxx.a $WORK/lib/libtiffxx_profile.a
+
+# Compile library for fuzzing
 ./configure --disable-shared --prefix="$WORK" \
         CXXFLAGS="-fsanitize=fuzzer-no-link,address -g" \
         CFLAGS="-fsanitize=fuzzer-no-link,address -g"
-        
+
 echo "make clean"
 make -j$(nproc) clean
 echo "make"

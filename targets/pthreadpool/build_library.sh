@@ -27,6 +27,24 @@ mkdir -p "$WORK/lib" "$WORK/include"
 echo "make 1"
 cd "$TARGET/repo"
 echo "cmake"
+# Compile library for coverage
+cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
+        -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_C_FLAGS_DEBUG="-fprofile-instr-generate -fcoverage-mapping -g" \
+        -DCMAKE_CXX_FLAGS_DEBUG="-fprofile-instr-generate -fcoverage-mapping -g" \
+        -DBENCHMARK_ENABLE_GTEST_TESTS=off \
+        -DBENCHMARK_ENABLE_INSTALL=off
+
+echo "make clean"
+make -j$(nproc) clean
+echo "make"
+make -j$(nproc)
+echo "make install"
+make install
+
+mv $WORK/lib/libpthreadpool.a $WORK/lib/libpthreadpool_profile.a
+
+
 cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
         -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_C_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g" \
@@ -40,5 +58,6 @@ echo "make"
 make -j$(nproc)
 echo "make install"
 make install
+
 
 echo "[INFO] Library installed in: $WORK"
