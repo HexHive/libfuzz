@@ -46,7 +46,7 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                         --cpuset-cpus $CPU_ID \
                         -d \
                         --name ${project}_${fuzz_target}_${ndrivers}_${napis}_${i} \
-                        -v .:/libfuzzpp \
+                        -v $(pwd):/libfuzzpp \
                         -t $IMG_NAME \
                         timeout $TIMEOUT $FUZZ_BINARY $FUZZ_CORPUS -artifact_prefix=${CRASHES}/ -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 -fork=1
 

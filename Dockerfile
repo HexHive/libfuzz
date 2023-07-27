@@ -149,3 +149,10 @@ FROM libfuzzpp_fuzzing AS libfuzzpp_crash_cluster
 
 WORKDIR ${LIBFUZZ}
 CMD ${LIBFUZZ}/targets/start_clustering.sh
+
+# ------------------------------------------------------------------------------------------------------------------
+# TARGET FOR FUZZING CAMPAIGNS
+FROM libfuzzpp_dev_image AS libfuzzpp_fuzzing_campaigns
+COPY LLVM/update-alternatives-clang.sh .
+RUN sudo ./update-alternatives-clang.sh 12 200
+WORKDIR ${LIBFUZZ}
