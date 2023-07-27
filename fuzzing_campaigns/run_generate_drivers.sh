@@ -19,6 +19,7 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
             # Dirty way to compile all drivers
             export TIMEOUT=0s
             ../docker/run_fuzzing.sh
+            rm -Rf workdir_${ndrivers}_${napis}/${project} || true
             mv ../workdir/${project} workdir_${ndrivers}_${napis}/${project}
         done
     done
