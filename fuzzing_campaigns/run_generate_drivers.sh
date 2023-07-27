@@ -10,7 +10,7 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
         echo "[generator]" > ../overwrite.toml
         echo "pool_size = ${ndrivers}" >> ../overwrite.toml
         echo "driver_size = ${napis}" >> ../overwrite.toml
-        echo "num_seeds = 20" >> ../overwrite.toml
+        echo "num_seeds = ${NUM_OF_SEEDS}" >> ../overwrite.toml
         mkdir -p workdir_${ndrivers}_${napis}
         for project in "${PROJECTS[@]}"; do
             export TARGET=$project
