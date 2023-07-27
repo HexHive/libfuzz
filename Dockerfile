@@ -140,6 +140,7 @@ FROM libfuzzpp_fuzzing AS libfuzzpp_coverage
 WORKDIR ${LIBFUZZ}
 ENV PROJECT_COVERAGE ${LIBFUZZ}/workdir/${TARGET_NAME}/coverage_data
 ENV DRIVER_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
+ENV CORPUS_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/corpus_new
 CMD ${LIBFUZZ}/targets/start_coverage.sh
 
 # ------------------------------------------------------------------------------------------------------------------

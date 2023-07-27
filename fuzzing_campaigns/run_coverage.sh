@@ -25,9 +25,9 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
             for project in "${PROJECTS[@]}"; do
                 PROJECT_FOLDER="/workspaces/libfuzz/fuzzing_campaigns/workdir_${ndrivers}_${napis}/${project}"
                 DRIVER_FOLDER="${PROJECT_FOLDER}/drivers"
-                RESULTS_FOLDER="${PROJECT_FOLDER}/results/iter_${i}"
+                CORPUS_FOLDER="${PROJECT_FOLDER}/results/iter_${i}/corpus_new"
                 COVERAGE_FOLDER="/workspaces/libfuzz/fuzzing_campaigns/workdir_${ndrivers}_${napis}/${project}/coverage_data/iter_${i}"
-                docker run --env DRIVER_FOLDER=${DRIVER_FOLDER} --env PROJECT_COVERAGE=${COVERAGE_FOLDER} --env TARGET=${project} \
+                docker run --env DRIVER_FOLDER=${DRIVER_FOLDER} --env PROJECT_COVERAGE=${COVERAGE_FOLDER} --env TARGET=${project} --env CORPUS_FOLDER=${CORPUS_FOLDER} \
                     -v $(pwd)/..:/workspaces/libfuzz $IMG_NAME
             done
         done
