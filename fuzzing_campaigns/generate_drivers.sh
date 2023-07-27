@@ -19,8 +19,8 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
             ../docker/run_drivergeneration.sh
 
             # Dirty way to compile all drivers
-            # export TIMEOUT=0s
-            TIMEOUT=0s ../docker/run_fuzzing.sh
+            export TIMEOUT=0s
+            ../docker/run_fuzzing.sh
             mv ../workdir/${project} workdir_${ndrivers}_${napis}/${project}
         done
     done

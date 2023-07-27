@@ -23,6 +23,7 @@ condition_extractor/node_modules/**/*
 *.ko
 *.obj
 *.elf
+*.bin
 
 # Linker output
 *.ilk
