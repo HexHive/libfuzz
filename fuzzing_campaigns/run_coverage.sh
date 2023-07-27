@@ -1,14 +1,12 @@
 #!/bin/bash -e
 
+source campaign_configuration.sh
+
 IMG_NAME="libpp-coverage"
 LIBPP=../
 
 echo "[INFO] Running: $IMG_NAME"
 
-export PROJECTS=( "cpu_features" ) # "minijail" "pthreadpool" "libtiff" )
-export NUM_OF_DRIVERS=( 5 ) # 10 20 )
-export NUM_OF_APIs=( 3 ) # 6 12 )
-export ITERATIONS=5
 
 for project in "${PROJECTS[@]}"; do
     set -x

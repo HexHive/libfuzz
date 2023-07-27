@@ -1,8 +1,6 @@
 #!/bin/bash
 
-export PROJECTS=( "cpu_features" "minijail" "pthreadpool" "libtiff" )
-export NUM_OF_DRIVERS=( 5 10 20 )
-export NUM_OF_APIs=( 3 6 12 )
+source campaign_configuration.sh
 
 mv ../overwrite.toml ../overwrite_backup.toml
 mv ../workdir ../workdir_backup 2> /dev/null
