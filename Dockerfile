@@ -138,6 +138,8 @@ CMD ${LIBFUZZ}/targets/start_fuzz_driver.sh
 FROM libfuzzpp_fuzzing AS libfuzzpp_coverage
 
 WORKDIR ${LIBFUZZ}
+ENV PROJECT_COVERAGE ${LIBFUZZ}/workdir/${TARGET_NAME}/coverage_data
+ENV DRIVER_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
 CMD ${LIBFUZZ}/targets/start_coverage.sh
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -146,10 +148,3 @@ FROM libfuzzpp_fuzzing AS libfuzzpp_crash_cluster
 
 WORKDIR ${LIBFUZZ}
 CMD ${LIBFUZZ}/targets/start_clustering.sh
-
-# ------------------------------------------------------------------------------------------------------------------
-# TARGET FOR FUZZING CAMPAIGNS
-FROM libfuzzpp_dev_image AS libfuzzpp_fuzzing_campaigns
-COPY LLVM/update-alternatives-clang.sh .
-RUN sudo ./update-alternatives-clang.sh 12 200
-WORKDIR ${LIBFUZZ}

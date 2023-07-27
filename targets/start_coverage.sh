@@ -4,9 +4,6 @@
 echo "[INFO] COVERAGE METRICS: ${TARGET_NAME}"
 
 
-
-PROJECT_COVERAGE=${LIBFUZZ}/workdir/${TARGET_NAME}/coverage_data
-DRIVER_FOLDER=${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
 REPO="/home/libfuzz/library/repo"
 
 
