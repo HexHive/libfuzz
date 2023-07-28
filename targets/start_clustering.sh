@@ -1,11 +1,10 @@
 #!/bin/bash
 
 
-echo "[INFO] COVERAGE METRICS: ${TARGET_NAME}"
+echo "[INFO] CLUSTERING: ${TARGET_NAME}"
 
 source "$HOME/.cargo/env"
 
-TARGET_WORKDIR=${LIBFUZZ}/workdir/${TARGET_NAME}
 DRIVER_FOLDER=${TARGET_WORKDIR}/drivers
 CRASHES=${TARGET_WORKDIR}/crashes
 OUTPUT=${TARGET_WORKDIR}/clusters

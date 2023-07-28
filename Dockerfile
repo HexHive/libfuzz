@@ -148,6 +148,7 @@ CMD ${LIBFUZZ}/targets/start_coverage.sh
 FROM libfuzzpp_fuzzing AS libfuzzpp_crash_cluster
 
 WORKDIR ${LIBFUZZ}
+ENV TARGET_WORKDIR ${LIBFUZZ}/workdir/${TARGET_NAME}
 CMD ${LIBFUZZ}/targets/start_clustering.sh
 
 # ------------------------------------------------------------------------------------------------------------------
