@@ -13,8 +13,9 @@ DOCKER_BUILDKIT=1 docker build \
 set +x
 
 
+let TOTAL_FUZZERS="$(IFS=+; echo "$((${NUM_OF_DRIVERS[*]}))")*${#NUM_OF_APIs[@]}*${#PROJECTS[@]}*ITERATIONS"
+COUNTER=0
 CPU_ID=0
-
 
 
 for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
@@ -49,11 +50,12 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                         -v $(pwd):/libfuzzpp \
                         -t $IMG_NAME \
                         timeout $TIMEOUT $FUZZ_BINARY $FUZZ_CORPUS -artifact_prefix=${CRASHES}/ -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 -fork=1
-
+                    COUNTER=$(( COUNTER + 1 ))
                     CPU_ID=$(( CPU_ID + 1 ))
                     if [ $CPU_ID -eq $MAX_CPUs ]
                     then
                         echo "Running ${MAX_CPUs} fuzzers in parallel, sleeping for now."
+                        echo "Total progress: ${COUNTER}/${TOTAL_FUZZERS}"
                         sleep $TIMEOUT
                         CPU_ID=0
                     fi
