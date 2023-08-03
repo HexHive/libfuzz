@@ -69,10 +69,14 @@ namespace libfuzz {
 
             llvm::PointerType *a_ptype = dyn_cast<llvm::PointerType>(a_type);
 
-            if (isa<llvm::FunctionType>(a_ptype->getPointerElementType())) {
-              this->flag = "fun";
+            if (a_ptype == nullptr) {
+                this->flag = "ref";
             } else {
-              this->flag = "ref";
+              if (isa<llvm::FunctionType>(a_ptype->getPointerElementType())) {
+                this->flag = "fun";
+              } else {
+                this->flag = "ref";
+              }
             }
 
           } else {

@@ -132,6 +132,8 @@ class CBFactory(Factory):
         rng_ctx = copy.deepcopy(rng_ctx)
         # context = rng_ctx.context
 
+        fun_name = api_call.function_name
+
         unsat_vars = set()
 
         # first round to initialize dependency args
@@ -168,7 +170,7 @@ class CBFactory(Factory):
                     rng_ctx.var_to_cond[x].len_depends_on = b_len
 
 
-        # if api_call.function_name == "TIFFGetField":
+        # if api_call.function_name == "vpx_codec_decode":
         #     print(f"hook {api_call.function_name}")
         #     # import pdb; pdb.set_trace()
         #     par_debug = 0
@@ -176,6 +178,8 @@ class CBFactory(Factory):
         #     arg_type = api_call.arg_types[par_debug]
         #     arg_cond = conditions.argument_at[par_debug]
         #     type = arg_type
+        #     tt = type.get_pointee_type()
+        #     cond = conditions.argument_at[par_debug]
         #     from IPython import embed; embed(); exit(1)
 
         # second round to initialize all the other args
@@ -189,24 +193,31 @@ class CBFactory(Factory):
                 if isinstance(arg_type, PointerType) and arg_type.to_function:
                     arg_var = rng_ctx.get_null_constant()
                 else:
-                    arg_var = rng_ctx.try_to_get_var(arg_type, arg_cond)
-                # if isinstance(arg_var, NullConstant):
-                #     print("isinstance(arg_var, NullConstant)")
-                #     from IPython import embed; embed(); exit(1)
+                    # arg_var = rng_ctx.try_to_get_var(arg_type, arg_cond, 
+                    #                                  fun_name, conditions, 
+                    #                                  arg_pos)
+                    arg_var = rng_ctx.try_to_get_var(api_call, conditions, 
+                                                     arg_pos)
                 api_call.set_pos_arg_var(arg_pos, arg_var)
-            except ConditionUnsat:
+            except ConditionUnsat as ex:
+                # if api_call.function_name == "vpx_codec_get_frame":
+                #     print(f"Unsat for {api_call.function_name}")
+                #     from IPython import embed; embed(); exit(1)
                 unsat_vars.add((arg_pos, arg_cond))
         
-        ret_ats = conditions.return_at
+        ret_cond = conditions.return_at
         ret_type = api_call.ret_type
         try:
             if isinstance(ret_type, PointerType) and ret_type.to_function:
                 ret_var = rng_ctx.get_null_constant()
             else:
-                ret_var = rng_ctx.try_to_get_var(ret_type, ret_ats, True)
+                # ret_var = rng_ctx.try_to_get_var(ret_type, ret_cond,
+                #                                  fun_name, conditions,
+                #                                  -1)
+                ret_var = rng_ctx.try_to_get_var(api_call, conditions, -1)
             api_call.set_ret_var(ret_var)
         except ConditionUnsat:
-            unsat_vars.add((-1, ret_ats))
+            unsat_vars.add((-1, ret_cond))
         
         if len(unsat_vars) != 0:
             return (None, unsat_vars)
@@ -216,7 +227,7 @@ class CBFactory(Factory):
             rng_ctx.update(api_call.arg_vars[arg_pos], arg_cond)
 
         if api_call.ret_var is not None:
-            rng_ctx.update(api_call.ret_var, ret_ats,  True)
+            rng_ctx.update(api_call.ret_var, ret_cond,  True)
 
         # I might have other pending vars to include
         # e.g., for controlling arrays length

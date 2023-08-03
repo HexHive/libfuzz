@@ -1,10 +1,10 @@
 from typing import List, Set, Dict, Tuple, Optional
 
-import random, copy, string
+import random, copy, string, traceback
 
 from driver import Context
 from driver.ir import Variable, Type, Value, PointerType, AllocType, CleanBuffer
-from driver.ir import Address, NullConstant, Buffer, ConstStringDecl
+from driver.ir import Address, NullConstant, Buffer, ConstStringDecl, ApiCall
 from driver.ir import BuffDecl, BuffInit, FileInit, Statement, DynArrayInit
 from driver.ir import SetStringNull, TypeTag
 from . import Conditions
@@ -144,10 +144,24 @@ class RunningContext(Context):
 
         # TODO: handle dependency fields here?
 
-    def try_to_get_var(self, type: Type, cond: ValueMetadata,
-                        is_ret: bool = False) -> Value:
+    # def try_to_get_var(self, type: Type, cond: ValueMetadata, api_name: Api,
+    #                     arg_pos: int) -> Value:
+    def try_to_get_var(self, api_call: ApiCall, api_cond: FunctionConditions,
+                       arg_pos: int) -> Value:
 
-        # if isinstance(type, PointerType) and type.get_base_type().token == "bstr" and not is_ret:
+        # my convention: arg_pos -1 => return value
+        is_ret = arg_pos == -1
+
+        if is_ret:
+            cond = api_cond.return_at
+            type = api_call.ret_type
+        else:
+            cond = api_cond.argument_at[arg_pos]
+            type = api_call.arg_types[arg_pos]
+
+    
+        # if (isinstance(type, PointerType) and 
+        #     type.get_base_type().token == "a_context_t" and api_call.function_name == "use_context"):
         #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
 
@@ -198,23 +212,37 @@ class RunningContext(Context):
             new_buff = self.create_new_var(self.stub_char_array, cond, False)
             val = new_buff.get_address()
         else:
+            raise_an_exception = False
+
             # print("else:")
             if isinstance(type, PointerType):
                 tt = type.get_pointee_type()  
             else:
                 tt = type
+
             # TODO: check if the ats allow to generate an object
-            if (not is_ret and 
-                (tt.is_incomplete or 
-                 (tt.tag == TypeTag.STRUCT and 
-                  not DataLayout.is_fuzz_friendly(tt.token)))):
-                raise ConditionUnsat()
+            if not is_ret:
+                if tt.is_incomplete:
+                    # raise ConditionUnsat()
+                    raise_an_exception = True
+                if tt.tag == TypeTag.STRUCT:
+                    if (not self.is_init_api(api_call, api_cond, arg_pos) and
+                        not DataLayout.is_fuzz_friendly(tt.token)):
+                        # raise ConditionUnsat()
+                        raise_an_exception = True
+                # print(f"{tt}is not fuzz friendly")
+                # from IPython import embed; embed(); exit(1)
+                # raise ConditionUnsat()
             elif ((not Conditions.is_unconstraint(cond) or
                 tt.is_incomplete) and 
                 not DataLayout.has_user_define_init(tt.token)):
-                # print()
+                # print(f"no has_user_define_init for {tt}")
                 # from IPython import embed; embed(); exit(1)
-                raise ConditionUnsat()
+                # raise ConditionUnsat()
+                raise_an_exception = True
+            
+            if raise_an_exception:
+                raise ConditionUnsat(traceback.format_stack())
             else:
                 val = self.create_new_var(type, cond, is_ret)
                 if (isinstance(val, Variable) and 
@@ -257,6 +285,42 @@ class RunningContext(Context):
             self.const_strings[var] = file_name
 
         return val
+    
+    def is_init_api(self, api_call: ApiCall, api_cond: FunctionConditions, 
+                    arg_pos: int):
+        
+        # api_name = api_call.function_name
+        # if api_name == "init_a_context" and arg_pos == 1:
+        #     from IPython import embed; embed(); exit(1)
+
+        if arg_pos == -1:
+            cond = api_cond.return_at
+        else:
+            cond = api_cond.argument_at[arg_pos] 
+
+        if len(cond.setby_dependencies) == 0:
+            return False
+
+        arg_ok = 0
+        for d in cond.setby_dependencies:
+            p_idx = int(d.replace("param_", ""))
+            d_type = api_call.arg_types[p_idx]
+            d_cond = api_cond.argument_at[p_idx]
+
+            if self.has_vars_type(d_type, d_cond):
+                arg_ok += 1
+            elif d_type.tag == TypeTag.STRUCT:
+                tt = d_type
+                if isinstance(d_type, PointerType):
+                    tt = d_type.get_base_type()
+                if (DataLayout.is_fuzz_friendly(tt.get_token()) or
+                    not tt.is_incomplete):
+                    arg_ok += 1
+            elif d_type.tag == TypeTag.PRIMITIVE:
+                arg_ok += 1
+
+        # the idea is that I can control all the dependncies
+        return arg_ok == len(cond.setby_dependencies)
 
     def create_dependency_length_variable(self):
         len_type = Type("size_t", DataLayout.get_type_size("size_t"))
@@ -672,6 +736,17 @@ class RunningContext(Context):
             if x.get_alloctype() in [AllocType.HEAP, AllocType.GLOBAL]:
                 continue
 
+            # TODO: check if the ats allow to generate an object
+            if (isinstance(t, PointerType)  and 
+                t.get_base_type().tag == TypeTag.STRUCT and 
+                not DataLayout.is_fuzz_friendly(t.get_base_type().token)):
+                # if "vpx_codec_dec_cfg_t" in t.token:
+                #     # continue
+                #     print(f"{t} is not fuzz friendly")
+                #     from IPython import embed; import traceback; embed(); exit(1)
+                #     # raise ConditionUnsat()
+                continue
+
             fix_buff.add(x)
 
         return var_buff, dyn_buff, fix_buff
@@ -681,6 +756,9 @@ class RunningContext(Context):
         buff_init = []
 
         var_buff, dyn_byff, fix_buff = self.get_fixed_and_dynamic_buffers()
+
+        # print("generate_buffer_init")
+        # from IPython import embed; embed(); exit(1)
 
         for x in fix_buff:
             t = x.get_type()
@@ -780,4 +858,5 @@ class RunningContext(Context):
         
 class ConditionUnsat(Exception):
     """ConditionUnsat, can't find a suitable variable in the RunningContext"""
-    pass
+    def __init__(self, ctx):
+        self.ctx = ctx

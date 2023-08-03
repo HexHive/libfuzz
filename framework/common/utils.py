@@ -374,9 +374,10 @@ class Utils:
         is_file_path = mdata_json["is_file_path"]
         is_malloc_size = mdata_json["is_malloc_size"]
         len_depends_on = mdata_json["len_depends_on"]
+        set_by = mdata_json["set_by"]
 
         return ValueMetadata(ats, is_array, is_malloc_size, 
-                is_file_path, len_depends_on)
+                is_file_path, len_depends_on, set_by)
 
     @staticmethod
     def get_access_type(at_json) -> AccessType:

@@ -69,9 +69,7 @@ LDFLAGS="$CXXFLAGS" LD=$CXX $TARGET/repo/configure \
     --size-limit=12288x12288 \
     --extra-cflags="${extra_c_flags}" \
     --disable-webm-io \
-    --enable-debug \
-    --disable-vp8-encoder \
-    --disable-vp9-encoder
+    --enable-debug 
 make -j all
 make install
 popd

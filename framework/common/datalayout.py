@@ -86,14 +86,18 @@ class DataLayout:
         
         if not known_type:
             if function_name not in DataLayout.apis_llvm:
-                return 0
+                raise Exception(f"{function_name} is not in DataLayout.apis_llvm")
 
             (type_llvm, size_llvm) = DataLayout.get_llvm_type(function_name, pos)
 
             if is_original and size_llvm != -1:
                 t_size = size_llvm
             else:
-                type_llvm = type_llvm.replace("*", "")
+                # type_llvm = type_llvm.replace("*", "")
+
+                # I remove only the last *, if it exists
+                if type_llvm[-1] == "*":
+                    type_llvm = type_llvm[:-1]
                 if type_llvm in DataLayout.incomplete_types:
                     t_size = 0
                 elif type_llvm in DataLayout.data_layout:
@@ -122,13 +126,27 @@ class DataLayout:
         t_size = t_size = DataLayout.multi_level_size_infer(tmp_type, function_name, arg_pos, is_original)
         DataLayout.layout[tmp_type] = t_size
 
+
+        if type_clang == "vpx_codec_err_t":
+            # print(f"debug size {type_clang}")
+            # from IPython import embed; embed(); exit(1)
+            print(f"[DEBUG] size of {type_clang} is {DataLayout.layout[type_clang]}")
+            print(f"[DEBUG] in fun {function_name}[{arg_pos}]")
+
+            if DataLayout.layout[type_clang] == 0:
+                from IPython import embed; embed(); exit(1)
+
+    @staticmethod
+    def is_a_pointer(type) -> bool:
+        return "*" in type
+
     @staticmethod
     def infer_type_size(type) -> int:
         # given a clang-like type, try to infer its size
         # NOTE: table written for x86 64
 
         # any pointer is 8 byes in x86 64
-        if "*" in type:
+        if DataLayout.is_a_pointer(type):
             return 8*8
         elif type == "float":
             return 4*8
@@ -174,7 +192,27 @@ class DataLayout:
 
     @staticmethod
     def is_a_struct(a_type: str) -> bool:
-        return a_type in DataLayout.clang_to_llvm_struct
+
+        if a_type not in DataLayout.clang_to_llvm_struct:
+            return False
+        
+        a_llvm = DataLayout.clang_to_llvm_struct[a_type]
+
+        if DataLayout.is_a_pointer(a_llvm):
+            return False
+        
+        return True
+
+        # return a_type in DataLayout.clang_to_llvm_struct
+
+    @staticmethod
+    def is_primitive_type(a_type: str) -> bool:
+        return not DataLayout.is_a_struct(a_type)
+        # try:
+        #     DataLayout.infer_type_size(a_type)
+        #     return True
+        # except:
+        #     return False
     
     @staticmethod
     def is_fuzz_friendly(a_type: str) -> bool:
@@ -201,14 +239,6 @@ class DataLayout:
 
         # 2nd position -> can feed from fuzzing seeds
         return DataLayout.data_layout[llvm_type][2]
-
-    @staticmethod
-    def is_primitive_type(a_type: str) -> bool:
-        try:
-            DataLayout.infer_type_size(a_type)
-            return True
-        except:
-            return False
 
     @staticmethod
     def has_incomplete_type() -> bool:
