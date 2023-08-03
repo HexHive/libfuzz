@@ -27,7 +27,9 @@ def get_argument_info(type):
 
     # this trick expands typedef into their real types
     atd = type.get_declaration()
-    if atd.kind.is_declaration() and "::" not in type.spelling:
+    if (atd.kind.is_declaration() and 
+        "::" not in type.spelling and 
+        atd.underlying_typedef_type.spelling != ""):
         type_str = atd.underlying_typedef_type.spelling
     else:
         type_str = type.spelling
