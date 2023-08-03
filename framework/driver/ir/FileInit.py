@@ -2,12 +2,11 @@ from abc import ABC, abstractmethod
 from typing import List, Set, Dict, Tuple, Optional
 
 from . import Statement, Type, Variable, Buffer
+from common import DataLayout
 
 class FileInit(Statement):
     buffer:     Buffer
     len_var:    Variable
-
-    size_types = ["size_t", "int", "uint32_t", "uint64_t"]
 
     def __init__(self, buffer, len_var):
         super().__init__()
@@ -18,7 +17,7 @@ class FileInit(Statement):
         if buff_type.get_token() != "char*":
             raise Exception(f"FileInit expects \"char*\" as buffer, \"{buff_type}\" given instead")
 
-        if len_type.get_token() not in FileInit.size_types:
+        if len_type.get_token() not in DataLayout.size_types:
             raise Exception(f"FileInit expects \"size_t\" as len_Var, \"{len_type}\" given instead")
 
         self.buffer = buffer
