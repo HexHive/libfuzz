@@ -10,13 +10,26 @@ type_incomplete = set()    # List of incomplete types
 apis_definition = []       # List of APIs with original argument types and extra info (e.g., const)
 type_enum = set()
 
+def find_api(api, apis_definition):
+    # from IPython import embed; embed(); exit(1)
+    api_hash = str(api)
+    if api_hash == "{}":
+        return True
+    for a in apis_definition:
+        a_hash = str(a)
+        if api_hash == a_hash:
+            return True
+    return False
+
 def get_argument_info(type):
 
     info = {}
 
     # this trick expands typedef into their real types
     atd = type.get_declaration()
-    if atd.kind.is_declaration() and "::" not in type.spelling:
+    if (atd.kind.is_declaration() and 
+        "::" not in type.spelling and 
+        atd.underlying_typedef_type.spelling != ""):
         type_str = atd.underlying_typedef_type.spelling
     else:
         type_str = type.spelling
@@ -52,6 +65,8 @@ def get_api(node, namespace):
         function_name = node.displayname[:node.displayname.index("(")]
     except ValueError:
         print(f"Cant find '(' in {node.displayname}")
+        function_name = node.displayname
+        # from IPython import embed; embed(); exit(1)
         return {}
     api_obj["function_name"] = function_name
     api_obj["namespace"] = copy.deepcopy(namespace)
@@ -109,7 +124,9 @@ def traverse(node, include_folder, namespace):
     if (node.type.kind == clang.cindex.TypeKind.FUNCTIONPROTO and 
         include_folder in str(node.location.file)):
         function_declarations.append(node)
-        apis_definition.append(get_api(node, namespace))
+        api = get_api(node, namespace)
+        if not find_api(api, apis_definition):
+            apis_definition.append(api)
         # from IPython import embed; embed(); exit(1)
 
     # type of size -2 is a special case for incomplete types
