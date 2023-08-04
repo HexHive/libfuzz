@@ -168,13 +168,15 @@ class CBFactory(Factory):
                     rng_ctx.var_to_cond[x].len_depends_on = b_len
 
 
-        # if api_call.function_name == "TIFFGetField":
+        # if api_call.function_name == "htp_get_version":
         #     print(f"hook {api_call.function_name}")
         #     # import pdb; pdb.set_trace()
         #     par_debug = 0
-        #     is_ret = False
-        #     arg_type = api_call.arg_types[par_debug]
-        #     arg_cond = conditions.argument_at[par_debug]
+        #     is_ret = True
+        #     # arg_type = api_call.arg_types[par_debug]
+        #     # arg_cond = conditions.argument_at[par_debug]
+        #     arg_type = api_call.ret_type
+        #     arg_cond = conditions.return_at
         #     type = arg_type
         #     from IPython import embed; embed(); exit(1)
 
