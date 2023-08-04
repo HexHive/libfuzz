@@ -15,6 +15,8 @@ class DataLayout:
     # layout:     Dict[str, int]
     # structs:    Set[str]
     # enum:       Set[str]
+    
+    size_types = ["size_t", "int", "uint32_t", "uint64_t", "__uint32_t"]
 
     @staticmethod
     def populate(apis_clang_p: str, apis_llvm_p: str,
