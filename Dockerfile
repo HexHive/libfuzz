@@ -70,7 +70,7 @@ RUN cd SVF && ./setup.sh
 COPY ./requirements.txt ${HOME}/python/requirements.txt
 RUN cd ${HOME}/python && python3 -m pip install -r requirements.txt
 
-
+# ------------------------------------------------------------------------------------------------------------------
 # TARGET FOR LIBRARY ANALYSIS
 FROM libfuzzpp_dev_image AS libfuzzpp_analysis
 
@@ -93,6 +93,7 @@ ENV PATH $PATH:${HOME}/.local/bin
 RUN echo $PATH
 CMD ${LIBFUZZ}/targets/start_analysis.sh
 
+# ------------------------------------------------------------------------------------------------------------------
 # TARGET FOR DRIVER GENERATION
 FROM libfuzzpp_dev_image AS libfuzzpp_drivergeneration
 
@@ -102,6 +103,7 @@ ARG target_name=simple_connection
 WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
 CMD ${LIBFUZZ}/targets/start_generate_drivers.sh
 
+# ------------------------------------------------------------------------------------------------------------------
 # TARGET FOR FUZZING SESSION
 FROM libfuzzpp_dev_image AS libfuzzpp_fuzzing
 
@@ -131,16 +133,27 @@ RUN ./build_library.sh
 WORKDIR ${LIBFUZZ}
 CMD ${LIBFUZZ}/targets/start_fuzz_driver.sh
 
-
+# ------------------------------------------------------------------------------------------------------------------
 # TARGET FOR COVERAGE
 FROM libfuzzpp_fuzzing AS libfuzzpp_coverage
 
 WORKDIR ${LIBFUZZ}
+ENV PROJECT_COVERAGE ${LIBFUZZ}/workdir/${TARGET_NAME}/coverage_data
+ENV DRIVER_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
+ENV CORPUS_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/corpus_new
 CMD ${LIBFUZZ}/targets/start_coverage.sh
 
-
+# ------------------------------------------------------------------------------------------------------------------
 # TARGET FOR CRASH CLUSTERING
 FROM libfuzzpp_fuzzing AS libfuzzpp_crash_cluster
 
 WORKDIR ${LIBFUZZ}
+ENV TARGET_WORKDIR ${LIBFUZZ}/workdir/${TARGET_NAME}
 CMD ${LIBFUZZ}/targets/start_clustering.sh
+
+# ------------------------------------------------------------------------------------------------------------------
+# TARGET FOR FUZZING CAMPAIGNS
+FROM libfuzzpp_dev_image AS libfuzzpp_fuzzing_campaigns
+COPY LLVM/update-alternatives-clang.sh .
+RUN sudo ./update-alternatives-clang.sh 12 200
+WORKDIR ${LIBFUZZ}

@@ -4,9 +4,6 @@
 echo "[INFO] COVERAGE METRICS: ${TARGET_NAME}"
 
 
-
-PROJECT_COVERAGE=${LIBFUZZ}/workdir/${TARGET_NAME}/coverage_data
-DRIVER_FOLDER=${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
 REPO="/home/libfuzz/library/repo"
 
 
@@ -24,8 +21,8 @@ do
     echo "COVERAGE: ${DRIVER_NAME}"
 
     DRIVER_COVERAGE=${PROJECT_COVERAGE}/${DRIVER_NAME}
-    DRIVER_COR=${LIBFUZZ}/workdir/${TARGET_NAME}/corpus_new/${DRIVER_NAME}
-    DRIVER_CORMIN=${LIBFUZZ}/workdir/${TARGET_NAME}/corpus_mini/${DRIVER_NAME}
+    DRIVER_COR=${CORPUS_FOLDER}/${DRIVER_NAME}
+    DRIVER_CORMIN=${CORPUS_FOLDER}/../corpus_mini/${DRIVER_NAME}
     mkdir -p $DRIVER_CORMIN
     mkdir -p $DRIVER_COVERAGE
 

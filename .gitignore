@@ -23,6 +23,7 @@ condition_extractor/node_modules/**/*
 *.ko
 *.obj
 *.elf
+*.bin
 
 # Linker output
 *.ilk
@@ -74,4 +75,8 @@ tool/misc/extract_param_names/check_debug_info.py
 tool/misc/extract_param_names/param_names_extractor_tool.py
 tool/misc/extract_param_names/param_names_extractor.py
 condition_extractor/package-lock.json
-regression_tests/condition_extractor/test_malloc2/.gdb_history
+
+
+# Fuzzing Campaigns
+fuzzing_campaigns/workdir_*
+
