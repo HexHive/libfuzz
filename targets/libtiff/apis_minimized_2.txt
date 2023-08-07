@@ -1,4 +1,3 @@
-TIFFOpen
-TIFFGetField
-TIFFTileSize64
-TIFFClose
+TIFFWarning
+TIFFRegisterCODEC
+TIFFUnRegisterCODEC

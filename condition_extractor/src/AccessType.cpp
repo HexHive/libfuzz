@@ -13,6 +13,8 @@ bool ValueMetadata::consider_indirect_calls = false;
 // NOT EXPOSED FUNCTIONS -- THESE FUNCTIONS ARE MEANT FOR ONLY INTERNAL USAGE!
 bool areConnected(const VFGNode*, const VFGNode*);
 std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
+std::set<const VFGNode*> getDefinitionSetForRet(const VFGNode*,
+    std::set<const SVFFunction*>*);
 bool areCompatible(FunctionType*,FunctionType*);
 bool handlerDispatcher(ValueMetadata*, std::string,
     const ICFGNode*, const CallICFGNode*, int, AccessType, H_SCOPE h_scope);
@@ -107,6 +109,9 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
 
     Type *retType = fun->getReturnType();
 
+    if (!SVFUtil::isa<llvm::PointerType>(retType))
+        return mdata;
+
     PHIFun phi;
     PHIFunInv phi_inv;
     getPhiFunction(svfModule, icfg, &phi, &phi_inv);  
@@ -115,6 +120,8 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
     // std::set<const Value*> allocainst_set;
     std::set<const Instruction*> allocainst_set;
     // std::set<const Value*> bitcastinst_set;
+
+    std::set<const SVFFunction*> visited_functions;
 
     // how many alloca?
     FunEntryICFGNode *entry_node = icfg->getFunEntryICFGNode(svfun);
@@ -185,19 +192,19 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                 allocainst_set.insert(inst);
             }
 
-            if (callee != nullptr) {
-                std::string fun = callee->getName();
-                // malloc handler
-                AccessType acNode(retType);
-                handlerDispatcher(&mdata, fun, node, call_node, -1, 
-                                    acNode, C_RETURN);
+            // if (callee != nullptr) {
+            //     std::string fun = callee->getName();
+            //     // malloc handler
+            //     AccessType acNode(retType);
+            //     handlerDispatcher(&mdata, fun, node, call_node, -1, 
+            //                         acNode, C_RETURN);
 
-                for (unsigned p = 0; p < ftype->getNumParams(); p++) {
-                    handlerDispatcher(&mdata, fun, node, call_node, p, 
-                                        acNode, C_RETURN);
-                }
+            //     for (unsigned p = 0; p < ftype->getNumParams(); p++) {
+            //         handlerDispatcher(&mdata, fun, node, call_node, p, 
+            //                             acNode, C_RETURN);
+            //     }
 
-            }
+            // }
         }  
 
         // We'll go throught the children and add unknown ones to our work list.
@@ -255,6 +262,83 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
     }
     // We have visited all the nodes
 
+    for (auto v: visited)
+        visited_functions.insert(v->getFun());
+
+    auto pXX = fun_exit->getFormalRet();
+    const VFGNode* XX = vfg->getDefSVFGNode(pXX);
+
+    // outs() << "[INFO] Visited " << visited_functions.size() << " functions\n";
+    // for (auto f: visited_functions)
+    //     outs() << "fun: " << f->getName() << "\n";
+
+    // std::set<const VFGNode*> defA = getDefinitionSet(XX);
+    std::set<const VFGNode*> defA = getDefinitionSetForRet(
+        XX, &visited_functions);
+
+    // outs() << "ORIGINAL RETURN:\n";
+    // outs() << XX->toString() << "\n";
+    // outs() << "DEFINITION:\n";
+    for (auto n: defA) {
+
+        if (auto s = SVFUtil::dyn_cast<StmtVFGNode>(n)) {
+            auto svfinst = s->getInst();
+            if (svfinst == nullptr)
+                continue;
+            auto llvminst = llvmModuleSet->getLLVMValue(svfinst);
+
+            // outs() << n->toString() << "\n";
+            // outs() << "LLVM inst:\n";
+            // outs() << *llvminst << "\n";
+            // outs() << "Fun:\n";
+            // outs() << n->getFun()->getName() << "\n";
+            // outs() << "-----\n";
+
+            auto pagedge = s->getPAGEdge();
+            auto node = pagedge->getICFGNode();
+
+            if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
+
+                // outs() << "This comes from a call\n";
+                // Handling calls
+                if (!consider_indirect_calls && call_node->isIndirectCall())
+                        continue;
+
+                auto callee = SVFUtil::getCallee(call_node->getCallSite());
+
+                auto svfinst_cs = call_node->getCallSite();
+                auto llvmins_cs = llvmModuleSet->getLLVMValue(svfinst);
+
+                auto inst = SVFUtil::dyn_cast<CallBase>(llvmins_cs);
+                // // outs() << "[INFO] callinst2 " << *inst << "\n";
+                FunctionType *ftype = inst->getFunctionType();
+                // if (ftype->getReturnType() == retType) {
+                //     // outs() << "[INFO] => type ok!\n";
+                //     // alloca_set.insert(vfgnode);
+                //     allocainst_set.insert(inst);
+                // }
+
+                if (callee != nullptr) {
+                    std::string fun = callee->getName();
+                    // malloc handler
+                    AccessType acNode(retType);
+                    handlerDispatcher(&mdata, fun, node, call_node, -1, 
+                                        acNode, C_RETURN);
+
+                    for (unsigned p = 0; p < ftype->getNumParams(); p++) {
+                        handlerDispatcher(&mdata, fun, node, call_node, p, 
+                                            acNode, C_RETURN);
+                    }
+
+                }
+            }
+
+        }
+
+    }
+    // outs() << "DONE!\n";
+    // exit(0);
+
     // outs() << "[INFO] extractParameterMetadata part\n";
 
     // outs() << "mdata [1] " << mdata.getSummary();
@@ -267,7 +351,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
     // std::map<const Instruction*, AccessTypeSet> all_ats;
     std::map<const Instruction*, ValueMetadata> all_ats;
     for (auto a: allocainst_set) {
-        // outs() << "[INFO] paraAT() " << *a << " -- ";
+        // outs() << "[INFO] paramAT() " << *a << " -- ";
         // outs() << a->getFunction()->getName().str() << "\n";
         ValueMetadata mdata = ValueMetadata::extractParameterMetadata(
             vfg, a, retType);
@@ -308,8 +392,10 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
     // outs() << "Get Summary:\n";
     // I just merge all!
     for (auto el: all_ats) {
-        // outs() << el.first->getFunction()->getName().str() << " ";
+        // outs() << "Func: " << el.first->getFunction()->getName().str() << "\n";
+        // outs() << "Inst: " << *el.first << "\n";
         // outs() << el.second.getSummary();
+        // outs() << "----\n";
          for (auto atx:  *el.second.getAccessTypeSet())
             for (auto inst: atx.getICFGNodes())
                 ats->insert(atx, inst);
@@ -446,6 +532,41 @@ std::string ValueMetadata::extractDependentParameter(
 
 
     return dependent_param;
+}
+
+std::set<const VFGNode*> getDefinitionSetForRet(const VFGNode *n, std::set<const SVFFunction*> *vf) {
+
+    std::set<const VFGNode*> definitions;
+
+    std::set<const VFGNode*> visited;
+    std::vector<const VFGNode*> worklist;
+
+    worklist.push_back(n);
+    while(!worklist.empty()) {
+        auto n = worklist.back();
+        worklist.pop_back();
+        if (visited.find(n) != visited.end())
+            continue;
+        if (SVFUtil::isa<GepVFGNode>(n))
+            continue;
+        auto fun = n->getFun();
+        // I am visiting a non-visted function, skip it
+        if (vf->find(fun) == vf->end())
+            continue;
+        int n_parents = 0;
+        for(auto in: n->getInEdges()) {
+            auto pn = in->getSrcNode();
+            worklist.push_back(pn);
+            n_parents++;
+            
+        }
+        // Maybe select some classes, e.g., alloca, param
+        if (n_parents == 0) 
+            definitions.insert(n);
+        visited.insert(n);
+    }
+
+    return definitions;
 }
 
 std::set<const VFGNode*> getDefinitionSet(const VFGNode *n) {
