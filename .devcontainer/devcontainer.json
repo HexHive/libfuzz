@@ -14,6 +14,9 @@
 		"target": "libfuzzpp_dev_image"
 	},
 
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/libfuzz,type=bind",
+	"workspaceFolder": "/workspaces/libfuzz"
+
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
