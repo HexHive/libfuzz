@@ -164,28 +164,6 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                     allocainst_set.insert(bitcastinst);
                     // bitcastinst_set.insert(bitcastinst);
                 }
-            } else if (auto retinst = SVFUtil::dyn_cast<ReturnInst>(llvminst)) {
-                auto retval = retinst->getReturnValue();
-                if (retval->getType() == retType) {
-                    // outs() << "[INFO] retinst " << *retinst << "\n";
-
-                    if (SVFUtil::isa<GlobalValue>(retval)) {
-                        // outs() << "[INFO] I am returning a global value:\n";
-                        // outs() << *retval << "\n";
-
-                        AccessType tmpAcNode(retType);
-                        tmpAcNode.addField(-1);
-                        tmpAcNode.setAccess(AccessType::Access::write);
-                        mdata.getAccessTypeSet()->insert
-                            (tmpAcNode, intra_stmt);
-
-                    }
-
-                    // outs() << "[INFO] => type ok!\n";
-                    // alloca_set.insert(vfgnode);
-                    // allocainst_set.insert(retinst);
-                    // bitcastinst_set.insert(bitcastinst);
-                }
             }
         }
         else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
