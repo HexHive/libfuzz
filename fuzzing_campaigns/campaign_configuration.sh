@@ -1,0 +1,9 @@
+#!/bin/bash
+
+export PROJECTS=( "cpu_features" "minijail" "pthreadpool" "libtiff" "libhtp" )
+export NUM_OF_DRIVERS=( 5 10 20 )
+export NUM_OF_APIs=( 3 6 12 )
+export NUM_OF_SEEDS=20
+export TIMEOUT=5m
+export ITERATIONS=3
+export MAX_CPUs=$(($(nproc) - 1))

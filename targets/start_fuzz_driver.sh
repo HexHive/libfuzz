@@ -9,7 +9,7 @@ fi
 
 echo "[INFO] DRIVER_FOLDER: ${DRIVER_FOLDER}"
 
-for d in ` find ${DRIVER_FOLDER} -type f -executable -name "${DRIVER}"`
+for d in `find ${DRIVER_FOLDER} -type f -executable -name "${DRIVER}"`
 do
     echo $d
     DRIVER_NAME=$(basename $d)
@@ -24,7 +24,7 @@ do
 
     # make a copy of initial corpus
     cp -r ${DRIVER_CORPUS}/* ${DRIVER_CORNEW}/
-    
+
     # # THIS IS WITH STANDARD MODE -- STOP AT THE FIRST CRASHE
     # timeout $TIMEOUT $d ${DRIVER_CORPUS} \
     #     -artifact_prefix=${CRASHES_DIR}/ || echo "Done: $d"

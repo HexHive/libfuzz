@@ -3,24 +3,24 @@
 FROM ubuntu:20.04 AS libfuzzpp_dev_image
 
 RUN --mount=type=cache,target=/var/cache/apt apt-get -q update && \
-    DEBIAN_FRONTEND="noninteractive" \ 
+    DEBIAN_FRONTEND="noninteractive" \
     apt-get -y install --no-install-suggests --no-install-recommends \
     sudo make ninja-build texinfo bison zsh ccache autoconf libtool \
-    zlib1g-dev liblzma-dev libjpeg-turbo8-dev automake cmake nasm \ 
+    zlib1g-dev liblzma-dev libjpeg-turbo8-dev automake cmake nasm \
     build-essential git openssh-client python3 python3-dev \
     python3-setuptools python-is-python3 python3-venv python3-pip \
     libtool libtool-bin libglib2.0-dev wget vim jupp nano \
     bash-completion less apt-utils apt-transport-https curl  \
     ca-certificates gnupg dialog libpixman-1-dev gnuplot-nox \
     nodejs npm graphviz libtinfo-dev libz-dev zip unzip libclang-12-dev \
-    tmux tree gdb jq bc cloc ccache \
+    tmux tree gdb jq bc cloc ccache lsb-release \
     && rm -rf /var/lib/apt/lists/*
 
 # Clang dependencies
 RUN --mount=type=cache,target=/var/cache/apt apt-get update && apt-get full-upgrade -y && \
-    DEBIAN_FRONTEND="noninteractive" \ 
+    DEBIAN_FRONTEND="noninteractive" \
     apt-get -y install --no-install-suggests --no-install-recommends \
-        gcc g++ libncurses5 
+        gcc g++ libncurses5
 
 
 ARG USERNAME=libfuzz
@@ -49,17 +49,20 @@ RUN --mount=type=cache,target=${CCACHE_DIR} mkdir -p ${CCACHE_DIR} && sudo -E ch
 RUN pip3 install ipython
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+RUN $HOME/.cargo/bin/cargo install casr
+
 ENV LIBFUZZ /workspaces/libfuzz
 
 RUN --mount=type=cache,target=/var/cache/apt sudo apt-get update && sudo apt-get full-upgrade -y && \
-    DEBIAN_FRONTEND="noninteractive" \ 
+    DEBIAN_FRONTEND="noninteractive" \
     sudo apt-get -y install --no-install-suggests --no-install-recommends \
         gcc g++ libncurses5  clang-12 llvm-12-dev
 
 # SVF
 
 RUN --mount=type=cache,target=${HOME}/.ccache/ git clone https://github.com/SVF-tools/SVF.git && \
-    cd SVF && \ 
+    cd SVF && \
     sed -i 's/jobs=4/jobs=/g' build.sh && \
     ./build.sh
 RUN cd SVF && ./setup.sh
@@ -67,7 +70,7 @@ RUN cd SVF && ./setup.sh
 COPY ./requirements.txt ${HOME}/python/requirements.txt
 RUN cd ${HOME}/python && python3 -m pip install -r requirements.txt
 
-
+# ------------------------------------------------------------------------------------------------------------------
 # TARGET FOR LIBRARY ANALYSIS
 FROM libfuzzpp_dev_image AS libfuzzpp_analysis
 
@@ -75,12 +78,12 @@ ENV TOOLS_DIR ${HOME}
 
 RUN mkdir -p ${TOOLS_DIR}/condition_extractor/
 RUN mkdir -p ${TOOLS_DIR}/tool/misc/
-RUN sudo apt-get install zlib1g-dev unzip cmake gcc g++ libtinfo5 nodejs 
+RUN sudo apt-get install zlib1g-dev unzip cmake gcc g++ libtinfo5 nodejs
 COPY --chown=${USERNAME}:${USERNAME} ./condition_extractor ${TOOLS_DIR}/condition_extractor/
 COPY --chown=${USERNAME}:${USERNAME} ./tool/misc/extract_included_functions.py ${TOOLS_DIR}/tool/misc/
 # ENV SVF_DIR /home/libfuzz/SVF
 # ENV LLVM_DIR /home/libfuzz/SVF
-RUN cd ${TOOLS_DIR}/condition_extractor && rm -Rf CMakeCache.txt CMakeFiles && ./bootstrap.sh && make -j 
+RUN cd ${TOOLS_DIR}/condition_extractor && rm -Rf CMakeCache.txt CMakeFiles && ./bootstrap.sh && make -j
 
 # NOTE: start_analysis.sh finds out its configuration automatically
 
@@ -90,6 +93,7 @@ ENV PATH $PATH:${HOME}/.local/bin
 RUN echo $PATH
 CMD ${LIBFUZZ}/targets/start_analysis.sh
 
+# ------------------------------------------------------------------------------------------------------------------
 # TARGET FOR DRIVER GENERATION
 FROM libfuzzpp_dev_image AS libfuzzpp_drivergeneration
 
@@ -99,6 +103,7 @@ ARG target_name=simple_connection
 WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
 CMD ${LIBFUZZ}/targets/start_generate_drivers.sh
 
+# ------------------------------------------------------------------------------------------------------------------
 # TARGET FOR FUZZING SESSION
 FROM libfuzzpp_dev_image AS libfuzzpp_fuzzing
 
@@ -117,13 +122,38 @@ ENV DRIVER_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
 # I want to install the library at building time, so later I only need to build
 # the drivers
 WORKDIR ${LIBFUZZ}/targets/${TARGET_NAME}
-COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/preinstall.sh ${LIBFUZZ}/targets/${TARGET_NAME}  
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/preinstall.sh ${LIBFUZZ}/targets/${TARGET_NAME}
 RUN sudo ./preinstall.sh
-COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/fetch.sh ${LIBFUZZ}/targets/${TARGET_NAME}  
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/fetch.sh ${LIBFUZZ}/targets/${TARGET_NAME}
 RUN ./fetch.sh
-COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/build_library.sh ${LIBFUZZ}/targets/${TARGET_NAME}  
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/build_library.sh ${LIBFUZZ}/targets/${TARGET_NAME}
 RUN ./build_library.sh
 
 # NOTE: start_fuzz_driver.sh finds out its configuration automatically
 WORKDIR ${LIBFUZZ}
 CMD ${LIBFUZZ}/targets/start_fuzz_driver.sh
+
+# ------------------------------------------------------------------------------------------------------------------
+# TARGET FOR COVERAGE
+FROM libfuzzpp_fuzzing AS libfuzzpp_coverage
+
+WORKDIR ${LIBFUZZ}
+ENV PROJECT_COVERAGE ${LIBFUZZ}/workdir/${TARGET_NAME}/coverage_data
+ENV DRIVER_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
+ENV CORPUS_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/corpus_new
+CMD ${LIBFUZZ}/targets/start_coverage.sh
+
+# ------------------------------------------------------------------------------------------------------------------
+# TARGET FOR CRASH CLUSTERING
+FROM libfuzzpp_fuzzing AS libfuzzpp_crash_cluster
+
+WORKDIR ${LIBFUZZ}
+ENV TARGET_WORKDIR ${LIBFUZZ}/workdir/${TARGET_NAME}
+CMD ${LIBFUZZ}/targets/start_clustering.sh
+
+# ------------------------------------------------------------------------------------------------------------------
+# TARGET FOR FUZZING CAMPAIGNS
+FROM libfuzzpp_dev_image AS libfuzzpp_fuzzing_campaigns
+COPY LLVM/update-alternatives-clang.sh .
+RUN sudo ./update-alternatives-clang.sh 12 200
+WORKDIR ${LIBFUZZ}

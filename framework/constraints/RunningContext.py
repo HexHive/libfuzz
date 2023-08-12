@@ -463,12 +463,18 @@ class RunningContext(Context):
                 v = NullConstant(tt)
             # a vector
             elif a_choice == Context.POINTER_STRATEGY_ARRAY:
+                # print("elif a_choice == Context.POINTER_STRATEGY_ARRAY:")
                 pick_random = random.getrandbits(1) == 0
 
                 if not self.has_vars_type(type, cond):
+                    # print("self.has_vars_type")
                     pick_random = False
-                elif not DataLayout.is_fuzz_friendly(tt.token):
-                    pick_random = True
+                elif (tt.tag == TypeTag.STRUCT and
+                      not DataLayout.is_fuzz_friendly(tt.token)):
+                    # print("not DataLayout.is_fuzz_friendly")
+                    # if tt.token == "char":
+                    #     from IPython import embed; embed(); exit(1)
+                    pick_random = True                
                 # elif not is_incomplete:
                 #     pick_random = False
                 # elif is_ret:
@@ -476,8 +482,10 @@ class RunningContext(Context):
 
                 vp = None
                 if pick_random:
+                    # print("self.get_random_buffer")
                     vp = self.get_random_buffer(type, cond)
                 else:
+                    # print("self.create_new_buffer")
                     vp = self.create_new_buffer(type, cond, is_ret)
                  
                 if vp is None:
