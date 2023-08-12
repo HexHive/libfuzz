@@ -1,9 +1,3 @@
 vpx_codec_dec_init_ver
-vpx_codec_enc_init_ver
-vpx_codec_error
-vpx_codec_get_frame
-vpx_codec_peek_stream_info
-vpx_codec_version
-vpx_codec_version_extra_str
 vpx_codec_vp9_dx
-vpx_img_free
+vpx_codec_destroy
