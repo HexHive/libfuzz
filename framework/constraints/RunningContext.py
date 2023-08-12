@@ -192,7 +192,8 @@ class RunningContext(Context):
                     not type.is_incomplete):
                     val = self.randomly_gimme_a_var(type, cond, is_ret)
                 else:
-                    raise ConditionUnsat()
+                    # raise ConditionUnsat()
+                    raise ConditionUnsat(traceback.format_stack())
         elif self.has_vars_type(type, cond):
             # print("elif self.has_vars_type(type, cond):")
             # val = self.get_value_that_satisfy(type, cond)

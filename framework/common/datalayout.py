@@ -41,6 +41,10 @@ class DataLayout:
         # loop all the types in apis_clang (args + ret) and try to infer all the
         # types
         for function_name, api in apis_clang.items():
+
+            if function_name not in DataLayout.apis_llvm:
+                continue
+
             # if function_name == "GetX86CacheInfo":
             #     from IPython import embed; embed(); exit(1)
             for arg_pos, arg in enumerate(api["arguments_info"]):
@@ -128,15 +132,10 @@ class DataLayout:
         t_size = t_size = DataLayout.multi_level_size_infer(tmp_type, function_name, arg_pos, is_original)
         DataLayout.layout[tmp_type] = t_size
 
-
-        if type_clang == "vpx_codec_err_t":
-            # print(f"debug size {type_clang}")
-            # from IPython import embed; embed(); exit(1)
-            print(f"[DEBUG] size of {type_clang} is {DataLayout.layout[type_clang]}")
-            print(f"[DEBUG] in fun {function_name}[{arg_pos}]")
-
-            if DataLayout.layout[type_clang] == 0:
-                from IPython import embed; embed(); exit(1)
+        # if DataLayout.layout[type_clang] == 0:
+        #     print(f"[DEBUG] size of {type_clang} is {DataLayout.layout[type_clang]}")
+        #     print(f"[DEBUG] in fun {function_name}[{arg_pos}]")
+        # from IPython import embed; embed(); exit(1)
 
     @staticmethod
     def is_a_pointer(type) -> bool:

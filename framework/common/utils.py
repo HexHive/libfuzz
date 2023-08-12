@@ -146,8 +146,10 @@ class Utils:
 
                 ret_args = [a for a in arguments_info if a["flag"] == "ret"]
 
-                if len(ret_args) > 1:
-                    raise Exception(f"Function {function_name} has more than 1 ret argument, that's weird")
+                if len(ret_args) > 1 and return_info["type"] == "void":
+                    print(f"[INFO] skip {function_name},  has something wrong!")
+                    continue
+                    # raise Exception(f"Function {function_name} has more than 1 ret argument, that's weird")
 
                 if len(ret_args) == 1 and return_info["type"] == "void":
                     r = ret_args[0]
