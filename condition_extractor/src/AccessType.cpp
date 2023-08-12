@@ -173,7 +173,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                 }
             }
         }
-         else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
+        else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
             // Handling calls
             if (!consider_indirect_calls && call_node->isIndirectCall())
                     continue;
@@ -405,7 +405,79 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
 
 }
 
-std::string ValueMetadata::extractDependentParameter(
+std::vector<std::string> ValueMetadata::extractDependencyAmongParameters(
+    const SVF::SVFVar* current_parm, ValueMetadata* mdata, SVF::SVFG* svfg, 
+    const SVFFunction* fun) {
+
+    LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
+
+    std::set<std::string> set_by;
+
+    SVFIR* pag = SVFIR::getPAG();
+
+    PAG::FunToArgsListMap funmap_par = pag->getFunArgsMap();
+    PAG::SVFVarList fun_params = funmap_par[fun]; 
+    
+    auto ats = mdata->getAccessTypeSet();
+    auto ats_it = ats->begin();
+    auto ats_end = ats->end();
+    for (; ats_it != ats_end; ++ats_it) {
+        auto at = *ats_it;
+        // outs() << at.toString() << "\n";
+        if (at.getAccess() == AccessType::Access::write) {
+            // outs() << at.toString() << "\n";
+            // outs() << "the instructions:\n";
+            for (auto node: at.getICFGNodes()) {
+
+                auto* intra_n = SVFUtil::dyn_cast<IntraICFGNode>(node);
+                if (intra_n == nullptr)
+                    continue;
+
+                auto* inst = intra_n->getInst();
+                auto* llvm_inst = llvmModuleSet->getLLVMValue(inst);
+
+                auto* store_inst = SVFUtil::dyn_cast<StoreInst>(llvm_inst);
+                if (store_inst == nullptr)
+                    continue;
+
+                auto src = store_inst->getValueOperand();
+
+                // outs() << *store_inst << "\n";
+                // outs() << *src << "\n";
+
+                auto llvm_val = llvmModuleSet->getSVFValue(src);
+                PAGNode* pS = pag->getGNode(pag->getValueNode(llvm_val));
+                const VFGNode* vS = svfg->getDefSVFGNode(pS);
+
+                unsigned int p_idx = 0;
+                for (auto p: fun_params) {
+                    if (p == current_parm) {
+                        p_idx++;
+                        continue;
+                    }
+                    PAGNode* pP = pag->getGNode(pag->getValueNode(
+                        p->getValue()));
+                    const VFGNode* vP = svfg->getDefSVFGNode(pP);
+
+                    if (areConnected(vP,vS)) {
+                        set_by.insert("param_" + std::to_string(p_idx));
+                    }
+
+                    p_idx++;
+                }
+
+            }
+        }
+    }    
+
+    std::vector<std::string> set_by_list;
+    for (auto d: set_by)
+        set_by_list.push_back(d);
+
+    return set_by_list;
+}
+
+std::string ValueMetadata::extractLenDependencyParameter(
     const SVF::SVFVar* current_parm, ValueMetadata* mdata, SVF::SVFG* svfg, 
     const SVFFunction* fun) {
 
@@ -1014,7 +1086,8 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                         // it is a direct call, check for stubs
                         } else {
                             if (!cs->isIndirectCall()) {
-                                std::string fun = SVFUtil::getCallee(cs->getCallSite())->getName();
+                                std::string fun = SVFUtil::getCallee(
+                                    cs->getCallSite())->getName();
 
                                 // outs() << "[DEBUG] I found this function: " 
                                 //        << fun << "\n";

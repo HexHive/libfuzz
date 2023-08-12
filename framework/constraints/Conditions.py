@@ -11,6 +11,7 @@ class Conditions:
     is_malloc_size: bool
     is_file_path: bool
     len_depends_on: Variable
+    setby_dependencies: List[Variable]
     
     def __init__(self, mdata: ValueMetadata):
         self.ats = AccessTypeSet()
@@ -19,6 +20,7 @@ class Conditions:
         self.is_malloc_size = mdata.is_malloc_size
         self.is_file_path = mdata.is_file_path
         self.len_depends_on = None 
+        self.setby_dependencies = None
 
     def get_sub_fields(self, f_prev):
         f_prev_len = len(f_prev)
@@ -30,7 +32,8 @@ class Conditions:
 
     def is_compatible_with(self, r_cond: ValueMetadata) -> bool:
 
-        if self.is_array != r_cond.is_array:
+        # if self.is_array != r_cond.is_array:
+        if not (self.is_array >= r_cond.is_array):
             return False
 
         if self.is_file_path != r_cond.is_file_path:

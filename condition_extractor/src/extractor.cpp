@@ -396,7 +396,24 @@ int main(int argc, char ** argv)
         ValueMetadata::debug_condition = DebugCondition;
     }
 
+    if (Options::WriteAnder() == "ir_annotator")
+    {
+        LLVMModuleSet::getLLVMModuleSet()->preProcessBCs(moduleNameVec);
+    }
+
+    LLVMModuleSet* llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
+    SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
+
     ValueMetadata::consider_indirect_calls = doIndJump;
+
+    // I extract all the function names from the LLVM module
+    std::set<std::string> functions_llvm;
+    for (const SVFFunction* svfFun : svfModule->getFunctionSet() ){
+        auto llvm_val = llvmModuleSet->getLLVMValue(svfFun);
+        const llvm::Function* F = SVFUtil::dyn_cast<Function>(llvm_val);
+        StringRef function_name = F->getName();
+        functions_llvm.insert(function_name.str());
+    }
 
     // std::vector<std::string> functions;
     std::set<std::string> functions;
@@ -419,8 +436,12 @@ int main(int argc, char ** argv)
                     << reader.getFormattedErrorMessages();
                 exit(1);
             }
-            // functions.push_back(root["funcompareTypes(t1, t2)ction_name"].asString());
-            functions.insert(root["function_name"].asString());
+
+            // some clang functions are the result of macro expansion
+            // they are not present in the llvm module
+            std::string function_name = root["function_name"].asString();
+            if (functions_llvm.find(function_name) != functions_llvm.end())
+                functions.insert(function_name);
         }
 
         f.close();
@@ -433,14 +454,6 @@ int main(int argc, char ** argv)
 
     if (OutputType == OutType::stdo)
         SVFUtil::outs() << "[WARNING] outputting in stdout, ignoring OutputFile\n";
-
-    if (Options::WriteAnder() == "ir_annotator")
-    {
-        LLVMModuleSet::getLLVMModuleSet()->preProcessBCs(moduleNameVec);
-    }
-
-    LLVMModuleSet* llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
-    SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
 
     // Dump LLVM apis function per function
     for(const SVFFunction* svfFun : svfModule->getFunctionSet() ){
@@ -581,15 +594,23 @@ int main(int argc, char ** argv)
                 // functionResult[param_key] = paramMetadata.toJson();
 
                 if (paramMetadata.isArray()) {
-                    auto depends_on = ValueMetadata::extractDependentParameter(
+                    auto depends_on = 
+                        ValueMetadata::extractLenDependencyParameter(
                         p, &paramMetadata, svfg, fun);
 
                     if (depends_on != "")
                         paramMetadata.setLenDependency(depends_on);
                 }
 
-                fun_conds.addParameterMetadata(paramMetadata);
+                // // find "generic" dependencies between parameters
+                auto set_by_vect = 
+                    ValueMetadata::extractDependencyAmongParameters(
+                            p, &paramMetadata, svfg, fun);
 
+                for (auto d: set_by_vect)
+                    paramMetadata.addSetByDependency(d);
+            
+                fun_conds.addParameterMetadata(paramMetadata);
             }
         }
 
@@ -597,6 +618,9 @@ int main(int argc, char ** argv)
             const SVFFunction *fun = x.first;
             if ( fun->getName() != f)
                 continue;
+
+            SVFUtil::outs() << "[INFO] processing return for: " << 
+                        fun->getName() << "\n";
 
             auto p = x.second;
             if (verbose >= Verbosity::v1)

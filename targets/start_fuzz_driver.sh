@@ -2,6 +2,11 @@
 
 ${LIBFUZZ}/targets/${TARGET_NAME}/compile_driver.sh
 
+if [ "$TIMEOUT" -eq "0" ]; then
+	echo "No Timeout, just compile"
+	exit 0
+fi
+
 echo "[INFO] DRIVER_FOLDER: ${DRIVER_FOLDER}"
 
 for d in `find ${DRIVER_FOLDER} -type f -executable -name "${DRIVER}"`

@@ -85,14 +85,17 @@ class ValueMetadata:
     is_malloc_size: bool
     is_file_path: bool
     len_depends_on: str
+    setby_dependencies: List[str]
 
     def __init__(self, ats: AccessTypeSet, is_array: bool, 
-        is_malloc_size: bool, is_file_path: bool, len_depends_on: str):
+        is_malloc_size: bool, is_file_path: bool, len_depends_on: str, 
+        setby_dependencies: List[str]):
         self.ats = ats
         self.is_array = is_array
         self.is_malloc_size = is_malloc_size
         self.is_file_path = is_file_path
         self.len_depends_on = len_depends_on
+        self.setby_dependencies = setby_dependencies
 
     def __str__(self):
         return f"ValueMetadata(ats={len(self.ats.access_type_set)})"
@@ -102,7 +105,8 @@ class ValueMetadata:
 
     def __hash__(self):
         return hash((self.ats, self.is_array, self.is_malloc_size, 
-            self.is_file_path, self.len_depends_on))
+            self.is_file_path, self.len_depends_on, 
+            "".join(self.setby_dependencies)))
 
     def __eq__(self, other):
         return hash(self) == hash(other)

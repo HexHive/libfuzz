@@ -64,7 +64,7 @@ RUN --mount=type=cache,target=/var/cache/apt sudo apt-get update && sudo apt-get
 RUN --mount=type=cache,target=${HOME}/.ccache/ git clone https://github.com/SVF-tools/SVF.git && \
     cd SVF && \
     sed -i 's/jobs=4/jobs=/g' build.sh && \
-    ./build.sh debug
+    ./build.sh
 RUN cd SVF && ./setup.sh
 
 COPY ./requirements.txt ${HOME}/python/requirements.txt

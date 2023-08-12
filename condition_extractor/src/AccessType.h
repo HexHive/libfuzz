@@ -581,6 +581,7 @@ class ValueMetadata {
     bool is_malloc_size;
     bool is_file_path;
     std::string len_depends_on;
+    std::vector<std::string> set_by;
 
     const llvm::Value* val;
     std::vector<llvm::Value*> indexes;
@@ -624,6 +625,9 @@ class ValueMetadata {
         void setLenDependency(std::string p_dep) {len_depends_on = p_dep;}
         std::string getLenDependency() {return len_depends_on;}
 
+        void addSetByDependency(std::string p_dep) {set_by.push_back(p_dep);}
+        std::vector<std::string> getSetByDependency() {return set_by;}
+
 
         Json::Value toJson(bool verbose) {
 
@@ -634,6 +638,12 @@ class ValueMetadata {
             medataResult["is_malloc_size"] = this->is_malloc_size;
             medataResult["is_file_path"] = this->is_file_path;
             medataResult["len_depends_on"] = this->len_depends_on;
+
+            Json::Value setByJson(Json::arrayValue);
+            for (auto d: this->set_by)
+                setByJson.append(d);
+
+            medataResult["set_by"] = setByJson;
 
             return medataResult;
         }
@@ -648,6 +658,12 @@ class ValueMetadata {
             sstream << "is_file_path: " 
                     << std::to_string(this->is_file_path) << "\n";
             sstream << "len_depends_on: " << this->len_depends_on << "\n";
+
+            std::string set_by_str = "";
+            for (auto d: this->set_by)
+                set_by_str += d + " ";
+
+            sstream << "set_by: " << set_by_str << "\n";
             sstream << "access_type_set:\n" << ats.toString(verbose) << "\n";
 
             return sstream.str();
@@ -705,7 +721,9 @@ class ValueMetadata {
             const SVFG*, const Value*, const Type*);
         static ValueMetadata extractReturnMetadata(
             const SVFG*, const Value*);
-        static std::string extractDependentParameter(
+        static std::string extractLenDependencyParameter(
+            const SVF::SVFVar*, ValueMetadata*, SVF::SVFG*, const SVFFunction*);
+        static std::vector<std::string> extractDependencyAmongParameters(
             const SVF::SVFVar*, ValueMetadata*, SVF::SVFG*, const SVFFunction*);
 };
 

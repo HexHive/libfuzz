@@ -146,8 +146,10 @@ class Utils:
 
                 ret_args = [a for a in arguments_info if a["flag"] == "ret"]
 
-                if len(ret_args) > 1:
-                    raise Exception(f"Function {function_name} has more than 1 ret argument, that's weird")
+                if len(ret_args) > 1 and return_info["type"] == "void":
+                    print(f"[INFO] skip {function_name},  has something wrong!")
+                    continue
+                    # raise Exception(f"Function {function_name} has more than 1 ret argument, that's weird")
 
                 if len(ret_args) == 1 and return_info["type"] == "void":
                     r = ret_args[0]
@@ -374,9 +376,10 @@ class Utils:
         is_file_path = mdata_json["is_file_path"]
         is_malloc_size = mdata_json["is_malloc_size"]
         len_depends_on = mdata_json["len_depends_on"]
+        set_by = mdata_json["set_by"]
 
         return ValueMetadata(ats, is_array, is_malloc_size, 
-                is_file_path, len_depends_on)
+                is_file_path, len_depends_on, set_by)
 
     @staticmethod
     def get_access_type(at_json) -> AccessType:

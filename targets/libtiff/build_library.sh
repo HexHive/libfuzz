@@ -45,9 +45,9 @@ mv $WORK/lib/libtiffxx.a $WORK/lib/libtiffxx_profile.a
 
 # Compile library for fuzzing
 ./configure --disable-shared --prefix="$WORK" \
-        CXXFLAGS="-fsanitize=fuzzer-no-link,address -g" \
-        CFLAGS="-fsanitize=fuzzer-no-link,address -g"
-
+        CXXFLAGS="-fsanitize=fuzzer-no-link,address" \
+        CFLAGS="-fsanitize=fuzzer-no-link,address"
+        
 echo "make clean"
 make -j$(nproc) clean
 echo "make"

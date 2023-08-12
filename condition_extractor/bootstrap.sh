@@ -6,4 +6,5 @@ set -e
 # cmake .
 export PATH=$LLVM_DIR/bin:$PATH
 export CXXFLAGS="-Wno-deprecated-declarations -Wfatal-errors"
+# cmake -DCMAKE_BUILD_TYPE=Release .
 cmake -DCMAKE_BUILD_TYPE=Debug .

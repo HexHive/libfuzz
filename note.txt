@@ -1,3 +1,5 @@
+jq -c '.[] | select(.function_name == "vpx_codec_dec_init_ver")' conditions.json
+
 /workspaces/libfuzz/condition_extractor/bin/extractor library.o.bc -interface /workspaces/libfuzz/regression_tests/condition_extractor/test_simpleapi/apis_clang.json -t json -output library.json -v v1 -dom
 
 
