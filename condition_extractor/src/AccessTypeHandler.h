@@ -212,6 +212,9 @@ bool memset_hander(ValueMetadata *mdata, std::string fun_name,
 
     LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
 
+    // outs() << "memset_hander\n";
+    // outs() << icfgNode->toString() << "\n";
+
     if (param_num == 0 && atNode.getNumFields() == 0 && scope & C_PARAM) {
         
         AccessType tmpAcNode = atNode;
@@ -224,6 +227,14 @@ bool memset_hander(ValueMetadata *mdata, std::string fun_name,
         auto i = SVFUtil::dyn_cast<CallBase>(llvm_val);
         Value *v = i->getArgOperand(2);
         mdata->addFunParam(v);
+
+        if (auto par_const =dyn_cast<ConstantInt>(i->getArgOperand(1))) {
+            uint64_t actual_const = par_const->getZExtValue();
+            if (actual_const == 0) {
+                atNode.setAccess(AccessType::Access::del);
+                mdata->getAccessTypeSet()->insert(atNode, icfgNode);
+            }
+        }
 
         addWrteToAllFields(mdata, atNode, icfgNode);
     }

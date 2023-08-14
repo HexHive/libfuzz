@@ -32,5 +32,5 @@ do
     # THIS IS WITH FORK-MODE -- KEEP GOING TILL SOMEONE KILLS IT
     (sleep $TIMEOUT && pkill ${DRIVER_NAME}) &
     $d ${DRIVER_CORNEW} -artifact_prefix=${CRASHES_DIR}/ -ignore_crashes=1 \
-        -ignore_timeouts=1 -ignore_ooms=1 -fork=1 || echo "Done: $d"
+        -ignore_timeouts=1 -ignore_ooms=1 -detect_leaks=0 -fork=1 || echo "Done: $d"
 done

@@ -283,7 +283,13 @@ class LFBackendDriver(BackendDriver):
         # from IPython import embed; embed(); exit(1)
 
         extra_brackets = "[0]" * num_extra_brackets
-        return f"if ({v}{extra_brackets} != 0) {cleanup_method}({v}{extra_brackets});"
+
+        # buffers in stack and heap have different handling
+        if buff.alloctype == AllocType.STACK:
+            v_stack = self.clean_token(buff.token)
+            return f"{cleanup_method}({v_stack});"
+        elif buff.alloctype == AllocType.HEAP:
+            return f"if ({v}{extra_brackets} != 0) {cleanup_method}({v}{extra_brackets});"
 
     # ConstStringDecl
     def conststringdecl_emit(self, cnststrdecl: ConstStringDecl) -> str:

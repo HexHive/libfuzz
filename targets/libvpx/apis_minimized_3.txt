@@ -1,3 +1,7 @@
+vpx_codec_vp8_dx
 vpx_codec_dec_init_ver
-vpx_codec_vp9_dx
+vpx_codec_control
+mem_get_le32
+vpx_codec_decode
+vpx_codec_get_frame
 vpx_codec_destroy

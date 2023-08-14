@@ -16,9 +16,7 @@ class DataLayout:
     # structs:    Set[str]
     # enum:       Set[str]
     
-    size_types = ["size_t", "int", "uint32_t", "uint64_t", "__uint32_t"]
-
-    size_types = ["size_t", "int", "uint32_t", "uint64_t", "__uint32_t"]
+    size_types = ["size_t", "int", "uint32_t", "uint64_t", "__uint32_t", "unsigned int"]
 
     @staticmethod
     def populate(apis_clang_p: str, apis_llvm_p: str,
@@ -261,4 +259,24 @@ class DataLayout:
         # # if a_type == "UriUriA":
         # #     return True
         
+        return False
+
+    @staticmethod
+    def is_incomplete(a_type: str) -> bool:
+        
+        tmp_type = "%" + a_type
+
+        # # removing trailing stars
+        # x = tmp_type
+        # while x[-1] == "*":
+        #     x = x[:-1]
+
+        if "void" in tmp_type:
+            # print("is void?")
+            # from IPython import embed; embed(); exit(1)
+            return True
+
+        if tmp_type in DataLayout.incomplete_types:
+            return True
+
         return False

@@ -24,7 +24,7 @@ class Factory(ABC):
         arguments_info = api.arguments_info
         namespace = api.namespace
 
-        # if function_name in ["GetX86CacheInfo", "TIFFOpen"]:
+        # if function_name in ["TIFFSetClientInfo"]:
         #     print(f"api_to_apicall: {function_name}")
         #     from IPython import embed; embed(); exit(1)
 
@@ -65,6 +65,7 @@ class Factory(ABC):
         # NOTE: a_size comes wrong from LLVM analysis, I use this trick to fix
         # the size
         a_size = DataLayout.get_type_size(a_type_core)
+        a_incomplete_core = DataLayout.is_incomplete(a_type_core)
 
         type_tag = TypeTag.PRIMITIVE
         if DataLayout.is_a_struct(a_type_core):
@@ -72,7 +73,7 @@ class Factory(ABC):
             # from IPython import embed; embed(); exit(1)
             type_tag = TypeTag.STRUCT
             
-        type_core = Type(a_type_core, a_size, a_is_incomplete, a_is_const, type_tag)
+        type_core = Type(a_type_core, a_size, a_incomplete_core, a_is_const, type_tag)
 
         return_type = type_core
         for x in range(1, pointer_level + 1):

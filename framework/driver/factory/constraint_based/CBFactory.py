@@ -8,7 +8,7 @@ from constraints import ConditionUnsat, RunningContext
 from dependency import DependencyGraph
 from driver import Context, Driver
 from driver.factory import Factory
-from driver.ir import ApiCall, PointerType, Variable, TypeTag
+from driver.ir import ApiCall, PointerType, Variable, TypeTag, AllocType
 from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
 from constraints import Conditions
 
@@ -170,15 +170,15 @@ class CBFactory(Factory):
                     rng_ctx.var_to_cond[x].len_depends_on = b_len
 
 
-        # if api_call.function_name == "htp_get_version":
+        # if api_call.function_name == "vpx_codec_dec_init_ver":
         #     print(f"hook {api_call.function_name}")
         #     # import pdb; pdb.set_trace()
         #     par_debug = 0
-        #     is_ret = True
-        #     # arg_type = api_call.arg_types[par_debug]
-        #     # arg_cond = conditions.argument_at[par_debug]
-        #     arg_type = api_call.ret_type
-        #     arg_cond = conditions.return_at
+        #     is_ret = False
+        #     arg_type = api_call.arg_types[par_debug]
+        #     arg_cond = conditions.argument_at[par_debug]
+        #     # arg_type = api_call.ret_type
+        #     # arg_cond = conditions.return_at
         #     type = arg_type
         #     tt = type.get_pointee_type()
         #     cond = conditions.argument_at[par_debug]
@@ -359,13 +359,15 @@ class CBFactory(Factory):
                 statements_apicall += [AssertNull(var.get_buffer())]
             cond = get_cond(api_call)
             for cond_pos, cond_arg in enumerate(cond.argument_at):
-                if RunningContext.is_sink(cond_arg):
+                if (RunningContext.is_sink(cond_arg) and 
+                    len(api_call.arg_types) == 1):
                     arg = api_call.arg_vars[cond_pos]
                     if isinstance(arg, Address):
                         buff = arg.get_variable().get_buffer()
                     elif isinstance(arg, Variable):
                         buff = arg.get_buffer()
-                    statements_apicall += [SetNull(buff)]
+                    if buff.alloctype == AllocType.HEAP:
+                        statements_apicall += [SetNull(buff)]
             # if RunningContext.is_sink(api_call.ret_type, PointerType):
 
         # print("Before ")
