@@ -9,57 +9,57 @@
 
 extern "C" {
 
-iface_t global_a_struct;
+// iface_t global_a_struct;
 
-iface_t* get_a_struct() {
-	return &global_a_struct;
-}
-void init_a_context(iface_t *a, a_context_t *ctx, int x, short flag) {
+// iface_t* get_a_struct() {
+// 	return &global_a_struct;
+// }
+// void init_a_context(iface_t *a, a_context_t *ctx, int x, short flag) {
 
-	if (flag == 0)
-		return;
+// 	if (flag == 0)
+// 		return;
 
-	ctx->m_iface = a;
-	ctx->field_x = x;
-}
+// 	ctx->m_iface = a;
+// 	ctx->field_x = x;
+// }
 
-int use_context( a_context_t *ctx, int x) {
-	if (ctx == nullptr) 
-		return 0;
+// int use_context( a_context_t *ctx, int x) {
+// 	if (ctx == nullptr) 
+// 		return 0;
 
-	if (ctx->m_iface->field_a == 0)
-		return 0;
+// 	if (ctx->m_iface->field_a == 0)
+// 		return 0;
 
-	return ctx->field_x == x;
-}
+// 	return ctx->field_x == x;
+// }
 
-int fake_init(iface_t *i, a_context_t *ctx) {
-	return ctx->m_iface->field_a == 1; 
-}
+// int fake_init(iface_t *i, a_context_t *ctx) {
+// 	return ctx->m_iface->field_a == 1; 
+// }
 
-int get_something(iface_t *a, int x) {
-	return a->field_a;
-}
+// int get_something(iface_t *a, int x) {
+// 	return a->field_a;
+// }
 
-int vpx_codec_destroy(vpx_codec_ctx_t *ctx) {
-  int res;
+// int vpx_codec_destroy(vpx_codec_ctx_t *ctx) {
+//   int res;
 
-  if (!ctx)
-    res = 0;
-  else if (!ctx->iface || !ctx->priv)
-    res = 1;
-  else {
-    // ctx->iface->destroy((vpx_codec_alg_priv_t *)ctx->priv);
+//   if (!ctx)
+//     res = 0;
+//   else if (!ctx->iface || !ctx->priv)
+//     res = 1;
+//   else {
+//     // ctx->iface->destroy((vpx_codec_alg_priv_t *)ctx->priv);
 
-	  memset(ctx, 0, 16);
-    // ctx->iface = NULL;
-    // ctx->name = NULL;
-    // ctx->priv = NULL;
-    res = 2;
-  }
+// 	  memset(ctx, 0, 16);
+//     // ctx->iface = NULL;
+//     // ctx->name = NULL;
+//     // ctx->priv = NULL;
+//     res = 2;
+//   }
 
-  return res;
-}
+//   return res;
+// }
 
 int vpx_rb_read_bit(struct vpx_read_bit_buffer *rb) {
   const size_t off = rb->bit_offset;
@@ -74,9 +74,11 @@ int vpx_rb_read_bit(struct vpx_read_bit_buffer *rb) {
   }
 }
 
+int (*read_bit)(struct vpx_read_bit_buffer *rb) = &vpx_rb_read_bit;
+
 int decoder_peek_si_internal(const uint8_t *data, unsigned int data_sz) {
     struct vpx_read_bit_buffer rb = { data, data + data_sz, 0};
-    return vpx_rb_read_bit(&rb);
+    return read_bit(&rb);
 }
 
 }

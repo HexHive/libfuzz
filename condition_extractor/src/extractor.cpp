@@ -401,8 +401,12 @@ int main(int argc, char ** argv)
         LLVMModuleSet::getLLVMModuleSet()->preProcessBCs(moduleNameVec);
     }
 
+    SVFUtil::outs() << "[INFO] Loading library...\n";
+
     LLVMModuleSet* llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
     SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
+
+    SVFUtil::outs() << "[INFO] Done\n";
 
     ValueMetadata::consider_indirect_calls = doIndJump;
 
@@ -493,7 +497,7 @@ int main(int argc, char ** argv)
     FlowSensitive* point_to_analysys = FlowSensitive::createFSWPA(pag);
     // AndersenSCD* point_to_analysys = AndersenSCD::createAndersenSCD(pag);
     // TypeAnalysis* point_to_analysys = new TypeAnalysis(pag);
-    // point_to_analysys->analyze();
+    point_to_analysys->analyze();
 
     Dominator *dom = nullptr;
     PostDominator *pDom = nullptr;
@@ -513,10 +517,15 @@ int main(int argc, char ** argv)
     icfg = pag->getICFG();
     icfg->updateCallGraph(callgraph);
 
+
+    // icfg->dump("icfg_extractor");
+
     /// Sparse value-flow graph (SVFG)
     SVFGBuilder svfBuilder;
     SVFG* svfg = svfBuilder.buildFullSVFG(point_to_analysys);
     svfg->updateCallGraph(point_to_analysys);
+
+    // svfg->dump("from_extractor");
 
     // I want to find a minimized set of APIs to analyze
     if (minimizeApi != "") {

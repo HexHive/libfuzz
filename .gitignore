@@ -80,3 +80,4 @@ condition_extractor/package-lock.json
 # Fuzzing Campaigns
 fuzzing_campaigns/workdir_*
 
+point_to_test/

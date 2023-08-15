@@ -1001,12 +1001,13 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::BinaryOp) {
                 acNode.setAccess(AccessType::Access::read);
                 ats->insert(acNode, vNode->getICFGNode());
-            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::FRet) {
-                // outs() << "[INFO] I found a FormalRet\n";
-                // outs() << vNode->toString() << "\n";
-                acNode.setAccess(AccessType::Access::ret);
-                ats->insert(acNode, vNode->getICFGNode());
-            }
+            } 
+            // else if (vNode->getNodeKind() == VFGNode::VFGNodeK::FRet) {
+            //     // outs() << "[INFO] I found a FormalRet\n";
+            //     // outs() << vNode->toString() << "\n";
+            //     acNode.setAccess(AccessType::Access::ret);
+            //     ats->insert(acNode, vNode->getICFGNode());
+            // }
 
             if (skipNode) {
                 // outs() << "I skip\n";

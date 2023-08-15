@@ -1,5 +1,7 @@
-export CC = wllvm
-export CXX = wllvm++
+# export CC = wllvm
+# export CXX = wllvm++
+export CC = clang
+export CXX = clang++
 export LLVM_COMPILER = clang
 export LLVM_COMPILER_PATH=${LLVM_DIR}/bin
 export LIBFUZZ_LOG_PATH=$(shell pwd)
@@ -25,7 +27,7 @@ DATA_LAYOUT = datalayout.txt
 
 $(TARGET).o: $(TARGET).c
 	rm -f apis_llvm.log apis_clang.json 
-	$(CXX) -O0 -g -mllvm -get-api-pass -c $<
+	$(CXX) -O0 -g -c $<
 #	$(CC) -O0 -g -c $<
 
 $(TARGET).o.bc: $(TARGET).o

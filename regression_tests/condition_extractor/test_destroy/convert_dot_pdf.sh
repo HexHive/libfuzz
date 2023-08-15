@@ -31,5 +31,5 @@
 #     fi
 # done
 
-dot -Tpdf svfir_initial.dot -osvfir_initial.dot.pdf
+# dot -Tpdf svfir_initial.dot -osvfir_initial.dot.pdf
 dot -Tpdf svfg_final.dot -osvfg_final.dot.pdf

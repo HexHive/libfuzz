@@ -7,7 +7,7 @@ export LIBFUZZ_LOG_PATH=$(shell pwd)
 TARGET = library
 EXTRACTOR = /workspaces/libfuzz/condition_extractor/bin/extractor
 LLVM_DIS = ${LLVM_DIR}/bin/llvm-dis
-WPA = /root/SVF/Release-build/bin/wpa
+WPA = /home/libfuzz/SVF/Release-build/bin/wpa
 EXTRACT_BC = extract-bc
 FUNCTION = decoder_peek_si_internal
 INTERFACE = $(PWD)/apis_clang.json
@@ -33,11 +33,11 @@ run: $(TARGET).o.bc $(TARGET).o.ll
 #	$(WPA) -steens --dump-icfg  ./$(TARGET).o.bc
 	$(EXTR_INC_FUNC) -i $(PWD) -e "$(PWD)/exported_functions.txt" -t "$(PWD)/incomplete_types.txt" -a $(INTERFACE) -p "$(PWD)/public_headers.txt"
 #	$(EXTRACTOR) $< -interface $(INTERFACE) -t json -v v0  -output $(TARGET).json -data_layout $(DATA_LAYOUT)
-	$(EXTRACTOR) $< -function $(FUNCTION) -t json -v v0  -output $(TARGET).json -data_layout $(DATA_LAYOUT)
-# 	$(WPA) -ander -svfg --dump-vfg  ./$(TARGET).o.bc
+	$(EXTRACTOR) $< -function $(FUNCTION) -t json -v v0  -output $(TARGET).json -data_layout $(DATA_LAYOUT) -do_indirect_jumps
+#	$(WPA) -ander -svfg -dump-vfg  ./$(TARGET).o.bc
 #	$(WPA) -ander -dump-pag ./$(TARGET).o.bc
 # 	convert only if you --print_dom
-# 	./convert_dot_pdf.sh
+#	./convert_dot_pdf.sh
 
 gen: apis_llvm.json apis_clang.json coerce.log exported_functions.txt incomplete_types.txt $(TARGET).json
 	@echo "Generating drivers"
