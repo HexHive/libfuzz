@@ -611,7 +611,7 @@ int main(int argc, char ** argv)
                         paramMetadata.setLenDependency(depends_on);
                 }
 
-                // // find "generic" dependencies between parameters
+                // find "generic" dependencies between parameters
                 auto set_by_vect = 
                     ValueMetadata::extractDependencyAmongParameters(
                             p, &paramMetadata, svfg, fun);

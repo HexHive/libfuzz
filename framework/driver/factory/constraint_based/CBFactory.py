@@ -174,6 +174,7 @@ class CBFactory(Factory):
         #     print(f"hook {api_call.function_name}")
         #     # import pdb; pdb.set_trace()
         #     par_debug = 0
+        #     arg_pos = par_debug
         #     is_ret = False
         #     arg_type = api_call.arg_types[par_debug]
         #     arg_cond = conditions.argument_at[par_debug]
