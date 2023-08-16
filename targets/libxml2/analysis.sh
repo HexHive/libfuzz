@@ -66,7 +66,7 @@ $TOOLS_DIR/tool/misc/extract_included_functions.py -i "$WORK/include/libxml2" \
 
 # extract fields dependency from the library itself, repeat for each object
 # produced
-$TOOLS_DIR/condition_extractor/bin/extractor \
+$TOOLS_DIR/condition_extractor_minimal/bin/extractor \
     $WORK/lib/libxml2.a.bc \
     -interface "$LIBFUZZ_LOG_PATH/apis_clang.json" \
     -output "$LIBFUZZ_LOG_PATH/conditions.json" \

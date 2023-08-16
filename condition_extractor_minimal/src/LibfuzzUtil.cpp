@@ -34,6 +34,10 @@
 using namespace llvm;
 
 namespace libfuzz {
+  // cl::opt<bool> ClCreateCastRelatedTypeList(
+  // "create-cast-related-type-list",
+  // cl::desc("create casting related object list"),
+  // cl::Hidden, llvm::cl::init(false));
 
   std::string CoerceFilePath = "";
   std::string ApiFilePath = "";
@@ -53,7 +57,17 @@ namespace libfuzz {
   }
 
   std::string getApiFileLog() {
-    return "api_llvm.json";
+    if (ApiFilePath == "") {
+      if(getenv("LIBFUZZ_LOG_PATH")) {
+        char buff[1000];
+        strcpy(buff, getenv("LIBFUZZ_LOG_PATH"));
+        ApiFilePath = std::string(buff) + "/apis_llvm.json";
+      } else {
+        errs() << "LIBFUZZ_LOG_PATH not found, set it!\n";
+        exit(1);
+      }
+    }
+    return ApiFilePath;
   }
 
   void dumpLine(std::string line, std::string fileName) {
