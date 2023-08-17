@@ -197,6 +197,7 @@ class CBFactory(Factory):
             try:
                 if isinstance(arg_type, PointerType) and arg_type.to_function:
                     arg_var = rng_ctx.get_null_constant()
+                    # arg_var = rng_ctx.get_function_pointer(arg_type)
                 else:
                     # arg_var = rng_ctx.try_to_get_var(arg_type, arg_cond, 
                     #                                  fun_name, conditions, 

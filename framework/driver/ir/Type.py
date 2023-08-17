@@ -3,6 +3,7 @@ from enum import Enum
 class TypeTag(Enum):
     PRIMITIVE = 1
     STRUCT = 2
+    FUNCTION = 3
 
 class Type:
     token: str

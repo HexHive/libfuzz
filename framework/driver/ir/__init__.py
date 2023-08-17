@@ -9,6 +9,7 @@ from .Type                  import TypeTag
 from .PointerType           import PointerType
 from .Value                 import Value
 from .Variable              import Variable
+from .Function              import Function
 from .Address               import Address
 from .NullConstant          import NullConstant
 from .ApiCall               import ApiCall

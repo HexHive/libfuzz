@@ -1,8 +1,10 @@
-from . import Value, Variable
+from typing import Union
+
+from . import Value, Variable, Function
 
 class Address(Value):
     token:      str
-    variable:   Variable
+    variable:   Union["Variable", "Function"]
 
     def __init__(self, token, variable):
         self.token = token
