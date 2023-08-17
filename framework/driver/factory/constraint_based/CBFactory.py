@@ -66,6 +66,8 @@ class CBFactory(Factory):
                 sinks2.add(api)
 
         self.sinks_all = sinks2
+
+        self.source_api = list(self.get_source_api())
         
         # print("self.sinks")
         # from IPython import embed; embed(); exit(1)
@@ -240,6 +242,12 @@ class CBFactory(Factory):
         rng_ctx.new_vars.clear()
 
         return (rng_ctx, {})
+    
+    def get_random_source_api(self):
+        return random.choice(self.source_api)
+
+    def get_random_candidate(self, candidate_api):
+        return random.choice(candidate_api)
 
     def create_random_driver(self) -> Driver:
 
@@ -252,15 +260,13 @@ class CBFactory(Factory):
         get_cond = lambda x: self.conditions.get_function_conditions(x.function_name)
         to_api = lambda x: Factory.api_to_apicall(x)
 
-        source_api = list(self.get_source_api())
-
-        if len(source_api) == 0:
+        if len(self.source_api) == 0:
             raise Exception("I cannot find APIs to begin with :(")
 
         # List[(ApiCall, RunningContext)]
         drv = list()
 
-        begin_api = random.choice(source_api)
+        begin_api = self.get_random_source_api()
         begin_condition = get_cond(begin_api)
         call_begin = to_api(begin_api)
 
@@ -288,7 +294,7 @@ class CBFactory(Factory):
             if api_n in self.dependency_graph:
                 for next_possible in self.dependency_graph[api_n]:
 
-                    if next_possible in source_api:
+                    if next_possible in self.source_api:
                         continue
 
                     print(f"[INFO] Trying: {next_possible}")
@@ -314,14 +320,14 @@ class CBFactory(Factory):
             #     print("next to close?")
             #     from IPython import embed; embed(); exit(1)
 
-            # this check avoids the driver to degenerate in a list with the
-            # single APIs repetitively invoked
+            # this check avoids the driver to degenerate in a list with a single
+            # API repetitively invoked
             if len(candidate_api) == 1 and candidate_api[0][2] == api_n:
                 candidate_api = []
                 
             if candidate_api:
                 # (ApiCall, RunningContext, Api)
-                (api_call, rng_ctx_1, api_n) = random.choice(candidate_api)
+                (api_call, rng_ctx_1, api_n) = self.get_random_candidate(candidate_api)
                 print(f"[INFO] choose {api_call.function_name}")
 
                 # if api_call.function_name == "TIFFReadRGBAImage":
@@ -329,7 +335,7 @@ class CBFactory(Factory):
 
                 drv += [(api_call, rng_ctx_1)]
             else:
-                api_n = random.choice(source_api)
+                api_n = self.get_random_source_api()
                 begin_condition = get_cond(api_n)
                 call_begin = to_api(api_n)
 
