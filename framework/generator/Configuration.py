@@ -13,6 +13,7 @@ from common import Utils, DataLayout
 
 from driver.factory.only_type import *
 from driver.factory.constraint_based import *
+from driver.factory.constraint_based_weight import *
 
 from generator import Pool
 
@@ -275,6 +276,10 @@ class Configuration:
         if policy == "constraint_based":
             dep_graph = self.dependency_graph
             return CBFactory(self.api_list, self.driver_size, dep_graph, self.function_conditions, self.api_list_all)
+        
+        if policy == "constraint_based_weigth":
+            dep_graph = self.dependency_graph
+            return CBWFactory(self.api_list, self.driver_size, dep_graph, self.function_conditions, self.api_list_all)
 
         raise NotImplementedError
 

@@ -8,7 +8,7 @@ from constraints import ConditionUnsat, RunningContext
 from dependency import DependencyGraph
 from driver import Context, Driver
 from driver.factory import Factory
-from driver.ir import ApiCall, PointerType, Variable, TypeTag
+from driver.ir import ApiCall, PointerType, Variable, TypeTag, AllocType
 from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
 from constraints import Conditions
 
@@ -66,6 +66,8 @@ class CBFactory(Factory):
                 sinks2.add(api)
 
         self.sinks_all = sinks2
+
+        self.source_api = list(self.get_source_api())
         
         # print("self.sinks")
         # from IPython import embed; embed(); exit(1)
@@ -170,15 +172,16 @@ class CBFactory(Factory):
                     rng_ctx.var_to_cond[x].len_depends_on = b_len
 
 
-        # if api_call.function_name == "htp_get_version":
+        # if api_call.function_name == "vpx_codec_dec_init_ver":
         #     print(f"hook {api_call.function_name}")
         #     # import pdb; pdb.set_trace()
         #     par_debug = 0
-        #     is_ret = True
-        #     # arg_type = api_call.arg_types[par_debug]
-        #     # arg_cond = conditions.argument_at[par_debug]
-        #     arg_type = api_call.ret_type
-        #     arg_cond = conditions.return_at
+        #     arg_pos = par_debug
+        #     is_ret = False
+        #     arg_type = api_call.arg_types[par_debug]
+        #     arg_cond = conditions.argument_at[par_debug]
+        #     # arg_type = api_call.ret_type
+        #     # arg_cond = conditions.return_at
         #     type = arg_type
         #     tt = type.get_pointee_type()
         #     cond = conditions.argument_at[par_debug]
@@ -194,6 +197,7 @@ class CBFactory(Factory):
             try:
                 if isinstance(arg_type, PointerType) and arg_type.to_function:
                     arg_var = rng_ctx.get_null_constant()
+                    # arg_var = rng_ctx.get_function_pointer(arg_type)
                 else:
                     # arg_var = rng_ctx.try_to_get_var(arg_type, arg_cond, 
                     #                                  fun_name, conditions, 
@@ -239,6 +243,12 @@ class CBFactory(Factory):
         rng_ctx.new_vars.clear()
 
         return (rng_ctx, {})
+    
+    def get_random_source_api(self):
+        return random.choice(self.source_api)
+
+    def get_random_candidate(self, candidate_api):
+        return random.choice(candidate_api)
 
     def create_random_driver(self) -> Driver:
 
@@ -251,15 +261,13 @@ class CBFactory(Factory):
         get_cond = lambda x: self.conditions.get_function_conditions(x.function_name)
         to_api = lambda x: Factory.api_to_apicall(x)
 
-        source_api = list(self.get_source_api())
-
-        if len(source_api) == 0:
+        if len(self.source_api) == 0:
             raise Exception("I cannot find APIs to begin with :(")
 
         # List[(ApiCall, RunningContext)]
         drv = list()
 
-        begin_api = random.choice(source_api)
+        begin_api = self.get_random_source_api()
         begin_condition = get_cond(begin_api)
         call_begin = to_api(begin_api)
 
@@ -287,7 +295,7 @@ class CBFactory(Factory):
             if api_n in self.dependency_graph:
                 for next_possible in self.dependency_graph[api_n]:
 
-                    if next_possible in source_api:
+                    if next_possible in self.source_api:
                         continue
 
                     print(f"[INFO] Trying: {next_possible}")
@@ -313,14 +321,14 @@ class CBFactory(Factory):
             #     print("next to close?")
             #     from IPython import embed; embed(); exit(1)
 
-            # this check avoids the driver to degenerate in a list with the
-            # single APIs repetitively invoked
+            # this check avoids the driver to degenerate in a list with a single
+            # API repetitively invoked
             if len(candidate_api) == 1 and candidate_api[0][2] == api_n:
                 candidate_api = []
                 
             if candidate_api:
                 # (ApiCall, RunningContext, Api)
-                (api_call, rng_ctx_1, api_n) = random.choice(candidate_api)
+                (api_call, rng_ctx_1, api_n) = self.get_random_candidate(candidate_api)
                 print(f"[INFO] choose {api_call.function_name}")
 
                 # if api_call.function_name == "TIFFReadRGBAImage":
@@ -328,7 +336,7 @@ class CBFactory(Factory):
 
                 drv += [(api_call, rng_ctx_1)]
             else:
-                api_n = random.choice(source_api)
+                api_n = self.get_random_source_api()
                 begin_condition = get_cond(api_n)
                 call_begin = to_api(api_n)
 
@@ -359,13 +367,15 @@ class CBFactory(Factory):
                 statements_apicall += [AssertNull(var.get_buffer())]
             cond = get_cond(api_call)
             for cond_pos, cond_arg in enumerate(cond.argument_at):
-                if RunningContext.is_sink(cond_arg):
+                if (RunningContext.is_sink(cond_arg) and 
+                    len(api_call.arg_types) == 1):
                     arg = api_call.arg_vars[cond_pos]
                     if isinstance(arg, Address):
                         buff = arg.get_variable().get_buffer()
                     elif isinstance(arg, Variable):
                         buff = arg.get_buffer()
-                    statements_apicall += [SetNull(buff)]
+                    if buff.alloctype == AllocType.HEAP:
+                        statements_apicall += [SetNull(buff)]
             # if RunningContext.is_sink(api_call.ret_type, PointerType):
 
         # print("Before ")

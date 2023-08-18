@@ -1,3 +1,2 @@
 TIFFWarning
-TIFFRegisterCODEC
-TIFFUnRegisterCODEC
+TIFFSetClientInfo

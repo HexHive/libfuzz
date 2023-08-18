@@ -14,8 +14,9 @@ class CleanBuffer(Statement):
         type = buffer.get_type()
 
         # I want a Pointer(Type), no multiple pointers, no base types
-        if not (isinstance(type, PointerType) and
-            buffer.get_alloctype() == AllocType.HEAP):
+        if not isinstance(type, PointerType):
+            # and
+            # buffer.get_alloctype() == AllocType.HEAP):
             print("CleanBuffer")
             from IPython import embed; embed(); exit(1)
             raise Exception(f"CleanBuffer accepts only PointerType to heap, {type} received")

@@ -63,6 +63,7 @@ RUN --mount=type=cache,target=/var/cache/apt sudo apt-get update && sudo apt-get
 
 RUN --mount=type=cache,target=${HOME}/.ccache/ git clone https://github.com/SVF-tools/SVF.git && \
     cd SVF && \
+    git checkout f889cfbf7a4694183abbb3417f81887a44acab29 && \
     sed -i 's/jobs=4/jobs=/g' build.sh && \
     ./build.sh
 RUN cd SVF && ./setup.sh

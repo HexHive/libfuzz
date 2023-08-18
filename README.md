@@ -23,22 +23,22 @@ https://code.visualstudio.com/docs/remote/containers#_sharing-git-credentials-wi
 
 ## How to inteagrate a new a target (a new library)
 
-- [Add a new Target](./docs/AddNewTarget.md)
-- [Debug a Target in local](./docs/DebugLocal.md)
+- [Add a new Target](./_docs/AddNewTarget.md)
+- [Debug a Target in local](./_docs/DebugLocal.md)
 
 ## Specific Gudies
 
 Ad-hoc guides for specific components of the project
 
-- [Library Analysis](./docs/Analysis.md)
-- [Driver Generation](./docs/DriverGeneration.md)
-- [Fuzzing a Driver](./docs/FuzzingDrivers.md)
+- [Library Analysis](./_docs/Analysis.md)
+- [Driver Generation](./_docs/DriverGeneration.md)
+- [Fuzzing a Driver](./_docs/FuzzingDrivers.md)
+- [Statistics](./_docs/Statistics.md)
 - Triage (TODO)
-- Statistics (TODO)
 
 ## Internal technical details
 
-- [Driver IR](./docs/Driver_IR.md)
+- [Driver IR](./_docs/Driver_IR.md)
 
 ## Problems Addressed and Solved
 

@@ -6,3 +6,5 @@ for func in ('debug', 'info', 'warning', 'error', 'critical'):
 from .Factory               import Factory
 
 import driver.factory.only_type
+import driver.factory.constraint_based
+import driver.factory.constraint_based_weight

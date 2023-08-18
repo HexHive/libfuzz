@@ -1,6 +1,8 @@
 # so I overwrite only these params
 
 [generator]
+policy = "constraint_based"
+# policy = "constraint_based_weigth"
 pool_size = 10
 driver_size = 10
 num_seeds = 20

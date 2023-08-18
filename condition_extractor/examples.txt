@@ -40,3 +40,16 @@ make -j && ./bin/extractor /workspaces/libfuzz/analysis/minijail/work/lib/libmin
 
 
 make -j && ./bin/extractor /workspaces/libfuzz/analysis/minijail/work/lib/libminijail.pie.a.bc -function minijail_set_supplementary_gids -output minijail_set_supplementary_gids.json -t json -v v1 -do_indirect_jumps
+
+
+export LIBFUZZ_LOG_PATH=`pwd`
+make -j && gdb --args ./bin/extractor /workspaces/libfuzz/analysis/libvpx/work/lib/libvpx.a.bc -function vpx_codec_peek_stream_info -output vpx_codec_peek_stream_info.json -t json -v v1 -do_indirect_jumps
+
+export LIBFUZZ_LOG_PATH=`pwd` \
+./bin/extractor \
+    /workspaces/libfuzz/analysis/pthreadpool/work/lib/libpthreadpool.a.bc \
+    -function pthreadpool_create \
+    -output "$LIBFUZZ_LOG_PATH/conditions.json" \
+    -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
+    -v v1 -t json -do_indirect_jumps \
+    -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"

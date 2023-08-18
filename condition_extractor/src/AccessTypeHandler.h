@@ -57,7 +57,26 @@ bool isAnArray(const CallBase *c) {
 
 void addWrteToAllFields(ValueMetadata *mdata, AccessType atNode, 
     const ICFGNode* icfgNode) {
-    auto t = atNode.getType();
+
+    // outs() << "addWrteToAllFields\n";
+    // // outs() << "type: " << *atNode.getType() << "\n";
+    // outs() << "node: " << atNode.toString() << "\n";
+    // if (atNode.getOriginalCastType() == nullptr) 
+    //     outs() << "PROBABLY not from a cast\n";
+    // else {
+    //     outs() << "ORIGINAL TYPE BEFORE CAST\n";
+    //     outs() << *atNode.getOriginalCastType() << "\n";
+    // }
+
+
+    const llvm::Type *t;
+    if (atNode.getOriginalCastType() != nullptr) {
+        t = atNode.getOriginalCastType();
+    } else {
+        t = atNode.getType();
+    }
+
+    // auto t = atNode.getType();
     if (auto pt = SVFUtil::dyn_cast<llvm::PointerType>(t)) {
 
         AccessType tmpAcNode = atNode;
@@ -212,6 +231,9 @@ bool memset_hander(ValueMetadata *mdata, std::string fun_name,
 
     LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
 
+    // outs() << "memset_hander\n";
+    // outs() << icfgNode->toString() << "\n";
+
     if (param_num == 0 && atNode.getNumFields() == 0 && scope & C_PARAM) {
         
         AccessType tmpAcNode = atNode;
@@ -224,6 +246,14 @@ bool memset_hander(ValueMetadata *mdata, std::string fun_name,
         auto i = SVFUtil::dyn_cast<CallBase>(llvm_val);
         Value *v = i->getArgOperand(2);
         mdata->addFunParam(v);
+
+        if (auto par_const =dyn_cast<ConstantInt>(i->getArgOperand(1))) {
+            uint64_t actual_const = par_const->getZExtValue();
+            if (actual_const == 0) {
+                atNode.setAccess(AccessType::Access::del);
+                mdata->getAccessTypeSet()->insert(atNode, icfgNode);
+            }
+        }
 
         addWrteToAllFields(mdata, atNode, icfgNode);
     }

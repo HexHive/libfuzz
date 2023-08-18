@@ -982,6 +982,10 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                     // outs() << "acNode.getType() " << *acNode.getType() << "\n";
 
                     if (TypeMatcher::compare_types(src_typ, acNode.getType())) {
+                        // I want the node the original type after the cast this
+                        // may turn out useful for mem* api operations since
+                        // they tend to cast to i8* before being invoked
+                        acNode.setOriginalCastType(acNode.getType());
                         acNode.setType(dst_typ);
                         ats->insert(acNode, vNode->getICFGNode());
                     }
@@ -1001,12 +1005,13 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::BinaryOp) {
                 acNode.setAccess(AccessType::Access::read);
                 ats->insert(acNode, vNode->getICFGNode());
-            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::FRet) {
-                // outs() << "[INFO] I found a FormalRet\n";
-                // outs() << vNode->toString() << "\n";
-                acNode.setAccess(AccessType::Access::ret);
-                ats->insert(acNode, vNode->getICFGNode());
-            }
+            } 
+            // else if (vNode->getNodeKind() == VFGNode::VFGNodeK::FRet) {
+            //     // outs() << "[INFO] I found a FormalRet\n";
+            //     // outs() << vNode->toString() << "\n";
+            //     acNode.setAccess(AccessType::Access::ret);
+            //     ats->insert(acNode, vNode->getICFGNode());
+            // }
 
             if (skipNode) {
                 // outs() << "I skip\n";

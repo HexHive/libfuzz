@@ -1,7 +1,7 @@
-from typing import List, Set, Dict #, Tuple, Optional
-import random, copy
+from typing import List, Set, Dict
+import random, hashlib
 
-from .ir import Type, PointerType, Variable, BuffDecl, BuffInit
+from .ir import Type, PointerType, Variable, BuffDecl, BuffInit, Function
 from .ir import Statement, Value, NullConstant, Buffer, AllocType 
 
 class Context:
@@ -9,6 +9,8 @@ class Context:
     buffs_alive = Set[Buffer]
     # trace indexes to create new unique vars
     buffs_counter = Dict[Type, int]
+    # trace stub functions for callback
+    stub_functions = Dict[Type, Function]
 
     POINTER_STRATEGY_NULL = 0
     POINTER_STRATEGY_ARRAY = 1
@@ -29,6 +31,8 @@ class Context:
         # TODO: make this from config?
         # self.MAX_ARRAY_SIZE = 1024
         self.MAX_ARRAY_SIZE = 128
+
+        self.stub_functions = {}
 
         # TODO: map buffer and input
         # self.buffer_map = {}
@@ -173,3 +177,15 @@ class Context:
             buff_init += [BuffInit(x)]
 
         return buff_init
+
+    def get_function_pointer(self, type: PointerType):
+        
+        if type in self.stub_functions:
+            return self.stub_functions[type]
+
+        func_name = "f"+hashlib.md5(bytes(type.token, 'utf-8')).hexdigest()[:8]
+
+        func = Function(func_name, type)
+        self.stub_functions[type] = func
+
+        return func

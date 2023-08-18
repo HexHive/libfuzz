@@ -6,7 +6,7 @@ from driver import Context
 from driver.ir import Variable, Type, Value, PointerType, AllocType, CleanBuffer
 from driver.ir import Address, NullConstant, Buffer, ConstStringDecl, ApiCall
 from driver.ir import BuffDecl, BuffInit, FileInit, Statement, DynArrayInit
-from driver.ir import SetStringNull, TypeTag
+from driver.ir import SetStringNull, TypeTag, Function
 from . import Conditions
 from common.conditions import *
 from common import Utils, DataLayout
@@ -161,7 +161,7 @@ class RunningContext(Context):
 
     
         # if (isinstance(type, PointerType) and 
-        #     type.get_base_type().token == "a_context_t" and api_call.function_name == "use_context"):
+        #     type.get_base_type().token == "TIFF" and api_call.function_name == "TIFFGetClientInfo"):
         #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
 
@@ -185,7 +185,7 @@ class RunningContext(Context):
             else:
                 val = self.randomly_gimme_a_var(type, cond, is_ret)
 
-        elif is_sink:
+        elif is_sink and len(api_call.arg_types) == 1:
             val = self.get_value_that_strictly_satisfy(type, cond)
             if val is None:
                 if (Conditions.is_unconstraint(cond) and 
@@ -221,7 +221,7 @@ class RunningContext(Context):
             else:
                 tt = type
 
-            # TODO: check if the ats allow to generate an object
+            # check if the ats allow to generate an object
             if not is_ret:
                 if tt.is_incomplete:
                     # raise ConditionUnsat()
@@ -326,7 +326,7 @@ class RunningContext(Context):
     def create_dependency_length_variable(self):
         len_type = Type("size_t", DataLayout.get_type_size("size_t"))
         ats = AccessTypeSet()
-        mdata = ValueMetadata(ats, False, False, False, "")
+        mdata = ValueMetadata(ats, False, False, False, "", [])
         return (self.create_new_var(len_type, mdata, False), mdata)
 
     def create_new_buffer(self, type: Type, cond: ValueMetadata, force_pointer: bool):
@@ -356,7 +356,7 @@ class RunningContext(Context):
             #     t_base.tag == TypeTag.STRUCT):
             #     alloctype = default_alloctype
             if cond.len_depends_on != "":
-                alloctype = default_alloctype
+                alloctype = AllocType.HEAP
             if type.is_const:
                 alloctype = default_alloctype
             if force_pointer:
@@ -469,8 +469,9 @@ class RunningContext(Context):
                 if not self.has_vars_type(type, cond):
                     # print("self.has_vars_type")
                     pick_random = False
-                elif (tt.tag == TypeTag.STRUCT and
-                      not DataLayout.is_fuzz_friendly(tt.token)):
+                elif ((tt.tag == TypeTag.STRUCT and
+                      not DataLayout.is_fuzz_friendly(tt.token)) or 
+                      is_incomplete):
                     # print("not DataLayout.is_fuzz_friendly")
                     # if tt.token == "char":
                     #     from IPython import embed; embed(); exit(1)
@@ -646,7 +647,7 @@ class RunningContext(Context):
         is_ret: bool = False):
 
         # NullConstant does not have conditions
-        if isinstance(val, NullConstant):
+        if isinstance(val, (NullConstant, Function)):
             return
 
         synthetic_cond = None
@@ -826,14 +827,21 @@ class RunningContext(Context):
         clean_up = []
 
         for b in self.buffs_alive: # type: ignore
-            if (b.get_alloctype() == AllocType.HEAP and 
-                not b.get_type().is_const):
+            if b.get_type().is_const:
+                continue
+            if b.get_alloctype() == AllocType.HEAP:
                 cm = self.find_cleanup_method(b, sinks)
                 clean_up += [CleanBuffer(b, cm)]
 
+            if b.get_alloctype() == AllocType.STACK:
+                cm = self.find_cleanup_method(b, sinks, "")
+                if cm != "":
+                    clean_up += [CleanBuffer(b, cm)]
+
         return clean_up
 
-    def find_cleanup_method(self, buff: Buffer, sinks: Set[Api]):
+    def find_cleanup_method(self, buff: Buffer, sinks: Set[Api], 
+                            default: str = "free"):
 
         buff_type_token = buff.get_type().get_token()
 
@@ -845,7 +853,7 @@ class RunningContext(Context):
 
         # print("find_cleanup_method")
         # from IPython import embed; embed(); exit(1)
-        return "free"
+        return default
 
     # NOTE: this oracle infers if the variable with the access types (cond) can
     # be considered a sink

@@ -2,6 +2,8 @@
 
 To add a new target one can take inspiration from `libtiff`. 
 
+**TODO**: modify to include information about profiling (and crash minimization? maybe not..)
+
 **Preliminary steps**
 
 One needs first to understand how to successfully compile a library. This may
