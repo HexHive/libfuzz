@@ -2,7 +2,7 @@ from driver import Driver
 from driver.ir import ApiCall, BuffDecl, BuffInit, FileInit, AllocType
 from driver.ir import PointerType, Address, Variable, Type, DynArrayInit
 from driver.ir import Statement, Value, NullConstant, ConstStringDecl
-from driver.ir import AssertNull, CleanBuffer, SetNull, SetStringNull
+from driver.ir import AssertNull, CleanBuffer, SetNull, SetStringNull, Function
 from backend import BackendDriver
 
 import random, string, os, shutil
@@ -465,8 +465,15 @@ class LFBackendDriver(BackendDriver):
             return self.address_emit(value)
         if isinstance(value, NullConstant):
             return self.nullconst_emit(value)
+        if isinstance(value, Function):
+            return self.function_emit(value)
 
         raise Exception(f"I don't know {value}")
+    
+
+    # Function
+    def function_emit(self, function: Function):
+        return f"&{function.token}"
 
     # NullConstant
     def nullconst_emit(self, nullcnst: NullConstant) -> str:

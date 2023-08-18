@@ -328,7 +328,7 @@ class Utils:
             return_info.type = apis_clang_list[function_name]["return_info"]["type_clang"]
         
         for i, arg_info in enumerate(arguments_info):
-            if arg_info.flag in ["val", "ref"]:
+            if arg_info.flag in ["val", "ref", "fun"]:
                 arg_info.type =  apis_clang_list[function_name]["arguments_info"][i]["type_clang"]
 
         # if return_info.type == "void*":

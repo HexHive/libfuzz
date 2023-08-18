@@ -36,6 +36,9 @@ class AccessType {
         std::vector<int> p_fields;
         Access p_access;
         const llvm::Type* p_type;
+
+        // original casted type
+        const llvm::Type* c_type;
         
         // remember the types extracted from previous GEP
         std::set<const llvm::Type*> visited_types;
@@ -57,6 +60,7 @@ class AccessType {
             has_parent = false;
             type = t;
             p_type = nullptr;
+            c_type = nullptr;
         }
         ~AccessType() {fields.clear();}
 
@@ -95,6 +99,14 @@ class AccessType {
 
         std::set<const ICFGNode*> getICFGNodes() const {
             return icfg_set;
+        }
+
+        const llvm::Type* getOriginalCastType() {
+            return c_type;
+        }
+
+        void setOriginalCastType(const llvm::Type* t) {
+            c_type = t;
         }
 
         void addField(int a_field) {
@@ -140,6 +152,10 @@ class AccessType {
 
         const llvm::Type* getType() {
             return type;
+        }
+
+        inline bool hasParent() {
+            return has_parent;
         }
 
         // void clone() {

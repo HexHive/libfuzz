@@ -6,7 +6,7 @@ from driver import Context
 from driver.ir import Variable, Type, Value, PointerType, AllocType, CleanBuffer
 from driver.ir import Address, NullConstant, Buffer, ConstStringDecl, ApiCall
 from driver.ir import BuffDecl, BuffInit, FileInit, Statement, DynArrayInit
-from driver.ir import SetStringNull, TypeTag
+from driver.ir import SetStringNull, TypeTag, Function
 from . import Conditions
 from common.conditions import *
 from common import Utils, DataLayout
@@ -647,7 +647,7 @@ class RunningContext(Context):
         is_ret: bool = False):
 
         # NullConstant does not have conditions
-        if isinstance(val, NullConstant):
+        if isinstance(val, (NullConstant, Function)):
             return
 
         synthetic_cond = None

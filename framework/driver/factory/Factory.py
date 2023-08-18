@@ -24,7 +24,7 @@ class Factory(ABC):
         arguments_info = api.arguments_info
         namespace = api.namespace
 
-        # if function_name in ["TIFFSetClientInfo"]:
+        # if function_name in ["pthreadpool_parallelize_1d"]:
         #     print(f"api_to_apicall: {function_name}")
         #     from IPython import embed; embed(); exit(1)
 
@@ -54,6 +54,33 @@ class Factory(ABC):
         elif a_flag == "val":
             if "*" in a_type:
                 raise Exception(f"Type '{a_type}' seems a pointer while expecting a 'val'")
+            
+        # NOTE: function ponters handling reamain in idle due to lack of
+        # libclang support
+        
+        #  if a_flag == "fun" and "(" in a_type:
+
+        #     # # NOTE: I care only of function pointers like 'void ()(void , int)**
+        #     # # if the type does not _exactly_ end with '**', I raise an
+        #     # # exeception
+        #     # if a_type[-2:] != "**" or a_type[-3] != ")":
+        #     #     raise Exception(f"I do not know to parse {a_type}")
+
+        #     # a_type_core = a_type[:-2]
+
+        #     # a_size_core = 0
+        #     # a_incomplete_core = True
+        #     # a_is_const = True
+        #     # type_tag = TypeTag.FUNCTION
+        #     # type_core = Type(a_type_core, a_size_core, a_incomplete_core, 
+        #     #                  a_is_const, type_tag)
+            
+        #     # return_type = PointerType(
+        #     #     a_type_core + "*" , copy.deepcopy(type_core))
+
+
+        #     return_type.to_function = True
+        # else:
 
         pointer_level = a_type.count("*")
         a_type_core = a_type.replace("*", "")

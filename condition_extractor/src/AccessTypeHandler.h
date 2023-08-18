@@ -57,7 +57,26 @@ bool isAnArray(const CallBase *c) {
 
 void addWrteToAllFields(ValueMetadata *mdata, AccessType atNode, 
     const ICFGNode* icfgNode) {
-    auto t = atNode.getType();
+
+    // outs() << "addWrteToAllFields\n";
+    // // outs() << "type: " << *atNode.getType() << "\n";
+    // outs() << "node: " << atNode.toString() << "\n";
+    // if (atNode.getOriginalCastType() == nullptr) 
+    //     outs() << "PROBABLY not from a cast\n";
+    // else {
+    //     outs() << "ORIGINAL TYPE BEFORE CAST\n";
+    //     outs() << *atNode.getOriginalCastType() << "\n";
+    // }
+
+
+    const llvm::Type *t;
+    if (atNode.getOriginalCastType() != nullptr) {
+        t = atNode.getOriginalCastType();
+    } else {
+        t = atNode.getType();
+    }
+
+    // auto t = atNode.getType();
     if (auto pt = SVFUtil::dyn_cast<llvm::PointerType>(t)) {
 
         AccessType tmpAcNode = atNode;
