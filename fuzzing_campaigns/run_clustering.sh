@@ -39,8 +39,7 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
 
                     DRIVER_CRASHES="${PROJECT_WORKDIR}/results/iter_${i}/crashes/${driver_name}"
                     [ "$(ls -A ${DRIVER_CRASHES})" ] \
-                        && cp ${DRIVER_CRASHES}/* ${CRASHES}/${driver_name} \ 
-                        || echo "No crashes for ${project}/${driver_name} on iter ${i}"
+                        && cp ${DRIVER_CRASHES}/* ${CRASHES}/${driver_name} || echo "No crashes for ${project}/${driver_name} on iter ${i}"
                 done
             done
 
