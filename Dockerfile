@@ -53,6 +53,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 RUN $HOME/.cargo/bin/cargo install casr
 
 ENV LIBFUZZ /workspaces/libfuzz
+ENV PATH $PATH:${HOME}/.local/bin
 
 RUN --mount=type=cache,target=/var/cache/apt sudo apt-get update && sudo apt-get full-upgrade -y && \
     DEBIAN_FRONTEND="noninteractive" \
@@ -90,7 +91,6 @@ RUN cd ${TOOLS_DIR}/condition_extractor && rm -Rf CMakeCache.txt CMakeFiles && .
 
 COPY LLVM/update-alternatives-clang.sh .
 RUN sudo ./update-alternatives-clang.sh 12 200
-ENV PATH $PATH:${HOME}/.local/bin
 RUN echo $PATH
 CMD ${LIBFUZZ}/targets/start_analysis.sh
 
