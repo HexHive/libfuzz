@@ -12,7 +12,7 @@ mkdir -p ${PROJECT_COVERAGE}
 
 FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
 SOURCES="$(find $REPO -iname '*.h' -or -iname '*.cpp' -or -iname '*.c' -or -iname '*.cc')"
-
+DRIVER_PATH_REGEX="\/workspaces\/libfuzz\/workdir\/.*\/drivers\/.*\.cc"
 
 for d in $FUZZ_TARGETS
 do
@@ -34,8 +34,8 @@ do
     mv ${DRIVER_NAME}.profraw $PROJECT_COVERAGE
     llvm-profdata-12 merge -sparse $PROJECT_COVERAGE/${DRIVER_NAME}.profraw -o $PROJECT_COVERAGE/${DRIVER_NAME}.profdata
     llvm-cov-12 show $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > show
-    llvm-cov-12 report $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > report
-    llvm-cov-12 report -show-functions $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata $SOURCES > functions
+    llvm-cov-12 report $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
+    llvm-cov-12 report -show-functions $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
     llvm-cov-12 export -format=text $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > export.json
     mv show $DRIVER_COVERAGE
     mv report $DRIVER_COVERAGE
@@ -56,8 +56,8 @@ for d in $FUZZ_TARGETS; do
     fi
 done
 llvm-cov-12 show $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata > show
-llvm-cov-12 report $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata > report
-llvm-cov-12 report -show-functions $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata $SOURCES > functions
+llvm-cov-12 report $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
+llvm-cov-12 report -show-functions $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
 mv show $PROJECT_COVERAGE
 mv report $PROJECT_COVERAGE
 mv functions $PROJECT_COVERAGE
