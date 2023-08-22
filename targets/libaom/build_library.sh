@@ -13,22 +13,41 @@ rm -rf "$WORK"
 mkdir -p "$WORK"
 mkdir -p "$WORK/lib" "$WORK/include"
 
-export CC=wllvm
-export CXX=wllvm++
-export LLVM_COMPILER=clang
-echo "$LLVM_DIR"
 export LLVM_COMPILER_PATH=$LLVM_DIR/bin
-
-
+export CC="$LLVM_COMPILER_PATH"/clang
+export CXX="$LLVM_COMPILER_PATH"/clang++
 
 echo "make 1"
 mkdir -p "$TARGET/repo/aom_build"
 cd "$TARGET/repo/aom_build"
 
-
+# Compile library for coverage
 cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_LIBS=off \
         -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_C_FLAGS_DEBUG="-g -O0" \
-        -DCMAKE_CXX_FLAGS_DEBUG="-g -O0"
+        -DCMAKE_C_FLAGS_DEBUG="-fprofile-instr-generate -fcoverage-mapping -g" \
+        -DCMAKE_CXX_FLAGS_DEBUG="-fprofile-instr-generate -fcoverage-mapping -g"
+
+echo "make clean"
+make -j"$(nproc)" clean
+echo "make"
+make -j"$(nproc)"
+echo "make install"
+make install
+
+mv "$WORK"/lib/libaom.a "$WORK"/lib/libaom_profile.a
+
+
+# Compile library for fuzzing
+cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_LIBS=off \
+        -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_C_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g" \
+        -DCMAKE_CXX_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g"
+
+echo "make clean"
+make -j"$(nproc)" clean
+echo "make"
+make -j"$(nproc)"
+echo "make install"
+make install
 # configure compiles some shits for testing, better remove it
 echo "[INFO] Library installed in: $WORK"
