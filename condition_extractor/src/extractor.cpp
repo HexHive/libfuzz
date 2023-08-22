@@ -43,6 +43,7 @@
 #include "IBBG.h"
 #include "TypeMatcher.h"
 #include "LibfuzzUtil.h"
+#include "GlobalStruct.h"
 
 // for random sampling
 #include <random>
@@ -494,10 +495,14 @@ int main(int argc, char ** argv)
     ICFG* icfg = pag->getICFG();
     /// Create Andersen's pointer analysis
     // Andersen* point_to_analysys = AndersenWaveDiff::createAndersenWaveDiff(pag);
-    FlowSensitive* point_to_analysys = FlowSensitive::createFSWPA(pag);
+    // FlowSensitive* point_to_analysys = FlowSensitive::createFSWPA(pag);
     // AndersenSCD* point_to_analysys = AndersenSCD::createAndersenSCD(pag);
     // TypeAnalysis* point_to_analysys = new TypeAnalysis(pag);
+    GlobalStruct *point_to_analysys = GlobalStruct::createSGWPA(pag);
+
     point_to_analysys->analyze();
+
+    SVFUtil::outs() << "Analysis done!\n";
 
     Dominator *dom = nullptr;
     PostDominator *pDom = nullptr;

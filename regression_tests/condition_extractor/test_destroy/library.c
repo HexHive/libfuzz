@@ -61,7 +61,11 @@ extern "C" {
 //   return res;
 // }
 
-int vpx_rb_read_bit(struct vpx_read_bit_buffer *rb) {
+int vpx_rb_read_bit(struct vpx_read_bit_buffer *rb, unsigned int data_sz) {
+
+  if (data_sz > 100)
+    return 1;
+
   const size_t off = rb->bit_offset;
   const size_t p = off >> 3;
   const int q = 7 - (int)(off & 0x7);
@@ -74,11 +78,11 @@ int vpx_rb_read_bit(struct vpx_read_bit_buffer *rb) {
   }
 }
 
-int (*read_bit)(struct vpx_read_bit_buffer *rb) = &vpx_rb_read_bit;
+int (*read_bit)(struct vpx_read_bit_buffer *rb, unsigned int data_sz) = &vpx_rb_read_bit;
 
 int decoder_peek_si_internal(const uint8_t *data, unsigned int data_sz) {
     struct vpx_read_bit_buffer rb = { data, data + data_sz, 0};
-    return read_bit(&rb);
+    return read_bit(&rb, data_sz);
 }
 
 }

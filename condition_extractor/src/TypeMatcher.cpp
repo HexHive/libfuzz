@@ -73,7 +73,28 @@ std::string TypeMatcher::compute_hash(const llvm::Type* t,
             hash += "IN";
             break;
         case llvm::Type::TypeID::FunctionTyID:
-            hash += "FN"; // compute hash function
+            {
+            hash += "FN["; // compute hash function
+
+            const llvm::FunctionType* ft = SVFUtil::dyn_cast<FunctionType>(t);
+
+            // std::string t_id = compute_id(st);
+
+            auto ret_type = ft->getReturnType();
+            unsigned int n_arg = ft->getNumParams();
+            hash += std::to_string(n_arg+1) + ",";
+          
+            hash += compute_hash(ret_type, ids_done) + ",";
+            unsigned int i = 0;
+            for (; i < n_arg; i++) {
+                auto at = ft->getParamType(i);
+                hash += compute_hash(at, ids_done) + ",";
+            }
+
+                
+            hash = hash.substr(0, hash.size()-1); // remove last ","
+            hash += "]";
+            }
             break;
         case llvm::Type::TypeID::PointerTyID: 
             {
