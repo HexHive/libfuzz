@@ -1,4 +1,5 @@
 #!/bin/bash
 
-echo "[INFO] Nothing to preinstall"
-sudo apt install cmake git perl yasm
+echo "[INFO] Installing yasm"
+DEBIAN_FRONTEND="noninteractive" \
+    sudo apt-get -y install --no-install-suggests --no-install-recommends cmake git perl yasm
