@@ -32,11 +32,11 @@ do
     # [TAG] THIS STEP MUST BE ADAPTED FOR EACH LIBRARY
     # Compile driver for fuzzing
     $CXX -g -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
-        $d ${TARGET}/work/lib/libtiff.a ${TARGET}/work/lib/libtiffxx.a \
+        $d -Wl,--whole-archive ${TARGET}/work/lib/libtiff.a ${TARGET}/work/lib/libtiffxx.a -Wl,--no-whole-archive \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
 
     # Compile driver for coverage
     $CXX -g -std=c++11  -fsanitize=fuzzer -fprofile-instr-generate -fcoverage-mapping \
-        -I/${TARGET}/work/include $d ${TARGET}/work/lib/libtiff_profile.a ${TARGET}/work/lib/libtiffxx_profile.a \
+        -I/${TARGET}/work/include $d -Wl,--whole-archive ${TARGET}/work/lib/libtiff_profile.a ${TARGET}/work/lib/libtiffxx_profile.a -Wl,--no-whole-archive \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${DRIVER_FOLDER}/../profiles/${DRIVER_NAME%%.*}_profile"
 done
