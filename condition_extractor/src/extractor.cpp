@@ -105,6 +105,9 @@ static llvm::cl::opt<bool> useDominator("dom",
 static llvm::cl::opt<bool> printDominator("print_dom",
         llvm::cl::desc("Print Post/Dominators"), llvm::cl::init(false));
 
+static llvm::cl::opt<bool> dumpEachAPI("diff",
+        llvm::cl::desc("Dump analysis results after each funciton analyzed"), llvm::cl::init(false));
+
 static llvm::cl::opt<std::string> cacheFolder("cache_folder",
         llvm::cl::desc("Folder for cache"), llvm::cl::init(""));
 
@@ -366,6 +369,18 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
 //     exit(1);
 // }
 DataLayout *DL = nullptr;
+
+void dumpFunAnalysis(FunctionConditionsSet fun_cond_set) {
+    if (OutputType == OutType::txt) {
+        FunctionConditionsSet::storeIntoTextFile(
+            fun_cond_set, OutputFile, verbose >= Verbosity::v1);
+    } else if (OutputType == OutType::json) {
+        FunctionConditionsSet::storeIntoJsonFile(
+            fun_cond_set, OutputFile, verbose >= Verbosity::v1);
+    } else if (OutputType == OutType::stdo) {
+        SVFUtil::outs() << fun_cond_set.toString(verbose >= Verbosity::v1);
+    }
+};
 
 void setDataLayout(const Function* F) {
   if (DL == nullptr)
@@ -742,19 +757,21 @@ int main(int argc, char ** argv)
 
         fun_cond_set.addFunctionConditions(fun_conds);
 
+        SVFUtil::outs() << "[INFO] Done with: " << fun->getName() << "\n";
+         
+
+        if (dumpEachAPI) {
+            dumpFunAnalysis(fun_cond_set); 
+            fun_cond_set.clear();
+            SVFUtil::outs() << fun_cond_set.getSummary();
+        };
     }
 
-    if (OutputType == OutType::txt) {
-        FunctionConditionsSet::storeIntoTextFile(
-            fun_cond_set, OutputFile, verbose >= Verbosity::v1);
-    } else if (OutputType == OutType::json) {
-        FunctionConditionsSet::storeIntoJsonFile(
-            fun_cond_set, OutputFile, verbose >= Verbosity::v1);
-    } else if (OutputType == OutType::stdo) {
-        SVFUtil::outs() << fun_cond_set.toString(verbose >= Verbosity::v1);
-    }
+    if (!dumpEachAPI) {
+        dumpFunAnalysis(fun_cond_set);
 
-    SVFUtil::outs() << fun_cond_set.getSummary();
+        SVFUtil::outs() << fun_cond_set.getSummary();
+    }
 
     // extract data layout
     if (ExtractDataLayout != "") {

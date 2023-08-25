@@ -847,6 +847,10 @@ class FunctionConditionsSet {
                     (fun_cond.getFunctionName(),fun_cond)
             );
         }
+        
+        void clear() {
+            fun_cond_set.clear(); 
+        }
 
         Json::Value toJson(bool verbose) {
             Json::Value funCondJson(Json::arrayValue);
