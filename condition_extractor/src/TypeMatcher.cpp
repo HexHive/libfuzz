@@ -21,7 +21,7 @@ std::string TypeMatcher::compute_id(const llvm::StructType* t) {
     return name;
 }
 
-std::string TypeMatcher::compute_hash(const llvm::Type* t,
+std::string TypeMatcher::compute_unique_string(const llvm::Type* t,
     std::set<std::string> ids_done) {
 
     if (type_hash_map.find(t) != type_hash_map.end())
@@ -73,12 +73,33 @@ std::string TypeMatcher::compute_hash(const llvm::Type* t,
             hash += "IN";
             break;
         case llvm::Type::TypeID::FunctionTyID:
-            hash += "FN"; // compute hash function
+            {
+            hash += "FN["; // compute hash function
+
+            const llvm::FunctionType* ft = SVFUtil::dyn_cast<FunctionType>(t);
+
+            // std::string t_id = compute_id(st);
+
+            auto ret_type = ft->getReturnType();
+            unsigned int n_arg = ft->getNumParams();
+            hash += std::to_string(n_arg+1) + ",";
+          
+            hash += compute_unique_string(ret_type, ids_done) + ",";
+            unsigned int i = 0;
+            for (; i < n_arg; i++) {
+                auto at = ft->getParamType(i);
+                hash += compute_unique_string(at, ids_done) + ",";
+            }
+
+                
+            hash = hash.substr(0, hash.size()-1); // remove last ","
+            hash += "]";
+            }
             break;
         case llvm::Type::TypeID::PointerTyID: 
             {
             const llvm::PointerType* pt = SVFUtil::dyn_cast<PointerType>(t);
-            hash += "PN[" + compute_hash(pt->getElementType(), ids_done) + "]";
+            hash += "PN[" + compute_unique_string(pt->getElementType(), ids_done) + "]";
             }
             break;
         case llvm::Type::TypeID::StructTyID:
@@ -90,19 +111,20 @@ std::string TypeMatcher::compute_hash(const llvm::Type* t,
             if (st->isEmptyTy()) {
                 hash += "FN";
             } else {
-                hash += "ST[" + t_id + "," + 
-                        std::to_string(st->getNumElements()) + ",";
+                hash += "ST[" + t_id + "]";
+                // hash += "ST[" + t_id + "," + 
+                //         std::to_string(st->getNumElements()) + ",";
 
-                bool to_expand = ids_done.find(t_id) == ids_done.end();
-                ids_done.insert(t_id);
-                for (auto el: st->elements())
-                    if (to_expand)
-                        hash += compute_hash(el, ids_done) + ",";
-                    else
-                        hash += "x,";
+                // bool to_expand = ids_done.find(t_id) == ids_done.end();
+                // ids_done.insert(t_id);
+                // for (auto el: st->elements())
+                //     if (to_expand)
+                //         hash += compute_unique_string(el, ids_done) + ",";
+                //     else
+                //         hash += "x,";
                 
-                hash = hash.substr(0, hash.size()-1); // remove last ","
-                hash += "]";
+                // hash = hash.substr(0, hash.size()-1); // remove last ","
+                // hash += "]";
             }
             }
             break;
@@ -110,7 +132,7 @@ std::string TypeMatcher::compute_hash(const llvm::Type* t,
             {
             const llvm::ArrayType* ar = SVFUtil::dyn_cast<ArrayType>(t);
             hash += "AR[" + std::to_string(ar->getNumElements());
-            hash += "," + compute_hash(ar->getElementType(), ids_done);
+            hash += "," + compute_unique_string(ar->getElementType(), ids_done);
             hash += "]";
             }
             break;
@@ -118,7 +140,7 @@ std::string TypeMatcher::compute_hash(const llvm::Type* t,
             {
             const llvm::FixedVectorType* fv = SVFUtil::dyn_cast<FixedVectorType>(t);
             hash += "FV[" + std::to_string(fv->getNumElements());
-            hash += "," + compute_hash(fv->getElementType(), ids_done);
+            hash += "," + compute_unique_string(fv->getElementType(), ids_done);
             hash += "]";
             }
             break;
@@ -127,7 +149,7 @@ std::string TypeMatcher::compute_hash(const llvm::Type* t,
             const llvm::ScalableVectorType* fv = 
                 SVFUtil::dyn_cast<ScalableVectorType>(t);
             hash += "SV[" + std::to_string(fv->getMinNumElements());
-            hash += "," + compute_hash(fv->getElementType(), ids_done);
+            hash += "," + compute_unique_string(fv->getElementType(), ids_done);
             hash += "]";
             }
             break;
@@ -137,11 +159,18 @@ std::string TypeMatcher::compute_hash(const llvm::Type* t,
 
     }
 
+    type_hash_map[t] =  hash;
+
+    return hash;
+}
+
+std::string TypeMatcher::compute_hash(const llvm::Type* t) {
+
+    std::string hash = TypeMatcher::compute_unique_string(t);
+
     md5::MD5 md5stream;
     md5stream.add(hash.c_str(), hash.length());
     hash = md5stream.getHash();
-
-    type_hash_map[t] =  hash;
 
     return hash;
 }
