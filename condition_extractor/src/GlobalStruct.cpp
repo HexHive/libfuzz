@@ -57,8 +57,10 @@ void GlobalStruct::analyze() {
     SVFGEdgeSetTy svfgEdges;
     CallEdgeMap newEdges;
 
+    // SVFUtil::outs() << "My unresolved calls:\n";
     // Actually resolving call targets
     for (auto cnode: unresolved_calls) {
+        // SVFUtil::outs() << cnode->toString() << "\n";
         auto cs = cnode->getCallSite();
         auto llvm_inst = llvmModuleSet->getLLVMValue(cs);
         if (llvm_inst == nullptr)
@@ -69,46 +71,43 @@ void GlobalStruct::analyze() {
         if (llvm_cs == nullptr)
             continue;
 
-        // auto dst_id = llvmModuleSet->getSVFValue(cnode);
-
         // llvm::raw_string_ostream(str) << *llvm_cs;
         // SVFUtil::outs() << str << "\n";
 
-
         auto fun_type = llvm_cs->getFunctionType();
         auto fun_type_hash = TypeMatcher::compute_hash(fun_type);
+        auto fun_type_hash_str = TypeMatcher::compute_unique_string(fun_type);
+
+        // llvm::raw_string_ostream(str) << *fun_type << "\n";
+        // SVFUtil::outs() << str << "\n";
+        // str = "";
+        // SVFUtil::outs() << fun_type_hash << "\n";
+        // SVFUtil::outs() << fun_type_hash_str << "\n";
 
         // auto fun_caller = cnode->getFun();
         auto fun_caller = cnode->getCaller();
 
         const CallICFGNode* callBlockNode = pag->getICFG()->getCallICFGNode(cnode->getCallSite());
 
+        unsigned int x = 0;
         for (auto f: fncs[fun_type_hash]) {
             auto fun_callee = llvmModuleSet->getSVFFunction(f);
 
             newEdges[callBlockNode].insert(fun_callee);
             getIndCallMap()[callBlockNode].insert(fun_callee);
             ptacg->addIndirectCallGraphEdge(callBlockNode, fun_caller, fun_callee);
+            x++;
         }
+        // SVFUtil::outs() << "connected to: " << x << "\n";
+        // SVFUtil::outs() << "----\n";
     }
+
+    // SVFUtil::outs() << "[DEBUG] early stop\n";
+    // exit(1);
 
     connectCallerAndCallee(newEdges, svfgEdges);
     updateConnectedNodes(svfgEdges);
 
-    // check indirect calls again
-    map = pag->getIndirectCallsites();
-
-    std::set<const CallICFGNode*> unresolved_calls_2;
-    tot_indirect_calls = 0;
-    for (auto el: map) {
-        auto icfg_node = el.first;
-        auto node_id = el.second;
-        auto target_set = pag->getIndCallSites(node_id);
-        auto x = this->getPts(node_id);
-        if (x.empty())
-            unresolved_calls_2.insert(icfg_node);
-        tot_indirect_calls++;
-    }
 
 }
 
