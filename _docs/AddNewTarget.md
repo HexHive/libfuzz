@@ -1,8 +1,6 @@
 # Add a New Target
 
-To add a new target one can take inspiration from `libtiff`. 
-
-**TODO**: modify to include information about profiling (and crash minimization? maybe not..)
+To add a new target one can take inspiration from `libtiff`.
 
 **Preliminary steps**
 
@@ -22,13 +20,13 @@ You need to understand:
 Once mastered these skills (!), you should be able to create the following
 scripts.
 
-**Create a new folder**  
+**Create a new folder**
 Add a new folder in `./target`:
 ```bash
 NEWLIBRARY=<a-library>
 mkdir -p ./target/$NEWLIBRARY
 ```
-**Scripts**  
+**Scripts**
 We need *seven* scripts/files for the full pipeline:
 
 ```bash
@@ -76,7 +74,7 @@ The script will be automatically invoked in the docker building.
 
 The file indicates which library headers are meant to be included in the
 consumer/driver. One just needs to indiates the actual file, no subfolder
-handled yet.  
+handled yet.
 Example:
 ```text
 htp.h
@@ -152,7 +150,7 @@ $TOOLS_DIR/tool/misc/extract_included_functions.py -i "$WORK/include" \
 It is important that `-e`, `-t`, and `-a` flags refer to files in
 `$LIBFUZZ_LOG_PATH`. The option `-p`, insteaed, points to the `$TARGET_NAME` in
 folder.
-- Run the static analyzer, e.g., 
+- Run the static analyzer, e.g.,
 ```bash
 $TOOLS_DIR/condition_extractor/bin/extractor \
     $WORK/lib/libtiff.a.bc \
@@ -205,8 +203,8 @@ This controls how to generate drivers. Simplest approach: copy-paste from
 the in-docker file system.
 
 **NOTE:** Remember that some parameters could be overwritten by a global
-configuration.  
-In `$LIBFUZZ`, there is `overwrite.toml`. 
+configuration.
+In `$LIBFUZZ`, there is `overwrite.toml`.
 ```toml
 [generator]
 pool_size = 40
@@ -228,7 +226,7 @@ TARGET=libtiff ./run_drivergeneration.sh
 ```
 This will create a `workdir/$TARGET`, somethig like:
 ```bash
-ls workdir/libtiff 
+ls workdir/libtiff
 corpus # all the initial corpus
 drivers # all the drivers
 ```
@@ -237,7 +235,9 @@ If you want to know more of driver generation, check [here](DriverGeneration.md)
 **build_library.sh**
 
 This compiles and prepares the library to be fuzzed with libfuzzer.
-This is very close to `analysis.sh`. The difference is in the `CFLAGS` and `CXXFLAGS` that must be set as:
+We have to compile the library twice. First with fuzzing (fuzzer-no-link, ASan) instrumentation
+and secondly with coverage instrumentation.
+This is very similar to `analysis.sh`. The difference is in the `CFLAGS` and `CXXFLAGS` that first must be set as:
 
 ```bash
 export CXXFLAGS="-fsanitize=fuzzer-no-link,address -g" \
@@ -245,6 +245,16 @@ export CFLAGS="-fsanitize=fuzzer-no-link,address -g"
 ```
 `-fsanitize=fuzzer-no-link` prepares the library to be used in LibFuzzer, while
 `-fsanitize=address` includes ASan.
+
+While for coverage build we need:
+```bash
+export CXXFLAGS="-fprofile-instr-generate -fcoverage-mapping -g" \
+export CFLAGS="-fprofile-instr-generate -fcoverage-mapping -g"
+```
+
+It is important to save the profile version of the library before running fuzzing build:
+`mv $WORK/lib/{library_name}.a $WORK/lib/{library_name}_profile.a`
+
 
 Moreover, we do not need `wllvm` here. A simpler configuration such as the following is preferable.
 ```bash
@@ -272,11 +282,15 @@ This script is a simple loop that link drivers in `./workdir/${TARGET}/drivers` 
 Similarly, copy `compile_driver.sh` from `libtiff` and adjust the compilation step.
 
 For reference, I left two `[TAG]` that contains the part of the script to modify
-in `libtiff`'s `compile_driver.sh` script. 
+in `libtiff`'s `compile_driver.sh` script.
+
+Similar to building library, we have to compile the driver twice: for fuzzing
+and for profiling (with usual `-fprofile-instr-generate -fcoverage-mapping` flags).
 
 The important thing is to compile drivers against the `.a` library from
-`./build_library.sh`, and save the output in the same `.cc` folder. The
-rest *should* work transparently.
+`./build_library.sh` (the profile driver should be compiled against respective profile library),
+and save the output in the same `.cc` folder for fuzzer and inside `profiles` folder for coverage intrumented driver.
+The rest *should* work transparently.
 
 The actual fuzzing campaign is handled by the script
 `./targets/start_fuzz_driver.sh`, which will look up the correct
@@ -295,7 +309,7 @@ TARGET=libtiff TIMEOUT=1m DRIVER=driver8 ./run_fuzzing.sh
 - `DRIVER` -- the actual driver to fuzz, if omitted compile/fuzz all drivres
   (equivalent to `DRIVER=*`)
 
-The script additionally creates a `crashes` folder for the, guess what, crashes!  
+The script additionally creates a `crashes` folder for the, guess what, crashes!
 The initial corpus is also copied in a new folder `corpus_new` to divide
 generated and initial seeds.
 
