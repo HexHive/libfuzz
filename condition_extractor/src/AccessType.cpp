@@ -890,8 +890,8 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                     // if (SVFUtil::isa<llvm::StructType>(sType) && 
                     //  AccessTypeSet::isSameType(pType, acNode.getType()) ) {
                     if (TypeMatcher::compare_types(pType, acNode.getType()) &&
-                        !acNode.is_visited(pType) && 
-                        SVFUtil::isa<PointerType>(dType)) {
+                        !acNode.is_visited(pType)) {
+                        // SVFUtil::isa<PointerType>(dType)) {
                         if (inst->hasAllConstantIndices() &&
                             inst->getNumIndices() > 1) {
 

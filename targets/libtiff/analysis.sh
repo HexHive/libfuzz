@@ -72,7 +72,7 @@ $TOOLS_DIR/tool/misc/extract_included_functions.py -i "$WORK/include" \
 # produced
 $TOOLS_DIR/condition_extractor/bin/extractor \
     $WORK/lib/libtiff.a.bc \
-    -interface "$LIBFUZZ_LOG_PATH/apis_clang.json" \
+    -function "TIFFGetField" \
     -output "$LIBFUZZ_LOG_PATH/conditions.json" \
     -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
     -v v0 -t json -do_indirect_jumps \
