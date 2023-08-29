@@ -101,7 +101,7 @@ class CBFactory(Factory):
 
             num_arg_ok = 0
             for arg_p, arg in enumerate(api.arguments_info):
-                the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, arg.is_type_incomplete, False)
+                the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, False)
                 arg_cond = fun_cond.argument_at[arg_p]
                 if isinstance(the_type, PointerType):
                     the_type = the_type.get_base_type()

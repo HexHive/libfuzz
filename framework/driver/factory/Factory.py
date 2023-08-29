@@ -31,18 +31,18 @@ class Factory(ABC):
         arg_list_type = []
         for _, arg in enumerate(arguments_info):
             # NOTE: for simplicity, const type as arguments can be consider non-const, see `Driver_IR.md` for more info
-            the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, arg.is_type_incomplete, False)
+            the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, False)
             arg_list_type += [the_type]
 
         if return_info.size == 0:
-            ret_type = Factory.normalize_type('void', 0, "val", True, False)
+            ret_type = Factory.normalize_type('void', 0, "val", False)
         else:
-            ret_type = Factory.normalize_type(return_info.type, return_info.size, return_info.flag, return_info.is_type_incomplete, return_info.is_const)
+            ret_type = Factory.normalize_type(return_info.type, return_info.size, return_info.flag, return_info.is_const)
         
         return ApiCall(api, function_name, namespace, arg_list_type, ret_type)
 
     @staticmethod
-    def normalize_type(a_type, a_size, a_flag, a_is_incomplete, a_is_const) -> Type:
+    def normalize_type(a_type, a_size, a_flag, a_is_const) -> Type:
         
         if a_flag == "ref" or a_flag == "ret":
             if not re.search("\*$", a_type) and "*" in a_type:
