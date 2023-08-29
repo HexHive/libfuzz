@@ -52,6 +52,7 @@
 
 #include "json/json.h"
 #include <fstream> 
+#include <string>
 
 #include "md5/md5.h"
 
@@ -502,7 +503,7 @@ int main(int argc, char ** argv)
 
     point_to_analysys->analyze();
 
-    SVFUtil::outs() << "Analysis done!\n";
+    SVFUtil::outs() << "[INFO] Analysis done!\n";
 
     Dominator *dom = nullptr;
     PostDominator *pDom = nullptr;
@@ -579,10 +580,16 @@ int main(int argc, char ** argv)
 
     FunctionConditionsSet fun_cond_set;
 
+    unsigned int tot_function = functions.size();
+    unsigned int num_function = 0;
+
     SVFUtil::outs() << "[INFO] running analysis...\n";
     for (auto f: functions) {
 
+        num_function++;
         FunctionConditions fun_conds;
+        std::string prog = std::to_string(num_function) + "/" + 
+                            std::to_string(tot_function);
 
         fun_conds.setFunctionName(f);
         for (auto const& x : funmap_par) {
@@ -590,8 +597,8 @@ int main(int argc, char ** argv)
             if ( fun->getName() != f)
                 continue;
 
-            SVFUtil::outs() << "[INFO] processing params for: " << 
-                        fun->getName() << "\n";
+            SVFUtil::outs() << "[INFO " << prog << "] processing params for: " 
+                << fun->getName() << "\n";
                         
             for (auto const& p : x.second) {
                 if (verbose >= Verbosity::v1)
@@ -633,8 +640,8 @@ int main(int argc, char ** argv)
             if ( fun->getName() != f)
                 continue;
 
-            SVFUtil::outs() << "[INFO] processing return for: " << 
-                        fun->getName() << "\n";
+            SVFUtil::outs() << "[INFO " << prog << "] processing return for: " 
+                << fun->getName() << "\n";
 
             auto p = x.second;
             if (verbose >= Verbosity::v1)
