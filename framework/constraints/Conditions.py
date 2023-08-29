@@ -42,12 +42,21 @@ class Conditions:
         if self.is_malloc_size != r_cond.is_malloc_size:
             return False
 
-        # r_requirements = set([at for at in r_cond if at.access == Access.READ])
-        r_requirements = set([at for at in r_cond.ats if at.access == Access.WRITE])
+        r_requirements = set([at for at in r_cond.ats if at.access == Access.READ])
+        r_updates = set([at for at in r_cond.ats if at.access == Access.WRITE])
         # holding_condition = set([at for at in self.ats if at.access in [Access.WRITE, Access.RETURN]])
 
         matching_requirements = 0
         unmatching_requirements = set()
+
+        to_remove = set()
+        for r in r_requirements:
+            for h in r_updates:
+                if r.fields == h.fields:
+                    # matching_requirements += 1
+                    to_remove.add(r)
+
+        r_requirements = r_requirements.difference(to_remove)
 
         for r in r_requirements:
             req_found = False

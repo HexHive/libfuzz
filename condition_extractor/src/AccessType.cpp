@@ -934,6 +934,9 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                                 mdata.addIndex(inst);
                             }
 
+                        } 
+                        else {
+                            skipNode = true;
                         }
                         acNode.add_visited_type(pType);
                     }
@@ -957,6 +960,9 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                     //     outs() << "\n";
                     //     exit(1);
                     // }
+                }
+                else {
+                    skipNode = true;
                 }
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Copy &&
                 SVFUtil::isa<StmtVFGNode>(vNode)) {
@@ -984,17 +990,17 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                     // outs() << "src_typ " << *src_typ << "\n";
                     // outs() << "acNode.getType() " << *acNode.getType() << "\n";
 
-                    if (TypeMatcher::compare_types(src_typ, acNode.getType())) {
-                        // I want the node the original type after the cast this
-                        // may turn out useful for mem* api operations since
-                        // they tend to cast to i8* before being invoked
-                        acNode.setOriginalCastType(acNode.getType());
-                        acNode.setType(dst_typ);
-                        ats->insert(acNode, vNode->getICFGNode());
-                    }
-                    else {
-                        skipNode = true;    
-                    }
+                    // if (TypeMatcher::compare_types(src_typ, acNode.getType())) {
+                    //     // I want the node the original type after the cast this
+                    //     // may turn out useful for mem* api operations since
+                    //     // they tend to cast to i8* before being invoked
+                    //     acNode.setOriginalCastType(acNode.getType());
+                    //     acNode.setType(dst_typ);
+                    //     ats->insert(acNode, vNode->getICFGNode());
+                    // }
+                    // else {
+                    //     skipNode = true;    
+                    // }
 
                     // if (dst_typ != seek_type && dst_typ != i8ptr_typ) {
                     //     skipNode = true;
