@@ -401,7 +401,7 @@ class Utils:
         return AccessTypeSet(ats)
 
     @staticmethod
-    def get_function_conditions(conditions_file, apis_llvm) -> FunctionConditionsSet:
+    def prase_function_conditions(conditions_file, apis_llvm) -> FunctionConditionsSet:
 
         fcs = FunctionConditionsSet()
 

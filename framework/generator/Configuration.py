@@ -8,6 +8,8 @@ from dependency import TypeDependencyGraphGenerator
 from dependency import UndefDependencyGraphGenerator
 from grammar import GrammarGenerator, NonTerminal, Terminal
 
+from constraints import ConditionManager
+
 from backend import BackendDriver, MockBackendDriver, LFBackendDriver
 from common import Utils, DataLayout
 
@@ -225,8 +227,14 @@ class Configuration:
         data_layout = analysis["data_layout"]
         enum_types = analysis["enum_types"]
 
-        DataLayout.populate(apis_clang, apis_llvm, incomplete_types, 
-                            data_layout, enum_types)
+        data_layout_inst = DataLayout.instance()
+        data_layout_inst.setup(apis_clang, apis_llvm, incomplete_types, 
+                               data_layout, enum_types)
+
+    def build_condition_manager(self):
+        cond_manager = ConditionManager.instance()
+        cond_manager.setup(self.api_list, self.api_list_all,
+                           self.function_conditions)
 
     @cached_property
     def dependency_graph(self):
@@ -275,11 +283,13 @@ class Configuration:
 
         if policy == "constraint_based":
             dep_graph = self.dependency_graph
-            return CBFactory(self.api_list, self.driver_size, dep_graph, self.function_conditions, self.api_list_all)
+            return CBFactory(self.api_list, self.driver_size, dep_graph, 
+                             self.function_conditions)
         
         if policy == "constraint_based_weigth":
             dep_graph = self.dependency_graph
-            return CBWFactory(self.api_list, self.driver_size, dep_graph, self.function_conditions, self.api_list_all)
+            return CBWFactory(self.api_list, self.driver_size, dep_graph, 
+                              self.function_conditions)
 
         raise NotImplementedError
 
@@ -299,7 +309,7 @@ class Configuration:
         conditions_file = analysis["conditions"]
         apis_llvm = analysis["apis_llvm"]
         
-        return Utils.get_function_conditions(conditions_file, apis_llvm)
+        return Utils.prase_function_conditions(conditions_file, apis_llvm)
         
     @cached_property
     def num_seeds(self):

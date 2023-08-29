@@ -91,11 +91,11 @@ class Factory(ABC):
 
         # NOTE: a_size comes wrong from LLVM analysis, I use this trick to fix
         # the size
-        a_size = DataLayout.get_type_size(a_type_core)
-        a_incomplete_core = DataLayout.is_incomplete(a_type_core)
+        a_size = DataLayout.instance().get_type_size(a_type_core)
+        a_incomplete_core = DataLayout.instance().is_incomplete(a_type_core)
 
         type_tag = TypeTag.PRIMITIVE
-        if DataLayout.is_a_struct(a_type_core):
+        if DataLayout.instance().is_a_struct(a_type_core):
             # print("is this a struct?")
             # from IPython import embed; embed(); exit(1)
             type_tag = TypeTag.STRUCT
