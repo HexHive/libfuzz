@@ -49,7 +49,8 @@ class Conditions:
             if len(fld) == 0:
                 continue
             for cj, cj_sub in subfield_candidate_jollies.items():
-                if cj_sub == fld[:-1] and fld[-1] != -1:
+                if (cj_sub == fld[:-1] and fld[-1] != -1 and 
+                    cj in candidate_jollies):
                     candidate_jollies.remove(cj)
 
         return candidate_jollies
