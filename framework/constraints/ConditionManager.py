@@ -23,28 +23,46 @@ class ConditionManager:
             cls._instance = cls.__new__(cls)
         return cls._instance
     
-    def setup(self, api_list: Set[Api], api_list_all: Set[Api], conditions: FunctionConditionsSet):
-
-        get_cond = lambda x: conditions.get_function_conditions(
-            x.function_name)
+    def setup(self, api_list: Set[Api], api_list_all: Set[Api],
+              conditions: FunctionConditionsSet):
         
         self.api_list = api_list
         self.api_list_all = api_list_all
         self.conditions = conditions
 
+        self.init_sinks()
+        self.init_source()
+
+    def init_sinks(self):
         # sink map that links Type <=> (Sink)Api
         self.sink_map = {}
         self.sinks = set()
-        for api in api_list_all:
+
+        get_cond = lambda x: self.conditions.get_function_conditions(
+            x.function_name)
+
+        for api in self.api_list_all:
             fun_cond = get_cond(api)
             if (len(api.arguments_info) == 1 and 
-                api.return_info.type == "void" and
+                self.is_return_sink(api.return_info.type) and
                 self.is_a_sink_condition(fun_cond.argument_at[0])):
                 arg = api.arguments_info[0]
                 the_type = Factory.normalize_type(arg.type, arg.size, 
                                                   arg.flag, False)
                 self.sink_map[the_type] = api
                 self.sinks.add(api)
+
+        # print("init_sinks")
+        # from IPython import embed; embed(); exit()
+
+    def is_return_sink(self, token_type: str):
+        if token_type == "void":
+            return True
+        
+        if DataLayout.instance().is_enum_type(token_type):
+            return True
+
+        return False
 
     def is_sink(self, api_call: ApiCall) -> bool:
         return api_call.original_api in self.sinks
@@ -71,6 +89,9 @@ class ConditionManager:
                 if at.access == Access.CREATE and at.fields == []]) != 0)
     
     def get_source_api(self) -> Set[Api]:
+        return self.source_api
+
+    def init_source(self) -> Set[Api]:
 
         source_api = set()
 
@@ -124,4 +145,4 @@ class ConditionManager:
         # print("get_source_api")
         # from IPython import embed; embed(); exit(1)
 
-        return source_api
+        self.source_api = source_api
