@@ -33,7 +33,7 @@ run: $(TARGET).o.bc $(TARGET).o.ll
 #	$(WPA) -steens --dump-icfg  ./$(TARGET).o.bc
 	$(EXTR_INC_FUNC) -i $(PWD) -e "$(PWD)/exported_functions.txt" -t "$(PWD)/incomplete_types.txt" -a $(INTERFACE) -p "$(PWD)/public_headers.txt"
 #	$(EXTRACTOR) $< -interface $(INTERFACE) -t json -v v0  -output $(TARGET).json -data_layout $(DATA_LAYOUT)
-	$(EXTRACTOR) $< -function $(FUNCTION) -t json -v v0  -output $(TARGET).json -data_layout $(DATA_LAYOUT) -do_indirect_jumps
+	$(EXTRACTOR) $< -function $(FUNCTION) -t json -v v1  -output $(TARGET).json -data_layout $(DATA_LAYOUT) -do_indirect_jumps
 #	$(WPA) -ander -svfg -dump-vfg  ./$(TARGET).o.bc
 #	$(WPA) -ander -dump-pag ./$(TARGET).o.bc
 # 	convert only if you --print_dom

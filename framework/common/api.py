@@ -5,15 +5,13 @@ class Arg:
     size: int
     type: str
     # these are attributes from my perspective
-    is_type_incomplete: bool
     is_const: bool
 
-    def __init__(self, name, flag, size, type, is_type_incomplete, is_const):
+    def __init__(self, name, flag, size, type, is_const):
         self.name = name
         self.flag = flag
         self.size = size
         self.type = type
-        self.is_type_incomplete = is_type_incomplete
         self.is_const = is_const
 
     def __str__(self):
@@ -28,7 +26,6 @@ class Arg:
         arg_lst += [self.flag]
         arg_lst += [self.size]
         arg_lst += [self.type]
-        arg_lst += [self.is_type_incomplete]
         arg_lst += [self.is_const]
         return tuple(arg_lst)
 

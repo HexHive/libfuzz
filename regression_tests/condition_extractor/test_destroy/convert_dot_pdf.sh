@@ -31,5 +31,5 @@
 #     fi
 # done
 
-# dot -Tpdf svfir_initial.dot -osvfir_initial.dot.pdf
-dot -Tpdf svfg_final.dot -osvfg_final.dot.pdf
+dot -Tpdf svf_extractor.dot -osvf_extractor.dot.pdf
+dot -Tpdf icfg_extractor.dot -ocfg_extractor.dot.pdf

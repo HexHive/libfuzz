@@ -2,6 +2,7 @@ from driver.ir import ApiCall
 class Generator:
     def __init__(self, config):
         config.build_data_layout()
+        config.build_condition_manager()
 
         self._workdir = config.work_dir
 

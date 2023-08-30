@@ -15,15 +15,25 @@ class DataLayout:
     # layout:     Dict[str, int]
     # structs:    Set[str]
     # enum:       Set[str]
-    
-    size_types = ["size_t", "int", "uint32_t", "uint64_t", "__uint32_t", "unsigned int"]
 
-    @staticmethod
-    def populate(apis_clang_p: str, apis_llvm_p: str,
+    _instance           : "DataLayout" = None
+    
+    size_types = ["size_t", "int", "uint32_t", "uint64_t", "__uint32_t", "unsigned int", "int64_t"]
+
+    def __init__(self):
+        raise Exception("ConditionManager can be obtained through instance() class method")
+    
+    @classmethod
+    def instance(cls):
+        if cls._instance is None:
+            cls._instance = cls.__new__(cls)
+        return cls._instance
+
+    def setup(self, apis_clang_p: str, apis_llvm_p: str,
         incomplete_types_p: str, data_layout_p: str, enum_types_p: str):
         print("DataLayout populate!")
 
-        DataLayout.layout = {}
+        self.layout = {}
 
         apis_clang = Utils.get_apis_clang_list(apis_clang_p)
         apis_llvm = Utils.get_apis_llvm_list(apis_llvm_p)
@@ -31,38 +41,37 @@ class DataLayout:
         data_layout = Utils.get_data_layout(data_layout_p)
         enum_type = Utils.get_enum_types_list(enum_types_p)
 
-        DataLayout.apis_clang = apis_clang
-        DataLayout.apis_llvm = apis_llvm
-        DataLayout.incomplete_types = incomplete_types
-        DataLayout.data_layout = data_layout
-        DataLayout.enum_type = enum_type
-        DataLayout.clang_to_llvm_struct = {}
+        self.apis_clang = apis_clang
+        self.apis_llvm = apis_llvm
+        self.incomplete_types = incomplete_types
+        self.data_layout = data_layout
+        self.enum_type = enum_type
+        self.clang_to_llvm_struct = {}
 
         # loop all the types in apis_clang (args + ret) and try to infer all the
         # types
         for function_name, api in apis_clang.items():
 
-            if function_name not in DataLayout.apis_llvm:
+            if function_name not in self.apis_llvm:
                 continue
 
             # if function_name == "GetX86CacheInfo":
             #     from IPython import embed; embed(); exit(1)
             for arg_pos, arg in enumerate(api["arguments_info"]):
                 type_clang = arg["type_clang"]
-                DataLayout.populate_table(type_clang, function_name, arg_pos)
+                self.populate_table(type_clang, function_name, arg_pos)
 
             type_clang = api["return_info"]["type_clang"]
-            DataLayout.populate_table(type_clang, function_name, -1)
+            self.populate_table(type_clang, function_name, -1)
 
-        # print(DataLayout.layout)
+        # print(self.layout)
         # from IPython import embed; embed(); exit(1)
 
-    @staticmethod
-    def get_llvm_type(function_name, arg_pos):
+    def get_llvm_type(self, function_name, arg_pos):
         if arg_pos == -1:
-            arg = DataLayout.apis_llvm[function_name]["return_info"]
+            arg = self.apis_llvm[function_name]["return_info"]
         else:
-            arg = DataLayout.apis_llvm[function_name]["arguments_info"][arg_pos]
+            arg = self.apis_llvm[function_name]["arguments_info"][arg_pos]
 
         l_type = arg["type"]
         l_size = arg["size"]
@@ -70,8 +79,7 @@ class DataLayout:
         return l_type, l_size
 
     
-    @staticmethod
-    def multi_level_size_infer(ttype, function_name, pos, is_original):
+    def multi_level_size_infer(self, ttype, function_name, pos, is_original):
         t_size = 0
 
         # if ttype == "cpu_features::CacheInfo" and pos == -1:
@@ -81,7 +89,7 @@ class DataLayout:
         # first step, search in the tables
         known_type = False
         try:
-            t_size = DataLayout.infer_type_size(ttype)
+            t_size = self.infer_type_size(ttype)
             known_type = True
         except:
             pass
@@ -91,10 +99,10 @@ class DataLayout:
         #     from IPython import embed; embed(); exit(1)
         
         if not known_type:
-            if function_name not in DataLayout.apis_llvm:
-                raise Exception(f"{function_name} is not in DataLayout.apis_llvm")
+            if function_name not in self.apis_llvm:
+                raise Exception(f"{function_name} is not in self.apis_llvm")
 
-            (type_llvm, size_llvm) = DataLayout.get_llvm_type(function_name, pos)
+            (type_llvm, size_llvm) = self.get_llvm_type(function_name, pos)
 
             if is_original and size_llvm != -1:
                 t_size = size_llvm
@@ -104,17 +112,16 @@ class DataLayout:
                 # I remove only the last *, if it exists
                 if type_llvm[-1] == "*":
                     type_llvm = type_llvm[:-1]
-                if type_llvm in DataLayout.incomplete_types:
+                if type_llvm in self.incomplete_types:
                     t_size = 0
-                elif type_llvm in DataLayout.data_layout:
-                    t_size = DataLayout.data_layout[type_llvm][0]
+                elif type_llvm in self.data_layout:
+                    t_size = self.data_layout[type_llvm][0]
                     
-                DataLayout.clang_to_llvm_struct[ttype] = type_llvm
+                self.clang_to_llvm_struct[ttype] = type_llvm
 
         return t_size
     
-    @staticmethod
-    def populate_table(type_clang, function_name, arg_pos):
+    def populate_table(self, type_clang, function_name, arg_pos):
 
         # remove pointers
         tmp_type = type_clang
@@ -122,18 +129,18 @@ class DataLayout:
         is_original = True
         while pointer_level > 0:
 
-            t_size = DataLayout.multi_level_size_infer(tmp_type, function_name, arg_pos, is_original)
-            DataLayout.layout[tmp_type] = t_size
+            t_size = self.multi_level_size_infer(tmp_type, function_name, arg_pos, is_original)
+            self.layout[tmp_type] = t_size
 
             tmp_type = tmp_type[:-1]
             pointer_level = tmp_type.count("*")
             is_original = False
 
-        t_size = t_size = DataLayout.multi_level_size_infer(tmp_type, function_name, arg_pos, is_original)
-        DataLayout.layout[tmp_type] = t_size
+        t_size = t_size = self.multi_level_size_infer(tmp_type, function_name, arg_pos, is_original)
+        self.layout[tmp_type] = t_size
 
-        # if DataLayout.layout[type_clang] == 0:
-        #     print(f"[DEBUG] size of {type_clang} is {DataLayout.layout[type_clang]}")
+        # if self.layout[type_clang] == 0:
+        #     print(f"[DEBUG] size of {type_clang} is {self.layout[type_clang]}")
         #     print(f"[DEBUG] in fun {function_name}[{arg_pos}]")
         # from IPython import embed; embed(); exit(1)
 
@@ -141,8 +148,7 @@ class DataLayout:
     def is_a_pointer(type) -> bool:
         return "*" in type
 
-    @staticmethod
-    def infer_type_size(type) -> int:
+    def infer_type_size(self, type) -> int:
         # given a clang-like type, try to infer its size
         # NOTE: table written for x86 64
 
@@ -184,73 +190,66 @@ class DataLayout:
         else:
             raise Exception(f"I don't know the size of '{type}'")
 
-    @staticmethod
-    def get_type_size(a_type: str) -> int:
+    def get_type_size(self, a_type: str) -> int:
         try:
-            return DataLayout.infer_type_size(a_type)
+            return self.infer_type_size(a_type)
         except:
-            return DataLayout.layout[a_type]
+            return self.layout[a_type]
 
-    @staticmethod
-    def is_a_struct(a_type: str) -> bool:
+    def is_a_struct(self, a_type: str) -> bool:
 
-        if a_type not in DataLayout.clang_to_llvm_struct:
+        if a_type not in self.clang_to_llvm_struct:
             return False
         
-        a_llvm = DataLayout.clang_to_llvm_struct[a_type]
+        a_llvm = self.clang_to_llvm_struct[a_type]
 
         if DataLayout.is_a_pointer(a_llvm):
             return False
         
         return True
 
-        # return a_type in DataLayout.clang_to_llvm_struct
+        # return a_type in self.clang_to_llvm_struct
 
-    @staticmethod
-    def is_primitive_type(a_type: str) -> bool:
-        return not DataLayout.is_a_struct(a_type)
+    def is_primitive_type(self, a_type: str) -> bool:
+        return not self.is_a_struct(a_type)
         # try:
-        #     DataLayout.infer_type_size(a_type)
+        #     self.infer_type_size(a_type)
         #     return True
         # except:
         #     return False
     
-    @staticmethod
-    def is_fuzz_friendly(a_type: str) -> bool:
-        # for k, s in DataLayout.data_layout.items():
+    def is_fuzz_friendly(self, a_type: str) -> bool:
+        # for k, s in self.data_layout.items():
             # if 
         # if "TIFF" in a_type:
         #     print("is_a_struct")
         #     from IPython import embed; embed(); exit(1)
 
-        # if not DataLayout.is_a_struct(a_type):
+        # if not self.is_a_struct(a_type):
         #     return True
 
-        if a_type not in DataLayout.clang_to_llvm_struct:
+        if a_type not in self.clang_to_llvm_struct:
             return False
         
         # from IPython import embed; embed(); exit(1)
-        llvm_type = DataLayout.clang_to_llvm_struct[a_type]
+        llvm_type = self.clang_to_llvm_struct[a_type]
 
         # if llvm_type == "%struct.htp_hook_t":
         #     from IPython import embed; embed(); exit(1)
 
-        if llvm_type not in DataLayout.data_layout:
+        if llvm_type not in self.data_layout:
             return False
 
         # 2nd position -> can feed from fuzzing seeds
-        return DataLayout.data_layout[llvm_type][2]
+        return self.data_layout[llvm_type][2]
 
-    @staticmethod
-    def has_incomplete_type() -> bool:
-        return len(DataLayout.incomplete_types) != 0
+    def has_incomplete_type(self) -> bool:
+        return len(self.incomplete_types) != 0
     
-    @staticmethod
-    def is_enum_type(a_type: str) -> bool:
-        return a_type in DataLayout.enum_type
+    def is_enum_type(self, a_type: str) -> bool:
+        return a_type in self.enum_type
     
-    @staticmethod
-    def has_user_define_init(a_type: str) -> bool:
+    def has_user_define_init(self, a_type: str) -> bool:
         # NOTE: in somehow, I should define what types I can handle manually
         
         # if a_type == "UriParserStateA":
@@ -261,8 +260,7 @@ class DataLayout:
         
         return False
 
-    @staticmethod
-    def is_incomplete(a_type: str) -> bool:
+    def is_incomplete(self, a_type: str) -> bool:
         
         tmp_type = "%" + a_type
 
@@ -276,7 +274,7 @@ class DataLayout:
             # from IPython import embed; embed(); exit(1)
             return True
 
-        if tmp_type in DataLayout.incomplete_types:
+        if tmp_type in self.incomplete_types:
             return True
 
         return False
