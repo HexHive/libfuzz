@@ -23,7 +23,7 @@ echo "[INFO] Running: $IMG_NAME"
 
 
 for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
-    for napis in "${NUM_OF_APIs[@]}"; do        
+    for napis in "${NUM_OF_APIs[@]}"; do
         for project in "${PROJECTS[@]}"; do
 
             PROJECT_WORKDIR="./workdir_${ndrivers}_${napis}/${project}"
