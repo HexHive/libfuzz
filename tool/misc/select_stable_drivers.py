@@ -11,7 +11,7 @@ def p2f(x):
     return float(x.strip('%'))/100
 
 def calc_score(cov, n_crashes, n_unicrsh):
-    return cov * sig(n_crashes) / sig(n_crashes)
+    return cov * sig(n_unicrsh) / sig(n_crashes)
 
 def get_driver(raw_values):
     driver_id = raw_values[0]
