@@ -32,7 +32,6 @@ for project in "${PROJECTS[@]}"; do
             done
         done
     done
-    docker run --env TOTAL_LIBRARY_COVERAGE="YES" -v $(pwd)/..:/workspaces/libfuzz "${IMG_NAME}-${project}"
 done
 
 rm ../crash-*
