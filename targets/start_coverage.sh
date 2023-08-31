@@ -1,5 +1,17 @@
 #!/bin/bash
 
+echo "[INFO] COVERAGE METRICS: ${TARGET_NAME}"
+
+
+REPO="/home/libfuzz/library/repo"
+
+
+rm -Rf ${PROJECT_COVERAGE} || true
+mkdir -p ${PROJECT_COVERAGE}
+
+SOURCES="$(find $REPO -iname '*.h' -or -iname '*.cpp' -or -iname '*.c' -or -iname '*.cc')"
+DRIVER_PATH_REGEX="\/workspaces\/libfuzz\/workdir\/.*\/drivers\/.*\.cc"
+
 
 if [[ $TOTAL_LIBRARY_COVERAGE ]]; then
     MERGED_PROFDATAS="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/coverage_data/iter_*/merged.profdata)"
@@ -27,19 +39,7 @@ if [[ $TOTAL_LIBRARY_COVERAGE ]]; then
     exit 0
 fi
 
-
-echo "[INFO] COVERAGE METRICS: ${TARGET_NAME}"
-
-
-REPO="/home/libfuzz/library/repo"
-
-
-rm -Rf ${PROJECT_COVERAGE} || true
-mkdir -p ${PROJECT_COVERAGE}
-
 FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
-SOURCES="$(find $REPO -iname '*.h' -or -iname '*.cpp' -or -iname '*.c' -or -iname '*.cc')"
-DRIVER_PATH_REGEX="\/workspaces\/libfuzz\/workdir\/.*\/drivers\/.*\.cc"
 
 for d in $FUZZ_TARGETS
 do
