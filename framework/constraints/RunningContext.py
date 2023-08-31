@@ -7,24 +7,23 @@ from driver.ir import Variable, Type, Value, PointerType, AllocType, CleanBuffer
 from driver.ir import Address, NullConstant, Buffer, ConstStringDecl, ApiCall
 from driver.ir import BuffDecl, BuffInit, FileInit, Statement, DynArrayInit
 from driver.ir import SetStringNull, TypeTag, Function
-from . import Conditions
+from . import Conditions, ConditionManager
 from common.conditions import *
-from common import Utils, DataLayout
-from common import Api
+from common import DataLayout
 
 class RunningContext(Context):
-    variables_alive:    List[Variable]
-    var_to_cond:        Dict[Variable, Conditions]
-    file_path_buffers:  Set[Buffer]
-    new_vars:           Set[Tuple[Variable, Conditions]]
-    const_strings:      Dict[Variable, str]
+    variables_alive     : List[Variable]
+    var_to_cond         : Dict[Variable, Conditions]
+    file_path_buffers   : Set[Buffer]
+    new_vars            : Set[Tuple[Variable, Conditions]]
+    const_strings       : Dict[Variable, str]
 
     # static dictionary
-    type_to_hash:        Dict[str, str]
+    type_to_hash        : Dict[str, str]
 
     string_types = ["char*", "unsigned char*", "wchar_t*", \
                     "char**", "unsigned char**", "wchar_t**"]
-
+    
     def __init__(self):
         super().__init__()
         self.variables_alive = []
@@ -165,8 +164,8 @@ class RunningContext(Context):
         #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
 
-        is_sink = RunningContext.is_sink(cond)
-        is_source = RunningContext.is_source(cond)
+        is_sink = ConditionManager.instance().is_sink(api_call)
+        is_source = ConditionManager.instance().is_source(cond)
 
         val = None
 
@@ -185,7 +184,7 @@ class RunningContext(Context):
             else:
                 val = self.randomly_gimme_a_var(type, cond, is_ret)
 
-        elif is_sink and len(api_call.arg_types) == 1:
+        elif is_sink:
             val = self.get_value_that_strictly_satisfy(type, cond)
             if val is None:
                 if (Conditions.is_unconstraint(cond) and 
@@ -228,7 +227,7 @@ class RunningContext(Context):
                     raise_an_exception = True
                 if tt.tag == TypeTag.STRUCT:
                     if (not self.is_init_api(api_call, api_cond, arg_pos) and
-                        not DataLayout.is_fuzz_friendly(tt.token)):
+                        not DataLayout.instance().is_fuzz_friendly(tt.token)):
                         # raise ConditionUnsat()
                         raise_an_exception = True
                 # print(f"{tt}is not fuzz friendly")
@@ -236,7 +235,7 @@ class RunningContext(Context):
                 # raise ConditionUnsat()
             elif ((not Conditions.is_unconstraint(cond) or
                 tt.is_incomplete) and 
-                not DataLayout.has_user_define_init(tt.token)):
+                not DataLayout.instance().has_user_define_init(tt.token)):
                 # print(f"no has_user_define_init for {tt}")
                 # from IPython import embed; embed(); exit(1)
                 # raise ConditionUnsat()
@@ -314,7 +313,7 @@ class RunningContext(Context):
                 tt = d_type
                 if isinstance(d_type, PointerType):
                     tt = d_type.get_base_type()
-                if (DataLayout.is_fuzz_friendly(tt.get_token()) or
+                if (DataLayout.instance().is_fuzz_friendly(tt.get_token()) or
                     not tt.is_incomplete):
                     arg_ok += 1
             elif d_type.tag == TypeTag.PRIMITIVE:
@@ -324,7 +323,7 @@ class RunningContext(Context):
         return arg_ok == len(cond.setby_dependencies)
 
     def create_dependency_length_variable(self):
-        len_type = Type("size_t", DataLayout.get_type_size("size_t"))
+        len_type = Type("size_t", DataLayout.instance().get_type_size("size_t"))
         ats = AccessTypeSet()
         mdata = ValueMetadata(ats, False, False, False, "", [])
         return (self.create_new_var(len_type, mdata, False), mdata)
@@ -340,7 +339,7 @@ class RunningContext(Context):
 
 
         default_alloctype = AllocType.HEAP
-        if not RunningContext.is_source(cond):
+        if not ConditionManager.instance().is_source(cond):
             default_alloctype = AllocType.GLOBAL
             
         alloctype = AllocType.STACK
@@ -352,7 +351,7 @@ class RunningContext(Context):
             if (t_base.is_incomplete and 
                 t_base.tag == TypeTag.STRUCT):
                 alloctype = default_alloctype
-            # if (DataLayout.is_fuzz_friendly(t_base.get_token()) and
+            # if (DataLayout.instance().is_fuzz_friendly(t_base.get_token()) and
             #     t_base.tag == TypeTag.STRUCT):
             #     alloctype = default_alloctype
             if cond.len_depends_on != "":
@@ -470,9 +469,9 @@ class RunningContext(Context):
                     # print("self.has_vars_type")
                     pick_random = False
                 elif ((tt.tag == TypeTag.STRUCT and
-                      not DataLayout.is_fuzz_friendly(tt.token)) or 
+                      not DataLayout.instance().is_fuzz_friendly(tt.token)) or 
                       is_incomplete):
-                    # print("not DataLayout.is_fuzz_friendly")
+                    # print("not DataLayout.instance().is_fuzz_friendly")
                     # if tt.token == "char":
                     #     from IPython import embed; embed(); exit(1)
                     pick_random = True                
@@ -642,14 +641,9 @@ class RunningContext(Context):
         RunningContext.type_to_hash[type_str] = type_hash
 
         return (type_str, type_hash)
-
-    def update(self, val: Optional[Value], cond: ValueMetadata,
-        is_ret: bool = False):
-
-        # NullConstant does not have conditions
-        if isinstance(val, (NullConstant, Function)):
-            return
-
+    
+    def update_var(self, val: Optional[Value], cond: ValueMetadata,
+                   is_ret: bool = False, is_sink: bool = False):
         synthetic_cond = None
 
         var = None
@@ -670,8 +664,6 @@ class RunningContext(Context):
             var = val.get_variable()
         else:
             raise Exception(f"I don't know this val: {val}")
-            
-        is_sink = RunningContext.is_sink(cond)
 
         if is_ret and var in self.variables_alive:
             del self.var_to_cond[var]
@@ -690,6 +682,26 @@ class RunningContext(Context):
             # from IPython import embed; embed(); exit(1);
             # import pdb; pdb.set_trace(); exit(1);
 
+    def update(self, api_call: ApiCall, cond: ValueMetadata, 
+               arg_pos: int):
+
+        # my convention: arg_pos -1 => return value
+        is_ret = arg_pos == -1
+
+        if is_ret:
+            # type = api_call.ret_type
+            val = api_call.ret_var
+        else:
+            # type = api_call.arg_types[arg_pos]
+            val = api_call.arg_vars[arg_pos]
+
+        # NullConstant does not have conditions
+        if isinstance(val, (NullConstant, Function)):
+            return
+        
+        is_sink = ConditionManager.instance().is_sink(api_call)
+
+        self.update_var(val, cond, is_ret, is_sink)
     # the return structure (buff_var, dynamic_buff, fix_buff)
     # var_buff - list of var_buff for controlling var_len
     # dynamic_buff - list of dynamic allocated buffer
@@ -749,7 +761,7 @@ class RunningContext(Context):
             # TODO: check if the ats allow to generate an object
             if (isinstance(t, PointerType)  and 
                 t.get_base_type().tag == TypeTag.STRUCT and 
-                not DataLayout.is_fuzz_friendly(t.get_base_type().token)):
+                not DataLayout.instance().is_fuzz_friendly(t.get_base_type().token)):
                 # if "vpx_codec_dec_cfg_t" in t.token:
                 #     # continue
                 #     print(f"{t} is not fuzz friendly")
@@ -823,52 +835,22 @@ class RunningContext(Context):
 
         return counter_size
 
-    def generate_clean_up(self, sinks: Set[Api]):
+    def generate_clean_up(self):
         clean_up = []
 
         for b in self.buffs_alive: # type: ignore
             if b.get_type().is_const:
                 continue
             if b.get_alloctype() == AllocType.HEAP:
-                cm = self.find_cleanup_method(b, sinks)
+                cm = ConditionManager.instance().find_cleanup_method(b)
                 clean_up += [CleanBuffer(b, cm)]
 
             if b.get_alloctype() == AllocType.STACK:
-                cm = self.find_cleanup_method(b, sinks, "")
+                cm = ConditionManager.instance().find_cleanup_method(b, "")
                 if cm != "":
                     clean_up += [CleanBuffer(b, cm)]
 
         return clean_up
-
-    def find_cleanup_method(self, buff: Buffer, sinks: Set[Api], 
-                            default: str = "free"):
-
-        buff_type_token = buff.get_type().get_token()
-
-        # sinks have only one argument
-        for s in sinks:
-            s_type = s.arguments_info[0].type
-            if buff_type_token == s_type:
-                return s.function_name
-
-        # print("find_cleanup_method")
-        # from IPython import embed; embed(); exit(1)
-        return default
-
-    # NOTE: this oracle infers if the variable with the access types (cond) can
-    # be considered a sink
-    @staticmethod
-    def is_sink(cond: ValueMetadata):
-        deletes_root = any([c.access == Access.DELETE and c.fields == [] 
-                            for c in cond.ats])
-        creates_root = any([c.access == Access.CREATE and c.fields == [] 
-                            for c in cond.ats])
-        return deletes_root and not creates_root
-    
-    @staticmethod
-    def is_source(cond: ValueMetadata):
-        return (len([at for at in cond.ats
-                if at.access == Access.CREATE and at.fields == []]) != 0)
 
     def __copy__(self):
         raise Exception("__copy__ not implemented")

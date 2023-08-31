@@ -1,24 +1,20 @@
 import copy
 import random
 import re
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Set
 
-from common import Api, FunctionConditionsSet, FunctionConditions, DataLayout
-from constraints import ConditionUnsat, RunningContext
+from common import Api, FunctionConditionsSet
+from constraints import ConditionManager
 from dependency import DependencyGraph
-from driver import Context, Driver
+from driver import Driver
 from driver.factory.constraint_based import CBFactory
-from driver.ir import ApiCall, PointerType, Variable, TypeTag, AllocType
-from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
-from constraints import Conditions
-
+from driver.ir import ApiCall
 
 class CBWFactory(CBFactory):
     
     def __init__(self, api_list: Set[Api], driver_size: int, 
-                    dgraph: DependencyGraph, conditions: FunctionConditionsSet,
-                    api_list_all: Set[Api]):
-        super().__init__(api_list, driver_size, dgraph, conditions,  api_list_all)
+                    dgraph: DependencyGraph, conditions: FunctionConditionsSet):
+        super().__init__(api_list, driver_size, dgraph, conditions)
 
         self.api_initial_weigth = {}
         self.api_frequency = {}

@@ -29,6 +29,31 @@ class Conditions:
             if f_prev == x.fields[:f_prev_len]:
                 f_prev_sub += [x.fields]
         return f_prev_sub
+    
+    def get_jolly_conditions(self):
+        writes = set([at for at in self.ats if at.access in [Access.WRITE, Access.RETURN]])
+
+        # those terminating with -1
+        candidate_jollies = set()
+        for cj in writes:
+            if len(cj.fields) > 0 and cj.fields[-1] == -1:
+                candidate_jollies.add(cj)
+
+        subfield_candidate_jollies = {}
+
+        for cj in candidate_jollies:
+            subfield_candidate_jollies[cj] = cj.fields[:-1]
+
+        for w in writes:
+            fld = w.fields
+            if len(fld) == 0:
+                continue
+            for cj, cj_sub in subfield_candidate_jollies.items():
+                if (cj_sub == fld[:-1] and fld[-1] != -1 and 
+                    cj in candidate_jollies):
+                    candidate_jollies.remove(cj)
+
+        return candidate_jollies
 
     def is_compatible_with(self, r_cond: ValueMetadata) -> bool:
 
@@ -42,12 +67,31 @@ class Conditions:
         if self.is_malloc_size != r_cond.is_malloc_size:
             return False
 
-        # r_requirements = set([at for at in r_cond if at.access == Access.READ])
-        r_requirements = set([at for at in r_cond.ats if at.access == Access.WRITE])
-        # holding_condition = set([at for at in self.ats if at.access in [Access.WRITE, Access.RETURN]])
+        r_requirements = set()
+        for at in r_cond.ats:
+            
+            if at.access != Access.READ:
+                continue
+            # I do not want jolly reads
+            at_fld = at.fields
+            if len(at_fld) != 0 and at_fld[-1] == -1:
+                continue
+            r_requirements.add(at)
+
+        r_updates = set([at for at in r_cond.ats if at.access == Access.WRITE])
+        
+        jolly_conditions = self.get_jolly_conditions()
 
         matching_requirements = 0
         unmatching_requirements = set()
+
+        to_remove = set()
+        for r in r_requirements:
+            for h in r_updates:
+                if r.fields == h.fields:
+                    to_remove.add(r)
+
+        r_requirements = r_requirements.difference(to_remove)
 
         for r in r_requirements:
             req_found = False
@@ -91,6 +135,24 @@ class Conditions:
                         # print(f_prev)
                         f_prev = f_prev[:-1]
                         f_prev_len = len(f_prev)
+
+        real_unmatched_2 = set()
+
+        # TO REMOVE JOLLY CONDITIONS
+        for un in real_unmatched:
+            un_fld = un.fields
+            if len(un_fld) == 0:
+                continue
+            none_matching = True
+            for jc in jolly_conditions:
+                jc_sub = jc.fields[:-1]
+                jc_sub_len = len(jc_sub)
+                if un_fld[:jc_sub_len] == jc_sub:
+                    # print(f"{un} ok!")
+                    matching_requirements += 1
+                    none_matching = False
+            if none_matching:
+                real_unmatched_2.add(un)
 
         # if matching_requirements != len(r_requirements):
         #     print("OK FINE")
