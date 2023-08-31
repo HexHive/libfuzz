@@ -13,7 +13,6 @@ set -e
 #     exit 1
 # fi
 
-TARGET=/workspaces/libfuzz/targets/${TARGET_NAME}
 cd "$TARGET/repo"
 
 CXX=$LLVM_DIR/bin/clang++

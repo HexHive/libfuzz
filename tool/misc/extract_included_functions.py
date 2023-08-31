@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-import argparse, tempfile, json, copy
-import sys, os, re
+import argparse, tempfile, json, copy, os, re
 import clang.cindex
 
 
@@ -78,6 +77,10 @@ def get_api(node, namespace):
     # rt_str = rt.spelling
     # api_obj["return_info"] = get_argument_info(rt_str)
 
+    if function_name == "aom_uleb_encode_fixed_size":
+        print(f"debug {function_name}")
+        from IPython import embed; embed(); exit(1)
+
     arguments_info = []
     for a in nt.argument_types():
         info = get_argument_info(a)
@@ -143,35 +146,37 @@ MAIN_STUB = "int main(int argc, char** argv) {return 0;}"
 
 def get_stub_file(include_folder, public_headers):
 
-    stub_file = tempfile.NamedTemporaryFile(suffix='.cc', delete=False).name
+    return "/tmp/tmpdoylp1p6.cc"
 
-    public_headers_lst = set()
-    with open(public_headers, 'r') as ph:
-        lines = ph.readlines()
-        if(len(lines) == 0):
-            print(f"No header in {public_headers}. Aborting...")
-            exit(1)
-        for l in lines:
-            l = l.strip()
-            if l:
-                public_headers_lst.add(l)
+    # stub_file = tempfile.NamedTemporaryFile(suffix='.cc', delete=False).name
 
-    # from IPython import embed; embed(); exit()
+    # public_headers_lst = set()
+    # with open(public_headers, 'r') as ph:
+    #     lines = ph.readlines()
+    #     if(len(lines) == 0):
+    #         print(f"No header in {public_headers}. Aborting...")
+    #         exit(1)
+    #     for l in lines:
+    #         l = l.strip()
+    #         if l:
+    #             public_headers_lst.add(l)
 
-    with open(stub_file, 'w') as tmp:
-        for root, _, files in os.walk(include_folder):
-            for h in files:
-                # print(f"candidate header {h}: ", end='')
-                if (h.endswith(".h") or h.endswith(".h++") or h.endswith(".hh") 
-                    or h.endswith(".hpp")) and h in public_headers_lst:
-                    h_path = os.path.join(root, h)
-                    tmp.write(f"#include \"{h_path}\"\n")
+    # # from IPython import embed; embed(); exit()
 
-        tmp.write("\n")
+    # with open(stub_file, 'w') as tmp:
+    #     for root, _, files in os.walk(include_folder):
+    #         for h in files:
+    #             # print(f"candidate header {h}: ", end='')
+    #             if (h.endswith(".h") or h.endswith(".h++") or h.endswith(".hh") 
+    #                 or h.endswith(".hpp")) and h in public_headers_lst:
+    #                 h_path = os.path.join(root, h)
+    #                 tmp.write(f"#include \"{h_path}\"\n")
 
-        tmp.write(MAIN_STUB)
+    #     tmp.write("\n")
 
-    return stub_file
+    #     tmp.write(MAIN_STUB)
+
+    # return stub_file
 
 def _main():
 
@@ -204,7 +209,13 @@ def _main():
     index = clang.cindex.Index.create()
 
     # Generate AST from filepath passed in the command line
-    tu = index.parse(tmp_file, args=[f"-I{include_folder}"])
+    include_paths = [f"-I{include_folder}", 
+                     "-I/usr/lib/llvm-12/lib/clang/12.0.0/include/"]
+    tu = index.parse(tmp_file, args=include_paths)
+    # NOTE: this is for diagnosing in case of unexcepted behavior
+    # for diag in tu.diagnostics:
+    #     print(diag)
+    # exit(1)
 
     root = tu.cursor        # Get the root of the AST
     traverse(root, include_folder, [])
