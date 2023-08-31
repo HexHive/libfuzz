@@ -26,6 +26,8 @@ def __main():
     # default_config = PROJECT_FOLDER + "/targets/minijail/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libvpx/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/pthreadpool/generator.toml"
+    # default_config = PROJECT_FOLDER + "/targets/libvpx/generator.toml"
+    # default_config = PROJECT_FOLDER + "/targets/pthreadpool/generator.toml"
     default_config = PROJECT_FOLDER + "/targets/libaom/generator.toml"
 
     parser = argparse.ArgumentParser(description='Automatic Driver Generator')

@@ -1,29 +1,25 @@
 import copy
 import random
-import re
 from typing import Dict, List, Optional, Set, Tuple
 
 from common import Api, FunctionConditionsSet, FunctionConditions, DataLayout
-from constraints import ConditionUnsat, RunningContext
+from constraints import ConditionUnsat, RunningContext, ConditionManager
 from dependency import DependencyGraph
-from driver import Context, Driver
+from driver import Driver
 from driver.factory import Factory
-from driver.ir import ApiCall, PointerType, Variable, TypeTag, AllocType
+from driver.ir import ApiCall, PointerType, Variable, AllocType
 from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
-from constraints import Conditions
 
 
 class CBFactory(Factory):
     api_list            : Set[Api]
     driver_size         : int
-    # dependency_graph    : DependencyGraph
     conditions          : FunctionConditionsSet
     dependency_graph    : Dict[Api, Set[Api]]
-    sinks               : Set[Api]
+    condition_manager   : ConditionManager
     
     def __init__(self, api_list: Set[Api], driver_size: int, 
-                    dgraph: DependencyGraph, conditions: FunctionConditionsSet,
-                    api_list_all: Set[Api]):
+                    dgraph: DependencyGraph, conditions: FunctionConditionsSet):
         self.api_list = api_list
         self.driver_size = driver_size
         # self.dependency_graph = dgraph
@@ -47,85 +43,9 @@ class CBFactory(Factory):
                 inv_dep_graph[dep].add(api)
         self.dependency_graph = inv_dep_graph
 
-        get_cond = lambda x: self.conditions.get_function_conditions(x.function_name)
+        self.condition_manager = ConditionManager.instance()
 
-        # get all sink APIs
-        self.sinks = set()
-        for api in self.api_list:
-            fun_cond = get_cond(api)
-            if (len(api.arguments_info) == 1 and 
-                RunningContext.is_sink(fun_cond.argument_at[0])):
-                self.sinks.add(api)
-
-        # get all sink APIs
-        sinks2 = set()
-        for api in api_list_all:
-            fun_cond = get_cond(api)
-            if (len(api.arguments_info) == 1 and 
-                RunningContext.is_sink(fun_cond.argument_at[0])):
-                sinks2.add(api)
-
-        self.sinks_all = sinks2
-
-        self.source_api = list(self.get_source_api())
-        
-        # print("self.sinks")
-        # from IPython import embed; embed(); exit(1)
-
-    def get_source_api(self) -> Set[Api]:
-
-        source_api = set()
-
-        get_cond = lambda x: self.conditions.get_function_conditions(x.function_name)
-
-        for api in self.api_list:
-            # if DataLayout.has_incomplete_type():
-            #     if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
-            #         and api.return_info.is_type_incomplete):
-            #         source_api.add(api)
-            #     if (not any(arg.is_type_incomplete for arg in api.arguments_info) 
-            #         and api.return_info.type == "void*"):
-            #         source_api.add(api)
-            # else:
-            #     source_api.add(api)
-
-            # if api.function_name == "bstr_builder_create":
-            #     print("get_source_api")
-            #     from IPython import embed; embed(); exit(1)
-
-            fun_cond = get_cond(api)
-
-            # if api.function_name == "htp_tx_req_get_param":
-            #     print(f"get_source_api {api.function_name}")
-            #     from IPython import embed; embed(); exit(1)
-
-            num_arg_ok = 0
-            for arg_p, arg in enumerate(api.arguments_info):
-                the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, arg.is_type_incomplete, False)
-                arg_cond = fun_cond.argument_at[arg_p]
-                if isinstance(the_type, PointerType):
-                    the_type = the_type.get_base_type()
-                tkn = the_type.token
-                if DataLayout.is_primitive_type(tkn):
-                    num_arg_ok += 1 
-                elif DataLayout.has_user_define_init(tkn):
-                    num_arg_ok += 1 
-                elif DataLayout.is_enum_type(tkn):
-                    num_arg_ok += 1 
-                # elif (the_type.tag == TypeTag.STRUCT and
-                #       DataLayout.is_fuzz_friendly(tkn) and
-                #       Conditions.is_unconstraint(arg_cond)):
-                #     num_arg_ok += 1
-
-
-            # I can initialize all the arguments
-            if len(api.arguments_info) == num_arg_ok:
-                source_api.add(api)
-
-        # print("get_source_api")
-        # from IPython import embed; embed(); exit(1)
-
-        return source_api
+        self.source_api = list(self.condition_manager.get_source_api())
 
     def try_to_instantiate_api_call(self, api_call: ApiCall,
                         conditions: FunctionConditions, 
@@ -134,7 +54,7 @@ class CBFactory(Factory):
         rng_ctx = copy.deepcopy(rng_ctx)
         # context = rng_ctx.context
 
-        fun_name = api_call.function_name
+        # fun_name = api_call.function_name
 
         unsat_vars = set()
 
@@ -167,8 +87,8 @@ class CBFactory(Factory):
                         print("Exception here")
                         from IPython import embed; embed(); exit(1)
 
-                    rng_ctx.update(api_call.arg_vars[arg_pos], arg_cond)
-                    rng_ctx.update(api_call.arg_vars[idx], idx_cond)
+                    rng_ctx.update(api_call, arg_cond, arg_pos)
+                    rng_ctx.update(api_call, idx_cond, idx)
                     rng_ctx.var_to_cond[x].len_depends_on = b_len
 
 
@@ -229,16 +149,15 @@ class CBFactory(Factory):
             return (None, unsat_vars)
 
         for arg_pos, arg_type in api_call.get_pos_args_types():
-            arg_cond = conditions.argument_at[arg_pos]
-            rng_ctx.update(api_call.arg_vars[arg_pos], arg_cond)
+            rng_ctx.update(api_call, arg_cond, arg_pos)
 
         if api_call.ret_var is not None:
-            rng_ctx.update(api_call.ret_var, ret_cond,  True)
+            rng_ctx.update(api_call, ret_cond, -1)
 
         # I might have other pending vars to include
         # e.g., for controlling arrays length
         for var, var_len, cond_len in rng_ctx.new_vars:
-            rng_ctx.update(var_len, cond_len)
+            rng_ctx.update_var(var_len, cond_len)
             rng_ctx.var_to_cond[var].len_depends_on = var_len
         rng_ctx.new_vars.clear()
 
@@ -366,16 +285,16 @@ class CBFactory(Factory):
                 var = api_call.ret_var.get_variable()
                 statements_apicall += [AssertNull(var.get_buffer())]
             cond = get_cond(api_call)
-            for cond_pos, cond_arg in enumerate(cond.argument_at):
-                if (RunningContext.is_sink(cond_arg) and 
-                    len(api_call.arg_types) == 1):
-                    arg = api_call.arg_vars[cond_pos]
-                    if isinstance(arg, Address):
-                        buff = arg.get_variable().get_buffer()
-                    elif isinstance(arg, Variable):
-                        buff = arg.get_buffer()
-                    if buff.alloctype == AllocType.HEAP:
-                        statements_apicall += [SetNull(buff)]
+            # for cond_pos, cond_arg in enumerate(cond.argument_at):
+            # sink APIs have only 1 argument
+            if self.condition_manager.is_sink(api_call):
+                arg = api_call.arg_vars[0]
+                if isinstance(arg, Address):
+                    buff = arg.get_variable().get_buffer()
+                elif isinstance(arg, Variable):
+                    buff = arg.get_buffer()
+                if buff.alloctype == AllocType.HEAP:
+                    statements_apicall += [SetNull(buff)]
             # if RunningContext.is_sink(api_call.ret_type, PointerType):
 
         # print("Before ")
@@ -387,8 +306,7 @@ class CBFactory(Factory):
         statements += context.generate_buffer_init()
         statements += statements_apicall 
 
-        # clean_up_sec = context.generate_clean_up(self.sinks)
-        clean_up_sec = context.generate_clean_up(self.sinks_all)
+        clean_up_sec = context.generate_clean_up()
         counter_size = context.get_counter_size()
 
         return Driver(statements, context).add_clean_up(clean_up_sec).add_counter_size(counter_size)

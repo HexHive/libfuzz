@@ -1,2 +1,4 @@
-TIFFWarning
-TIFFSetClientInfo
+TIFFOpen
+TIFFGetField
+TIFFTileSize64
+TIFFClose

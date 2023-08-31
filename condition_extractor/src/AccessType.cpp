@@ -588,7 +588,6 @@ std::string ValueMetadata::extractLenDependencyParameter(
                 // const_cast<llvm::Value*>(p->getValue());
                 // outs() << "P: " << pP->toString() << "\n";
                 if (areConnected(vP,vS)) {
-                    // outs() << "Param control Loop\n";
                     param_control_len = true;
                     break;
                 } 
@@ -878,6 +877,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                     // outs() << "acNode.getType():\n";
                     // outs() << *acNode.getType() << "\n";
                     // outs() << TypeMatcher::compute_hash(acNode.getType()) << "\n";
+                    // exit(1);
 
                     // outs() << "compare_types(pType, acNode.getType()) "
                     //     << TypeMatcher::compare_types(pType, acNode.getType()) 
@@ -891,10 +891,12 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                     //  AccessTypeSet::isSameType(pType, acNode.getType()) ) {
                     if (TypeMatcher::compare_types(pType, acNode.getType()) &&
                         !acNode.is_visited(pType)) {
+                        // SVFUtil::isa<PointerType>(dType)) {
                         if (inst->hasAllConstantIndices() &&
                             inst->getNumIndices() > 1) {
 
-                            for (int pos = 1; pos <= inst->getNumIndices(); pos++) {
+                            int pos = 1;
+                            for (; pos <= inst->getNumIndices(); pos++) {
                                 
                                 if (pos == 1) {
                                     AccessType tmpAcNode = acNode;
@@ -926,11 +928,15 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                             if (!SVFUtil::isa<ConstantInt>(d)) {
                                 is_array = true;
                                 mdata.addIndex(d);
+                                mdata.addFunParam(d);
                             } else if (inst->getNumIndices() == 1) {
                                 is_array = true;
                                 mdata.addIndex(inst);
                             }
 
+                        } 
+                        else {
+                            skipNode = true;
                         }
                         acNode.add_visited_type(pType);
                     }
@@ -954,6 +960,9 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                     //     outs() << "\n";
                     //     exit(1);
                     // }
+                }
+                else {
+                    skipNode = true;
                 }
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::Copy &&
                 SVFUtil::isa<StmtVFGNode>(vNode)) {
@@ -981,17 +990,17 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                     // outs() << "src_typ " << *src_typ << "\n";
                     // outs() << "acNode.getType() " << *acNode.getType() << "\n";
 
-                    if (TypeMatcher::compare_types(src_typ, acNode.getType())) {
-                        // I want the node the original type after the cast this
-                        // may turn out useful for mem* api operations since
-                        // they tend to cast to i8* before being invoked
-                        acNode.setOriginalCastType(acNode.getType());
-                        acNode.setType(dst_typ);
-                        ats->insert(acNode, vNode->getICFGNode());
-                    }
-                    else {
-                        skipNode = true;    
-                    }
+                    // if (TypeMatcher::compare_types(src_typ, acNode.getType())) {
+                    //     // I want the node the original type after the cast this
+                    //     // may turn out useful for mem* api operations since
+                    //     // they tend to cast to i8* before being invoked
+                    //     acNode.setOriginalCastType(acNode.getType());
+                    //     acNode.setType(dst_typ);
+                    //     ats->insert(acNode, vNode->getICFGNode());
+                    // }
+                    // else {
+                    //     skipNode = true;    
+                    // }
 
                     // if (dst_typ != seek_type && dst_typ != i8ptr_typ) {
                     //     skipNode = true;
@@ -1083,7 +1092,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                         p_succ.pushFrame(cs);
                         if (p_succ.getStackSize() >= MAX_STACKSIZE) {
                             ok_continue = false;
-                            outs() << "[INFO] Stack size too big!\n";
+                            // outs() << "[INFO] Stack size too big!\n";
                         } else if (!consider_indirect_calls && 
                             cs->isIndirectCall()) {
                             ok_continue = false;
