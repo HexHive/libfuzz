@@ -23,7 +23,7 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                     COVERAGE_REPORT="./workdir_${ndrivers}_${napis}/${project}/coverage_data/iter_${i}/${fuzz_target}/report"
                     coverage=$(tail -n 1 $COVERAGE_REPORT | awk '{print $4}')
                     total_crashes=$(ls $CRASHES_DIR | wc -l)
-                    unique_crashes=$(ls $UNIQUE_CRASHES_DIR | wc -l)
+                    unique_crashes=$(ls -R $UNIQUE_CRASHES_DIR | grep .casrep | wc -l)
                     echo "${project},${fuzz_target},${ndrivers},${napis},${i},${coverage},${total_coverage},${total_crashes},${unique_crashes}" >> results.csv
                 done
             done
