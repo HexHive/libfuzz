@@ -23,12 +23,16 @@ echo "[INFO] Running: $IMG_NAME"
 
 
 for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
-    for napis in "${NUM_OF_APIs[@]}"; do
+    for napis in "${NUM_OF_APIs[@]}"; do        
         for project in "${PROJECTS[@]}"; do
 
             PROJECT_WORKDIR="./workdir_${ndrivers}_${napis}/${project}"
             DRIVER_FOLDER="${PROJECT_WORKDIR}/drivers"
-            DRIVER_NAMES="$(find ${DRIVER_FOLDER} -type f -executable)"
+	    if [ -d "$DRIVER_FOLDER" ]; then
+            	DRIVER_NAMES="$(find ${DRIVER_FOLDER} -type f -executable)"
+	    else 
+		continue
+	    fi
             CRASHES=${PROJECT_WORKDIR}/crashes
 
             for i in $( eval echo {1..$ITERATIONS} ); do
