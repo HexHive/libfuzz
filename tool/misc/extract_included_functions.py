@@ -77,9 +77,9 @@ def get_api(node, namespace):
     # rt_str = rt.spelling
     # api_obj["return_info"] = get_argument_info(rt_str)
 
-    if function_name == "aom_uleb_encode_fixed_size":
-        print(f"debug {function_name}")
-        from IPython import embed; embed(); exit(1)
+    # if function_name == "aom_uleb_encode_fixed_size":
+    #     print(f"debug {function_name}")
+    #     from IPython import embed; embed(); exit(1)
 
     arguments_info = []
     for a in nt.argument_types():
@@ -146,37 +146,36 @@ MAIN_STUB = "int main(int argc, char** argv) {return 0;}"
 
 def get_stub_file(include_folder, public_headers):
 
-    return "/tmp/tmpdoylp1p6.cc"
+    # return "/tmp/tmpicriipu6.cc"
+    stub_file = tempfile.NamedTemporaryFile(suffix='.cc', delete=False).name
 
-    # stub_file = tempfile.NamedTemporaryFile(suffix='.cc', delete=False).name
+    public_headers_lst = set()
+    with open(public_headers, 'r') as ph:
+        lines = ph.readlines()
+        if(len(lines) == 0):
+            print(f"No header in {public_headers}. Aborting...")
+            exit(1)
+        for l in lines:
+            l = l.strip()
+            if l:
+                public_headers_lst.add(l)
 
-    # public_headers_lst = set()
-    # with open(public_headers, 'r') as ph:
-    #     lines = ph.readlines()
-    #     if(len(lines) == 0):
-    #         print(f"No header in {public_headers}. Aborting...")
-    #         exit(1)
-    #     for l in lines:
-    #         l = l.strip()
-    #         if l:
-    #             public_headers_lst.add(l)
+    # from IPython import embed; embed(); exit()
 
-    # # from IPython import embed; embed(); exit()
+    with open(stub_file, 'w') as tmp:
+        for root, _, files in os.walk(include_folder):
+            for h in files:
+                # print(f"candidate header {h}: ", end='')
+                if (h.endswith(".h") or h.endswith(".h++") or h.endswith(".hh") 
+                    or h.endswith(".hpp")) and h in public_headers_lst:
+                    h_path = os.path.join(root, h)
+                    tmp.write(f"#include \"{h_path}\"\n")
 
-    # with open(stub_file, 'w') as tmp:
-    #     for root, _, files in os.walk(include_folder):
-    #         for h in files:
-    #             # print(f"candidate header {h}: ", end='')
-    #             if (h.endswith(".h") or h.endswith(".h++") or h.endswith(".hh") 
-    #                 or h.endswith(".hpp")) and h in public_headers_lst:
-    #                 h_path = os.path.join(root, h)
-    #                 tmp.write(f"#include \"{h_path}\"\n")
+        tmp.write("\n")
 
-    #     tmp.write("\n")
+        tmp.write(MAIN_STUB)
 
-    #     tmp.write(MAIN_STUB)
-
-    # return stub_file
+    return stub_file
 
 def _main():
 
@@ -210,7 +209,13 @@ def _main():
 
     # Generate AST from filepath passed in the command line
     include_paths = [f"-I{include_folder}", 
-                     "-I/usr/lib/llvm-12/lib/clang/12.0.0/include/"]
+                     "-I/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9", 
+                     "-I/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9/backward", 
+                     "-I/usr/lib/llvm-12/lib/clang/12.0.0/include", 
+                     "-I/usr/include/x86_64-linux-gnu", 
+                     "-I/usr/include"]
+
+
     tu = index.parse(tmp_file, args=include_paths)
     # NOTE: this is for diagnosing in case of unexcepted behavior
     # for diag in tu.diagnostics:
