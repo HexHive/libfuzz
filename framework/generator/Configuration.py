@@ -94,6 +94,12 @@ class Configuration:
         d = os.path.join(self.work_dir, "drivers")
         os.makedirs(d, exist_ok=True)
         return d
+    
+    @cached_property
+    def metadata_dir(self):
+        d = os.path.join(self.work_dir, "metadata")
+        os.makedirs(d, exist_ok=True)
+        return d
 
     @cached_property
     def seeds_dir(self):
