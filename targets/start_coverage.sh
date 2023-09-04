@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 echo "[INFO] COVERAGE METRICS: ${TARGET_NAME}"
 
 
@@ -10,9 +9,37 @@ REPO="/home/libfuzz/library/repo"
 rm -Rf ${PROJECT_COVERAGE} || true
 mkdir -p ${PROJECT_COVERAGE}
 
-FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
 SOURCES="$(find $REPO -iname '*.h' -or -iname '*.cpp' -or -iname '*.c' -or -iname '*.cc')"
 DRIVER_PATH_REGEX="\/workspaces\/libfuzz\/workdir\/.*\/drivers\/.*\.cc"
+
+
+if [[ $TOTAL_LIBRARY_COVERAGE ]]; then
+    MERGED_PROFDATAS="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/coverage_data/iter_*/merged.profdata)"
+    mkdir -p fuzzing_campaigns/total_library_coverage/${TARGET_NAME}
+    llvm-profdata-12 merge -sparse $MERGED_PROFDATAS -o fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/merged.profdata
+    PROFILES="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/profiles/*_profile)"
+
+    OBJECTS=""
+    for profile in $PROFILES; do
+        if [[ -z $OBJECTS ]]; then
+            # The first object needs to be passed without -object= flag.
+            OBJECTS="$profile"
+        else
+            OBJECTS="$OBJECTS -object=$profile"
+        fi
+    done
+
+    llvm-cov-12 show $OBJECTS -instr-profile=fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/merged.profdata > show
+    llvm-cov-12 report $OBJECTS -instr-profile=fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
+    llvm-cov-12 report -show-functions $OBJECTS -instr-profile=fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
+
+    mv show fuzzing_campaigns/total_library_coverage/${TARGET_NAME}
+    mv report fuzzing_campaigns/total_library_coverage/${TARGET_NAME}
+    mv functions fuzzing_campaigns/total_library_coverage/${TARGET_NAME}
+    exit 0
+fi
+
+FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
 
 for d in $FUZZ_TARGETS
 do
