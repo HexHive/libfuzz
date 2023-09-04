@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-import argparse, tempfile, json, copy
-import sys, os, re
+import argparse, tempfile, json, copy, os, re
 import clang.cindex
 
 
@@ -78,6 +77,10 @@ def get_api(node, namespace):
     # rt_str = rt.spelling
     # api_obj["return_info"] = get_argument_info(rt_str)
 
+    # if function_name == "aom_uleb_encode_fixed_size":
+    #     print(f"debug {function_name}")
+    #     from IPython import embed; embed(); exit(1)
+
     arguments_info = []
     for a in nt.argument_types():
         info = get_argument_info(a)
@@ -143,6 +146,7 @@ MAIN_STUB = "int main(int argc, char** argv) {return 0;}"
 
 def get_stub_file(include_folder, public_headers):
 
+    # return "/tmp/tmpicriipu6.cc"
     stub_file = tempfile.NamedTemporaryFile(suffix='.cc', delete=False).name
 
     public_headers_lst = set()
@@ -204,7 +208,19 @@ def _main():
     index = clang.cindex.Index.create()
 
     # Generate AST from filepath passed in the command line
-    tu = index.parse(tmp_file, args=[f"-I{include_folder}"])
+    include_paths = [f"-I{include_folder}", 
+                     "-I/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9", 
+                     "-I/usr/bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9/backward", 
+                     "-I/usr/lib/llvm-12/lib/clang/12.0.0/include", 
+                     "-I/usr/include/x86_64-linux-gnu", 
+                     "-I/usr/include"]
+
+
+    tu = index.parse(tmp_file, args=include_paths)
+    # NOTE: this is for diagnosing in case of unexcepted behavior
+    # for diag in tu.diagnostics:
+    #     print(diag)
+    # exit(1)
 
     root = tu.cursor        # Get the root of the AST
     traverse(root, include_folder, [])
