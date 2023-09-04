@@ -13,7 +13,6 @@ set -e
 #     exit 1
 # fi
 
-TARGET=/workspaces/libfuzz/targets/${TARGET_NAME}
 cd "$TARGET/repo"
 
 CXX=$LLVM_DIR/bin/clang++
@@ -34,6 +33,6 @@ do
 
     # Compile driver for coverage
     $CXX -g -std=c++11  -fsanitize=fuzzer -fprofile-instr-generate -fcoverage-mapping -I/"${TARGET}"/work/include \
-        "$d" -Wl,--whole-archive  "${TARGET}"/work/lib/libaom.a -Wl,--no-whole-archive \
+        "$d" -Wl,--whole-archive  "${TARGET}"/work/lib/libaom_profile.a -Wl,--no-whole-archive \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${DRIVER_FOLDER}/../profiles/${DRIVER_NAME%%.*}_profile"
 done
