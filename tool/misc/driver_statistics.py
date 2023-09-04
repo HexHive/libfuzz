@@ -5,31 +5,6 @@ import numpy as np
 import score as scr
 from tabulate import tabulate
 
-def p2f(x):
-    return float(x.strip('%'))/100
-
-def get_driver(raw_values):
-    driver_id = raw_values[0]
-    n_drivers = raw_values[1]
-    n_apis = raw_values[2]
-    # do not need this?
-    # n_iter = raw_values[3]
-    cov = p2f(raw_values[4])
-    # no need
-    # libcov = raw_values[5]
-    n_crashes = int(raw_values[6])
-    n_unicrsh = int(raw_values[7])
-
-    score = scr.calc_score(cov, n_crashes, n_unicrsh)
-
-    return {"driver": driver_id, 
-            "n_drivers": n_drivers,
-            "n_apis": n_apis,
-            "cov": cov,
-            "n_crashes": n_crashes,
-            "n_unicrsh": n_unicrsh,
-            "score": score}
-
 def print_summary(libraries):
     for lib, drvs in libraries.items():
         max_cov = 0
@@ -110,12 +85,14 @@ def print_table(libraries):
 def _main():
     parser = argparse.ArgumentParser(description='Select stable drivers')
     parser.add_argument('-report', '-r', type=str, help='Report File', required=True)
+    parser.add_argument('-rootdir', '-d', type=str, help='Driver Folder', required=False)
 
     args = parser.parse_args()
-
+    
     report = args.report
+    rootdir = args.rootdir
 
-    libraries = scr.load_report(report)
+    libraries = scr.load_report(report, rootdir)
 
     # print_summary(libraries)
     print_table(libraries)
