@@ -370,13 +370,13 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
 // }
 DataLayout *DL = nullptr;
 
-void dumpFunAnalysis(FunctionConditionsSet fun_cond_set) {
+void dumpFunAnalysis(FunctionConditionsSet fun_cond_set, bool append=false) {
     if (OutputType == OutType::txt) {
         FunctionConditionsSet::storeIntoTextFile(
-            fun_cond_set, OutputFile, verbose >= Verbosity::v1);
+            fun_cond_set, OutputFile, verbose >= Verbosity::v1, append);
     } else if (OutputType == OutType::json) {
         FunctionConditionsSet::storeIntoJsonFile(
-            fun_cond_set, OutputFile, verbose >= Verbosity::v1);
+            fun_cond_set, OutputFile, verbose >= Verbosity::v1, append);
     } else if (OutputType == OutType::stdo) {
         SVFUtil::outs() << fun_cond_set.toString(verbose >= Verbosity::v1);
     }
@@ -757,11 +757,11 @@ int main(int argc, char ** argv)
 
         fun_cond_set.addFunctionConditions(fun_conds);
 
-        SVFUtil::outs() << "[INFO] Done with: " << fun->getName() << "\n";
+        SVFUtil::outs() << "[INFO] Done with: " << f << "\n";
          
 
         if (dumpEachAPI) {
-            dumpFunAnalysis(fun_cond_set); 
+            dumpFunAnalysis(fun_cond_set, true); 
             fun_cond_set.clear();
             SVFUtil::outs() << fun_cond_set.getSummary();
         };

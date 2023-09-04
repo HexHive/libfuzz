@@ -882,9 +882,9 @@ class FunctionConditionsSet {
 
     public: // static functions
         static void storeIntoJsonFile(FunctionConditionsSet,
-            std::string, bool);
+            std::string, bool, bool);
         static void storeIntoTextFile(FunctionConditionsSet,
-            std::string, bool);
+            std::string, bool, bool);
 };
 
 #endif /* INCLUDE_DOM_ACCESSTYPE_H_ */

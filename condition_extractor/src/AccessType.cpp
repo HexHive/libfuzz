@@ -1173,11 +1173,16 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
 
 void FunctionConditionsSet::storeIntoJsonFile(
         FunctionConditionsSet fun_cond_set, 
-        std::string filename, bool verbose) {
+        std::string filename, bool verbose, bool append = false) {
 
     Json::Value jsonResult = fun_cond_set.toJson(verbose);
 
-    std::ofstream jsonOutFile(filename);
+    std::ofstream jsonOutFile;
+    if (append) {
+        jsonOutFile.open(filename, std::ios_base::app);
+    } else {
+        jsonOutFile.open(filename);
+    }
     Json::StreamWriterBuilder jsonBuilder;
     if (!verbose)
         jsonBuilder.settings_["indentation"] = "";
@@ -1192,9 +1197,14 @@ void FunctionConditionsSet::storeIntoJsonFile(
 
 void FunctionConditionsSet::storeIntoTextFile(
         FunctionConditionsSet fun_cond_set, 
-        std::string filename, bool verbose) {
+        std::string filename, bool verbose, bool append = false) {
 
-    std::ofstream txtOutFile(filename);
+    std::ofstream txtOutFile;
+    if (append) {
+        txtOutFile.open(filename, std::ios_base::app);
+    } else {
+        txtOutFile.open(filename);
+    }
     txtOutFile << fun_cond_set.toString(verbose);
     txtOutFile.close();
     
