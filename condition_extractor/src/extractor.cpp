@@ -163,7 +163,7 @@ void pruneAccessTypes(Dominator* dom, PostDominator* pDom,
         for (auto at2: *meta->getAccessTypeSet()) {
             if (at2.getAccess() != AccessType::Access::create &&
                 at2.getAccess() != AccessType::Access::del)
-            continue;
+                continue;
 
             if (at1 == at2)
                 continue;
@@ -195,7 +195,7 @@ void pruneAccessTypes(Dominator* dom, PostDominator* pDom,
         for (auto at2: *meta->getAccessTypeSet()) {
             if (at2.getAccess() != AccessType::Access::write &&
                 at2.getAccess() != AccessType::Access::read)
-            continue;
+                continue;
 
             if (at1 == at2)
                 continue;

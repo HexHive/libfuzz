@@ -251,8 +251,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                     curr_stack.push(next_ret);
                     working.push(std::make_pair(dst, curr_stack));
                     visited.insert(dst);
-                }
-                 else {
+                } else {
                     working.push(std::make_pair(dst, curr_stack));
                     visited.insert(dst);
                 }
