@@ -47,6 +47,8 @@ class CBFactory(Factory):
 
         self.source_api = list(self.condition_manager.get_source_api())
 
+    attempt = 2
+
     def try_to_instantiate_api_call(self, api_call: ApiCall,
                         conditions: FunctionConditions, 
                         rng_ctx: RunningContext):
@@ -91,8 +93,11 @@ class CBFactory(Factory):
                     rng_ctx.update(api_call, idx_cond, idx)
                     rng_ctx.var_to_cond[x].len_depends_on = b_len
 
+        # if api_call.function_name == "htp_connp_create" and self.attempt > 0:
+        #     self.attempt -= 1
 
-        # if api_call.function_name == "vpx_codec_dec_init_ver":
+        # if api_call.function_name == "htp_connp_create" and self.attempt == 0:
+             
         #     print(f"hook {api_call.function_name}")
         #     # import pdb; pdb.set_trace()
         #     par_debug = 0
