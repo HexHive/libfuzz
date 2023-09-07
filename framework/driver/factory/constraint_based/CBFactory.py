@@ -116,8 +116,8 @@ class CBFactory(Factory):
 
             try:
                 if isinstance(arg_type, PointerType) and arg_type.to_function:
-                    arg_var = rng_ctx.get_null_constant()
-                    # arg_var = rng_ctx.get_function_pointer(arg_type)
+                    # arg_var = rng_ctx.get_null_constant()
+                    arg_var = rng_ctx.get_function_pointer(arg_type)
                 else:
                     # arg_var = rng_ctx.try_to_get_var(arg_type, arg_cond, 
                     #                                  fun_name, conditions, 
@@ -308,5 +308,11 @@ class CBFactory(Factory):
 
         clean_up_sec = context.generate_clean_up()
         counter_size = context.get_counter_size()
+        stub_functions = context.get_stub_functions()
 
-        return Driver(statements, context).add_clean_up(clean_up_sec).add_counter_size(counter_size)
+        d = Driver(statements, context)
+        d.add_clean_up(clean_up_sec)
+        d.add_counter_size(counter_size)
+        d.add_stub_functions(stub_functions)
+
+        return d
