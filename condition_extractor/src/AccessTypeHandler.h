@@ -109,12 +109,12 @@ void addWrteToAllFields(ValueMetadata *mdata, AccessType atNode,
 typedef unsigned short H_SCOPE;
 
 typedef bool (*Handler)(ValueMetadata*, std::string, 
-    const ICFGNode*, const CallICFGNode*, int, AccessType, H_SCOPE);
+    const ICFGNode*, const CallICFGNode*, int, AccessType, H_SCOPE, Path*);
 typedef std::map<std::string, Handler> AccessTypeHandlerMap;
 
 bool malloc_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num,
-    AccessType atNode, H_SCOPE scope) {
+    AccessType atNode, H_SCOPE scope, Path* path) {
 
     if (param_num == -1 && scope & C_RETURN) {
         // no need to set field, empty field set is what I need
@@ -134,7 +134,7 @@ bool malloc_handler(ValueMetadata *mdata, std::string fun_name,
 
 bool free_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num,
-    AccessType atNode, H_SCOPE scope) {
+    AccessType atNode, H_SCOPE scope, Path* path) {
 
     if (param_num == 0 && atNode.getNumFields() == 0 && scope & C_PARAM) {
         atNode.setAccess(AccessType::Access::del);
@@ -146,7 +146,7 @@ bool free_handler(ValueMetadata *mdata, std::string fun_name,
 
 bool open_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num, 
-    AccessType atNode, H_SCOPE scope) {
+    AccessType atNode, H_SCOPE scope, Path* path) {
 
     if ((param_num == 0 || param_num == 1) && atNode.getNumFields() == 0 &&
         scope & C_PARAM) {
@@ -164,9 +164,12 @@ bool open_handler(ValueMetadata *mdata, std::string fun_name,
 
 bool memcpy_hander(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num, 
-    AccessType atNode, H_SCOPE scope) {
+    AccessType atNode, H_SCOPE scope, Path* path) {
 
     LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
+
+    // outs() << icfgNode->toString() << "\n";
+    // exit(1);
 
     if ((param_num == 0 || param_num == 1) && atNode.getNumFields() == 0 && 
         scope & C_PARAM) {
@@ -179,11 +182,12 @@ bool memcpy_hander(ValueMetadata *mdata, std::string fun_name,
         auto llvm_val = llvmModuleSet->getLLVMValue(cs->getCallSite());
         auto c = SVFUtil::dyn_cast<CallBase>(llvm_val);
         mdata->setIsArray(isAnArray(c));
-        if (param_num == 1) {
+        // if (param_num == 1) {
+            //  outs() << cs->getCallSite()->toString() << "\n";
             auto i = SVFUtil::dyn_cast<CallBase>(llvm_val);
             Value *v = i->getArgOperand(2);
-            mdata->addFunParam(v);
-        }
+            mdata->addFunParam(v, path);
+        // }
     }
 
     return false;
@@ -191,7 +195,7 @@ bool memcpy_hander(ValueMetadata *mdata, std::string fun_name,
 
 bool strlen_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num, 
-    AccessType atNode, H_SCOPE scope) {
+    AccessType atNode, H_SCOPE scope, Path* path) {
 
     // outs() << "strlen_handler\n";
 
@@ -211,7 +215,7 @@ bool strlen_handler(ValueMetadata *mdata, std::string fun_name,
 
 bool strcpy_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num, 
-    AccessType atNode, H_SCOPE scope) {
+    AccessType atNode, H_SCOPE scope, Path* path) {
 
     if ((param_num == 0 || param_num == 1) && atNode.getNumFields() == 0 &&
         scope & C_PARAM) {
@@ -227,7 +231,7 @@ bool strcpy_handler(ValueMetadata *mdata, std::string fun_name,
 
 bool memset_hander(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num, 
-    AccessType atNode, H_SCOPE scope) {
+    AccessType atNode, H_SCOPE scope, Path* path) {
 
     LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
 
@@ -245,7 +249,7 @@ bool memset_hander(ValueMetadata *mdata, std::string fun_name,
         auto llvm_val = llvmModuleSet->getLLVMValue(cs->getCallSite());
         auto i = SVFUtil::dyn_cast<CallBase>(llvm_val);
         Value *v = i->getArgOperand(2);
-        mdata->addFunParam(v);
+        mdata->addFunParam(v, path);
 
         if (auto par_const =dyn_cast<ConstantInt>(i->getArgOperand(1))) {
             uint64_t actual_const = par_const->getZExtValue();
@@ -263,7 +267,7 @@ bool memset_hander(ValueMetadata *mdata, std::string fun_name,
 
 bool calloc_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num,
-    AccessType atNode, H_SCOPE scope) {
+    AccessType atNode, H_SCOPE scope, Path* path) {
 
     if (param_num == -1 && scope & C_RETURN) {
         // no need to set field, empty field set is what I need
@@ -286,7 +290,7 @@ bool calloc_handler(ValueMetadata *mdata, std::string fun_name,
 
 bool posix_memalign_handler(ValueMetadata *mdata, std::string fun_name, 
     const ICFGNode* icfgNode, const CallICFGNode* cs, int param_num,
-    AccessType atNode, H_SCOPE scope) {
+    AccessType atNode, H_SCOPE scope, Path* path) {
 
     if (param_num == 0 && scope & C_RETURN) {
         // no need to set field, empty field set is what I need
