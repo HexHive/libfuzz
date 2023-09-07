@@ -33,23 +33,28 @@ def get_argument_info(type):
     else:
         type_str = type.spelling
 
-    # clean any form of [] and *
-    n_asterix = type_str.count("*") + type_str.count("[")
-    if "[" in type_str:
-        # stuffs like char[100] into char*
-        type_str = re.sub('\[\d*\]', '', type_str)
-    type_str = type_str.replace("*","")
-    
-    info["const"] = False
-    type_str_token = type_str.strip().split(" ")
-    for bad_token in ["enum", "struct", "const"]:
-        if bad_token in type_str_token:
-            type_str_token.remove(bad_token)
-            if bad_token == "const":
-                info["const"] = True
+    # type is a function pointer
+    if "(*)" in type_str:
+        info["type_clang"] = type_str
+        info["const"] = False
+    else:
+        # clean any form of [] and *
+        n_asterix = type_str.count("*") + type_str.count("[")
+        if "[" in type_str:
+            # stuffs like char[100] into char*
+            type_str = re.sub('\[\d*\]', '', type_str)
+        type_str = type_str.replace("*","")
+        
+        info["const"] = False
+        type_str_token = type_str.strip().split(" ")
+        for bad_token in ["enum", "struct", "const"]:
+            if bad_token in type_str_token:
+                type_str_token.remove(bad_token)
+                if bad_token == "const":
+                    info["const"] = True
 
-    # re-append the * at the end of the type
-    info["type_clang"] = " ".join(type_str_token) + "*"*n_asterix
+        # re-append the * at the end of the type
+        info["type_clang"] = " ".join(type_str_token) + "*"*n_asterix
 
     return info
 
@@ -77,7 +82,7 @@ def get_api(node, namespace):
     # rt_str = rt.spelling
     # api_obj["return_info"] = get_argument_info(rt_str)
 
-    # if function_name == "aom_uleb_encode_fixed_size":
+    # if function_name == "pthreadpool_parallelize_4d_tile_1d":
     #     print(f"debug {function_name}")
     #     from IPython import embed; embed(); exit(1)
 

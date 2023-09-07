@@ -182,6 +182,9 @@ class Context:
         
         if type in self.stub_functions:
             return self.stub_functions[type]
+        
+        # print("get_function_pointer")
+        # from IPython import embed; embed(); exit(1)
 
         func_name = "f"+hashlib.md5(bytes(type.token, 'utf-8')).hexdigest()[:8]
 
@@ -189,3 +192,6 @@ class Context:
         self.stub_functions[type] = func
 
         return func
+    
+    def get_stub_functions(self):
+        return self.stub_functions
