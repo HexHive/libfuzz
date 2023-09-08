@@ -2,78 +2,31 @@
 
 import csv, argparse, math
 import numpy as np
-import os
+import os, sys
 
+PROJECT_FOLDER="/workspaces/libfuzz"
+sys.path.append(PROJECT_FOLDER)
 
-def sig(x):
-    return 1/(1 + np.exp(-x))
-
-def p2f(x):
-    return float(x.strip('%'))/100
-
-def calc_score(cov, n_crashes, n_unicrsh):
-    return cov * sig(n_unicrsh) / sig(n_crashes)
-
-def get_driver(raw_values):
-    driver_id = raw_values[0]
-    n_drivers = raw_values[1]
-    n_apis = raw_values[2]
-    # do not need this?
-    # n_iter = raw_values[3]
-    cov = p2f(raw_values[4])
-    # no need
-    # libcov = raw_values[5]
-    n_crashes = int(raw_values[6])
-    n_unicrsh = int(raw_values[7])
-
-    score = calc_score(cov, n_crashes, n_unicrsh)
-
-    return {"driver": driver_id,
-            "n_drivers": n_drivers,
-            "n_apis": n_apis,
-            "cov": cov,
-            "n_crashes": n_crashes,
-            "n_unicrsh": n_unicrsh,
-            "score": score}
-
-def get_best_drivers(drvs):
-
-    # keep only 10%
-    perc_ok = math.ceil(len(drvs) * 0.10)
-
-    # from IPython import embed; embed(); exit(1)
-
-    return sorted(drvs, key=lambda x: x["score"], reverse=True)[:perc_ok]
-
-
+import tool.misc.score as scr
 
 def _main():
 
     parser = argparse.ArgumentParser(description='Select stable drivers')
     parser.add_argument('-report', '-r', type=str, help='Report File', required=True)
+    parser.add_argument('-rootdir', '-d', type=str, help='Driver Folder', required=False)
 
     args = parser.parse_args()
 
     report = args.report
+    rootdir = args.rootdir
 
-    libraries = {}
-
-    with open(report) as csvfile:
-        spamreader = csv.reader(csvfile, delimiter=',')
-
-        next(spamreader)
-        for row in spamreader:
-            lib = row[0]
-            drvs = libraries.get(lib, [])
-            drvs += [get_driver(row[1:])]
-            libraries[lib] = drvs
-
+    libraries = scr.load_report(report, rootdir)
 
     best_drivers = {}
 
     # print(libraries)
     for lib, drvs in libraries.items():
-        best_drvs = get_best_drivers(drvs)
+        best_drvs = scr.get_best_drivers(drvs)
 
         best_drivers[lib] = best_drvs
 
