@@ -132,7 +132,7 @@ def draw_figure(project, coverage_datas):
 
 def heatmap_for_library_configuration(project, ndrivers, napis):
     coverage_datas = get_coverage_datas_for_configuration("libtiff", 20, 12)
-    draw_figure(project, coverage_datas, per_configuration=True)
+    draw_figure(project, coverage_datas)
 
 
 def heatmap_for_library_drivers(project, list_of_drivers):
