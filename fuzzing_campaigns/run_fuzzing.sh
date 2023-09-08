@@ -13,9 +13,16 @@ DOCKER_BUILDKIT=1 docker build \
 set +x
 
 
-let TOTAL_FUZZERS="$(IFS=+; echo "$((${NUM_OF_DRIVERS[*]}))")*${#NUM_OF_APIs[@]}*${#PROJECTS[@]}*ITERATIONS"
+let TOTAL_FUZZERS="$(find workdir_*_*/*/drivers/ -type f -executable | wc -l)*ITERATIONS"
 COUNTER=0
 CPU_ID=0
+
+if [ "$STABLE_DRIVERS" -eq "1" ]; then
+   export TIMEOUT=$TIMEOUT_STABLE
+else
+   export TIMEOUT=$TIMEOUT_NOT_STABLE
+fi
+
 
 
 for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
