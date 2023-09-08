@@ -1,14 +1,16 @@
+import os, json
+
 from driver.ir import ApiCall
 class Generator:
     def __init__(self, config):
         config.build_data_layout()
         config.build_condition_manager()
 
-        self._workdir = config.work_dir
-
-        self._factory   = config.factory
-        self._backend   = config.backend
-        self._pool      = config.pool
+        self._workdir       = config.work_dir
+        self._metadata_dir  = config.metadata_dir
+        self._factory       = config.factory
+        self._backend       = config.backend
+        self._pool          = config.pool
         
     def run(self):
         # print("Cleaning previous drivers...")
@@ -35,8 +37,29 @@ class Generator:
             print(f"Storing seeds for: {driver_name}")
             self._backend.emit_seeds(driver, driver_name)
 
-            for s in driver.statements:
-                if isinstance(s, ApiCall):
-                    api = s.original_api
-                    api_freq[api] = api_freq.get(api, 0) + 1 
-                    dist_apis.add(api)
+            for api, freq in driver.get_apis_multiset().items():
+                api_freq[api] = freq
+                dist_apis.add(api)
+
+            print(f"Storing metadata for {driver_name}:")
+            self.dump_metadata(driver, driver_name)
+
+    def dump_metadata(self, driver, driver_name):
+
+        if "." in driver_name:
+            ext_pos = driver_name.find(".")
+            driver_name_clean = driver_name[:ext_pos]
+        else:
+            driver_name_clean = driver_name
+
+        driver_meta = f"{driver_name_clean}.meta"
+        
+        meta_file = os.path.join(self._metadata_dir, driver_meta)
+
+        metadata = {}
+        metadata["api_multiset"] = {}
+        for api, freq in driver.get_apis_multiset().items():
+            metadata["api_multiset"][api.function_name] = freq
+        
+        with open(meta_file, "w") as fp:
+            json.dump(metadata, fp)

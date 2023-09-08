@@ -1,5 +1,0 @@
-[generator]
-pool_size = 10
-driver_size = 6
-num_seeds = 20
-policy = "constraint_based"
