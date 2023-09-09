@@ -160,7 +160,8 @@ class RunningContext(Context):
 
     
         # if (isinstance(type, PointerType) and 
-        #     type.get_base_type().token == "TIFF" and api_call.function_name == "TIFFGetClientInfo"):
+        # type.get_base_type().token == "TIFF" and 
+        # if arg_pos == -1 and api_call.function_name == "pcap_geterr":
         #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
 
@@ -477,8 +478,8 @@ class RunningContext(Context):
                     pick_random = True                
                 # elif not is_incomplete:
                 #     pick_random = False
-                # elif is_ret:
-                #     pick_random = False
+                elif is_ret:
+                    pick_random = False
 
                 vp = None
                 if pick_random:

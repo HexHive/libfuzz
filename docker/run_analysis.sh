@@ -22,5 +22,10 @@ set +x
 
 echo "$IMG_NAME"
 
-docker run --rm -d --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" "$IMG_NAME"
-# docker run --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" -t "$IMG_NAME"
+
+if [[ -z "${DEVENV}" ]]; then
+    docker run --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" -t "$IMG_NAME"
+else
+    docker run --rm -d --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" "$IMG_NAME"
+fi
+
