@@ -1,9 +1,9 @@
+#!/usr/bin/env python3
+
 import matplotlib.pyplot as plt
 import numpy as np
 from os import listdir
-
-
-
+import argparse
 
 def get_function_coverages(coverage_file):
     result = {}
@@ -131,7 +131,8 @@ def draw_figure(project, coverage_datas):
     plt.show()
 
 def heatmap_for_library_configuration(project, ndrivers, napis):
-    coverage_datas = get_coverage_datas_for_configuration("libtiff", 20, 12)
+    coverage_datas = get_coverage_datas_for_configuration(
+        project, ndrivers, napis)
     draw_figure(project, coverage_datas)
 
 
@@ -139,7 +140,54 @@ def heatmap_for_library_drivers(project, list_of_drivers):
     coverage_datas = get_coverage_datas_for_drivers(project, list_of_drivers)
     draw_figure(project, coverage_datas)
 
+def get_driver_list(inputfile):
 
-heatmap_for_library_drivers("libtiff", [(20, 12, "driver11"), (20, 12, "driver5"), (20, 3, "driver17")])
+    drv = []
 
-# heatmap_for_library_configuration("libtiff", 20, 12)
+    # file format: driver1 ndriver napi
+    with open(inputfile, 'r') as f:
+        for l in f:
+            if l:
+                driver, ndriver, napi = l.split(" ")
+                drv += [(driver, int(ndriver), int(napi))]
+
+    return drv
+
+
+
+if __name__ == "__main__":
+    
+
+    parser = argparse.ArgumentParser(description='Produce heat-map')
+    parser.add_argument('--target', '-t', type=str, 
+                        help='Target to analyse', required=True)
+    subparsers = parser.add_subparsers(help='sub-command help', 
+            dest="mode")
+    
+
+    # create the parser for the "a" command
+
+    parser_a = subparsers.add_parser('library', 
+            help='Heat map per library and configuration')
+    parser_a.add_argument('--ndriver', type=int, help='N. Drivers')
+    parser_a.add_argument('--napis', type=int, help='N. APIs')
+
+    # create the parser for the "b" command
+
+    parser_b = subparsers.add_parser('custom',
+            help='Heat map with custom drivers')
+    parser_b.add_argument('--inputfile', type=str, help='Input file')
+
+    args = parser.parse_args()
+
+    # print(args)
+
+    target = args.target
+
+    if args.mode == "library":
+        napis = args.napis
+        ndrivers = args.ndrivers
+        heatmap_for_library_configuration(target, ndrivers, napis)
+    else:
+        driver_list = get_driver_list(args.inputfile)
+        heatmap_for_library_drivers(target, driver_list)
