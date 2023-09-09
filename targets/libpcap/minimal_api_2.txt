@@ -1,0 +1,2 @@
+pcap_open_offline
+pcap_geterr
