@@ -17,13 +17,6 @@ let TOTAL_FUZZERS="$(find workdir_*_*/*/drivers/ -type f -executable | wc -l)*IT
 COUNTER=0
 CPU_ID=0
 
-if [ "$STABLE_DRIVERS" -eq "1" ]; then
-   export TIMEOUT=$TIMEOUT_STABLE
-else
-   export TIMEOUT=$TIMEOUT_NOT_STABLE
-fi
-
-
 
 for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
     for napis in "${NUM_OF_APIs[@]}"; do
@@ -71,3 +64,5 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
         done
     done
 done
+
+sleep $TIMEOUT

@@ -4,7 +4,7 @@ import csv, argparse, math
 import numpy as np
 import os, sys
 
-PROJECT_FOLDER="/workspaces/libfuzz"
+PROJECT_FOLDER="../"
 sys.path.append(PROJECT_FOLDER)
 
 import tool.misc.score as scr
@@ -29,8 +29,17 @@ def _main():
         best_drvs = scr.get_best_drivers(drvs)
 
         best_drivers[lib] = best_drvs
+        # print("-" * 10)
+        # print(lib)
+        # print(best_drvs)
+    
+    # exit(1)
 
-    # FROM HERE
+    os.system("mkdir -p workdir_backup")
+    os.system("mv workdir_*_*/ workdir_backup")
+
+    # from IPython import embed; embed(); exit(1)
+
     for lib, drvs in best_drivers.items():
         print(f"{lib}")
         for d in drvs:
@@ -49,8 +58,8 @@ def _main():
             os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/corpus")
             os.system(f"cp -r workdir_backup/workdir_{n_drivers}_{n_apis}/{lib}/corpus/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus")
 
-            os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/corpus_new")
-            os.system(f"cp -r workdir_backup/workdir_{n_drivers}_{n_apis}/{lib}/corpus_new/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus_new")
+            # os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/corpus_new")
+            # os.system(f"cp -r workdir_backup/workdir_{n_drivers}_{n_apis}/{lib}/corpus_new/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus_new")
 
             os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/crashes/{driver}")
 
