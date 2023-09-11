@@ -24,7 +24,7 @@ class Factory(ABC):
         arguments_info = api.arguments_info
         namespace = api.namespace
 
-        # if function_name in ["pthreadpool_parallelize_1d"]:
+        # if function_name in ["TIFFGetCloseProc"]:
         #     print(f"api_to_apicall: {function_name}")
         #     from IPython import embed; embed(); exit(1)
 
@@ -54,59 +54,50 @@ class Factory(ABC):
         elif a_flag == "val":
             if "*" in a_type:
                 raise Exception(f"Type '{a_type}' seems a pointer while expecting a 'val'")
+
+        if a_flag == "fun" and "(*)" in a_type:
+
+            a_type_core = a_type
+
+            a_size_core = 0
+            a_incomplete_core = True
+            a_is_const = True
+            type_tag = TypeTag.FUNCTION
+            type_core = Type(a_type_core, a_size_core, a_incomplete_core, 
+                             a_is_const, type_tag)
             
-        # NOTE: function ponters handling reamain in idle due to lack of
-        # libclang support
-        
-        #  if a_flag == "fun" and "(" in a_type:
+            return_type = PointerType(
+                a_type_core + "*" , copy.deepcopy(type_core))
 
-        #     # # NOTE: I care only of function pointers like 'void ()(void , int)**
-        #     # # if the type does not _exactly_ end with '**', I raise an
-        #     # # exeception
-        #     # if a_type[-2:] != "**" or a_type[-3] != ")":
-        #     #     raise Exception(f"I do not know to parse {a_type}")
+            return_type.to_function = True
+        else:
 
-        #     # a_type_core = a_type[:-2]
+            pointer_level = a_type.count("*")
+            a_type_core = a_type.replace("*", "")
 
-        #     # a_size_core = 0
-        #     # a_incomplete_core = True
-        #     # a_is_const = True
-        #     # type_tag = TypeTag.FUNCTION
-        #     # type_core = Type(a_type_core, a_size_core, a_incomplete_core, 
-        #     #                  a_is_const, type_tag)
-            
-        #     # return_type = PointerType(
-        #     #     a_type_core + "*" , copy.deepcopy(type_core))
+            # THIS IS A DOUBLE CHECK, NOT SURE WE NEED IT, BETTER SAFE THAN SORRY!!
+            if a_type_core == "void":
+                a_is_incomplete = True
 
+            # NOTE: a_size comes wrong from LLVM analysis, I use this trick to fix
+            # the size
+            a_size = DataLayout.instance().get_type_size(a_type_core)
+            a_incomplete_core = DataLayout.instance().is_incomplete(a_type_core)
 
-        #     return_type.to_function = True
-        # else:
+            type_tag = TypeTag.PRIMITIVE
+            if DataLayout.instance().is_a_struct(a_type_core):
+                # print("is this a struct?")
+                # from IPython import embed; embed(); exit(1)
+                type_tag = TypeTag.STRUCT
+                
+            type_core = Type(a_type_core, a_size, a_incomplete_core, a_is_const, type_tag)
 
-        pointer_level = a_type.count("*")
-        a_type_core = a_type.replace("*", "")
+            return_type = type_core
+            for x in range(1, pointer_level + 1):
+                return_type = copy.deepcopy(PointerType( a_type_core + "*"*x , copy.deepcopy(return_type)))
 
-        # THIS IS A DOUBLE CHECK, NOT SURE WE NEED IT, BETTER SAFE THAN SORRY!!
-        if a_type_core == "void":
-            a_is_incomplete = True
-
-        # NOTE: a_size comes wrong from LLVM analysis, I use this trick to fix
-        # the size
-        a_size = DataLayout.instance().get_type_size(a_type_core)
-        a_incomplete_core = DataLayout.instance().is_incomplete(a_type_core)
-
-        type_tag = TypeTag.PRIMITIVE
-        if DataLayout.instance().is_a_struct(a_type_core):
-            # print("is this a struct?")
-            # from IPython import embed; embed(); exit(1)
-            type_tag = TypeTag.STRUCT
-            
-        type_core = Type(a_type_core, a_size, a_incomplete_core, a_is_const, type_tag)
-
-        return_type = type_core
-        for x in range(1, pointer_level + 1):
-            return_type = copy.deepcopy(PointerType( a_type_core + "*"*x , copy.deepcopy(return_type)))
-
-        if isinstance(return_type, PointerType):
-            return_type.to_function = a_flag == "fun" and "(" in a_type
+            return_type.to_function = False
+            # if isinstance(return_type, PointerType):
+            #     return_type.to_function = a_flag == "fun" and "(" in a_type
 
         return return_type

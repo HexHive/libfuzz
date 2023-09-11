@@ -1,11 +1,27 @@
 #!/bin/bash
 
-export PROJECTS=( "cpu_features" "minijail" "pthreadpool" "libhtp" "libvpx" "libtiff" )
-export NUM_OF_DRIVERS=( 5 10 20 )
-export NUM_OF_APIs=( 3 6 12 )
-export NUM_OF_SEEDS=20
+export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" )
+export NUM_OF_DRIVERS=( 20 )
+export NUM_OF_APIs=( 2 4 8 16 32  )
+export NUM_OF_SEEDS=1
 # export POLICY="constraint_based"
 export POLICY="constraint_based_weigth"
-export TIMEOUT=5m
-export ITERATIONS=1
 export MAX_CPUs=$(($(nproc) - 1))
+
+case $CONF in
+
+  selection)
+    export TIMEOUT=3m
+    export ITERATIONS=1
+    ;;
+
+  long)
+    export TIMEOUT=1h
+    export ITERATIONS=5
+    ;;
+
+  *)
+    echo -n "unknown CONF"
+    exit 1
+    ;;
+esac

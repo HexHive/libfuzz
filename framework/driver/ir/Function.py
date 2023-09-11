@@ -18,10 +18,13 @@ class Function(Value):
 
         token = type.get_pointee_type().token
         
-        if "()" not in token:
+        if "(*)" not in token:
             raise Exception(f"{type} seems not a function I can handle")
         
-        ret_token, args_token = [t.strip() for t in token.split("()")]
+        ret_token, args_token = [t.strip() for t in token.split("(*)")]
+
+        if args_token.endswith(" __va_list_tag *)"):
+            args_token = args_token.replace(" __va_list_tag *)", "va_list)")
 
         self.token = func_name
         self.addr = None
@@ -30,8 +33,8 @@ class Function(Value):
 
         self.addr   = Address.Address(token, self)
 
-        print("Function")
-        from IPython import embed; embed(); exit(1)
+        # print("Function")
+        # from IPython import embed; embed(); exit(1)
 
     def get_token(self):
         return self.token

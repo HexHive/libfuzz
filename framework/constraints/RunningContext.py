@@ -143,6 +143,8 @@ class RunningContext(Context):
 
         # TODO: handle dependency fields here?
 
+    attempt = 1
+
     # def try_to_get_var(self, type: Type, cond: ValueMetadata, api_name: Api,
     #                     arg_pos: int) -> Value:
     def try_to_get_var(self, api_call: ApiCall, api_cond: FunctionConditions,
@@ -162,6 +164,12 @@ class RunningContext(Context):
         # if (isinstance(type, PointerType) and 
         # type.get_base_type().token == "TIFF" and 
         # if arg_pos == -1 and api_call.function_name == "pcap_geterr":
+
+        #     type.get_base_type().token == "htp_cfg_t" and api_call.function_name == "aom_codec_decode"):
+        #     self.attempt -= 1
+
+        # if (isinstance(type, PointerType) and 
+        #     type.get_base_type().token == "aom_codec_ctx_t" and api_call.function_name == "aom_codec_decode"):
         #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
 
@@ -291,7 +299,8 @@ class RunningContext(Context):
                     arg_pos: int):
         
         # api_name = api_call.function_name
-        # if api_name == "init_a_context" and arg_pos == 1:
+        # if api_name == "aom_codec_decode" and arg_pos == 0:
+        #     print("is_init_api")
         #     from IPython import embed; embed(); exit(1)
 
         if arg_pos == -1:

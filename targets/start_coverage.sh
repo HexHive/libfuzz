@@ -39,8 +39,57 @@ if [[ $TOTAL_LIBRARY_COVERAGE ]]; then
     exit 0
 fi
 
-FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
 
+if [[ $TOTAL_DRIVER_COVERAGE ]]; then
+    DRIVER_FOLDER=${PROJECT_FOLDER}/drivers
+    FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
+    for d in $FUZZ_TARGETS; do
+        DRIVER_NAME=$(basename $d)
+        DRIVER_PROFDATAS="$(ls -d ${PROJECT_FOLDER}/coverage_data/iter_*/${DRIVER_NAME}.profdata)"
+        mkdir -p ${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}
+        llvm-profdata-12 merge -sparse $DRIVER_PROFDATAS -o ${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}/merged.profdata
+
+        PROFILE_BINARY=${PROJECT_FOLDER}/profiles/${DRIVER_NAME}_profile
+
+        llvm-cov-12 show $PROFILE_BINARY -instr-profile=${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}/merged.profdata > show
+        llvm-cov-12 report $PROFILE_BINARY -instr-profile=${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
+        llvm-cov-12 report -show-functions $PROFILE_BINARY -instr-profile=${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
+
+        mv show ${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}
+        mv report ${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}
+        mv functions ${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}
+    done
+    exit 0
+fi
+
+if [[ $TOTAL_LIBRARY_COVERAGE_FOR_CONFIGURATION ]]; then
+    MERGED_PROFDATAS="$(ls -d ${PROJECT_FOLDER}/coverage_data/iter_*/merged.profdata)"
+    mkdir -p ${PROJECT_FOLDER}/coverage_data/total
+    llvm-profdata-12 merge -sparse $MERGED_PROFDATAS -o ${PROJECT_FOLDER}/coverage_data/total/merged.profdata
+    PROFILES="$(ls -d ${PROJECT_FOLDER}/profiles/*_profile)"
+
+    OBJECTS=""
+    for profile in $PROFILES; do
+        if [[ -z $OBJECTS ]]; then
+            # The first object needs to be passed without -object= flag.
+            OBJECTS="$profile"
+        else
+            OBJECTS="$OBJECTS -object=$profile"
+        fi
+    done
+
+    llvm-cov-12 show $OBJECTS -instr-profile=${PROJECT_FOLDER}/coverage_data/total/merged.profdata > show
+    llvm-cov-12 report $OBJECTS -instr-profile=${PROJECT_FOLDER}/coverage_data/total/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
+    llvm-cov-12 report -show-functions $OBJECTS -instr-profile=${PROJECT_FOLDER}/coverage_data/total/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
+
+    mv show ${PROJECT_FOLDER}/coverage_data/total
+    mv report ${PROJECT_FOLDER}/coverage_data/total
+    mv functions ${PROJECT_FOLDER}/coverage_data/total
+    exit 0
+fi
+
+
+FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
 for d in $FUZZ_TARGETS
 do
     echo $d

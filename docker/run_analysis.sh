@@ -28,4 +28,3 @@ if [[ -z "${DEVENV}" ]]; then
 else
     docker run --rm -d --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" "$IMG_NAME"
 fi
-
