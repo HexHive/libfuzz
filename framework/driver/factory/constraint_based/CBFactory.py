@@ -98,17 +98,16 @@ class CBFactory(Factory):
         # if api_call.function_name == "htp_connp_create" and self.attempt > 0:
         #     self.attempt -= 1
 
-        # if api_call.function_name == "htp_connp_create" and self.attempt == 0:
-             
+        # if api_call.function_name == "TIFFGetCloseProc":
         #     print(f"hook {api_call.function_name}")
         #     # import pdb; pdb.set_trace()
-        #     par_debug = 0
+        #     par_debug = -1
         #     arg_pos = par_debug
-        #     is_ret = False
-        #     arg_type = api_call.arg_types[par_debug]
-        #     arg_cond = conditions.argument_at[par_debug]
-        #     # arg_type = api_call.ret_type
-        #     # arg_cond = conditions.return_at
+        #     is_ret = True
+        #     # arg_type = api_call.arg_types[par_debug]
+        #     # arg_cond = conditions.argument_at[par_debug]
+        #     arg_type = api_call.ret_type
+        #     arg_cond = conditions.return_at
         #     type = arg_type
         #     tt = type.get_pointee_type()
         #     cond = conditions.argument_at[par_debug]

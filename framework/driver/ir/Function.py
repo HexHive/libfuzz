@@ -23,6 +23,9 @@ class Function(Value):
         
         ret_token, args_token = [t.strip() for t in token.split("(*)")]
 
+        if args_token.endswith(" __va_list_tag *)"):
+            args_token = args_token.replace(" __va_list_tag *)", "va_list)")
+
         self.token = func_name
         self.addr = None
         self.arg_types = args_token

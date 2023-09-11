@@ -24,7 +24,7 @@ class Factory(ABC):
         arguments_info = api.arguments_info
         namespace = api.namespace
 
-        # if function_name in ["pthreadpool_parallelize_1d"]:
+        # if function_name in ["TIFFGetCloseProc"]:
         #     print(f"api_to_apicall: {function_name}")
         #     from IPython import embed; embed(); exit(1)
 
