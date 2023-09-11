@@ -28,7 +28,7 @@ do
     # [TAG] THIS STEP MUST BE ADAPTED FOR EACH LIBRARY
     # Compile driver for fuzzing
     $CXX -g -std=c++11  -fsanitize=fuzzer,address -I/"${TARGET}"/work/include \
-        "$d" -Wl,--whole-archive "${TARGET}"/work/lib/libcares.a -Wl,--no-whole-archive \
+        "$d" -Wl,--whole-archive "${TARGET}"/work/lib/libcares_static.a -Wl,--no-whole-archive \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
 
     # Compile driver for coverage
