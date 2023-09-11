@@ -162,6 +162,9 @@ class RunningContext(Context):
 
     
         # if (isinstance(type, PointerType) and 
+        # type.get_base_type().token == "TIFF" and 
+        # if arg_pos == -1 and api_call.function_name == "pcap_geterr":
+
         #     type.get_base_type().token == "htp_cfg_t" and api_call.function_name == "aom_codec_decode"):
         #     self.attempt -= 1
 

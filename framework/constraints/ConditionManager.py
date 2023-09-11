@@ -113,6 +113,10 @@ class ConditionManager:
             #     print("get_source_api")
             #     from IPython import embed; embed(); exit(1)
 
+            # NOTE: some sinks could be misclassifed as source apis
+            if api in self.sinks:
+                continue
+
             fun_cond = get_cond(api)
 
             # if api.function_name == "htp_tx_req_get_param":

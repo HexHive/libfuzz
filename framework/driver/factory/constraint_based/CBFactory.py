@@ -98,7 +98,7 @@ class CBFactory(Factory):
         # if api_call.function_name == "htp_connp_create" and self.attempt > 0:
         #     self.attempt -= 1
 
-        # if api_call.function_name == "TIFFGetCloseProc":
+        # if api_call.function_name == "pcap_geterr":
         #     print(f"hook {api_call.function_name}")
         #     # import pdb; pdb.set_trace()
         #     par_debug = -1
