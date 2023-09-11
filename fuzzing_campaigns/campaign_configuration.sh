@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" )
+export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" )
 export NUM_OF_DRIVERS=( 20 )
 export NUM_OF_APIs=( 2 4 8 16 32  )
 export NUM_OF_SEEDS=1
@@ -9,6 +9,10 @@ export POLICY="constraint_based_weigth"
 export MAX_CPUs=$(($(nproc) - 1))
 
 case $CONF in
+
+  regtest)
+    export TIMEOUT=0
+    ;;
 
   selection)
     export TIMEOUT=3m
