@@ -34,7 +34,6 @@ Ad-hoc guides for specific components of the project
 - [Driver Generation](./_docs/DriverGeneration.md)
 - [Fuzzing a Driver](./_docs/FuzzingDrivers.md)
 - [Statistics](./_docs/Statistics.md)
-- Triage (TODO)
 
 ## Internal technical details
 
