@@ -21,13 +21,15 @@ def __main():
     # default_config = PROJECT_FOLDER + "/regression_tests/condition_extractor/test_full/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/uriparser/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libhtp/generator.toml"
-    default_config = PROJECT_FOLDER + "/targets/libtiff/generator.toml"
+    # default_config = PROJECT_FOLDER + "/targets/libtiff/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/cpu_features/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/minijail/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libvpx/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/pthreadpool/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libvpx/generator.toml"
+    # default_config = PROJECT_FOLDER + "/targets/pthreadpool/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libaom/generator.toml"
+    default_config = PROJECT_FOLDER + "/targets/libpcap/generator.toml"
 
     parser = argparse.ArgumentParser(description='Automatic Driver Generator')
     parser.add_argument('--config', type=str, help='The configuration', default=default_config)
