@@ -484,8 +484,8 @@ class RunningContext(Context):
                     pick_random = True                
                 # elif not is_incomplete:
                 #     pick_random = False
-                # elif is_ret:
-                #     pick_random = False
+                elif is_ret:
+                    pick_random = False
 
                 vp = None
                 if pick_random:
