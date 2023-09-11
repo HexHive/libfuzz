@@ -7,6 +7,8 @@ for project in "${PROJECTS[@]}"; do
     ../docker/run_analysis.sh
 done
 
+sleep 5m
+
 echo "[INFO] waiting for dockers to end"
 
 for project in "${PROJECTS[@]}"; do

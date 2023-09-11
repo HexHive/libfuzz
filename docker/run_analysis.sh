@@ -17,6 +17,7 @@ set -x
 DOCKER_BUILDKIT=1 docker build \
     --build-arg USER_UID=$(id -u) --build-arg GROUP_UID=$(id -g) \
     -t "$IMG_NAME" --target libfuzzpp_analysis \
+    --name "${IMG_NAME}-${TARGET_NAME}" \
     -f "$LIBPP/Dockerfile" "$LIBPP"
 set +x
 
