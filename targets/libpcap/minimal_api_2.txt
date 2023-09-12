@@ -1,2 +1,4 @@
-pcap_open_offline
-pcap_geterr
+pcap_open_live
+# pcap_geterr
+# pcap_datalink_ext
+pcap_next_ex

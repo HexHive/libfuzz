@@ -20,9 +20,6 @@ class RunningContext(Context):
 
     # static dictionary
     type_to_hash        : Dict[str, str]
-
-    string_types = ["char*", "unsigned char*", "wchar_t*", \
-                    "char**", "unsigned char**", "wchar_t**"]
     
     def __init__(self):
         super().__init__()
@@ -169,7 +166,7 @@ class RunningContext(Context):
         #     self.attempt -= 1
 
         # if (isinstance(type, PointerType) and 
-        #     type.get_base_type().token == "aom_codec_ctx_t" and api_call.function_name == "aom_codec_decode"):
+        #     type.get_base_type().token == "u_char" and api_call.function_name == "pcap_next_ex"):
         #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
 
@@ -405,7 +402,7 @@ class RunningContext(Context):
         buff_name = f"{clean_token}{pnt}_{cst}{decrt}{buff_counter}"
         buff_name = buff_name.replace(" ", "")
         # NOTE: char* => always considered as array!
-        if ((cond.is_array or type.token in RunningContext.string_types) and
+        if ((cond.is_array or type.token in DataLayout.string_types) and
             alloctype == AllocType.STACK):
             new_buffer = Buffer(buff_name, self.MAX_ARRAY_SIZE, type, alloctype)
         else:

@@ -24,14 +24,14 @@ class Factory(ABC):
         arguments_info = api.arguments_info
         namespace = api.namespace
 
-        # if function_name in ["TIFFGetCloseProc"]:
+        # if function_name in ["pcap_next_ex"]:
         #     print(f"api_to_apicall: {function_name}")
         #     from IPython import embed; embed(); exit(1)
 
         arg_list_type = []
         for _, arg in enumerate(arguments_info):
             # NOTE: for simplicity, const type as arguments can be consider non-const, see `Driver_IR.md` for more info
-            the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, False)
+            the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, arg.is_const)
             arg_list_type += [the_type]
 
         if return_info.size == 0:
@@ -74,6 +74,11 @@ class Factory(ABC):
 
             pointer_level = a_type.count("*")
             a_type_core = a_type.replace("*", "")
+
+            # if a_type_core == "u_char":
+            #     print("normalize_type")
+            #     from IPython import embed; embed()
+            #     exit(1)
 
             # THIS IS A DOUBLE CHECK, NOT SURE WE NEED IT, BETTER SAFE THAN SORRY!!
             if a_type_core == "void":

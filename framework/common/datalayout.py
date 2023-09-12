@@ -20,6 +20,10 @@ class DataLayout:
     
     size_types = ["size_t", "int", "uint32_t", "uint64_t", "__uint32_t", "unsigned int", "int64_t", "unsigned long", "__u_int"]
 
+    string_types = ["char*", "unsigned char*", "wchar_t*", \
+                    "char**", "unsigned char**", "wchar_t**" \
+                    "u_char*", "u_char**"]
+
     def __init__(self):
         raise Exception("ConditionManager can be obtained through instance() class method")
     

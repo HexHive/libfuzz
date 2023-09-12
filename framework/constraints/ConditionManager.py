@@ -48,7 +48,7 @@ class ConditionManager:
                 self.is_a_sink_condition(fun_cond.argument_at[0])):
                 arg = api.arguments_info[0]
                 the_type = Factory.normalize_type(arg.type, arg.size, 
-                                                  arg.flag, False)
+                                                  arg.flag, arg.is_const)
                 self.sink_map[the_type] = api
                 self.sinks.add(api)
 
@@ -125,7 +125,7 @@ class ConditionManager:
 
             num_arg_ok = 0
             for arg_p, arg in enumerate(api.arguments_info):
-                the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, False)
+                the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, arg.is_const)
                 arg_cond = fun_cond.argument_at[arg_p]
                 if isinstance(the_type, PointerType):
                     the_type = the_type.get_base_type()
