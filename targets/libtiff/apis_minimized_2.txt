@@ -1,2 +1,2 @@
 TIFFOpen
-TIFFSetErrorHandler
+TIFFReadRawStrip

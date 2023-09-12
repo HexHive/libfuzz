@@ -74,7 +74,15 @@ class CBFactory(Factory):
                 elif isinstance(idx_type, PointerType):
                     arg_cond.len_depends_on = ""
                 else:
-                    arg_var = rng_ctx.create_new_var(arg_type, arg_cond, False)
+                    
+                    if (isinstance(arg_type, PointerType) and 
+                        arg_type.get_pointee_type() == rng_ctx.stub_void):
+                        arg_var = rng_ctx.create_new_var(
+                            rng_ctx.stub_char_array, arg_cond, False)
+                    else:
+                        arg_var = rng_ctx.create_new_var(
+                            arg_type, arg_cond, False)
+                        
                     x = arg_var
                     if (isinstance(arg_var, Variable) and 
                         isinstance(arg_type, PointerType)):

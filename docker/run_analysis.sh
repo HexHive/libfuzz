@@ -17,7 +17,6 @@ set -x
 DOCKER_BUILDKIT=1 docker build \
     --build-arg USER_UID=$(id -u) --build-arg GROUP_UID=$(id -g) \
     -t "$IMG_NAME" --target libfuzzpp_analysis \
-    --name "${IMG_NAME}-${TARGET_NAME}" \
     -f "$LIBPP/Dockerfile" "$LIBPP"
 set +x
 
@@ -25,7 +24,9 @@ echo "$IMG_NAME"
 
 
 if [[ "${DEVENV}" ]]; then
-    docker run --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" -t "$IMG_NAME"
+    docker run --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" \ 
+        -t "$IMG_NAME"
 else
-    docker run --rm -d --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" "$IMG_NAME"
+    docker run --rm -d --name "${IMG_NAME}-${TARGET}" \
+        --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" "$IMG_NAME"
 fi

@@ -488,6 +488,12 @@ std::string ValueMetadata::extractLenDependencyParameter(
     // // outs() << "CURRENT PARAM: \n";
     // // outs() << current_parm->toString() << "\n";
 
+    auto par_type = current_parm->getType();
+    auto llvm_type = LLVMModuleSet::getLLVMModuleSet()->getLLVMType(par_type);
+
+    if (!SVFUtil::isa<PointerType>(llvm_type))
+        return "";
+
     std::string dependent_param = "";
 
     SVFIR* pag = SVFIR::getPAG();
