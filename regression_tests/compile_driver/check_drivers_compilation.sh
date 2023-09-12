@@ -16,14 +16,14 @@ export CONF=regtest
 
 all_exec=$(find workdir_*_*/*/drivers -type f -executable | wc -l)
 all_drvr=$(find workdir_*_*/*/drivers -type f -name "*.cc" | wc -l)
-# echo "all_exec = ${all_exec}"
-# echo "all_drvr = ${all_drvr}"
 
+compiled_drivers=0
 if [[ "${all_exec}" -eq "${all_drvr}" ]]; then
     echo -e "[OK] All drivers are compiled!" 
 else
     non_cmp=$(($all_drvr-$all_exec))
     echo -e "[ERROR] ${non_cmp} drivers not compile!"
+    compiled_drivers=1
 fi
 
 export CONF=regtest
@@ -42,13 +42,22 @@ for project in "${PROJECTS[@]}"; do
     done
 done
 
-if [ ${#empty_projects[@]} -ne 0 ]; then
+empty_folders_check=0
+if [[ "${#empty_projects[@]}" -ne 0 ]]; then
     echo -e "[ERROR] ${#empty_projects[@]} working dirs are empty:"
     for dir in "${empty_projects[@]}"; do
         echo ${dir}
     done 
+    empty_folders_check=1
 else
     echo "[OK] ${#empty_projects[@]} working dirs are empty:"
+fi
+
+if [[ "${compiled_drivers}" -ne 0 || "${empty_folders_check}" -ne 0 ]]; then
+    echo "[ERROR] in driver compilations"
+    exit 1
+else
+    echo "[OK] all drivers correctly generated!"
 fi
 
 echo "Clean workdir folders"
