@@ -31,7 +31,7 @@ class Factory(ABC):
         arg_list_type = []
         for _, arg in enumerate(arguments_info):
             # NOTE: for simplicity, const type as arguments can be consider non-const, see `Driver_IR.md` for more info
-            the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, arg.is_const)
+            the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, False)
             arg_list_type += [the_type]
 
         if return_info.size == 0:
