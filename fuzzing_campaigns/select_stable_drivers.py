@@ -49,21 +49,21 @@ def _main():
 
             # cp compiled driver
             os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/drivers")
-            os.system(f"cp {rootdir}/workdir_backup/workdir_{n_drivers}_{n_apis}/{lib}/drivers/{driver} workdir_{n_drivers}_{n_apis}/{lib}/drivers")
+            os.system(f"cp {rootdir}/workdir_{n_drivers}_{n_apis}/{lib}/drivers/{driver} workdir_{n_drivers}_{n_apis}/{lib}/drivers")
 
             # cp source code driver
-            os.system(f"cp {rootdir}/workdir_backup/workdir_{n_drivers}_{n_apis}/{lib}/drivers/{driver}.cc workdir_{n_drivers}_{n_apis}/{lib}/drivers")
+            os.system(f"cp {rootdir}/workdir_{n_drivers}_{n_apis}/{lib}/drivers/{driver}.cc workdir_{n_drivers}_{n_apis}/{lib}/drivers")
 
             # cp profile driver
             os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/profiles")
-            os.system(f"cp {rootdir}/workdir_backup/workdir_{n_drivers}_{n_apis}/{lib}/profiles/{driver}_profile workdir_{n_drivers}_{n_apis}/{lib}/profiles")
+            os.system(f"cp {rootdir}/workdir_{n_drivers}_{n_apis}/{lib}/profiles/{driver}_profile workdir_{n_drivers}_{n_apis}/{lib}/profiles")
 
             # cp corpus for driver
             os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/corpus")
-            os.system(f"cp -r {rootdir}/workdir_backup/workdir_{n_drivers}_{n_apis}/{lib}/corpus/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus")
+            os.system(f"cp -r {rootdir}/workdir_{n_drivers}_{n_apis}/{lib}/corpus/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus")
 
             # os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/corpus_new")
-            # os.system(f"cp -r workdir_backup/workdir_{n_drivers}_{n_apis}/{lib}/corpus_new/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus_new")
+            # os.system(f"cp -r workdir_{n_drivers}_{n_apis}/{lib}/corpus_new/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus_new")
 
             os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/crashes/{driver}")
 
