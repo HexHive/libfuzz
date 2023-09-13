@@ -75,10 +75,11 @@ def print_table(libraries):
     all_cols = sorted(list(all_n_api))
     
     table = []
-    table += [["library"] + all_cols]
+    table += [["library"] + all_cols + ["best conf."]]
     for lib, score in rows.items():
         orered_val = sorted(score.items(), key=lambda x: int(x[0]))
-        table += [[lib] + [o[1] for o in orered_val]]
+        best_conf = max(score, key=score.get) 
+        table += [[lib] + [o[1] for o in orered_val] + [best_conf]]
 
     print(tabulate(table, headers='firstrow'))
 

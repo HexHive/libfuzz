@@ -6,7 +6,7 @@ def sig(x):
     
 def calc_score(cov, n_crashes, n_unicrsh):
     # return cov * sig(n_unicrsh) / sig(n_crashes)
-    return cov / (1 + n_unicrsh)
+    return cov / (1 + n_crashes)
 
 def load_report(report, rootdir = None):
     libraries = {}
