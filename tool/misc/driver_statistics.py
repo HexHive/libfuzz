@@ -60,7 +60,8 @@ def print_table(libraries):
         # exit(1)
         rows[lib] = {}
         for n_api, raw in api_score_raw.items():
-            rows[lib][n_api] = np.average(raw)
+            rows[lib][n_api] = np.median(raw)
+            # rows[lib][n_api] = np.average(raw)
             # s = len(raw)
             # print(f"{lib} {n_api} = {s}")
 
