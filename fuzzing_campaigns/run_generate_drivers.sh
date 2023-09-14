@@ -41,9 +41,6 @@ else
     compiled_drivers=1
 fi
 
-export CONF=regtest
-source campaign_configuration.sh
-
 empty_projects=()
 for project in "${PROJECTS[@]}"; do
     for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
