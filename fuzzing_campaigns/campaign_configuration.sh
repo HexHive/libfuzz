@@ -24,6 +24,14 @@ case $CONF in
     export ITERATIONS=5
     ;;
 
+  bestconf)
+    export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" "minijail" )
+    export NUM_OF_DRIVERS=( 20  )
+    export NUM_OF_APIs=( 4 8  )
+    export TIMEOUT=1h
+    export ITERATION=1
+    ;;
+
   *)
     echo -n "unknown CONF"
     exit 1
