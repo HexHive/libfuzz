@@ -41,7 +41,7 @@ def _main():
     # from IPython import embed; embed(); exit(1)
 
     for lib, drvs in best_drivers.items():
-        print(f"{lib}")
+        print(f"{lib}: {len(drvs)} drivers")
         for d in drvs:
             n_drivers = d['n_drivers']
             n_apis = d['n_apis']
