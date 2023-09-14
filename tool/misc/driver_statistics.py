@@ -79,9 +79,9 @@ def print_table(libraries):
     table += [["library"] + all_cols + ["best conf."]]
     for lib, score in rows.items():
         orered_val = sorted(score.items(), key=lambda x: int(x[0]))
-        rank_score = sorted(score.items(), key=lambda x: int(x[1]))
-        best_conf_1 = rank_score[-1]
-        best_conf_2 = rank_score[-2]
+        rank_score = sorted(score.items(), key=lambda x: float(x[1]))
+        best_conf_1 = int(rank_score[-1][0])
+        best_conf_2 = int(rank_score[-2][0])
         table += [[lib] + [o[1] for o in orered_val] + 
                   [f"{best_conf_1} - {best_conf_2}"]]
 
