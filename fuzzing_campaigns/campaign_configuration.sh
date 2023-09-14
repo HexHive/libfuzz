@@ -29,7 +29,7 @@ case $CONF in
     export NUM_OF_DRIVERS=( 20  )
     export NUM_OF_APIs=( 4 8  )
     export TIMEOUT=1h
-    export ITERATION=1
+    export ITERATIONS=1
     ;;
 
   *)
