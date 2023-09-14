@@ -7,13 +7,21 @@ mv ../workdir ../workdir_backup 2> /dev/null
 
 for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
     for napis in "${NUM_OF_APIs[@]}"; do
-        echo "[generator]" > ../overwrite.toml
-        echo "pool_size = ${ndrivers}" >> ../overwrite.toml
-        echo "driver_size = ${napis}" >> ../overwrite.toml
-        echo "num_seeds = ${NUM_OF_SEEDS}" >> ../overwrite.toml
-        echo "policy = \"${POLICY}\"" >> ../overwrite.toml
+
         mkdir -p workdir_${ndrivers}_${napis}
         for project in "${PROJECTS[@]}"; do
+
+            echo "[generator]" > ../overwrite.toml
+            echo "pool_size = ${ndrivers}" >> ../overwrite.toml
+            echo "driver_size = ${napis}" >> ../overwrite.toml
+            echo "num_seeds = ${NUM_OF_SEEDS}" >> ../overwrite.toml
+            echo "policy = \"${POLICY}\"" >> ../overwrite.toml
+
+            if [ ${USE_CUSTOM_APIS} -eq 1 ]; then
+                echo "[analysis]" >> ../overwrite.toml
+                echo "minimum_apis = \"/workspaces/libfuzz/targets/${project}/custom_apis_minized.txt\"" >> ../overwrite.toml
+            fi
+
             export TARGET=$project
             ../docker/run_drivergeneration.sh
 

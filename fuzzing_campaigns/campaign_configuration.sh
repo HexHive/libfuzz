@@ -7,6 +7,7 @@ export NUM_OF_SEEDS=1
 # export POLICY="constraint_based"
 export POLICY="constraint_based_weigth"
 export MAX_CPUs=$(($(nproc) - 1))
+export USE_CUSTOM_APIS=0
 
 case $CONF in
 
@@ -30,6 +31,15 @@ case $CONF in
     export NUM_OF_APIs=( 4 8  )
     export TIMEOUT=1h
     export ITERATIONS=1
+    ;;
+
+  minimized)
+    export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" )
+    export NUM_OF_DRIVERS=( 20  )
+    export NUM_OF_APIs=( 4 8 )
+    export TIMEOUT=1h
+    export ITERATIONS=1
+    export USE_CUSTOM_APIS=1
     ;;
 
   *)
