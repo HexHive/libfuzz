@@ -262,6 +262,10 @@ class Utils:
             return_info = r
             return_info["size"] = -1
 
+        # if function_name == "TIFFGetCloseProc":
+        #     print(f"normalize_coerce_args 1 {function_name}")
+        #     from IPython import embed; embed(); exit(1)
+
         if function_name in coerce_info:
             coerce_arguments = coerce_info[function_name].arguments
 
@@ -321,7 +325,7 @@ class Utils:
                             return_info["size"], return_info["type"], is_const)
 
         # normalize arguments_info and return_info
-        if return_info.flag in ["val", "ref"]:
+        if return_info.flag in ["val", "ref", "fun"]:
             return_info.type = apis_clang_list[function_name]["return_info"]["type_clang"]
         
         for i, arg_info in enumerate(arguments_info):

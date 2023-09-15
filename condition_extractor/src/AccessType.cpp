@@ -12,12 +12,15 @@ bool ValueMetadata::consider_indirect_calls = false;
 
 // NOT EXPOSED FUNCTIONS -- THESE FUNCTIONS ARE MEANT FOR ONLY INTERNAL USAGE!
 bool areConnected(const VFGNode*, const VFGNode*);
+bool areConnectedCtx(const VFGNode*, const VFGNode*, Path*);
 std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
+std::set<const VFGNode*> getDefinitionSetCtx(const VFGNode*, Path*);
 std::set<const VFGNode*> getDefinitionSetForRet(const VFGNode*,
     std::set<const SVFFunction*>*);
 bool areCompatible(FunctionType*,FunctionType*);
 bool handlerDispatcher(ValueMetadata*, std::string,
-    const ICFGNode*, const CallICFGNode*, int, AccessType, H_SCOPE h_scope);
+    const ICFGNode*, const CallICFGNode*, int, AccessType, H_SCOPE h_scope, 
+    Path *path);
 // NOT EXPOSED FUNCTIONS -- END!
 
 /**
@@ -33,7 +36,7 @@ If exists, call the predefined handler for function fun.
 */
 bool handlerDispatcher(ValueMetadata *mdata, std::string fun, 
     const ICFGNode * icfgNode, const CallICFGNode* cs, int param_num,
-    AccessType atNode, H_SCOPE h_scope) {
+    AccessType atNode, H_SCOPE h_scope, Path *path) {
 
     std::string suffix = "*";
     for (auto f: accessTypeHandlers) {
@@ -46,10 +49,11 @@ bool handlerDispatcher(ValueMetadata *mdata, std::string fun,
             std::string fk_clean = fk.substr(0, fk_size);
             std::string fun_clean = fun.substr(0, fk_size);
             if (fk_clean == fun_clean)
-                handler(mdata, fun, icfgNode, cs, param_num, atNode, h_scope);
+                handler(mdata, fun, icfgNode, cs, param_num, atNode, h_scope, 
+                    path);
         }
         else if (fun == f.first) {
-            handler(mdata, fun, icfgNode, cs, param_num, atNode, h_scope);
+            handler(mdata, fun, icfgNode, cs, param_num, atNode, h_scope, path);
         }
     }
     return true;
@@ -323,11 +327,11 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                     // malloc handler
                     AccessType acNode(retType);
                     handlerDispatcher(&mdata, fun, node, call_node, -1, 
-                                        acNode, C_RETURN);
+                                        acNode, C_RETURN, nullptr);
 
                     for (unsigned p = 0; p < ftype->getNumParams(); p++) {
                         handlerDispatcher(&mdata, fun, node, call_node, p, 
-                                            acNode, C_RETURN);
+                                            acNode, C_RETURN, nullptr);
                     }
 
                 }
@@ -484,6 +488,12 @@ std::string ValueMetadata::extractLenDependencyParameter(
     // // outs() << "CURRENT PARAM: \n";
     // // outs() << current_parm->toString() << "\n";
 
+    auto par_type = current_parm->getType();
+    auto llvm_type = LLVMModuleSet::getLLVMModuleSet()->getLLVMType(par_type);
+
+    if (!SVFUtil::isa<PointerType>(llvm_type))
+        return "";
+
     std::string dependent_param = "";
 
     SVFIR* pag = SVFIR::getPAG();
@@ -543,8 +553,28 @@ std::string ValueMetadata::extractLenDependencyParameter(
                     p_idx++;
                     continue;
                 }
+
+
+                auto p_val = p->getValue();
+
+                auto llvm_p_val = LLVMModuleSet::getLLVMModuleSet()
+                                            ->getLLVMValue(p_val);
+
+                // std::string str;
+                // llvm::raw_string_ostream rawstr(str);
+                // rawstr << *llvm_p_val->getType();
+                // outs() << "Testing par " << p_idx << "  (index loop phase)\n";
+                // outs() << str << "\n";
+                if (SVFUtil::isa<PointerType>(llvm_p_val->getType())) {
+                    // outs() << "It is a pointer, skip it (index loop phase)!\n";
+                    p_idx++;
+                    continue;
+                }
+
+
+
                 // pP = const_cast<llvm::Value*>(p->getValue());
-                pP = pag->getGNode(pag->getValueNode(p->getValue()));
+                pP = pag->getGNode(pag->getValueNode(p_val));
                 const VFGNode* vP = svfg->getDefSVFGNode(pP);
                 // const_cast<llvm::Value*>(p->getValue());
                 // outs() << "P: " << pP->toString() << "\n";
@@ -568,8 +598,13 @@ std::string ValueMetadata::extractLenDependencyParameter(
     }
 
     if (dependent_param == "")
-        for (auto fs: mdata->getFunParams()) {
+        for (auto el: mdata->getFunParams()) {
             // outs() << *fs << "\n";
+            auto fs = el.first;
+            auto path = el.second; // Path == Context == Stack
+            // path.dump_stack();
+            // SVFUtil::outs() << "---------\n";
+            // continue;
 
             auto llvm_val = llvmModuleSet->getSVFValue(fs);
             PAGNode* pS = pag->getGNode(pag->getValueNode(llvm_val));
@@ -582,12 +617,30 @@ std::string ValueMetadata::extractLenDependencyParameter(
                     p_idx++;
                     continue;
                 }
-                // pP = const_cast<llvm::Value*>(p->getValue());
-                PAGNode* pP = pag->getGNode(pag->getValueNode(p->getValue()));
+
+                auto p_val = p->getValue();
+
+                auto llvm_p_val = LLVMModuleSet::getLLVMModuleSet()
+                                            ->getLLVMValue(p_val);
+
+                // std::string str;
+                // llvm::raw_string_ostream rawstr(str);
+                // rawstr << *llvm_p_val->getType();
+                // outs() << "Testing par " << p_idx << "\n";
+                // outs() << str << "\n";
+                if (SVFUtil::isa<PointerType>(llvm_p_val->getType())) {
+                    // outs() << "It is a pointer, skip it!\n";
+                    p_idx++;
+                    continue;
+                }
+
+                PAGNode* pP = pag->getGNode(pag->getValueNode(p_val));
+
                 const VFGNode* vP = svfg->getDefSVFGNode(pP);
                 // const_cast<llvm::Value*>(p->getValue());
                 // outs() << "P: " << pP->toString() << "\n";
-                if (areConnected(vP,vS)) {
+                if (areConnectedCtx(vP, vS, &path)) {
+                    // outs() << "connected!\n";
                     param_control_len = true;
                     break;
                 } 
@@ -640,6 +693,53 @@ std::set<const VFGNode*> getDefinitionSetForRet(const VFGNode *n, std::set<const
     return definitions;
 }
 
+std::set<const VFGNode*> getDefinitionSetCtx(const VFGNode *n, Path *path_in) {
+
+    std::set<const VFGNode*> definitions;
+
+    std::set<const VFGNode*> visited;
+    std::vector<const VFGNode*> worklist;
+
+    Path path = *path_in;
+
+    // outs() << "n: " << n->toString() << "\n";
+
+    worklist.push_back(n);
+    while(!worklist.empty()) {
+        auto n = worklist.back();
+        worklist.pop_back();
+        if (visited.find(n) != visited.end())
+            continue;
+        int n_parents = 0;
+        for(auto in: n->getInEdges()) {
+            if (auto src = SVFUtil::dyn_cast<ActualParmVFGNode>(
+                in->getSrcNode())) {
+
+                auto cs = src->getCallSite();
+
+                if (path.isCorrect(cs)) {
+                    path.popFrame();
+                    // outs() << "This is correct!!!\n";
+                } else 
+                    continue;
+            }
+            // outs() << in->toString() << "\n";
+
+            auto pn = in->getSrcNode();
+            worklist.push_back(pn);
+            n_parents++;
+            
+        }
+        // Maybe select some classes, e.g., alloca, param
+        if (n_parents == 0) 
+            definitions.insert(n);
+        visited.insert(n);
+    }
+
+    return definitions;
+
+}
+
 std::set<const VFGNode*> getDefinitionSet(const VFGNode *n) {
 
     std::set<const VFGNode*> definitions;
@@ -669,7 +769,28 @@ std::set<const VFGNode*> getDefinitionSet(const VFGNode *n) {
     return definitions;
 }
 
-// bool ValueMetadata::areConnected(const VFGNode *a, const VFGNode *b) {
+bool areConnectedCtx(const VFGNode *a, const VFGNode *b, Path *path) {
+
+    std::set<const VFGNode*> defA = getDefinitionSet(a);
+    std::set<const VFGNode*> defB = getDefinitionSetCtx(b, path);
+    std::set<const VFGNode*> intersection;
+
+    // outs() << "DefA:" << a->toString() << "\n";
+    // for (auto e: defA)
+    //     outs() << e->toString() << "\n";
+    // outs() << "DefB:" << b->toString() << "\n";
+    // for (auto e: defB)
+    //     outs() << e->toString() << "\n";
+
+    std::set_intersection(
+        defA.begin(), defA.end(),
+        defB.begin(), defB.end(), 
+        std::inserter(intersection, intersection.begin()));
+
+    return !intersection.empty();
+
+}
+
 bool areConnected(const VFGNode *a, const VFGNode *b) {
 
     std::set<const VFGNode*> defA = getDefinitionSet(a);
@@ -928,7 +1049,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
                             if (!SVFUtil::isa<ConstantInt>(d)) {
                                 is_array = true;
                                 mdata.addIndex(d);
-                                mdata.addFunParam(d);
+                                mdata.addFunParam(d, &p);
                             } else if (inst->getNumIndices() == 1) {
                                 is_array = true;
                                 mdata.addIndex(inst);
@@ -1142,7 +1263,7 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
 
                                     ok_continue = handlerDispatcher(
                                         &mdata, fun, vNode->getICFGNode(), cs,
-                                        n_param, acNode, C_PARAM);
+                                        n_param, acNode, C_PARAM, &p);
                                 }
                             }
                         }

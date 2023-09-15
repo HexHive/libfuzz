@@ -60,7 +60,8 @@ def print_table(libraries):
         # exit(1)
         rows[lib] = {}
         for n_api, raw in api_score_raw.items():
-            rows[lib][n_api] = np.average(raw)
+            rows[lib][n_api] = np.median(raw)
+            # rows[lib][n_api] = np.average(raw)
             # s = len(raw)
             # print(f"{lib} {n_api} = {s}")
 
@@ -75,10 +76,14 @@ def print_table(libraries):
     all_cols = sorted(list(all_n_api))
     
     table = []
-    table += [["library"] + all_cols]
+    table += [["library"] + all_cols + ["best conf."]]
     for lib, score in rows.items():
         orered_val = sorted(score.items(), key=lambda x: int(x[0]))
-        table += [[lib] + [o[1] for o in orered_val]]
+        rank_score = sorted(score.items(), key=lambda x: float(x[1]))
+        best_conf_1 = int(rank_score[-1][0])
+        best_conf_2 = int(rank_score[-2][0])
+        table += [[lib] + [o[1] for o in orered_val] + 
+                  [f"{best_conf_1} - {best_conf_2}"]]
 
     print(tabulate(table, headers='firstrow'))
 

@@ -68,6 +68,25 @@ class LFBackendDriver(BackendDriver):
             with open(os.path.join(seed_folder, f"seed{x}.bin"), "wb") as f:
                 f.write(os.urandom(seed_size))
 
+    def emit_stub_functions(self, stub_functions: List[Function]) -> str:
+        stubs = ""
+
+        # print("emit_stub_functions")
+        # from IPython import embed; embed(); exit(1)
+
+        for _, f in stub_functions.items():
+            f_name = f.token
+            f_return = f.ret_type
+            f_arguments = f.arg_types
+
+            stubs += f"{f_return} {f_name} {f_arguments} {{\n"
+            if f_return != "void":
+                stubs += f"\treturn ({f_return})0;\n"
+            stubs += "}\n"
+            stubs += "\n"
+
+        return stubs
+
     def emit_defines(self, seed_fix_size, counter_size) -> str:
 
         counter_size_str = ",".join([f"{c}" for c in counter_size])
@@ -92,6 +111,7 @@ class LFBackendDriver(BackendDriver):
 
         seed_fix_size = driver.get_input_size()
         counter_size = driver.get_counter_size()
+        stub_functions = driver.get_stub_functions()
 
         with open(os.path.join(self.working_dir, driver_filename), "w") as f:
             # TODO: add headers inclusion
@@ -108,6 +128,11 @@ class LFBackendDriver(BackendDriver):
             # if self.has_counter:
             f.write("\n")
             f.write(self.emit_defines(seed_fix_size, counter_size))
+
+            # callback functions
+            if len(stub_functions) != 0:
+                f.write("\n")
+                f.write(self.emit_stub_functions(stub_functions))
 
             f.write("\n")
 

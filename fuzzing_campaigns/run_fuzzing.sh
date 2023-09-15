@@ -13,7 +13,7 @@ DOCKER_BUILDKIT=1 docker build \
 set +x
 
 
-let TOTAL_FUZZERS="$(IFS=+; echo "$((${NUM_OF_DRIVERS[*]}))")*${#NUM_OF_APIs[@]}*${#PROJECTS[@]}*ITERATIONS"
+let TOTAL_FUZZERS="$(find workdir_*_*/*/drivers/ -type f -executable | wc -l)*ITERATIONS"
 COUNTER=0
 CPU_ID=0
 
@@ -64,3 +64,5 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
         done
     done
 done
+
+sleep $TIMEOUT

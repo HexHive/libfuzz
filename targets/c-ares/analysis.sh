@@ -28,12 +28,12 @@ export LIBFUZZ_LOG_PATH=$WORK/apipass
 mkdir -p "$LIBFUZZ_LOG_PATH"
 
 echo "make 1"
-mkdir -p "$TARGET/repo/pcap_build"
-cd "$TARGET/repo/pcap_build"
+mkdir -p "$TARGET/repo/cares_build"
+cd "$TARGET/repo/cares_build"
 
 
 cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_LIBS=off \
-        -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
+        -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug -DCARES_STATIC=on \
         -DCMAKE_C_FLAGS_DEBUG="-g -O0" \
         -DCMAKE_CXX_FLAGS_DEBUG="-g -O0"
 # configure compiles some shits for testing, better remove it
@@ -52,7 +52,7 @@ make -j"$(nproc)"
 echo "make install"
 make install
 
-extract-bc -b "$WORK"/lib/libpcap.a
+extract-bc -b "$WORK"/lib/libcares_static.a
 
 # this extracts the exported functions in a file, to be used later for grammar
 # generations
@@ -66,11 +66,9 @@ extract-bc -b "$WORK"/lib/libpcap.a
 # extract fields dependency from the library itself, repeat for each object
 # produced
 "$TOOLS_DIR"/condition_extractor/bin/extractor \
-    "$WORK"/lib/libpcap.a.bc \
+    "$WORK"/lib/libcares_static.a.bc \
     -interface "$LIBFUZZ_LOG_PATH/apis_clang.json" \
     -output "$LIBFUZZ_LOG_PATH/conditions.json" \
     -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
     -v v0 -t json -do_indirect_jumps \
     -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
-
-sed -i 's\pcap_next_ex\# pcap_next_ex\g' "$LIBFUZZ_LOG_PATH/apis_minimized.txt"

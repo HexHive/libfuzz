@@ -47,6 +47,8 @@ class CBFactory(Factory):
 
         self.source_api = list(self.condition_manager.get_source_api())
 
+    attempt = 2
+
     def try_to_instantiate_api_call(self, api_call: ApiCall,
                         conditions: FunctionConditions, 
                         rng_ctx: RunningContext):
@@ -67,10 +69,20 @@ class CBFactory(Factory):
                 idx = int(arg_cond.len_depends_on.replace("param_", ""))
                 idx_type = api_call.arg_types[idx]
 
-                if isinstance(idx_type, PointerType):
+                if DataLayout.instance().is_enum_type(idx_type.get_token()):
+                    arg_cond.len_depends_on = ""
+                elif isinstance(idx_type, PointerType):
                     arg_cond.len_depends_on = ""
                 else:
-                    arg_var = rng_ctx.create_new_var(arg_type, arg_cond, False)
+                    
+                    if (isinstance(arg_type, PointerType) and 
+                        arg_type.get_pointee_type() == rng_ctx.stub_void):
+                        arg_var = rng_ctx.create_new_var(
+                            rng_ctx.stub_char_array, arg_cond, False)
+                    else:
+                        arg_var = rng_ctx.create_new_var(
+                            arg_type, arg_cond, False)
+                        
                     x = arg_var
                     if (isinstance(arg_var, Variable) and 
                         isinstance(arg_type, PointerType)):
@@ -91,6 +103,8 @@ class CBFactory(Factory):
                     rng_ctx.update(api_call, idx_cond, idx)
                     rng_ctx.var_to_cond[x].len_depends_on = b_len
 
+        # if api_call.function_name == "htp_connp_create" and self.attempt > 0:
+        #     self.attempt -= 1
 
         # if api_call.function_name == "pcap_geterr":
         #     print(f"hook {api_call.function_name}")
@@ -116,8 +130,8 @@ class CBFactory(Factory):
 
             try:
                 if isinstance(arg_type, PointerType) and arg_type.to_function:
-                    arg_var = rng_ctx.get_null_constant()
-                    # arg_var = rng_ctx.get_function_pointer(arg_type)
+                    # arg_var = rng_ctx.get_null_constant()
+                    arg_var = rng_ctx.get_function_pointer(arg_type)
                 else:
                     # arg_var = rng_ctx.try_to_get_var(arg_type, arg_cond, 
                     #                                  fun_name, conditions, 
@@ -308,5 +322,11 @@ class CBFactory(Factory):
 
         clean_up_sec = context.generate_clean_up()
         counter_size = context.get_counter_size()
+        stub_functions = context.get_stub_functions()
 
-        return Driver(statements, context).add_clean_up(clean_up_sec).add_counter_size(counter_size)
+        d = Driver(statements, context)
+        d.add_clean_up(clean_up_sec)
+        d.add_counter_size(counter_size)
+        d.add_stub_functions(stub_functions)
+
+        return d
