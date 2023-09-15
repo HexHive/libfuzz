@@ -24,7 +24,7 @@ echo "$IMG_NAME"
 
 
 if [[ "${DEVENV}" ]]; then
-    docker run --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" \ 
+    docker run --env TARGET=${TARGET} -v "$(pwd)/..:/workspaces/libfuzz" \
         -t "$IMG_NAME"
 else
     docker run --rm -d --name "${IMG_NAME}-${TARGET}" \
