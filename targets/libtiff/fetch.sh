@@ -7,4 +7,4 @@
 
 git clone --no-checkout https://gitlab.com/libtiff/libtiff.git \
     "$TARGET/repo"
-git -C "$TARGET/repo" checkout c145a6c14978f73bb484c955eb9f84203efcb12e
+git -C "$TARGET/repo" checkout 4d0329a4539550f2396772b8c4c60c5fecdda7db

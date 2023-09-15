@@ -7,4 +7,4 @@
 
 git clone --no-checkout https://github.com/OISF/libhtp.git \
     "$TARGET/repo"
-git -C "$TARGET/repo" checkout 5aaea8cdc7ceac907b3cdbe265e8a2b5fe74d918
+git -C "$TARGET/repo" checkout 8bdfe7b9d04e5e948c8fbaa7472e14d884cc00af
