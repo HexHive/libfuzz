@@ -12,6 +12,7 @@ class Conditions:
     is_file_path: bool
     len_depends_on: Variable
     setby_dependencies: List[Variable]
+    is_initialized: bool
     
     def __init__(self, mdata: ValueMetadata):
         self.ats = AccessTypeSet()
@@ -21,6 +22,20 @@ class Conditions:
         self.is_file_path = mdata.is_file_path
         self.len_depends_on = None 
         self.setby_dependencies = None
+        self.is_initialized = False
+
+    def is_init(self):
+        return self.is_initialized
+    
+    def set_init(self):
+        # print("set_init")
+        # from IPython import embed; embed(); exit(1)
+        self.is_initialized = True
+
+    def unset_init(self):
+        # print("unset_init")
+        # from IPython import embed; embed(); exit(1)
+        self.is_initialized = False
 
     def get_sub_fields(self, f_prev):
         f_prev_len = len(f_prev)

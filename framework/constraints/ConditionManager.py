@@ -1,6 +1,6 @@
-from typing import Set, Dict
+from typing import Set, Dict, List
 
-from driver.ir import Type, ApiCall, Buffer, PointerType
+from driver.ir import Type, ApiCall, Buffer, PointerType, TypeTag
 from driver.factory import Factory
 
 from common import Api, FunctionConditionsSet, ValueMetadata, Access
@@ -10,6 +10,8 @@ class ConditionManager:
     sink_map            : Dict[Type, Api]
     sinks               : Set[Api]
     api_list            : Set[Api]
+    init_per_type       : Dict[Type, List[Api]]
+    set_per_type        : Dict[Type, List[Api]]
     conditions          : FunctionConditionsSet
 
     _instance           : "ConditionManager" = None
@@ -32,6 +34,7 @@ class ConditionManager:
 
         self.init_sinks()
         self.init_source()
+        self.init_init()
 
     def init_sinks(self):
         # sink map that links Type <=> (Sink)Api
@@ -150,3 +153,95 @@ class ConditionManager:
         # from IPython import embed; embed(); exit(1)
 
         self.source_api = source_api
+
+    def init_init(self):
+        #  api_call: ApiCall, api_cond: FunctionConditions, 
+                    # arg_pos: int):
+        
+        # api_name = api_call.function_name
+        # if api_name == "aom_codec_decode" and arg_pos == 0:
+        #     print("is_init_api")
+        #     from IPython import embed; embed(); exit(1)
+
+        init_per_type = {}
+        set_per_type = {}
+
+        get_cond = lambda x: self.conditions.get_function_conditions(
+            x.function_name)
+        to_api = lambda x: Factory.api_to_apicall(x)
+
+        for api in self.api_list:
+            api_cond = get_cond(api)
+            api_call = to_api(api)
+            
+            for arg_pos, arg_type in enumerate(api_call.arg_types):
+                cond = api_cond.argument_at[arg_pos] 
+
+                if len(cond.setby_dependencies) == 0:
+                    continue
+
+                arg_ok = 0     
+                n_incomplete_type = 0
+                for d in cond.setby_dependencies:
+                    p_idx = int(d.replace("param_", ""))
+                    d_type = api_call.arg_types[p_idx]
+                    
+                    tt = d_type
+                    if isinstance(d_type, PointerType):
+                        tt = d_type.get_base_type()
+
+                    if tt.tag == TypeTag.STRUCT:
+                        token = tt.get_token()
+                        if DataLayout.instance().is_fuzz_friendly(token):
+                            arg_ok += 1
+                        elif tt.is_incomplete:
+                            n_incomplete_type += 1
+                    elif tt.tag == TypeTag.PRIMITIVE:
+                        arg_ok += 1
+
+                if (arg_ok == len(cond.setby_dependencies) - 1 and 
+                    n_incomplete_type == 1):
+                    xx = init_per_type.get(arg_type, set())
+                    xx.add(api)
+                    init_per_type[arg_type] = xx
+                else:
+                    xx = set_per_type.get(arg_type, set())
+                    xx.add(api)
+                    set_per_type[arg_type] = xx
+
+        self.init_per_type = init_per_type
+        self.set_per_type = set_per_type
+    
+    def get_init_api(self) -> Dict[Type, List[Api]]:
+        return self.init_per_type
+    
+    def has_init_api(self, type: Type) -> bool:
+        return type in self.init_per_type
+    
+    def is_init(self, api_call: ApiCall, arg_pos: int) -> bool:
+        if arg_pos < 0:
+            return False
+        
+        arg_type = api_call.arg_types[arg_pos]
+        api = api_call.original_api
+
+        if arg_type not in self.init_per_type:
+            return False
+
+        init_list = self.init_per_type[arg_type]
+
+        return api in init_list
+    
+    def is_set(self, api_call: ApiCall, arg_pos: int) -> bool:
+        if arg_pos < 0:
+            return False
+        
+        arg_type = api_call.arg_types[arg_pos]
+        api = api_call.original_api
+
+        if arg_type not in self.set_per_type:
+            return False
+
+        set_list = self.set_per_type[arg_type]
+
+        return api in set_list
