@@ -269,26 +269,32 @@ class RunningContext(Context):
                 var = val
             else:
                 raise Exception("Excepted Address or Variable")
-
-            # buff = var.get_buffer()
-            # buff.alloctype = AllocType.GLOBAL
             
-            buff = var.get_buffer()
-            (len_dep, len_cond) = self.create_dependency_length_variable()
+            x_type = var.get_type()
+            if isinstance(var, PointerType):
+                x_type = var.get_base_type()
+            
+            if x_type.token in DataLayout.string_types:
+            
+                # buff = var.get_buffer()
+                # buff.alloctype = AllocType.GLOBAL
+                
+                buff = var.get_buffer()
+                (len_dep, len_cond) = self.create_dependency_length_variable()
 
-            # if buff.get_type().token != "char*":
-            #     print("checking type")
-            #     from IPython import embed; embed(); exit(1)
+                # if buff.get_type().token != "char*":
+                #     print("checking type")
+                #     from IPython import embed; embed(); exit(1)
 
-            self.file_path_buffers.add(buff)
-            self.new_vars.add((var, len_dep, len_cond))
+                self.file_path_buffers.add(buff)
+                self.new_vars.add((var, len_dep, len_cond))
 
-            length = 20
-            letters = string.ascii_lowercase
-            file_name = ''.join(random.choice(letters) for i in range(length)) + ".bin"
+                length = 20
+                letters = string.ascii_lowercase
+                file_name = ''.join(random.choice(letters) for i in range(length)) + ".bin"
 
-            # TODO: add folder to the file lenght
-            self.const_strings[var] = file_name
+                # TODO: add folder to the file lenght
+                self.const_strings[var] = file_name
 
         return val
     
