@@ -75,3 +75,14 @@ $TOOLS_DIR/condition_extractor/bin/extractor \
     -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
     -v v0 -t json -do_indirect_jumps \
     -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
+
+sed -i 's\minijail_run\# minijail_run\g' "$LIBFUZZ_LOG_PATH/apis_minimized.txt"
+sed -i 's\minijail_run_env\# minijail_run_env\g' "$LIBFUZZ_LOG_PATH/apis_minimized.txt"
+sed -i 's\minijail_run_env_pid_pipes\# minijail_run_env_pid_pipes\g' "$LIBFUZZ_LOG_PATH/apis_minimized.txt"
+sed -i 's\minijail_run_env_pid_pipes_no_preload\# minijail_run_env_pid_pipes_no_preload\g' "$LIBFUZZ_LOG_PATH/apis_minimized.txt"
+sed -i 's\minijail_rminijail_run_fd_env_pid_pipesun\# minijail_run_fd_env_pid_pipes\g' "$LIBFUZZ_LOG_PATH/apis_minimized.txt"
+sed -i 's\minijail_run_no_preload\# minijail_run_no_preload\g' "$LIBFUZZ_LOG_PATH/apis_minimized.txt"
+sed -i 's\minijail_run_pid\# minijail_run_pid\g' "$LIBFUZZ_LOG_PATH/apis_minimized.txt"
+sed -i 's\minijail_run_pid_pipes\# minijail_run_pid_pipes\g' "$LIBFUZZ_LOG_PATH/apis_minimized.txt"
+sed -i 's\minijail_run_pid_pipes_no_preload\# minijail_run_pid_pipes_no_preload\g' "$LIBFUZZ_LOG_PATH/apis_minimized.txt"
+sed -i 's\minijail_run_pipe\# minijail_run_pipe\g' "$LIBFUZZ_LOG_PATH/apis_minimized.txt"
