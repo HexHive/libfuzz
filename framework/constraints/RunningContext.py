@@ -311,10 +311,10 @@ class RunningContext(Context):
                 letters = string.ascii_lowercase
                 file_name = ''.join(random.choice(letters) for i in range(length)) + ".bin"
 
-            # print("is_File_path")
-            # from IPython import embed; embed(); exit(1)
-            # TODO: add folder to the file lenght
-            self.const_strings[var] = file_name
+                # print("is_File_path")
+                # from IPython import embed; embed(); exit(1)
+                # TODO: add folder to the file lenght
+                self.const_strings[var] = file_name
         elif is_heap_wo_len:
             var = None
             if isinstance(val, Address):
