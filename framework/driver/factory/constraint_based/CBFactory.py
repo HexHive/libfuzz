@@ -318,6 +318,8 @@ class CBFactory(Factory):
         # from IPython import embed; embed(); 
         # exit()
 
+        context.generate_auxiliary_operations()
+
         statements = []
         statements += context.generate_buffer_decl()
         statements += context.generate_buffer_init()

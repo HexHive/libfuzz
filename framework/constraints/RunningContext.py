@@ -779,6 +779,7 @@ class RunningContext(Context):
         is_sink = ConditionManager.instance().is_sink(api_call)
 
         self.update_var(val, cond, is_ret, is_sink)
+
     # the return structure (buff_var, dynamic_buff, fix_buff)
     # var_buff - list of var_buff for controlling var_len
     # dynamic_buff - list of dynamic allocated buffer
@@ -851,7 +852,7 @@ class RunningContext(Context):
         return var_buff, dyn_buff, fix_buff
 
 
-    def generate_buffer_init(self) -> List[Statement]:
+    def generate_auxiliary_operations(self):
         buff_init = []
 
         var_buff, dyn_byff, fix_buff = self.get_fixed_and_dynamic_buffers()
@@ -863,7 +864,7 @@ class RunningContext(Context):
             t = x.get_type()
             buff_init += [BuffInit(x)]
 
-            if t.get_token() in ["char*", "unsigned char*"]:
+            if t.get_token() in DataLayout.string_types:
                 buff_init += [SetStringNull(x)]
 
         for buff, buff_len in zip(dyn_byff, var_buff):
@@ -875,7 +876,7 @@ class RunningContext(Context):
             # elif buff.get_token() in DataLayout.string_types:
             elif self.is_ptr_level(buff.get_type(), 1):
                 buff_init += [DynArrayInit(buff, len_var)]
-                if buff.get_type().get_token() in ["char*", "unsigned char*"]:
+                if buff.get_type().get_token() in DataLayout.string_types:
                     buff_init += [SetStringNull(buff, len_var)]
             elif self.is_ptr_level(buff.get_type(), 2):
                 # print("handle double pointers")
@@ -946,16 +947,6 @@ class RunningContext(Context):
         tot = sum([ b.get_allocated_size() for b in fix_buff ])
 
         return tot
-
-    def get_counter_size(self):
-        counter_size = []
-
-        var_buff, _, _ = self.get_fixed_and_dynamic_buffers()
-
-        for buff in var_buff:
-            counter_size += [buff.get_allocated_size()/8]
-
-        return counter_size
 
     def generate_clean_up(self):
         clean_up = []
