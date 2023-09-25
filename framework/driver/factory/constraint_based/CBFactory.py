@@ -106,19 +106,22 @@ class CBFactory(Factory):
         # if api_call.function_name == "htp_connp_create" and self.attempt > 0:
         #     self.attempt -= 1
 
-        # if api_call.function_name == "pcap_geterr":
+        # if api_call.function_name == "minijail_destroy":
         #     print(f"hook {api_call.function_name}")
         #     # import pdb; pdb.set_trace()
-        #     par_debug = -1
+        #     par_debug = 0
         #     arg_pos = par_debug
-        #     is_ret = True
-        #     # arg_type = api_call.arg_types[par_debug]
-        #     # arg_cond = conditions.argument_at[par_debug]
-        #     arg_type = api_call.ret_type
-        #     arg_cond = conditions.return_at
+        #     is_ret = par_debug == -1
+        #     if is_ret:
+        #         arg_type = api_call.ret_type
+        #         arg_cond = conditions.return_at
+        #     else:
+        #         arg_type = api_call.arg_types[par_debug]
+        #         arg_cond = conditions.argument_at[par_debug]
         #     type = arg_type
-        #     tt = type.get_pointee_type()
-        #     cond = conditions.argument_at[par_debug]
+        #     # tt = type.get_pointee_type()
+        #     # cond = conditions.argument_at[par_debug]
+        #     # print(api_call.arg_vars)
         #     from IPython import embed; embed(); exit(1)
 
         # second round to initialize all the other args
