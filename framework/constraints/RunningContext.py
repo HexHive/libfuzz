@@ -3,10 +3,10 @@ from typing import List, Set, Dict, Tuple, Optional
 import random, copy, string, traceback
 
 from driver import Context
-from driver.ir import Variable, Type, Value, PointerType, AllocType, CleanBuffer
+from driver.ir import Variable, Type, Value, PointerType, AllocType, CleanBuffer, CleanDblBuffer
 from driver.ir import Address, NullConstant, Buffer, ConstStringDecl, ApiCall
 from driver.ir import BuffDecl, BuffInit, FileInit, Statement, DynArrayInit
-from driver.ir import SetStringNull, TypeTag, Function
+from driver.ir import SetStringNull, TypeTag, Function, DynDblArrInit
 from . import Conditions, ConditionManager
 from common.conditions import *
 from common import DataLayout
@@ -15,7 +15,7 @@ class RunningContext(Context):
     variables_alive     : List[Variable]
     var_to_cond         : Dict[Variable, Conditions]
     file_path_buffers   : Set[Buffer]
-    new_vars            : Set[Tuple[Variable, Conditions]]
+    new_vars            : Set[Tuple[Variable, Variable, Conditions]]
     const_strings       : Dict[Variable, str]
 
     # static dictionary
@@ -32,66 +32,77 @@ class RunningContext(Context):
 
         self.poninter_strategies = [Context.POINTER_STRATEGY_ARRAY]
 
+        self.auxiliary_operations_set = False
+        self.buff_init = None
+        self.counter_size = None
+
+        self.DOUBLE_PTR_SIZE = 16
+
     # override of Context method
     def has_vars_type(self, type: Type, cond: ValueMetadata) -> bool:
 
         # FLAVIO: I think this should be like that!
         # TODO: Extract "base" type with a dedicated method?
-        tt = None
-        if isinstance(type, PointerType):
-            if type.get_pointee_type().is_incomplete:
-                tt = type
-            else:
-                tt = type.get_pointee_type()
-        else:
-            tt = type
+        # tt = None
+        # if isinstance(type, PointerType):
+        #     if type.get_pointee_type().is_incomplete:
+        #         tt = type
+        #     else:
+        #         tt = type.get_pointee_type()
+        # else:
+        #     tt = type
             
-        if tt is None:
-            raise Exception("can't find a type for 'tt'")
+        # if tt is None:
+        #     raise Exception("can't find a type for 'tt'")
         # tt = type
 
         for v in self.variables_alive:
-            if ((v.get_type() == tt or v.get_type() == type) and 
-                self.var_to_cond[v].is_compatible_with(cond)):
+            if self.var_is_equal_to_type_cond(v, type, cond):
                 return True
+            # if (v.get_type() == type and 
+            #     self.var_to_cond[v].is_compatible_with(cond)):
+            #     return True
+            # if ((v.get_type() == tt or v.get_type() == type) and 
+            #     self.var_to_cond[v].is_compatible_with(cond)):
+            #     return True
 
         # if cond.is_array:
         #     from IPython import embed; embed(); exit(1)
 
         return False
 
-    def get_value_that_satisfy(self, type: Type,
-            cond: AccessTypeSet) -> Optional[Value]:
+    # def get_value_that_satisfy(self, type: Type,
+    #         cond: AccessTypeSet) -> Optional[Value]:
 
-        # print("Debug get_value_that_satisfy")
-        # from IPython import embed; embed(); exit()
+    #     # print("Debug get_value_that_satisfy")
+    #     # from IPython import embed; embed(); exit()
 
-        tt = None
-        if isinstance(type, PointerType):
-            if type.get_pointee_type().is_incomplete:
-                tt = type
-            else:
-                tt = type.get_pointee_type()
-        else:
-            tt = type
+    #     tt = None
+    #     if isinstance(type, PointerType):
+    #         if type.get_pointee_type().is_incomplete:
+    #             tt = type
+    #         else:
+    #             tt = type.get_pointee_type()
+    #     else:
+    #         tt = type
             
-        if tt is None:
-            raise Exception("can't find a type for 'tt'")
+    #     if tt is None:
+    #         raise Exception("can't find a type for 'tt'")
 
-        vars = set()
+    #     vars = set()
 
-        for v in self.variables_alive:
-            if ((v.get_type() == tt or v.get_type() == type) and
-                self.var_to_cond[v].is_compatible_with(cond)):
-                vars.add(v)
+    #     for v in self.variables_alive:
+    #         if ((v.get_type() == tt or v.get_type() == type) and
+    #             self.var_to_cond[v].is_compatible_with(cond)):
+    #             vars.add(v)
 
-        if len(vars) == 0:
-            return None
-        else:
-            var = random.choice(list(vars))
-            if isinstance(type, PointerType):
-                return var.get_address()
-            return var
+    #     if len(vars) == 0:
+    #         return None
+    #     else:
+    #         var = random.choice(list(vars))
+    #         if isinstance(type, PointerType):
+    #             return var.get_address()
+    #         return var
 
     def get_value_that_strictly_satisfy(self, type: Type,
             cond: AccessTypeSet) -> Optional[Value]:
@@ -140,7 +151,7 @@ class RunningContext(Context):
 
         # TODO: handle dependency fields here?
 
-    attempt = 1
+    attempt = 2
 
     # def try_to_get_var(self, type: Type, cond: ValueMetadata, api_name: Api,
     #                     arg_pos: int) -> Value:
@@ -157,21 +168,20 @@ class RunningContext(Context):
             cond = api_cond.argument_at[arg_pos]
             type = api_call.arg_types[arg_pos]
 
+        is_sink = ConditionManager.instance().is_sink(api_call)
+        is_source = ConditionManager.instance().is_source(cond)
     
         # if (isinstance(type, PointerType) and 
         # type.get_base_type().token == "TIFF" and 
         # if arg_pos == -1 and api_call.function_name == "pcap_geterr":
-
-        #     type.get_base_type().token == "htp_cfg_t" and api_call.function_name == "aom_codec_decode"):
-        #     self.attempt -= 1
+        # if (isinstance(type, PointerType) and 
+        #     type.get_base_type().token == "char" and api_call.function_name == "foo"):
+        #     RunningContext.attempt -= 1
 
         # if (isinstance(type, PointerType) and 
-        #     type.get_base_type().token == "u_char" and api_call.function_name == "pcap_next_ex"):
+        #     type.get_base_type().token == "char" and api_call.function_name == "foo") and RunningContext.attempt == 0:
         #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
-
-        is_sink = ConditionManager.instance().is_sink(api_call)
-        is_source = ConditionManager.instance().is_source(cond)
 
         val = None
 
@@ -200,11 +210,6 @@ class RunningContext(Context):
                     # raise ConditionUnsat()
                     raise ConditionUnsat(traceback.format_stack())
         elif self.has_vars_type(type, cond):
-            # print("elif self.has_vars_type(type, cond):")
-            # val = self.get_value_that_satisfy(type, cond)
-            # if val is None:
-            #     if (Conditions.is_unconstraint(cond) and 
-            #         not type.is_incomplete):
             try:
                 val = self.randomly_gimme_a_var(type, cond, is_ret)
             except Exception as e:
@@ -222,7 +227,7 @@ class RunningContext(Context):
 
             # print("else:")
             if isinstance(type, PointerType):
-                tt = type.get_pointee_type()  
+                tt = type.get_base_type()  
             else:
                 tt = type
 
@@ -258,7 +263,20 @@ class RunningContext(Context):
         if val == None:
             raise Exception("Val unset")
 
-        if cond.is_file_path and not isinstance(val, NullConstant):
+        var_t = None
+        if isinstance(val, Address):
+            var_t = val.get_variable()
+        elif isinstance(val, Variable):
+            var_t = val
+        is_heap_wo_len = (not isinstance(val, NullConstant) and
+            cond.len_depends_on == "" and
+            var_t.get_buffer().get_alloctype() == AllocType.HEAP and 
+            var_t.get_type().get_base_type().get_tag() == TypeTag.PRIMITIVE)
+
+        is_file_path = (cond.is_file_path and 
+            not isinstance(val, NullConstant))
+
+        if is_file_path:
             # print("cond.is_file_path")
             # from IPython import embed; embed(); exit(1)
 
@@ -293,8 +311,24 @@ class RunningContext(Context):
                 letters = string.ascii_lowercase
                 file_name = ''.join(random.choice(letters) for i in range(length)) + ".bin"
 
-                # TODO: add folder to the file lenght
-                self.const_strings[var] = file_name
+            # print("is_File_path")
+            # from IPython import embed; embed(); exit(1)
+            # TODO: add folder to the file lenght
+            self.const_strings[var] = file_name
+        elif is_heap_wo_len:
+            var = None
+            if isinstance(val, Address):
+                var = val.get_variable()
+            elif isinstance(val, Variable):
+                var = val
+            else:
+                raise Exception("Excepted Address or Variable")
+            
+            # print("is_heap_wo_len")
+            # from IPython import embed; embed(); exit(1)
+            
+            (len_dep, len_cond) = self.create_dependency_length_variable()
+            self.new_vars.add((var, len_dep, len_cond))
 
         return val
     
@@ -343,7 +377,7 @@ class RunningContext(Context):
 
     def create_new_buffer(self, type: Type, cond: ValueMetadata, force_pointer: bool):
         
-        # if "pthreadpool" in type.token:
+        # if "char" in type.token:
         #     print("create_new_buffer")
         #     from IPython import embed; embed(); exit(1)
 
@@ -375,9 +409,15 @@ class RunningContext(Context):
                 alloctype = default_alloctype
 
         # double pointers -> always in heap
-        if (isinstance(type, PointerType) and 
-            isinstance(type.get_pointee_type(), PointerType)):
-            alloctype = default_alloctype
+        if self.is_ptr_level(type, 2):
+            if type.get_base_type().is_incomplete:
+                alloctype = default_alloctype
+            else:
+                alloctype = AllocType.HEAP
+        #     # .get_token() in DataLayout.string_types
+        # elif (isinstance(type, PointerType) and
+            
+            
 
         buff_counter = self.buffs_counter.get(type, 0)
         
@@ -411,6 +451,8 @@ class RunningContext(Context):
         if ((cond.is_array or type.token in DataLayout.string_types) and
             alloctype == AllocType.STACK):
             new_buffer = Buffer(buff_name, self.MAX_ARRAY_SIZE, type, alloctype)
+        elif type.token == "char**":
+            new_buffer = Buffer(buff_name, self.DOUBLE_PTR_SIZE, type, alloctype)
         else:
             new_buffer = Buffer(buff_name, 1, type, alloctype)
 
@@ -549,23 +591,34 @@ class RunningContext(Context):
     def get_random_buffer(self, type: Type, cond: ValueMetadata) -> Buffer:
         return self.get_random_var(type, cond).buffer
     
+    def var_is_equal_to_type_cond(self, var: Variable, type: Type,
+                                  cond: ValueMetadata) -> bool:
+        # if ((v.get_type() == tt or v.get_type() == type)
+        #     and self.var_to_cond[v].is_compatible_with(cond)):
+        if (var.get_type() == type and
+            self.var_to_cond[var].is_compatible_with(cond)):
+            return True
+        return False
+    
     def get_random_var(self, type: Type, cond: ValueMetadata) -> Variable:
 
         suitable_vars = []
 
-        tt = None
-        if isinstance(type, PointerType):
-            if type.get_pointee_type().is_incomplete:
-                tt = type
-            else:
-                tt = type.get_pointee_type()
-        else:
-            tt = type
+        # tt = None
+        # if isinstance(type, PointerType):
+        #     if type.get_pointee_type().is_incomplete:
+        #         tt = type
+        #     else:
+        #         tt = type.get_pointee_type()
+        # else:
+        #     tt = type
 
         for v in self.variables_alive:
-            if ((v.get_type() == tt or v.get_type() == type)
-                and self.var_to_cond[v].is_compatible_with(cond)):
+            if self.var_is_equal_to_type_cond(v, type, cond):
                 suitable_vars += [v]
+            # if ((v.get_type() == tt or v.get_type() == type)
+            #     and self.var_to_cond[v].is_compatible_with(cond)):
+            #     suitable_vars += [v]
 
         return random.choice(suitable_vars)
 
@@ -681,6 +734,7 @@ class RunningContext(Context):
         if is_ret and var in self.variables_alive:
             del self.var_to_cond[var]
             self.variables_alive.remove(var)
+            self.remove_from_new_vars(var)
 
         already_present = var in self.var_to_cond
         self.add_variable(var, cond)
@@ -688,12 +742,22 @@ class RunningContext(Context):
         if already_present and is_sink:
             del self.var_to_cond[var]
             self.variables_alive.remove(var)
+            self.remove_from_new_vars(var)
 
         if var in self.var_to_cond and synthetic_cond is not None:
             self.var_to_cond[var].add_conditions(synthetic_cond)
 
             # from IPython import embed; embed(); exit(1);
             # import pdb; pdb.set_trace(); exit(1);
+
+    def remove_from_new_vars(self, var: Variable):
+        to_remove = None
+        for var_h, len, cond in self.new_vars:
+            if var_h == var:
+                to_remove = (var_h, len, cond)
+
+        if to_remove is not None:
+            self.new_vars.remove(to_remove)
 
     def update(self, api_call: ApiCall, cond: ValueMetadata, 
                arg_pos: int):
@@ -808,12 +872,57 @@ class RunningContext(Context):
 
             if buff in self.file_path_buffers:
                 buff_init += [FileInit(buff, len_var)]
-            else:
+            # elif buff.get_token() in DataLayout.string_types:
+            elif self.is_ptr_level(buff.get_type(), 1):
                 buff_init += [DynArrayInit(buff, len_var)]
                 if buff.get_type().get_token() in ["char*", "unsigned char*"]:
                     buff_init += [SetStringNull(buff, len_var)]
+            elif self.is_ptr_level(buff.get_type(), 2):
+                # print("handle double pointers")
+                # from IPython import embed; embed(); exit(1)
+                buff_init += [DynDblArrInit(buff, len_var)]
 
-        return buff_init
+        counter_size = []
+
+        # dyn_buff, _ = self.get_fixed_and_dynamic_buffers()
+
+        for init in buff_init:
+            if (isinstance(init, FileInit) or 
+                isinstance(init, DynArrayInit)):
+                len_var = init.get_len_var()
+                len_buff = len_var.get_buffer()
+                counter_size += [len_buff.get_allocated_size()/8]
+            elif isinstance(init, DynDblArrInit):
+                len_var = init.get_len_var()
+                len_buff = len_var.get_buffer()
+                buff = init.get_buffer()
+                n_element = buff.get_number_elements()
+                counter_size += [len_buff.get_allocated_size()/8] * n_element
+
+        self.auxiliary_operations_set = True
+        self.buff_init = buff_init
+        self.counter_size = counter_size
+
+    def is_ptr_level(self, type, lvl: int) -> bool:
+
+        ptr_level = 0
+
+        tmp_type = type
+        while isinstance(tmp_type, PointerType):
+            ptr_level += 1
+            tmp_type = tmp_type.get_pointee_type()
+
+        return ptr_level == lvl
+
+    def generate_buffer_init(self) -> List[Statement]:
+        if not self.auxiliary_operations_set:
+            raise ("auxiliary_operations_set False, try generate_auxiliary_operations")
+        return self.buff_init
+    
+    def get_counter_size(self):
+        if not self.auxiliary_operations_set:
+            raise ("auxiliary_operations_set False, try generate_auxiliary_operations")
+        return self.counter_size
 
     def generate_buffer_decl(self) -> List[Statement]:
         buff_decl = []
@@ -856,7 +965,10 @@ class RunningContext(Context):
                 continue
             if b.get_alloctype() == AllocType.HEAP:
                 cm = ConditionManager.instance().find_cleanup_method(b)
-                clean_up += [CleanBuffer(b, cm)]
+                if self.is_ptr_level(b.get_type(), 2):
+                    clean_up += [CleanDblBuffer(b, cm)]
+                else:
+                    clean_up += [CleanBuffer(b, cm)]
 
             if b.get_alloctype() == AllocType.STACK:
                 cm = ConditionManager.instance().find_cleanup_method(b, "")

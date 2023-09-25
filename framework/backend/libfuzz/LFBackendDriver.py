@@ -3,7 +3,9 @@ from driver.ir import ApiCall, BuffDecl, BuffInit, FileInit, AllocType
 from driver.ir import PointerType, Address, Variable, Type, DynArrayInit
 from driver.ir import Statement, Value, NullConstant, ConstStringDecl
 from driver.ir import AssertNull, CleanBuffer, SetNull, SetStringNull, Function
+from driver.ir import DynDblArrInit, CleanDblBuffer
 from backend import BackendDriver
+from common import DataLayout
 
 import random, string, os, shutil
 
@@ -272,7 +274,68 @@ class LFBackendDriver(BackendDriver):
             return self.setnull_emit(stmt)
         elif isinstance(stmt, SetStringNull):
             return self.setstringnull_emit(stmt)
+        elif isinstance(stmt, DynDblArrInit):
+            return self.dyndblarrinit_emit(stmt)
+        elif isinstance(stmt, CleanDblBuffer):
+            return self.cleandblbuffer_emit(stmt)
         raise NotImplementedError
+    
+    def cleandblbuffer_emit(self, stmt: CleanDblBuffer) -> str:
+        buff            = stmt.get_buffer()
+        cleanup_method  = stmt.get_cleanup_method()
+
+        buff_nelem      = buff.get_number_elements()
+
+        # v = self.value_emit(buff[0])
+
+        # NOTE: this is super ugly but not sure how to do otherwise
+        num_extra_brackets = buff.type.token.count("*")-1
+        # print("cleanbuffer_emit")
+        # from IPython import embed; embed(); exit(1)
+
+        # extra_brackets = "[0]" * num_extra_brackets
+
+        buff_i = f"{self.value_emit(buff[0])}[i]"
+
+        str = "//clean dbl array\n"
+        str += f"\tfor (uint i = 0; i < {buff_nelem}; i++) "
+        str += f" if ({buff_i} != 0) {cleanup_method}({buff_i});\n"
+
+        return str
+
+
+    # DynDblArrInit
+    def dyndblarrinit_emit(self, stmt: DynDblArrInit) -> str:
+        var_len = stmt.get_len_var()
+        buff = stmt.get_buffer()
+
+        # buff_token = self.clean_token(buff.get_token())
+        buff_nelem = buff.get_number_elements()
+
+        var_len_init = BuffInit(var_len.get_buffer())
+        dst_type = self.type_emit(buff.get_type())
+
+        buff_i = f"{self.value_emit(buff[0])}[i]"
+        var_lel_val = self.value_emit(var_len)
+
+        str = "//dyn dbl array init\n"
+        str += f"\tfor (uint i = 0; i < {buff_nelem}; i++) {{\n"
+        
+        # var_len from fuzzer seed
+        str += "\t\t" + self.buffinit_emit(var_len_init) + "\n"
+        # malloc
+        str += f"\t\t{buff_i} = ({dst_type}*)malloc({self.value_emit(var_len)});\n"
+        # memcpy
+        str += f"\t\tmemcpy({buff_i}, data, {self.value_emit(var_len)});\n"
+        if buff.get_type() in DataLayout.string_types:
+            # set last element as 0
+            str += f"\t\t{buff_i}[{var_lel_val} - 1] = 0;\n"
+        # move cursor ahead
+        str += f"\t\tdata += {self.value_emit(var_len)};\n"
+
+        str += "\t}\n"
+
+        return str
 
     # SetStringNull
     def setstringnull_emit(self, stmt: SetStringNull) -> str:

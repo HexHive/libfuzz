@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Set, Dict, Tuple, Optional
 
 from . import Statement, Type, Variable, Buffer
+from common import DataLayout
 
 class SetStringNull(Statement):
     buffer:     Buffer
@@ -12,8 +13,9 @@ class SetStringNull(Statement):
         type = buffer.get_type()
 
         # I want a Pointer(Type), no multiple pointers, no base types
-        if type.token != "char*" and type.token != "unsigned char*":
-            print("ConstStringDecl")
+        # if type.token != "char*" and type.token != "unsigned char*":
+        if type.token not in DataLayout.string_types:
+            print("SetStringNull")
             from IPython import embed; embed(); exit(1)
             raise Exception(f"ConstStringDecl accepts only 'char*', {type} received")
 
