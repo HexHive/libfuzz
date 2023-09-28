@@ -151,6 +151,19 @@ class DataLayout:
         # from IPython import embed; embed(); exit(1)
 
     @staticmethod
+    def is_ptr_level(type, lvl: int) -> bool:
+        from driver.ir.PointerType import PointerType
+
+        ptr_level = 0
+
+        tmp_type = type
+        while isinstance(tmp_type, PointerType):
+            ptr_level += 1
+            tmp_type = tmp_type.get_pointee_type()
+
+        return ptr_level == lvl
+
+    @staticmethod
     def is_a_pointer(type) -> bool:
         return "*" in type
 

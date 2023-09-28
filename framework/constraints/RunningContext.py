@@ -233,14 +233,16 @@ class RunningContext(Context):
 
             # check if the ats allow to generate an object
             if not is_ret:
-                if tt.is_incomplete:
-                    # raise ConditionUnsat()
-                    raise_an_exception = True
-                if tt.tag == TypeTag.STRUCT:
-                    if (not self.is_init_api(api_call, api_cond, arg_pos) and
-                        not DataLayout.instance().is_fuzz_friendly(tt.token)):
+                if not DataLayout.is_ptr_level(type, 2):
+                    if tt.is_incomplete:
                         # raise ConditionUnsat()
                         raise_an_exception = True
+                    if (tt.tag == TypeTag.STRUCT and
+                        not self.is_init_api(api_call, api_cond, arg_pos) 
+                        and not DataLayout.instance().is_fuzz_friendly(
+                            tt.token)):
+                            # raise ConditionUnsat()
+                            raise_an_exception = True
                 # print(f"{tt}is not fuzz friendly")
                 # from IPython import embed; embed(); exit(1)
                 # raise ConditionUnsat()
@@ -409,7 +411,7 @@ class RunningContext(Context):
                 alloctype = default_alloctype
 
         # double pointers -> always in heap
-        if self.is_ptr_level(type, 2):
+        if DataLayout.is_ptr_level(type, 2):
             if type.get_base_type().is_incomplete:
                 alloctype = default_alloctype
             else:
@@ -874,11 +876,11 @@ class RunningContext(Context):
             if buff in self.file_path_buffers:
                 buff_init += [FileInit(buff, len_var)]
             # elif buff.get_token() in DataLayout.string_types:
-            elif self.is_ptr_level(buff.get_type(), 1):
+            elif DataLayout.is_ptr_level(buff.get_type(), 1):
                 buff_init += [DynArrayInit(buff, len_var)]
                 if buff.get_type().get_token() in DataLayout.string_types:
                     buff_init += [SetStringNull(buff, len_var)]
-            elif self.is_ptr_level(buff.get_type(), 2):
+            elif DataLayout.is_ptr_level(buff.get_type(), 2):
                 # print("handle double pointers")
                 # from IPython import embed; embed(); exit(1)
                 buff_init += [DynDblArrInit(buff, len_var)]
@@ -903,17 +905,6 @@ class RunningContext(Context):
         self.auxiliary_operations_set = True
         self.buff_init = buff_init
         self.counter_size = counter_size
-
-    def is_ptr_level(self, type, lvl: int) -> bool:
-
-        ptr_level = 0
-
-        tmp_type = type
-        while isinstance(tmp_type, PointerType):
-            ptr_level += 1
-            tmp_type = tmp_type.get_pointee_type()
-
-        return ptr_level == lvl
 
     def generate_buffer_init(self) -> List[Statement]:
         if not self.auxiliary_operations_set:
@@ -956,7 +947,7 @@ class RunningContext(Context):
                 continue
             if b.get_alloctype() == AllocType.HEAP:
                 cm = ConditionManager.instance().find_cleanup_method(b)
-                if self.is_ptr_level(b.get_type(), 2):
+                if DataLayout.is_ptr_level(b.get_type(), 2):
                     clean_up += [CleanDblBuffer(b, cm)]
                 else:
                     clean_up += [CleanBuffer(b, cm)]

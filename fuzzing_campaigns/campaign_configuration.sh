@@ -12,7 +12,7 @@ export USE_CUSTOM_APIS=0
 case $CONF in
 
   quickcamp)
-    export NUM_OF_DRIVERS=( 10 ) 
+    export NUM_OF_DRIVERS=( 20 ) 
     export NUM_OF_APIs=( 5)
     export TIMEOUT=10m
     export ITERATIONS=1
