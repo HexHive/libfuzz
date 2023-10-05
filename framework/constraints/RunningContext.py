@@ -783,16 +783,15 @@ class RunningContext(Context):
         self.update_var(val, cond, is_ret, is_sink)
 
     # the return structure (buff_var, dynamic_buff, fix_buff)
-    # var_buff - list of var_buff for controlling var_len
     # dynamic_buff - list of dynamic allocated buffer
     # fix_buff - list of fixed size buffers
-    # len(var_buff) == len(dynamic_buff)
-    def get_fixed_and_dynamic_buffers(self) -> Tuple[List[Buffer],List[Buffer],List[Buffer]]:
+    def get_fixed_and_dynamic_buffers(self) -> Tuple[List[Buffer],List[Buffer]]:
 
-        dyn_buff = set()
-        var_buff = set()
-        fix_buff = set()
+        dyn_buff = []
+        fix_buff = []
         
+        var_buff = set()
+
         # dynamic arrays and respective var_len variables
         for var, cond in self.var_to_cond.items():
             if cond.len_depends_on is not None:
@@ -807,7 +806,7 @@ class RunningContext(Context):
                         raise Exception(f"{x} did not expected here!")
 
                     if x == var:
-                        dyn_buff.add(buff)
+                        dyn_buff += [buff]
                     if x == var_len:
                         var_buff.add(buff)
                         
@@ -829,7 +828,7 @@ class RunningContext(Context):
             if t == self.stub_void:
                 continue
 
-            if x in dyn_buff.union(var_buff):
+            if x in set(dyn_buff).union(var_buff):
                 continue
 
             if t.is_const:
@@ -849,15 +848,16 @@ class RunningContext(Context):
                 #     # raise ConditionUnsat()
                 continue
 
-            fix_buff.add(x)
+            fix_buff += [x]
 
-        return var_buff, dyn_buff, fix_buff
-
+        return dyn_buff, fix_buff
+    
 
     def generate_auxiliary_operations(self):
         buff_init = []
+        counter_size = []
 
-        var_buff, dyn_byff, fix_buff = self.get_fixed_and_dynamic_buffers()
+        dyn_byff, fix_buff = self.get_fixed_and_dynamic_buffers()
 
         # print("generate_buffer_init")
         # from IPython import embed; embed(); exit(1)
@@ -869,9 +869,15 @@ class RunningContext(Context):
             if t.get_token() in DataLayout.string_types:
                 buff_init += [SetStringNull(x)]
 
-        for buff, buff_len in zip(dyn_byff, var_buff):
+        for buff in dyn_byff:
+            # print("generate_buffer_init -- dyn_byff")
+            # from IPython import embed; embed(); exit(1)
 
-            len_var = buff_len[0]
+            v = buff[0]
+            c = self.var_to_cond[v]
+            len_var = c.len_depends_on
+
+            # len_var = buff_len[0]
 
             if buff in self.file_path_buffers:
                 buff_init += [FileInit(buff, len_var)]
@@ -933,7 +939,7 @@ class RunningContext(Context):
 
     def get_allocated_size(self):
 
-        _, _, fix_buff = self.get_fixed_and_dynamic_buffers()
+        _, fix_buff = self.get_fixed_and_dynamic_buffers()
 
         tot = sum([ b.get_allocated_size() for b in fix_buff ])
 
