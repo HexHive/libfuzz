@@ -38,3 +38,6 @@ class Type:
 
     def get_token(self):
         return self.token
+    
+    def get_tag(self):
+        return self.tag

@@ -61,6 +61,7 @@ class Configuration:
     @cached_property
     def work_dir(self):
         wd = self._config["generator"]["workdir"]
+        shutil.rmtree(wd, ignore_errors=True)
         os.makedirs(wd, exist_ok=True)
         return wd
 

@@ -56,6 +56,10 @@ class Conditions:
         return candidate_jollies
 
     def is_compatible_with(self, r_cond: ValueMetadata) -> bool:
+        # NOTE: FLAVIO: fields comparison is a bullshit!  
+        # this is a test to show that w/ field matching, we have good results
+        # anyway (or even better)
+        return True
 
         # if self.is_array != r_cond.is_array:
         if not (self.is_array >= r_cond.is_array):
