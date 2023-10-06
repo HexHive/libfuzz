@@ -7,4 +7,4 @@
 
 git clone --no-checkout https://chromium.googlesource.com/chromiumos/platform/minijail \
     "$TARGET/repo"
-git -C "$TARGET/repo" checkout 999a1c171d48ddf9a9e92da858c35fa46a40584e
+git -C "$TARGET/repo" checkout ceb800091b03171c3998a57e37c25ac523c23b4d
