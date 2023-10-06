@@ -25,7 +25,7 @@ docker run \
     --security-opt seccomp=unconfined \
     --name ${work_dir}-${project}-${fuzzer}-${iter} \
     -v $(pwd)/..:/fuzzing_campaigns \
-    -t libpp-fuzzing-cpu_features \
+    -t libpp-fuzzing-${project} \
     /bin/bash -c "cd /fuzzing_campaigns/stack_depth && gdb -x ./traces/${work_dir}/${project}/${fuzzer}/iter_${iter}/gdb_commands -batch"
 
 docker wait ${work_dir}-${project}-${fuzzer}-${iter}
