@@ -21,7 +21,7 @@ class DataLayout:
     size_types = ["size_t", "int", "uint32_t", "uint64_t", "__uint32_t", "unsigned int", "int64_t", "unsigned long", "__u_int"]
 
     string_types = ["char*", "unsigned char*", "wchar_t*", \
-                    "u_char*", "u_char*"]
+                    "u_char*", "u_char"]
     # string_types = ["char*", "unsigned char*", "wchar_t*", \
     #                 "char**", "unsigned char**", "wchar_t**" \
     #                 "u_char*", "u_char**"]

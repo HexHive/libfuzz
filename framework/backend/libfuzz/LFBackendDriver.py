@@ -430,6 +430,10 @@ class LFBackendDriver(BackendDriver):
 
         const_attr = "const " if type.is_const else ""
 
+        # DIRTY ACK!
+        if type.token == "u_char**":
+            const_attr = "const "
+
         if buffer.get_alloctype() in [AllocType.HEAP, AllocType.GLOBAL]:
             return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}] = {{ 0 }};"
         else:

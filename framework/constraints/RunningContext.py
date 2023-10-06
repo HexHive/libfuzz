@@ -951,6 +951,11 @@ class RunningContext(Context):
         for b in self.buffs_alive: # type: ignore
             if b.get_type().is_const:
                 continue
+
+            # DIRTY ACK!
+            if b.type.token == "u_char**":
+                continue
+
             if b.get_alloctype() == AllocType.HEAP:
                 cm = ConditionManager.instance().find_cleanup_method(b)
                 if DataLayout.is_ptr_level(b.get_type(), 2):
