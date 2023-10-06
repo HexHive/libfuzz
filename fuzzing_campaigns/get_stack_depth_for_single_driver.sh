@@ -13,10 +13,9 @@ fuzzer=$3
 iter=$4
 
 mkdir -p ./traces/${work_dir}/${project}/${fuzzer}/iter_${iter}
-python3 helper/stacktrace.py ${work_dir} ${project} ${fuzzer} ${iter}
+python3 ../tool/misc/stack_depth/stacktrace.py ${work_dir} ${project} ${fuzzer} ${iter}
 
 docker run \
-    -d \
     --rm \
     -u root \
     --privileged \
@@ -24,11 +23,11 @@ docker run \
     --cap-add=SYS_PTRACE \
     --security-opt seccomp=unconfined \
     --name ${work_dir}-${project}-${fuzzer}-${iter} \
-    -v $(pwd)/..:/fuzzing_campaigns \
+    -v $(pwd):/fuzzing_campaigns \
     -t libpp-fuzzing-${project} \
-    /bin/bash -c "cd /fuzzing_campaigns/stack_depth && gdb -x ./traces/${work_dir}/${project}/${fuzzer}/iter_${iter}/gdb_commands -batch"
+    /bin/bash -c "cd /fuzzing_campaigns && gdb -x ./traces/${work_dir}/${project}/${fuzzer}/iter_${iter}/gdb_commands -batch"
 
 docker wait ${work_dir}-${project}-${fuzzer}-${iter}
-python3 helper/get_max_stack_depth_and_apis.py ${work_dir} ${project} ${fuzzer} ${iter} > ./traces/${work_dir}/${project}/${fuzzer}/iter_${iter}/max_depth
+python3 ../tool/misc/stack_depth/get_max_stack_depth_and_apis.py ${work_dir} ${project} ${fuzzer} ${iter} > ./traces/${work_dir}/${project}/${fuzzer}/iter_${iter}/max_depth
 echo "Output file: ./traces/${work_dir}/${project}/${fuzzer}/iter_${iter}/max_depth"
 rm -f default.profraw

@@ -9,8 +9,10 @@ project = sys.argv[2]
 fuzzer = sys.argv[3]
 itereration = sys.argv[4]
 
+
+
 functions = set()
-function_coverage = f'../{work_dir}/{project}/coverage_data/{fuzzer}/functions'
+function_coverage = f'./{work_dir}/{project}/coverage_data/{fuzzer}/functions'
 with open(function_coverage) as function_coverage:
     for line in function_coverage:
         line = line.strip()
@@ -31,7 +33,7 @@ set pagination off
 set logging file ./traces/{work_dir}/{project}/{fuzzer}/iter_{itereration}/traces_log
 set logging on
 
-file ../{work_dir}/{project}/profiles/{fuzzer}_profile
+file ./{work_dir}/{project}/profiles/{fuzzer}_profile
 
 '''
 
@@ -49,7 +51,7 @@ gdb_script += \
 f'''
 set $_exitcode = -999
 
-run -runs=0 -ignore_crashes=1 ../{work_dir}/{project}/results/iter_{itereration}/corpus_mini/{fuzzer}
+run -runs=0 -ignore_crashes=1 ./{work_dir}/{project}/results/iter_{itereration}/corpus_mini/{fuzzer}
 
 if $_exitcode != -999
     quit
