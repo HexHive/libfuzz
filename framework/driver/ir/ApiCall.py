@@ -11,18 +11,26 @@ class ApiCall(Statement):
     arg_vars:       List[Optional[Value]]
     ret_type:       Type
     ret_var:        Optional[Value]
+    is_vararg:      bool
+    vararg_var:     List[Optional[Value]]
 
-    def __init__(self, api, function_name, namespace, arg_types, ret_type):
+    def __init__(self, api: Api, function_name: str, 
+                 namespace: str, arg_types, ret_type):
         super().__init__()
         self.original_api   = api
         self.function_name  = function_name
         self.namespace      = namespace
         self.arg_types      = arg_types
         self.ret_type       = ret_type
+        self.is_vararg      = api.is_vararg
 
         # these are the objects of the instance of the ApiCall
         self.arg_vars   = [None for x in arg_types]
         self.ret_var    = None
+
+        # NOTE: for the time being, one only argment for var arg
+        if self.is_vararg:
+            self.vararg_var = [None]
 
     def get_original_api(self) -> Api:
         return self.original_api

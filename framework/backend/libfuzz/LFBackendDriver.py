@@ -514,13 +514,18 @@ class LFBackendDriver(BackendDriver):
         arg_vars = apicall.arg_vars
         function_name = apicall.function_name
         namespace = apicall.namespace
+        is_vararg = apicall.is_vararg
 
         if namespace is not None and len(namespace) > 0:
             function_name = "::".join(namespace) + "::" + function_name
 
+        if is_vararg:
+            for vv in apicall.vararg_var:
+                arg_vars += [vv] 
 
         ret_var_code = self.value_emit(ret_var)
         arg_vars_code = ", ".join([self.value_emit(a) for a in arg_vars])
+
 
         if isinstance(ret_var, Address):
             ret_var_type = ret_var.get_variable().get_type()

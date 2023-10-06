@@ -3,6 +3,7 @@ import random
 from typing import Dict, List, Optional, Set, Tuple
 
 from common import Api, FunctionConditionsSet, FunctionConditions, DataLayout
+from common import ValueMetadata, AccessTypeSet
 from constraints import ConditionUnsat, RunningContext, ConditionManager
 from dependency import DependencyGraph
 from driver import Driver
@@ -106,7 +107,7 @@ class CBFactory(Factory):
         # if api_call.function_name == "htp_connp_create" and self.attempt > 0:
         #     self.attempt -= 1
 
-        # if api_call.function_name == "minijail_destroy":
+        # if api_call.function_name == "TIFFGetField":
         #     print(f"hook {api_call.function_name}")
         #     # import pdb; pdb.set_trace()
         #     par_debug = 0
@@ -148,6 +149,22 @@ class CBFactory(Factory):
                 #     from IPython import embed; embed(); exit(1)
                 unsat_vars.add((arg_pos, arg_cond))
         
+        if api_call.is_vararg:
+            ats_t = AccessTypeSet()
+            cond_t = ValueMetadata(ats_t, False, False, False, "", [])
+
+            # type.get_pointee_type() == self.stub_void):
+            new_buff = rng_ctx.create_new_var(rng_ctx.stub_char_array, 
+                                              cond_t, False)
+            val = new_buff.get_address()
+            var_t = None
+            if isinstance(val, Address):
+                var_t = val.get_variable()
+            elif isinstance(val, Variable):
+                var_t = val
+            api_call.vararg_var[0] = var_t
+
+
         ret_cond = conditions.return_at
         ret_type = api_call.ret_type
         try:
