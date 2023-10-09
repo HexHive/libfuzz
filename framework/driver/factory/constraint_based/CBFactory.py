@@ -18,6 +18,8 @@ class CBFactory(Factory):
     conditions          : FunctionConditionsSet
     dependency_graph    : Dict[Api, Set[Api]]
     condition_manager   : ConditionManager
+
+    MAX_ALLOC_SIZE = 1024
     
     def __init__(self, api_list: Set[Api], driver_size: int, 
                     dgraph: DependencyGraph, conditions: FunctionConditionsSet):
@@ -142,7 +144,13 @@ class CBFactory(Factory):
                     #                                  arg_pos)
                     arg_var = rng_ctx.try_to_get_var(api_call, conditions, 
                                                      arg_pos)
-                api_call.set_pos_arg_var(arg_pos, arg_var)
+                
+                if (arg_cond.is_malloc_size and 
+                    arg_type.token in DataLayout.size_types):
+                    api_call.set_pos_arg_var(arg_pos, arg_var, 
+                                             CBFactory.MAX_ALLOC_SIZE)
+                else:
+                    api_call.set_pos_arg_var(arg_pos, arg_var)
             except ConditionUnsat as ex:
                 # if api_call.function_name == "vpx_codec_get_frame":
                 #     print(f"Unsat for {api_call.function_name}")
@@ -153,16 +161,17 @@ class CBFactory(Factory):
             ats_t = AccessTypeSet()
             cond_t = ValueMetadata(ats_t, False, False, False, "", [])
 
-            # type.get_pointee_type() == self.stub_void):
-            new_buff = rng_ctx.create_new_var(rng_ctx.stub_char_array, 
-                                              cond_t, False)
-            val = new_buff.get_address()
-            var_t = None
-            if isinstance(val, Address):
-                var_t = val.get_variable()
-            elif isinstance(val, Variable):
-                var_t = val
-            api_call.vararg_var[0] = var_t
+            for i, _ in enumerate(api_call.vararg_var):
+                # type.get_pointee_type() == self.stub_void):
+                new_buff = rng_ctx.create_new_var(rng_ctx.stub_char_array, 
+                                                cond_t, False)
+                val = new_buff.get_address()
+                var_t = None
+                if isinstance(val, Address):
+                    var_t = val.get_variable()
+                elif isinstance(val, Variable):
+                    var_t = val
+                api_call.vararg_var[i] = var_t.get_address()
 
 
         ret_cond = conditions.return_at

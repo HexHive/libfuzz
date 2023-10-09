@@ -9,6 +9,7 @@ class ApiCall(Statement):
     namespace:      str
     arg_types:      List[Type]
     arg_vars:       List[Optional[Value]]
+    max_vals:       List[int]
     ret_type:       Type
     ret_var:        Optional[Value]
     is_vararg:      bool
@@ -26,11 +27,12 @@ class ApiCall(Statement):
 
         # these are the objects of the instance of the ApiCall
         self.arg_vars   = [None for x in arg_types]
+        self.max_vals   = [0 for x in arg_types]
         self.ret_var    = None
 
         # NOTE: for the time being, one only argment for var arg
         if self.is_vararg:
-            self.vararg_var = [None]
+            self.vararg_var = [None, None]
 
     def get_original_api(self) -> Api:
         return self.original_api
@@ -38,7 +40,7 @@ class ApiCall(Statement):
     def get_pos_args_types(self):
         return enumerate(self.arg_types)
 
-    def set_pos_arg_var(self, pos: int, var: Value):
+    def set_pos_arg_var(self, pos: int, var: Value, max_val: int = 0):
         if pos < 0 or pos > len(self.arg_vars):
             raise Exception(f"{pos} out of range [0, {len(self.arg_vars)}]")
 
@@ -50,6 +52,21 @@ class ApiCall(Statement):
             raise Exception(f"{var} cannot be of type {self.arg_types[pos]}")
 
         self.arg_vars[pos] = var
+
+        if max_val != 0:
+            self.max_vals[pos] = max_val
+        
+    def has_max_value(self, pos: int) -> bool:
+        if pos < 0 or pos >= len(self.max_vals):
+            return False
+        
+        return self.max_vals[pos] > 0
+
+    def get_max_value(self, pos: int) -> int:
+        if pos < 0 or pos >= len(self.max_vals):
+            return -1
+        
+        return self.max_vals[pos]
 
     def set_ret_var(self, ret_var):
 

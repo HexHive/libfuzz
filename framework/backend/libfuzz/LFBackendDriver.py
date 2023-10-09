@@ -528,7 +528,17 @@ class LFBackendDriver(BackendDriver):
                 arg_vars += [vv] 
 
         ret_var_code = self.value_emit(ret_var)
-        arg_vars_code = ", ".join([self.value_emit(a) for a in arg_vars])
+
+        str_vals = []
+        for p, a in enumerate(arg_vars):
+            x = self.value_emit(a)
+            if apicall.has_max_value(p):
+                m = apicall.get_max_value(p)
+                str_vals += [f" abs({x}) % {m}"]
+            else:
+                str_vals += [x]
+
+        arg_vars_code = ", ".join(str_vals)
 
 
         if isinstance(ret_var, Address):
