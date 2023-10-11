@@ -534,7 +534,7 @@ class LFBackendDriver(BackendDriver):
             x = self.value_emit(a)
             if apicall.has_max_value(p):
                 m = apicall.get_max_value(p)
-                str_vals += [f" abs({x}) % {m}"]
+                str_vals += [f" ((uint){x}) % {m}"]
             else:
                 str_vals += [x]
 
