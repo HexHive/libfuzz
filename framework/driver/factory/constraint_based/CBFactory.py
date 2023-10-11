@@ -72,9 +72,11 @@ class CBFactory(Factory):
                 idx = int(arg_cond.len_depends_on.replace("param_", ""))
                 idx_type = api_call.arg_types[idx]
 
-                if DataLayout.instance().is_enum_type(idx_type.get_token()):
-                    arg_cond.len_depends_on = ""
-                elif isinstance(idx_type, PointerType):
+                # if DataLayout.instance().is_enum_type(idx_type.get_token()):
+                #     arg_cond.len_depends_on = ""
+                # elif isinstance(idx_type, PointerType):
+                #     arg_cond.len_depends_on = ""
+                if idx_type.get_token() not in DataLayout.size_types:
                     arg_cond.len_depends_on = ""
                 else:
                     
