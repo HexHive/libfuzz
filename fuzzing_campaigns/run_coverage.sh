@@ -39,7 +39,7 @@ for project in "${PROJECTS[@]}"; do
     done
 done
 
-+rm ../crash-* || true
-+rm ../oom-* || true
-+rm ../timeout-* || true
-+rm ../*.bin || true
+rm ../crash-* || true
+rm ../oom-* || true
+rm ../timeout-* || true
+rm ../*.bin || true
