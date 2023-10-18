@@ -183,6 +183,18 @@ class RunningContext(Context):
         #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
 
+        is_sink = ConditionManager.instance().is_sink(api_call)
+        is_source = ConditionManager.instance().is_source(cond)
+        is_init = ConditionManager.instance().is_init(api_call, arg_pos)
+        is_set = ConditionManager.instance().is_set(api_call, arg_pos)
+
+        
+        # if (api_call.function_name == "vpx_codec_register_put_slice_cb" and 
+        #     arg_pos == 0):
+        #     self.attempt -= 1
+        #     print(f"try_to_get_var {type}")
+        #     from IPython import embed; embed(); exit(1)
+
         val = None
 
         # for variables used in ret -> I take any compatible type and overwrite
@@ -209,9 +221,87 @@ class RunningContext(Context):
                 else:
                     # raise ConditionUnsat()
                     raise ConditionUnsat(traceback.format_stack())
+        elif is_init:
+            tt = None
+            if isinstance(type, PointerType):
+                if type.get_pointee_type().is_incomplete:
+                    tt = type
+                else:
+                    tt = type.get_pointee_type()
+            else:
+                tt = type
+
+            for v in self.variables_alive:
+                # skip variables with different types and with incompatible
+                # conds
+                if (not ((v.get_type() == tt or v.get_type() == type) and 
+                    self.var_to_cond[v].is_compatible_with(cond))):
+                    continue
+
+                c = self.var_to_cond[v]
+                if not c.is_init():
+                    val = v
+                    break
+                    
+            if val is None:
+                val = self.create_new_var(type, cond, is_ret)
+
+            if (isinstance(val, Variable) and 
+                isinstance(val.get_type(), PointerType)):
+                val = val.get_address()
+        elif is_set:
+            tt = None
+            if isinstance(type, PointerType):
+                if type.get_pointee_type().is_incomplete:
+                    tt = type
+                else:
+                    tt = type.get_pointee_type()
+            else:
+                tt = type
+
+            is_fuzz_struct = (tt.tag == TypeTag.STRUCT and
+                             DataLayout.instance().is_fuzz_friendly(tt.token))
+
+            for v in self.variables_alive:
+                # skip variables with different types and with incompatible
+                # conds
+                if (not ((v.get_type() == tt or v.get_type() == type) and 
+                    self.var_to_cond[v].is_compatible_with(cond))):
+                    continue
+
+                c = self.var_to_cond[v]
+                if c.is_init() or is_fuzz_struct:
+                    val = v
+
+            if val is None and tt.is_incomplete:
+                # if RunningContext.attempt == 0:
+                #     print("val is none is set")
+                #     from IPython import embed; embed(); exit(1)
+                # RunningContext.attempt -= 1
+                raise ConditionUnsat(traceback.format_stack())
+            elif not ConditionManager.instance().has_init_api(type):
+                val = self.create_new_var(type, cond, is_ret)
+            else:
+                raise ConditionUnsat(traceback.format_stack())
+
+            
+            # if (api_call.function_name == "vpx_codec_register_put_slice_cb" and 
+            #     arg_pos == 0):
+            #     self.attempt -= 1
+            #     print(f"try_to_get_var {type}")
+            #     from IPython import embed; embed(); exit(1)
+            
+
+            if (isinstance(val, Variable) and 
+                isinstance(val.get_type(), PointerType)):
+                val = val.get_address()
         elif self.has_vars_type(type, cond):
             try:
-                val = self.randomly_gimme_a_var(type, cond, is_ret)
+                # val = self.randomly_gimme_a_var(type, cond, is_ret)
+                val = self.get_random_var(type, cond)
+                if (isinstance(val, Variable) and 
+                    isinstance(val.get_type(), PointerType)):
+                    val = val.get_address()
             except Exception as e:
                 print("randomly_gimme_a_var empty?!")
                 from IPython import embed; embed(); exit(1)
@@ -233,8 +323,19 @@ class RunningContext(Context):
 
             # check if the ats allow to generate an object
             if not is_ret:
-                if not DataLayout.is_ptr_level(type, 2):
-                    if tt.is_incomplete:
+
+                # double check 
+                # if not DataLayout.is_ptr_level(type, 2):
+                #    if tt.is_incomplete:
+        
+                if tt.is_incomplete:
+                    # raise ConditionUnsat()
+                    raise_an_exception = True
+                if tt.tag == TypeTag.STRUCT:
+                    # if (not self.is_init_api(api_call, api_cond, arg_pos) and
+                    #     not DataLayout.instance().is_fuzz_friendly(tt.token)):
+                    if (not DataLayout.instance().is_fuzz_friendly(tt.token)):
+
                         # raise ConditionUnsat()
                         raise_an_exception = True
                     if (tt.tag == TypeTag.STRUCT and
@@ -246,9 +347,9 @@ class RunningContext(Context):
                 # print(f"{tt}is not fuzz friendly")
                 # from IPython import embed; embed(); exit(1)
                 # raise ConditionUnsat()
-            elif ((not Conditions.is_unconstraint(cond) or
-                tt.is_incomplete) and 
-                not DataLayout.instance().has_user_define_init(tt.token)):
+            elif (not Conditions.is_unconstraint(cond) or
+                tt.is_incomplete):
+                # not DataLayout.instance().has_user_define_init(tt.token)):
                 # print(f"no has_user_define_init for {tt}")
                 # from IPython import embed; embed(); exit(1)
                 # raise ConditionUnsat()
@@ -711,7 +812,8 @@ class RunningContext(Context):
         return (type_str, type_hash)
     
     def update_var(self, val: Optional[Value], cond: ValueMetadata,
-                   is_ret: bool = False, is_sink: bool = False):
+                   is_ret: bool = False, is_sink: bool = False,
+                   is_init: bool = False, is_set: bool = False):
         synthetic_cond = None
 
         var = None
@@ -744,10 +846,16 @@ class RunningContext(Context):
         if already_present and is_sink:
             del self.var_to_cond[var]
             self.variables_alive.remove(var)
+            # double check
             self.remove_from_new_vars(var)
 
         if var in self.var_to_cond and synthetic_cond is not None:
             self.var_to_cond[var].add_conditions(synthetic_cond)
+
+            if is_init or is_set:
+                self.var_to_cond[var].set_init()
+            if is_sink:
+                self.var_to_cond[var].unset_init()
 
             # from IPython import embed; embed(); exit(1);
             # import pdb; pdb.set_trace(); exit(1);
@@ -779,12 +887,13 @@ class RunningContext(Context):
             return
         
         is_sink = ConditionManager.instance().is_sink(api_call)
+        is_init = ConditionManager.instance().is_init(api_call, arg_pos)
+        is_set = ConditionManager.instance().is_set(api_call, arg_pos)
 
-        self.update_var(val, cond, is_ret, is_sink)
-
+        self.update_var(val, cond, is_ret, is_sink, is_init, is_set)
     # the return structure (buff_var, dynamic_buff, fix_buff)
     # dynamic_buff - list of dynamic allocated buffer
-    # fix_buff - list of fixed size buffers
+    # fix_buff - list of fixed size buffer
     def get_fixed_and_dynamic_buffers(self) -> Tuple[List[Buffer],List[Buffer]]:
 
         dyn_buff = []

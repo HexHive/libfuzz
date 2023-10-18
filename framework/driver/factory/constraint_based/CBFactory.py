@@ -50,7 +50,13 @@ class CBFactory(Factory):
 
         self.source_api = list(self.condition_manager.get_source_api())
 
-    attempt = 2
+        self.init_api = self.condition_manager.get_init_api()
+
+        # print(self.init_api)
+        # print("TEST INIT APIS")
+        # from IPython import embed; embed(); exit(1)
+
+    attempt = 3
 
     def try_to_instantiate_api_call(self, api_call: ApiCall,
                         conditions: FunctionConditions, 
@@ -154,9 +160,10 @@ class CBFactory(Factory):
                 else:
                     api_call.set_pos_arg_var(arg_pos, arg_var)
             except ConditionUnsat as ex:
-                # if api_call.function_name == "vpx_codec_get_frame":
+                # if api_call.function_name == "vpx_codec_decode" and self.attempt == 0:
                 #     print(f"Unsat for {api_call.function_name}")
                 #     from IPython import embed; embed(); exit(1)
+                # self.attempt -= 1
                 unsat_vars.add((arg_pos, arg_cond))
         
         if api_call.is_vararg:
