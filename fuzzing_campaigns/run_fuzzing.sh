@@ -48,8 +48,9 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                         -d \
                         --name ${project}_${fuzz_target}_${ndrivers}_${napis}_${i} \
                         -v $(pwd):/libfuzzpp \
+                        --mount type=tmpfs,destination=/tmpfs \
                         -t $IMG_NAME \
-                        timeout $TIMEOUT $FUZZ_BINARY $FUZZ_CORPUS -artifact_prefix=${CRASHES}/ -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 -fork=1
+                        timeout $TIMEOUT $FUZZ_BINARY $FUZZ_CORPUS -artifact_prefix=${CRASHES}/ -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 -detect_leaks=0 -fork=1
                     COUNTER=$(( COUNTER + 1 ))
                     CPU_ID=$(( CPU_ID + 1 ))
                     if [ $CPU_ID -eq $MAX_CPUs ]

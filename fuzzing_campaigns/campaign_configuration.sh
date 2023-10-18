@@ -11,6 +11,13 @@ export USE_CUSTOM_APIS=0
 
 case $CONF in
 
+  quickcamp)
+    export NUM_OF_DRIVERS=( 20 ) 
+    export NUM_OF_APIs=( 5 )
+    export TIMEOUT=10m
+    export ITERATIONS=1
+    ;;
+
   regtest)
     export TIMEOUT=0
     ;;
@@ -34,10 +41,11 @@ case $CONF in
     ;;
 
   minimized)
-    export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" )
+    export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" "libpcap" "c-ares" )
+    # probably we can fix the number of drivers to match 24 hours
     export NUM_OF_DRIVERS=( 20  )
     export NUM_OF_APIs=( 4 8 )
-    export TIMEOUT=1h
+    export TIMEOUT=10m
     export ITERATIONS=1
     export USE_CUSTOM_APIS=1
     ;;

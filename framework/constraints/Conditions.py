@@ -72,12 +72,19 @@ class Conditions:
 
     def is_compatible_with(self, r_cond: ValueMetadata) -> bool:
 
+        if self.is_file_path != r_cond.is_file_path:
+            return False
+
+        # NOTE: FLAVIO: fields comparison is a bullshit!  
+        # this is a test to show that w/ field matching, we have good results
+        # anyway (or even better)
+        return True
+
         # if self.is_array != r_cond.is_array:
         if not (self.is_array >= r_cond.is_array):
             return False
 
-        if self.is_file_path != r_cond.is_file_path:
-            return False
+        
 
         if self.is_malloc_size != r_cond.is_malloc_size:
             return False

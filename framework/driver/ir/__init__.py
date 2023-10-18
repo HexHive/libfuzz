@@ -19,8 +19,10 @@ from .SetStringNull         import SetStringNull
 from .BuffInit              import BuffInit
 from .FileInit              import FileInit
 from .DynArrayInit          import DynArrayInit
+from .DynDblArrInit         import DynDblArrInit
 from .Buffer                import Buffer
 from .Buffer                import AllocType
 from .AssertNull            import AssertNull
 from .CleanBuffer           import CleanBuffer
+from .CleanDblBuffer        import CleanDblBuffer
 from .SetNull               import SetNull

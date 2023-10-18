@@ -120,16 +120,17 @@ class ConditionManager:
             if api in self.sinks:
                 continue
 
-            fun_cond = get_cond(api)
+            # fun_cond = get_cond(api)
 
-            # if api.function_name == "htp_tx_req_get_param":
+            # if api.function_name == "aom_img_flip":
             #     print(f"get_source_api {api.function_name}")
             #     from IPython import embed; embed(); exit(1)
 
             num_arg_ok = 0
-            for arg_p, arg in enumerate(api.arguments_info):
+            for arg in api.arguments_info:
                 the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, False)
-                arg_cond = fun_cond.argument_at[arg_p]
+                the_type_orig = the_type
+                # arg_cond = fun_cond.argument_at[arg_p]
                 if isinstance(the_type, PointerType):
                     the_type = the_type.get_base_type()
                 tkn = the_type.token
@@ -138,6 +139,11 @@ class ConditionManager:
                 elif DataLayout.instance().has_user_define_init(tkn):
                     num_arg_ok += 1 
                 elif DataLayout.instance().is_enum_type(tkn):
+                    num_arg_ok += 1
+                elif (not the_type.is_incomplete and 
+                      DataLayout.instance().is_fuzz_friendly(tkn)):
+                    num_arg_ok += 1
+                elif DataLayout.is_ptr_level(the_type_orig, 2):
                     num_arg_ok += 1 
                 # elif (the_type.tag == TypeTag.STRUCT and
                 #       DataLayout.instance().is_fuzz_friendly(tkn) and
