@@ -188,7 +188,6 @@ class RunningContext(Context):
         is_init = ConditionManager.instance().is_init(api_call, arg_pos)
         is_set = ConditionManager.instance().is_set(api_call, arg_pos)
 
-        
         # if (api_call.function_name == "vpx_codec_register_put_slice_cb" and 
         #     arg_pos == 0):
         #     self.attempt -= 1
@@ -196,6 +195,11 @@ class RunningContext(Context):
         #     from IPython import embed; embed(); exit(1)
 
         val = None
+
+
+        # if api_call.function_name == "aom_codec_decode" and arg_pos == 0:
+        #     print(f"try_to_get_var {type}")
+        #     from IPython import embed; embed(); exit(1)
 
         # for variables used in ret -> I take any compatible type and overwrite
         # their conditions
@@ -249,52 +253,52 @@ class RunningContext(Context):
             if (isinstance(val, Variable) and 
                 isinstance(val.get_type(), PointerType)):
                 val = val.get_address()
-        elif is_set:
-            tt = None
-            if isinstance(type, PointerType):
-                if type.get_pointee_type().is_incomplete:
-                    tt = type
-                else:
-                    tt = type.get_pointee_type()
-            else:
-                tt = type
+        # elif is_set:
+        #     tt = None
+        #     if isinstance(type, PointerType):
+        #         if type.get_pointee_type().is_incomplete:
+        #             tt = type
+        #         else:
+        #             tt = type.get_pointee_type()
+        #     else:
+        #         tt = type
 
-            is_fuzz_struct = (tt.tag == TypeTag.STRUCT and
-                             DataLayout.instance().is_fuzz_friendly(tt.token))
+        #     is_fuzz_struct = (tt.tag == TypeTag.STRUCT and
+        #                      DataLayout.instance().is_fuzz_friendly(tt.token))
 
-            for v in self.variables_alive:
-                # skip variables with different types and with incompatible
-                # conds
-                if (not ((v.get_type() == tt or v.get_type() == type) and 
-                    self.var_to_cond[v].is_compatible_with(cond))):
-                    continue
+        #     for v in self.variables_alive:
+        #         # skip variables with different types and with incompatible
+        #         # conds
+        #         if (not ((v.get_type() == tt or v.get_type() == type) and 
+        #             self.var_to_cond[v].is_compatible_with(cond))):
+        #             continue
 
-                c = self.var_to_cond[v]
-                if c.is_init() or is_fuzz_struct:
-                    val = v
+        #         c = self.var_to_cond[v]
+        #         if c.is_init() or is_fuzz_struct:
+        #             val = v
 
-            if val is None and tt.is_incomplete:
-                # if RunningContext.attempt == 0:
-                #     print("val is none is set")
-                #     from IPython import embed; embed(); exit(1)
-                # RunningContext.attempt -= 1
-                raise ConditionUnsat(traceback.format_stack())
-            elif not ConditionManager.instance().has_init_api(type):
-                val = self.create_new_var(type, cond, is_ret)
-            else:
-                raise ConditionUnsat(traceback.format_stack())
+        #     if val is None and tt.is_incomplete:
+        #         # if RunningContext.attempt == 0:
+        #         #     print("val is none is set")
+        #         #     from IPython import embed; embed(); exit(1)
+        #         # RunningContext.attempt -= 1
+        #         raise ConditionUnsat(traceback.format_stack())
+        #     elif not ConditionManager.instance().has_init_api(type):
+        #         val = self.create_new_var(type, cond, is_ret)
+        #     else:
+        #         raise ConditionUnsat(traceback.format_stack())
 
             
-            # if (api_call.function_name == "vpx_codec_register_put_slice_cb" and 
-            #     arg_pos == 0):
-            #     self.attempt -= 1
-            #     print(f"try_to_get_var {type}")
-            #     from IPython import embed; embed(); exit(1)
+        #     # if (api_call.function_name == "vpx_codec_register_put_slice_cb" and 
+        #     #     arg_pos == 0):
+        #     #     self.attempt -= 1
+        #     #     print(f"try_to_get_var {type}")
+        #     #     from IPython import embed; embed(); exit(1)
             
 
-            if (isinstance(val, Variable) and 
-                isinstance(val.get_type(), PointerType)):
-                val = val.get_address()
+        #     if (isinstance(val, Variable) and 
+        #         isinstance(val.get_type(), PointerType)):
+        #         val = val.get_address()
         elif self.has_vars_type(type, cond):
             try:
                 # val = self.randomly_gimme_a_var(type, cond, is_ret)
