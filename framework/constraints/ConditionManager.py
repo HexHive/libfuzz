@@ -1,4 +1,4 @@
-from typing import Set, Dict, List
+from typing import Set, Dict, List, Tuple
 
 from driver.ir import Type, ApiCall, Buffer, PointerType, TypeTag
 from driver.factory import Factory
@@ -10,8 +10,8 @@ class ConditionManager:
     sink_map            : Dict[Type, Api]
     sinks               : Set[Api]
     api_list            : Set[Api]
-    init_per_type       : Dict[Type, List[Api]]
-    set_per_type        : Dict[Type, List[Api]]
+    init_per_type       : Dict[Type, List[Tuple[Api, int]]]
+    set_per_type        : Dict[Type, List[Tuple[Api, int]]]
     conditions          : FunctionConditionsSet
 
     _instance           : "ConditionManager" = None
@@ -208,21 +208,21 @@ class ConditionManager:
                 if (arg_ok == len(cond.setby_dependencies) - 1 and 
                     n_incomplete_type == 1):
                     xx = init_per_type.get(arg_type, set())
-                    xx.add(api)
+                    xx.add((api, arg_pos))
                     init_per_type[arg_type] = xx
                 else:
                     xx = set_per_type.get(arg_type, set())
-                    xx.add(api)
+                    xx.add((api, arg_pos))
                     set_per_type[arg_type] = xx
 
         self.init_per_type = init_per_type
         self.set_per_type = set_per_type
     
-    def get_init_api(self) -> Dict[Type, List[Api]]:
-        return self.init_per_type
+    # def get_init_api(self) -> Dict[Type, List[Api]]:
+    #     return self.init_per_type
     
-    def has_init_api(self, type: Type) -> bool:
-        return type in self.init_per_type
+    # def has_init_api(self, type: Type) -> bool:
+    #     return type in self.init_per_type
     
     def is_init(self, api_call: ApiCall, arg_pos: int) -> bool:
         if arg_pos < 0:
@@ -236,7 +236,7 @@ class ConditionManager:
 
         init_list = self.init_per_type[arg_type]
 
-        return api in init_list
+        return (api, arg_pos) in init_list
     
     def is_set(self, api_call: ApiCall, arg_pos: int) -> bool:
         if arg_pos < 0:
@@ -250,4 +250,4 @@ class ConditionManager:
 
         set_list = self.set_per_type[arg_type]
 
-        return api in set_list
+        return (api, arg_pos) in set_list

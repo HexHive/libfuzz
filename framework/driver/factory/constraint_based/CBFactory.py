@@ -50,12 +50,6 @@ class CBFactory(Factory):
 
         self.source_api = list(self.condition_manager.get_source_api())
 
-        self.init_api = self.condition_manager.get_init_api()
-
-        # print(self.init_api)
-        # print("TEST INIT APIS")
-        # from IPython import embed; embed(); exit(1)
-
     attempt = 3
 
     def try_to_instantiate_api_call(self, api_call: ApiCall,
@@ -237,6 +231,10 @@ class CBFactory(Factory):
 
         # List[(ApiCall, RunningContext)]
         drv = list()
+
+        # print("Instantiate the first source api")
+        # print("inspect: ares_parse_a_reply")
+        # from IPython import embed; embed(); exit(1)
 
         begin_api = self.get_random_source_api()
         begin_condition = get_cond(begin_api)

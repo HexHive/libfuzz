@@ -188,9 +188,9 @@ class RunningContext(Context):
         is_init = ConditionManager.instance().is_init(api_call, arg_pos)
         is_set = ConditionManager.instance().is_set(api_call, arg_pos)
 
-        # if (api_call.function_name == "vpx_codec_register_put_slice_cb" and 
-        #     arg_pos == 0):
-        #     self.attempt -= 1
+        # if (api_call.function_name == "TIFFReadFromUserBuffer" and 
+        #     arg_pos == 4):
+        #     # self.attempt -= 1
         #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
 
@@ -327,19 +327,8 @@ class RunningContext(Context):
 
             # check if the ats allow to generate an object
             if not is_ret:
-
-                # double check 
-                # if not DataLayout.is_ptr_level(type, 2):
-                #    if tt.is_incomplete:
-        
-                if tt.is_incomplete:
-                    # raise ConditionUnsat()
-                    raise_an_exception = True
-                if tt.tag == TypeTag.STRUCT:
-                    # if (not self.is_init_api(api_call, api_cond, arg_pos) and
-                    #     not DataLayout.instance().is_fuzz_friendly(tt.token)):
-                    if (not DataLayout.instance().is_fuzz_friendly(tt.token)):
-
+                if not DataLayout.is_ptr_level(type, 2):
+                    if tt.is_incomplete:
                         # raise ConditionUnsat()
                         raise_an_exception = True
                     if (tt.tag == TypeTag.STRUCT and
@@ -351,9 +340,10 @@ class RunningContext(Context):
                 # print(f"{tt}is not fuzz friendly")
                 # from IPython import embed; embed(); exit(1)
                 # raise ConditionUnsat()
-            elif (not Conditions.is_unconstraint(cond) or
-                tt.is_incomplete):
-                # not DataLayout.instance().has_user_define_init(tt.token)):
+                
+            elif ((not Conditions.is_unconstraint(cond) or
+                tt.is_incomplete) and 
+                not DataLayout.instance().has_user_define_init(tt.token)):
                 # print(f"no has_user_define_init for {tt}")
                 # from IPython import embed; embed(); exit(1)
                 # raise ConditionUnsat()
