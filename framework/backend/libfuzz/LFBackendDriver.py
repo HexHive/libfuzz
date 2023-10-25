@@ -229,7 +229,7 @@ class LFBackendDriver(BackendDriver):
         cm += "\t} else {\n"
         cm += "\t\tunsigned dyn_field_idx = field - 1;\n\n"
 
-        cm += "\t\tsize_t counter;\n"
+        cm += "\t\tsize_t counter = 0;\n"
         cm += "\t\tuint8_t *counter_addr = Data + FIXED_SIZE;\n"
         cm += "\t\tuint8_t *buffer_start, *buffer_end;\n"
 
@@ -275,7 +275,8 @@ class LFBackendDriver(BackendDriver):
         cm += "\t\tnew_data += counter_addr - Data;\n\n"
 
         cm += "\t\t// store the new counter\n"
-        cm += "\t\tmemcpy(new_data, &new_dynamic_data, sizeof(size_t));\n"
+        cm += "\t\tsize_t real_counter_size = MIN(sizeof(size_t), counter_size[dyn_field_idx]);\n"
+        cm += "\t\tmemcpy(new_data, &new_dynamic_data, real_counter_size);\n"
         cm += "\t\tnew_data += counter_size[dyn_field_idx];\n\n"
 
         cm += "\t\t// store the new dynamic field\n"
@@ -284,7 +285,7 @@ class LFBackendDriver(BackendDriver):
 
         cm += "\t\t// dynamic region is not the last one\n"
         cm += "\t\tif (buffer_end != Data + Size && new_dynamic_data > 0) {\n"
-        cm += "\t\tsize_t leftover_size = (Data + Size) - buffer_end;\n"
+        cm += "\t\t\tsize_t leftover_size = (Data + Size) - buffer_end;\n"
         cm += "\t\t\tmemcpy(new_data, buffer_end, leftover_size);\n"
         cm += "\t\t}\n\n"
 
@@ -293,9 +294,9 @@ class LFBackendDriver(BackendDriver):
         cm += "\t\tfree(new_data_original);\n\n"
 
         cm += "\t\treturn new_whole_data_size;\n"
-        cm += "\t\t}\n"
-
         cm += "\t}\n"
+
+        cm += "}\n"
 
         # cm += "\tsize_t counter_size_sum = 0;\n"
         # cm += "\tfor (int i = 0; i < COUNTER_NUMBER; i++)\n"
