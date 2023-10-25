@@ -186,8 +186,7 @@ class RunningContext(Context):
         is_sink = ConditionManager.instance().is_sink(api_call)
         is_source = ConditionManager.instance().is_source(cond)
         is_init = ConditionManager.instance().is_init(api_call, arg_pos)
-        is_set = ConditionManager.instance().is_set(api_call, arg_pos)
-
+        
         # if (api_call.function_name == "TIFFReadFromUserBuffer" and 
         #     arg_pos == 4):
         #     # self.attempt -= 1
@@ -253,52 +252,6 @@ class RunningContext(Context):
             if (isinstance(val, Variable) and 
                 isinstance(val.get_type(), PointerType)):
                 val = val.get_address()
-        # elif is_set:
-        #     tt = None
-        #     if isinstance(type, PointerType):
-        #         if type.get_pointee_type().is_incomplete:
-        #             tt = type
-        #         else:
-        #             tt = type.get_pointee_type()
-        #     else:
-        #         tt = type
-
-        #     is_fuzz_struct = (tt.tag == TypeTag.STRUCT and
-        #                      DataLayout.instance().is_fuzz_friendly(tt.token))
-
-        #     for v in self.variables_alive:
-        #         # skip variables with different types and with incompatible
-        #         # conds
-        #         if (not ((v.get_type() == tt or v.get_type() == type) and 
-        #             self.var_to_cond[v].is_compatible_with(cond))):
-        #             continue
-
-        #         c = self.var_to_cond[v]
-        #         if c.is_init() or is_fuzz_struct:
-        #             val = v
-
-        #     if val is None and tt.is_incomplete:
-        #         # if RunningContext.attempt == 0:
-        #         #     print("val is none is set")
-        #         #     from IPython import embed; embed(); exit(1)
-        #         # RunningContext.attempt -= 1
-        #         raise ConditionUnsat(traceback.format_stack())
-        #     elif not ConditionManager.instance().has_init_api(type):
-        #         val = self.create_new_var(type, cond, is_ret)
-        #     else:
-        #         raise ConditionUnsat(traceback.format_stack())
-
-            
-        #     # if (api_call.function_name == "vpx_codec_register_put_slice_cb" and 
-        #     #     arg_pos == 0):
-        #     #     self.attempt -= 1
-        #     #     print(f"try_to_get_var {type}")
-        #     #     from IPython import embed; embed(); exit(1)
-            
-
-        #     if (isinstance(val, Variable) and 
-        #         isinstance(val.get_type(), PointerType)):
-        #         val = val.get_address()
         elif self.has_vars_type(type, cond):
             try:
                 # val = self.randomly_gimme_a_var(type, cond, is_ret)
@@ -325,7 +278,7 @@ class RunningContext(Context):
             else:
                 tt = type
 
-            # check if the ats allow to generate an object
+            # check if the ats allows us to generate an object
             if not is_ret:
                 if not DataLayout.is_ptr_level(type, 2):
                     if tt.is_incomplete:
@@ -335,7 +288,6 @@ class RunningContext(Context):
                         not self.is_init_api(api_call, api_cond, arg_pos) 
                         and not DataLayout.instance().is_fuzz_friendly(
                             tt.token)):
-                            # raise ConditionUnsat()
                             raise_an_exception = True
                 # print(f"{tt}is not fuzz friendly")
                 # from IPython import embed; embed(); exit(1)
