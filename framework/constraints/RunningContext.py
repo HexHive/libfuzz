@@ -167,10 +167,7 @@ class RunningContext(Context):
         else:
             cond = api_cond.argument_at[arg_pos]
             type = api_call.arg_types[arg_pos]
-
-        is_sink = ConditionManager.instance().is_sink(api_call)
-        is_source = ConditionManager.instance().is_source(cond)
-    
+   
         # if (isinstance(type, PointerType) and 
         # type.get_base_type().token == "TIFF" and 
         # if arg_pos == -1 and api_call.function_name == "pcap_geterr":
@@ -196,7 +193,7 @@ class RunningContext(Context):
         val = None
 
 
-        # if api_call.function_name == "aom_codec_decode" and arg_pos == 0:
+        # if arg_pos == 0 and type.token == "htp_tx_t*":
         #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
 
@@ -289,6 +286,8 @@ class RunningContext(Context):
                         and not DataLayout.instance().is_fuzz_friendly(
                             tt.token)):
                             raise_an_exception = True
+                    if ConditionManager.instance().has_source(tt):
+                        raise_an_exception = True
                 # print(f"{tt}is not fuzz friendly")
                 # from IPython import embed; embed(); exit(1)
                 # raise ConditionUnsat()

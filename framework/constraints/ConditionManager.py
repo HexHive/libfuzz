@@ -51,21 +51,18 @@ class ConditionManager:
                 continue
 
             ret_type = api.return_info
-            # the_type = Factory.normalize_type(ret_type.type, ret_type.size, 
-            #                                   ret_type.flag, False)
-            the_type = ret_type.type
+            the_type = Factory.normalize_type(ret_type.type, ret_type.size, 
+                                              ret_type.flag, False)
             the_type_orig = the_type
 
-            is_a_pointer = DataLayout.is_a_pointer(the_type)
-            if (is_a_pointer and not 
-                (ret_type.flag == "fun" and "(*)" in the_type)):
-                the_type = the_type.replace("*", "")
-            is_a_struct = DataLayout.instance().is_a_struct(the_type)
+            if isinstance(the_type, PointerType):
+                the_type = the_type.get_base_type()
 
-            if is_a_pointer and is_a_struct:
-                src_set = source_per_type.get(the_type_orig, set())
+            if (isinstance(the_type_orig, PointerType) and
+                the_type.get_tag() == TypeTag.STRUCT):
+                src_set = source_per_type.get(the_type, set())
                 src_set.add(api)
-                source_per_type[the_type_orig] = src_set
+                source_per_type[the_type] = src_set
 
         # print("check source_per_type")
         # from IPython import embed; embed(); exit(1)
