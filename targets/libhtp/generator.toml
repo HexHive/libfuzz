@@ -19,7 +19,7 @@ policy = "constraint_based"
 dep_graph = "type"
 # dep_graph = "undef"
 pool_size = 1
-driver_size = 40
+driver_size = 20
 num_seeds = 1
 backend = "libfuzz"
 

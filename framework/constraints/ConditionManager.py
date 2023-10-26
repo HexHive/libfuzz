@@ -12,6 +12,7 @@ class ConditionManager:
     api_list            : Set[Api]
     init_per_type       : Dict[Type, List[Tuple[Api, int]]]
     set_per_type        : Dict[Type, List[Tuple[Api, int]]]
+    source_per_type     : Dict[Type, List[Tuple[Api, int]]]
     conditions          : FunctionConditionsSet
 
     _instance           : "ConditionManager" = None
@@ -35,6 +36,41 @@ class ConditionManager:
         self.init_sinks()
         self.init_source()
         self.init_init()
+        self.init_source_per_type()
+
+    # this gets ALL the sources for any custom type, not just the ones for
+    # starting a driver
+    def init_source_per_type(self):
+    
+        source_per_type = {}
+    
+        for api in self.api_list:
+
+            # NOTE: some sinks could be misclassifed as source apis
+            if api in self.sinks:
+                continue
+
+            ret_type = api.return_info
+            # the_type = Factory.normalize_type(ret_type.type, ret_type.size, 
+            #                                   ret_type.flag, False)
+            the_type = ret_type.type
+            the_type_orig = the_type
+
+            is_a_pointer = DataLayout.is_a_pointer(the_type)
+            if (is_a_pointer and not 
+                (ret_type.flag == "fun" and "(*)" in the_type)):
+                the_type = the_type.replace("*", "")
+            is_a_struct = DataLayout.instance().is_a_struct(the_type)
+
+            if is_a_pointer and is_a_struct:
+                src_set = source_per_type.get(the_type_orig, set())
+                src_set.add(api)
+                source_per_type[the_type_orig] = src_set
+
+        # print("check source_per_type")
+        # from IPython import embed; embed(); exit(1)
+
+        self.source_per_type = source_per_type
 
     def init_sinks(self):
         # sink map that links Type <=> (Sink)Api
@@ -98,8 +134,8 @@ class ConditionManager:
 
         source_api = set()
 
-        get_cond = lambda x: self.conditions.get_function_conditions(
-            x.function_name)
+        # get_cond = lambda x: self.conditions.get_function_conditions(
+        #     x.function_name)
 
         for api in self.api_list:
             # if DataLayout.instance().has_incomplete_type():
@@ -215,6 +251,9 @@ class ConditionManager:
                     xx.add((api, arg_pos))
                     set_per_type[arg_type] = xx
 
+        # print("check init_init")
+        # from IPython import embed; embed(); exit(1)
+
         self.init_per_type = init_per_type
         self.set_per_type = set_per_type
     
@@ -237,6 +276,11 @@ class ConditionManager:
         
         arg_type = api_call.arg_types[arg_pos]
         api = api_call.original_api
+
+        # this filters out wrong init types that must be actually initialized
+        # through a source
+        if arg_type is self.source_per_type:
+            return False
 
         if arg_type not in self.init_per_type:
             return False
