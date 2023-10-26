@@ -26,14 +26,26 @@ class CBWFactory(CBFactory):
         w = []
         for sa in self.source_api:
             w += [self.get_weigth(sa)]
-        return random.choices(self.source_api, weights=w)[0]
+        s_api = random.choices(self.source_api, weights=w)[0]
+        self.inc_api_frequency(s_api)
+        return s_api
 
     def get_random_candidate(self, candidate_api):
         w = []
         for ca in candidate_api:
             # Api object is in position 2
             w += [self.get_weigth(ca[2])]
-        return random.choices(candidate_api, weights=w)[0]
+        r_api = random.choices(candidate_api, weights=w)[0] 
+        self.inc_api_frequency(r_api)
+        return r_api
+    
+    def inc_api_frequency(self, api):
+        freq = self.get_api_frequency(api)
+        if freq is None:
+            freq = 1
+        else:
+            freq = freq + 1
+        self.set_api_frequency(api, freq)
 
     def get_weigth(self, api):
 
@@ -77,18 +89,18 @@ class CBWFactory(CBFactory):
 
         return visited_api
 
-    def create_random_driver(self) -> Driver:
-        d = super().create_random_driver()
+    # def create_random_driver(self) -> Driver:
+    #     d = super().create_random_driver()
 
-        rel_freq = {}
+    #     rel_freq = {}
 
-        # update frequency
-        for s in d.statements:
-            if isinstance(s, ApiCall):
-                api = s.original_api
-                rel_freq[api] = rel_freq.get(api, 0) + 1
+    #     # update frequency
+    #     for s in d.statements:
+    #         if isinstance(s, ApiCall):
+    #             api = s.original_api
+    #             rel_freq[api] = rel_freq.get(api, 0) + 1
 
-        for a, rf in rel_freq.items():
-            self.upd_api_frequency(a, rf)
+    #     for a, rf in rel_freq.items():
+    #         self.upd_api_frequency(a, rf)
 
-        return d
+    #     return d

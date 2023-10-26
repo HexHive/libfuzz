@@ -50,6 +50,8 @@ class CBFactory(Factory):
 
         self.source_api = list(self.condition_manager.get_source_api())
 
+        self.init_api = list(self.condition_manager.get_init_api())
+
     attempt = 3
 
     def try_to_instantiate_api_call(self, api_call: ApiCall,
@@ -265,6 +267,9 @@ class CBFactory(Factory):
                 for next_possible in self.dependency_graph[api_n]:
 
                     if next_possible in self.source_api:
+                        continue
+                
+                    if next_possible in self.init_api:
                         continue
 
                     print(f"[INFO] Trying: {next_possible}")

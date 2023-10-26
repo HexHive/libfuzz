@@ -218,8 +218,15 @@ class ConditionManager:
         self.init_per_type = init_per_type
         self.set_per_type = set_per_type
     
-    # def get_init_api(self) -> Dict[Type, List[Api]]:
-    #     return self.init_per_type
+    def get_init_api(self) -> Set[Api]:
+        init_set = set()
+        
+        # init_per_type       : Dict[Type, List[Tuple[Api, int]]]
+        for _, l_api_pos in self.init_per_type.items():
+            for api, _ in l_api_pos:
+                init_set.add(api)
+
+        return init_set
     
     # def has_init_api(self, type: Type) -> bool:
     #     return type in self.init_per_type
