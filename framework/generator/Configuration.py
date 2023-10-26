@@ -157,19 +157,13 @@ class Configuration:
 
         if not "coercemap" in analysis:
             raise Exception("'coercemap' not defined")
-
-        # if not "minimum_apis" in analysis:
-        #     raise Exception("'minimum_apis' not defined")
-
+        
         apis_llvm = analysis["apis_llvm"]
         apis_clang = analysis["apis_clang"]
         hedader_folder = analysis["headers"]
         coerce_map = analysis["coercemap"]
         incomplete_types = analysis["incomplete_types"]
-        # minimum_apis = analysis["minimum_apis"]
 
-        # t = Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types)
-        # from IPython import embed; embed(); exit()
         return Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types, "")
 
     @cached_property
@@ -202,8 +196,6 @@ class Configuration:
         incomplete_types = analysis["incomplete_types"]
         minimum_apis = analysis["minimum_apis"]
 
-        # t = Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types)
-        # from IPython import embed; embed(); exit()
         return Utils.get_api_list(apis_llvm, apis_clang, coerce_map, hedader_folder, incomplete_types, minimum_apis)
 
     # this builds a static structure in DataLayout

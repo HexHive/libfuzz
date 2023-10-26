@@ -74,8 +74,8 @@ class ConditionManager:
 
     def init_sinks(self):
         # sink map that links Type <=> (Sink)Api
-        self.sink_map = {}
-        self.sinks = set()
+        sink_map = {}
+        sinks = set()
 
         get_cond = lambda x: self.conditions.get_function_conditions(
             x.function_name)
@@ -88,11 +88,14 @@ class ConditionManager:
                 arg = api.arguments_info[0]
                 the_type = Factory.normalize_type(arg.type, arg.size, 
                                                   arg.flag, False)
-                self.sink_map[the_type] = api
-                self.sinks.add(api)
+                sink_map[the_type] = api
+                sinks.add(api)
 
         # print("init_sinks")
         # from IPython import embed; embed(); exit()
+
+        self.sink_map = sink_map
+        self.sinks = sinks
 
     def is_return_sink(self, token_type: str):
         if token_type == "void":
@@ -269,6 +272,9 @@ class ConditionManager:
     
     # def has_init_api(self, type: Type) -> bool:
     #     return type in self.init_per_type
+
+    def has_source(self, type: Type) -> bool:
+        return type in self.source_per_type
     
     def is_init(self, api_call: ApiCall, arg_pos: int) -> bool:
         if arg_pos < 0:
