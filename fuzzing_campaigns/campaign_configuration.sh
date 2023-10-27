@@ -23,9 +23,6 @@ case $CONF in
     ;;
 
   selection)
-    export PROJECTS=( "cpu_features" )
-    export NUM_OF_DRIVERS=( 2 )
-    export NUM_OF_APIs=( 2 )
     export TIMEOUT=1m
     export ITERATIONS=1
     ;;
