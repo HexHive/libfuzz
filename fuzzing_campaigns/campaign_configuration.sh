@@ -23,7 +23,7 @@ case $CONF in
     ;;
 
   selection)
-    export TIMEOUT=1m
+    export TIMEOUT=10m
     export ITERATIONS=1
     ;;
 
