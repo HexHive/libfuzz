@@ -200,6 +200,8 @@ class DataLayout:
             return 8*2
         elif type == "unsigned char":
             return 8
+        elif type == "bool":
+            return 8
         elif type == "wchar_t":
             return 8*4
         else:

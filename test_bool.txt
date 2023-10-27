@@ -1,0 +1,17 @@
+minijail_new
+minijail_is_fs_restriction_ruleset_initialized
+# 	int_s2[0] =  minijail_create_session(minijail_p_h0[0]);
+# 	int_s2[0] =  minijail_preserve_fd(minijail_p_h0[0], int_s0[0], int_s1[0]);
+# 	int_s3[0] =  minijail_namespace_set_hostname(minijail_p_h0[0], char_p_s1);
+# 	bool_s0[0] =  minijail_is_fs_restriction_ruleset_initialized(minijail_p_h0[0]);
+# 	char_p_cg0[0] =  minijail_syscall_name(minijail_p_h0[0], long_s0[0]);
+# 	if (char_p_cg0[0] == 0) goto clean_up;
+# 	minijail_set_enable_default_runtime(minijail_p_h0[0], bool_s0[0]);
+# 	minijail_namespace_enter_net(minijail_p_h0[0], char_p_s0);
+# 	__pid_t_s0[0] =  minijail_fork(minijail_p_h0[0]);
+# 	__pid_t_s1[0] =  minijail_fork(minijail_p_h0[0]);
+# 	int_s2[0] =  minijail_run_env(minijail_p_h0[0], char_p_s1, char_pp_h1[0], char_pp_h1[0]);
+# 	minijail_skip_setting_securebits(minijail_p_h0[0], __uint64_t_s0[0]);
+# 	minijail_no_new_privs(minijail_p_h0[0]);
+# 	int_s4[0] =  minijail_add_fs_restriction_access_rights(minijail_p_h0[0], char_p_s1, __uint16_t_s0[0]);
+# 
