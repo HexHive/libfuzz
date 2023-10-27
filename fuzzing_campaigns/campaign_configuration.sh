@@ -23,7 +23,10 @@ case $CONF in
     ;;
 
   selection)
-    export TIMEOUT=10m
+    export PROJECTS=( "cpu_features" )
+    export NUM_OF_DRIVERS=( 2 )
+    export NUM_OF_APIs=( 2 )
+    export TIMEOUT=1m
     export ITERATIONS=1
     ;;
 
@@ -55,3 +58,11 @@ case $CONF in
     exit 1
     ;;
 esac
+
+# LOG the configuration
+LOG_FILE=config.txt
+date >> $LOG_FILE
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+echo "$SCRIPTPATH/$0" >> $LOG_FILE
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' - >> $LOG_FILE
+env >> $LOG_FILE
