@@ -436,11 +436,17 @@ class LFBackendDriver(BackendDriver):
         # buff_token = self.clean_token(buff.get_token())
         buff_nelem = buff.get_number_elements()
 
+        buff_type = buff.get_type()
+        tkn_base = buff_type.get_pointee_type().get_token()
+
         var_len_init = BuffInit(var_len.get_buffer())
-        dst_type = self.type_emit(buff.get_type())
+        dst_type = self.type_emit(buff_type)
 
         buff_i = f"{self.value_emit(buff[0])}[i]"
         var_lel_val = self.value_emit(var_len)
+
+        # print("dyndblarrinit_emit")
+        # from IPython import embed; embed(); exit(1)
 
         str = "//dyn dbl array init\n"
         str += f"\tfor (uint i = 0; i < {buff_nelem}; i++) {{\n"
@@ -451,7 +457,7 @@ class LFBackendDriver(BackendDriver):
         str += f"\t\t{buff_i} = ({dst_type}*)malloc({self.value_emit(var_len)});\n"
         # memcpy
         str += f"\t\tmemcpy({buff_i}, data, {self.value_emit(var_len)});\n"
-        if buff.get_type() in DataLayout.string_types:
+        if tkn_base in DataLayout.string_types:
             # set last element as 0
             str += f"\t\t{buff_i}[{var_lel_val} - 1] = 0;\n"
         # move cursor ahead
@@ -559,6 +565,8 @@ class LFBackendDriver(BackendDriver):
             const_attr = "const "
 
         if buffer.get_alloctype() in [AllocType.HEAP, AllocType.GLOBAL]:
+            if DataLayout.is_ptr_level(type, 2):
+                n_element += 1
             return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}] = {{ 0 }};"
         else:
             return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}];"
