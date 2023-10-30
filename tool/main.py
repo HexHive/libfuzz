@@ -23,10 +23,10 @@ def __main():
     # default_config = PROJECT_FOLDER + "/targets/libhtp/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libtiff/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/cpu_features/generator.toml"
-    default_config = PROJECT_FOLDER + "/targets/minijail/generator.toml"
+    # default_config = PROJECT_FOLDER + "/targets/minijail/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libvpx/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/pthreadpool/generator.toml"
-    # default_config = PROJECT_FOLDER + "/targets/libaom/generator.toml"
+    default_config = PROJECT_FOLDER + "/targets/libaom/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libpcap/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/c-ares/generator.toml"
 
