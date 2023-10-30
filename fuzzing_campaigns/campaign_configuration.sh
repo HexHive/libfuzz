@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" "c-ares" )
-export NUM_OF_DRIVERS=( 20 )
+export NUM_OF_DRIVERS=( 40 )
 export NUM_OF_APIs=( 2 4 8 16 32  )
 export NUM_OF_SEEDS=1
 # export POLICY="constraint_based"
@@ -23,7 +23,7 @@ case $CONF in
     ;;
 
   selection)
-    export TIMEOUT=10m
+    export TIMEOUT=5m
     export ITERATIONS=1
     ;;
 
