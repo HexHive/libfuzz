@@ -65,10 +65,31 @@ class LFBackendDriver(BackendDriver):
 
         # seed size in bytes
         seed_size = driver.get_input_size()
+
+        counter_size = driver.get_counter_size()
+        seed_fix_size = driver.get_input_size()
         
         for x in range(1, self.num_seeds + 1):
             with open(os.path.join(seed_folder, f"seed{x}.bin"), "wb") as f:
-                f.write(os.urandom(seed_size))
+
+                # fix part of the seed
+                complete_seed_buffer = os.urandom(seed_fix_size)
+                # TVL part of the seed
+                for c in counter_size:
+                    # I want 10 bytes for buffers at the beginning
+                    dyn_buff_len = 10
+                    # maybe I watn a random range of bytes?
+                    # dyn_buff_len = os.getrandom(10)
+                    dyn_buff_len_bytes = dyn_buff_len.to_bytes(c, 'little')
+                    buff_initial_bytes = os.getrandom(dyn_buff_len)
+                    complete_seed_buffer += (dyn_buff_len_bytes + 
+                                             buff_initial_bytes)
+                    
+                    # print("about to write a seed")
+                    # from IPython import embed; embed(); exit(1)
+
+                # f.write(os.urandom(seed_size))
+                f.write(complete_seed_buffer)
 
     def emit_stub_functions(self, stub_functions: List[Function]) -> str:
         stubs = ""
@@ -103,6 +124,8 @@ class LFBackendDriver(BackendDriver):
         cm += f"{{ {counter_size_str} }};\n"
 
         cm += "\n#define NEW_DATA_LEN 4096\n\n"
+        
+        cm += "\n#define MIN(x,y) ((x < y) ? x : y)\n\n"
 
         return cm
 
@@ -174,62 +197,163 @@ class LFBackendDriver(BackendDriver):
 
         cm += "extern \"C\" size_t LLVMFuzzerCustomMutator(uint8_t *Data, size_t Size, size_t MaxSize, unsigned int Seed) {\n\n"
 
-        cm += "\tsize_t counter_size_sum = 0;\n"
-        cm += "\tfor (int i = 0; i < COUNTER_NUMBER; i++)\n"
-        cm += "\t\tcounter_size_sum += counter_size[i];\n\n"
+        cm += "\t// select the field to mutate: fized or a dynamic one\n"
+        cm += "\tunsigned field = (unsigned)(rand() % (COUNTER_NUMBER + 1));\n"
 
-        cm += "\tif (Size < FIXED_SIZE ||\n"
-        cm += "\t\tSize >= (NEW_DATA_LEN-counter_size_sum))\n"
-        cm += "\t\treturn 0;\n"
-        cm += "\tunsigned cut[COUNTER_NUMBER] = { 0 };\n"
-        cm += "\tuint8_t NewData[NEW_DATA_LEN];\n"
-        cm += "\tsize_t NewDataSize = sizeof(NewData);\n"
+        cm += "\t// mutate the fixed part\n"
+        cm += "\tif (field == 0) {\n"
 
-        cm += "\tuint8_t *NewDataPtr = NewData;\n"
-        cm += "\tuint8_t *DataPtr = Data;\n"
+        cm += "\t\tuint8_t fixed_field[FIXED_SIZE];\n"
+        cm += "\t\tmemcpy(fixed_field, Data, FIXED_SIZE);\n"
 
-        cm += "\tsize_t NewDataLen = LLVMFuzzerMutate(Data, Size, NEW_DATA_LEN);\n"
+        cm += "\t\tsize_t new_fixed_data = LLVMFuzzerMutate(fixed_field, FIXED_SIZE, FIXED_SIZE);\n\n"
 
-        cm += "\tif (NewDataLen < FIXED_SIZE ||\n"
-        cm += "\t\t NewDataLen >= (NEW_DATA_LEN-counter_size_sum))\n"       
-        cm += "\t\treturn 0;\n"
+        cm += "\t\tif (new_fixed_data > FIXED_SIZE) {\n"
+        cm += "\t\t\tprintf(\"[ERROR] for the fixed size, I have a longer size\");\n"
+        cm += "\t\t\texit(1);\n"
+        cm += "\t\t}\n"
 
-        cm += "\tsize_t DynamicPart = NewDataLen - FIXED_SIZE;\n"
+        cm += "\t\t// LLVMFuzzerMutate could reduce the seed size\n"
+        cm += "\t\tif (new_fixed_data < FIXED_SIZE) {\n"
+        cm += "\t\t\tsize_t to_append_size = FIXED_SIZE-new_fixed_data;\n"
+        cm += "\t\t\tfor (unsigned i = 0; i < to_append_size; i++)\n"
+        cm += "\t\t\t// fixed_field[new_fixed_data+i] = (uint8_t)rand();\n"
+        cm += "\t\t\tfixed_field[new_fixed_data+i] = 0x0;\n"
+        cm += "\t\t}\n"
 
-        cm += "\tcut[0] = 0;\n"
-        cm += "\tif (DynamicPart == 0) {\n"
-        cm += "\t\tfor (int i = 1; i < COUNTER_NUMBER; i++) cut[i] = 0;\n";
+        cm += "\t\tmemcpy(Data, fixed_field, FIXED_SIZE);\n"
+
+        cm += "\t\treturn Size;\n"
+
+        cm += "\t// mutate one of the dynamic fields\n"
         cm += "\t} else {\n"
-        cm += "\t\tfor (int i = 1; i < COUNTER_NUMBER; i++)\n"
-        cm += "\t\t\tcut[i] = rand() % DynamicPart;\n"
-        cm += "\t\tqsort(cut, COUNTER_NUMBER, sizeof(unsigned), cmpfunc);\n"
+        cm += "\t\tunsigned dyn_field_idx = field - 1;\n\n"
+
+        cm += "\t\tsize_t counter = 0;\n"
+        cm += "\t\tuint8_t *counter_addr = Data + FIXED_SIZE;\n"
+        cm += "\t\tuint8_t *buffer_start, *buffer_end;\n"
+
+        cm += "\t\tsize_t to_read = MIN(sizeof(size_t), counter_size[0]);\n"
+        cm += "\t\tmemcpy(&counter, counter_addr, to_read);\n"
+        cm += "\t\tbuffer_start = Data + FIXED_SIZE + counter_size[0];\n"
+        cm += "\t\tbuffer_end = buffer_start + counter;\n"
+
+        cm += "\t\tif (dyn_field_idx != 0) {\n"
+
+        cm += "\t\t\tfor (unsigned i = 1; i < COUNTER_NUMBER && i != (dyn_field_idx + 1); i++) {\n"
+        cm += "\t\t\t\tto_read = MIN(sizeof(size_t), counter_size[i]);\n"
+        cm += "\t\t\t\tmemcpy(&counter, buffer_end, to_read);\n"
+
+        cm += "\t\t\t\tcounter_addr = buffer_end;\n"
+        cm += "\t\t\t\tbuffer_start = buffer_end + counter_size[i];\n"
+        cm += "\t\t\t\tbuffer_end = buffer_start + counter;\n\n"
+                    
+        cm += "\t\t\t}\n"
+        cm += "\t\t}\n"
+
+        cm += "\t\tuint8_t dynamic_field[NEW_DATA_LEN];\n\n"
+
+        cm += "\t\tmemcpy(dynamic_field, buffer_start, counter);\n\n"
+
+        cm += "\t\tsize_t new_dynamic_data = LLVMFuzzerMutate(dynamic_field, counter, NEW_DATA_LEN);\n\n"
+
+        cm += "\t\tif (new_dynamic_data > NEW_DATA_LEN) {\n"
+        cm += "\t\t\tprintf(\"[ERROR] for the dynamic size, I have a longer size\");\n"
+        cm += "\t\t\texit(1);\n"
+        cm += "\t\t}\n\n"
+
+        cm += "\t\tsize_t new_whole_data_size = Size - (counter - new_dynamic_data);\n"
+        cm += "\t\tif (new_whole_data_size == 0 || new_whole_data_size > MaxSize)\n"
+        cm += "\t\t\treturn 0;\n\n"
+
+        cm += "\t\tuint8_t *new_data = (uint8_t*)malloc(new_whole_data_size);\n"
+        cm += "\t\tuint8_t *new_data_original = new_data;\n"
+        cm += "\t\tmemset(new_data, 0, new_whole_data_size);\n\n"
+
+        cm += "\t\t// copy what stays before the old dyn buffer\n"
+        cm += "\t\tmemcpy(new_data, Data, counter_addr - Data);\n"
+        cm += "\t\tnew_data += counter_addr - Data;\n\n"
+
+        cm += "\t\t// store the new counter\n"
+        cm += "\t\tsize_t real_counter_size = MIN(sizeof(size_t), counter_size[dyn_field_idx]);\n"
+        cm += "\t\tmemcpy(new_data, &new_dynamic_data, real_counter_size);\n"
+        cm += "\t\tnew_data += counter_size[dyn_field_idx];\n\n"
+
+        cm += "\t\t// store the new dynamic field\n"
+        cm += "\t\tmemcpy(new_data, dynamic_field, new_dynamic_data);\n"
+        cm += "\t\tnew_data += new_dynamic_data;\n\n"
+
+        cm += "\t\t// dynamic region is not the last one\n"
+        cm += "\t\tif (buffer_end != Data + Size && new_dynamic_data > 0) {\n"
+        cm += "\t\t\tsize_t leftover_size = (Data + Size) - buffer_end;\n"
+        cm += "\t\t\tmemcpy(new_data, buffer_end, leftover_size);\n"
+        cm += "\t\t}\n\n"
+
+        cm += "\t\t// re-transfer the new seed into the Data buffer\n"
+        cm += "\t\tmemcpy(Data, new_data_original, new_whole_data_size);\n"
+        cm += "\t\tfree(new_data_original);\n\n"
+
+        cm += "\t\treturn new_whole_data_size;\n"
         cm += "\t}\n"
 
-        cm += "\t// copy Fixed Part\n"
-        cm += "\tsize_t slice_len = FIXED_SIZE;\n"
-        cm += "\tmemcpy(NewDataPtr, DataPtr, slice_len);\n"
-        cm += "\tDataPtr += slice_len;\n"
-        cm += "\tNewDataPtr += slice_len;\n"
-
-        cm += "\tsize_t NewDataFinalLen = slice_len;\n"
-    
-        cm += "\tfor (int i = 0; i < COUNTER_NUMBER; i++) {\n"
-        cm += "\t\tif (i == COUNTER_NUMBER - 1)\n"
-        cm += "\t\t\tslice_len = DynamicPart - cut[i];\n"
-        cm += "\t\telse\n"
-        cm += "\t\t\tslice_len = cut[i+1] - cut[i];\n"
-        cm += "\t\tmemcpy(NewDataPtr, &slice_len, counter_size[i]);\n"
-        cm += "\t\tNewDataPtr += counter_size[i];\n"
-        cm += "\t\tmemcpy(NewDataPtr, DataPtr, slice_len);\n"
-        cm += "\t\tDataPtr += slice_len;\n"
-        cm += "\t\tNewDataPtr += slice_len;\n"
-        cm += "\t\tNewDataFinalLen += slice_len + counter_size[i];\n"
-        cm += "\t}\n"
-
-        cm += "\tmemcpy(Data, NewData, NewDataFinalLen);\n"
-
-        cm += "\treturn NewDataFinalLen;\n"
         cm += "}\n"
+
+        # cm += "\tsize_t counter_size_sum = 0;\n"
+        # cm += "\tfor (int i = 0; i < COUNTER_NUMBER; i++)\n"
+        # cm += "\t\tcounter_size_sum += counter_size[i];\n\n"
+
+        # cm += "\tif (Size < FIXED_SIZE ||\n"
+        # cm += "\t\tSize >= (NEW_DATA_LEN-counter_size_sum))\n"
+        # cm += "\t\treturn 0;\n"
+        # cm += "\tunsigned cut[COUNTER_NUMBER] = { 0 };\n"
+        # cm += "\tuint8_t NewData[NEW_DATA_LEN];\n"
+        # cm += "\tsize_t NewDataSize = sizeof(NewData);\n"
+
+        # cm += "\tuint8_t *NewDataPtr = NewData;\n"
+        # cm += "\tuint8_t *DataPtr = Data;\n"
+
+        # cm += "\tsize_t NewDataLen = LLVMFuzzerMutate(Data, Size, NEW_DATA_LEN);\n"
+
+        # cm += "\tif (NewDataLen < FIXED_SIZE ||\n"
+        # cm += "\t\t NewDataLen >= (NEW_DATA_LEN-counter_size_sum))\n"       
+        # cm += "\t\treturn 0;\n"
+
+        # cm += "\tsize_t DynamicPart = NewDataLen - FIXED_SIZE;\n"
+
+        # cm += "\tcut[0] = 0;\n"
+        # cm += "\tif (DynamicPart == 0) {\n"
+        # cm += "\t\tfor (int i = 1; i < COUNTER_NUMBER; i++) cut[i] = 0;\n";
+        # cm += "\t} else {\n"
+        # cm += "\t\tfor (int i = 1; i < COUNTER_NUMBER; i++)\n"
+        # cm += "\t\t\tcut[i] = rand() % DynamicPart;\n"
+        # cm += "\t\tqsort(cut, COUNTER_NUMBER, sizeof(unsigned), cmpfunc);\n"
+        # cm += "\t}\n"
+
+        # cm += "\t// copy Fixed Part\n"
+        # cm += "\tsize_t slice_len = FIXED_SIZE;\n"
+        # cm += "\tmemcpy(NewDataPtr, DataPtr, slice_len);\n"
+        # cm += "\tDataPtr += slice_len;\n"
+        # cm += "\tNewDataPtr += slice_len;\n"
+
+        # cm += "\tsize_t NewDataFinalLen = slice_len;\n"
+    
+        # cm += "\tfor (int i = 0; i < COUNTER_NUMBER; i++) {\n"
+        # cm += "\t\tif (i == COUNTER_NUMBER - 1)\n"
+        # cm += "\t\t\tslice_len = DynamicPart - cut[i];\n"
+        # cm += "\t\telse\n"
+        # cm += "\t\t\tslice_len = cut[i+1] - cut[i];\n"
+        # cm += "\t\tmemcpy(NewDataPtr, &slice_len, counter_size[i]);\n"
+        # cm += "\t\tNewDataPtr += counter_size[i];\n"
+        # cm += "\t\tmemcpy(NewDataPtr, DataPtr, slice_len);\n"
+        # cm += "\t\tDataPtr += slice_len;\n"
+        # cm += "\t\tNewDataPtr += slice_len;\n"
+        # cm += "\t\tNewDataFinalLen += slice_len + counter_size[i];\n"
+        # cm += "\t}\n"
+
+        # cm += "\tmemcpy(Data, NewData, NewDataFinalLen);\n"
+
+        # cm += "\treturn NewDataFinalLen;\n"
+        # cm += "}\n"
 
         return cm
 
@@ -312,11 +436,17 @@ class LFBackendDriver(BackendDriver):
         # buff_token = self.clean_token(buff.get_token())
         buff_nelem = buff.get_number_elements()
 
+        buff_type = buff.get_type()
+        tkn_base = buff_type.get_pointee_type().get_token()
+
         var_len_init = BuffInit(var_len.get_buffer())
-        dst_type = self.type_emit(buff.get_type())
+        dst_type = self.type_emit(buff_type)
 
         buff_i = f"{self.value_emit(buff[0])}[i]"
         var_lel_val = self.value_emit(var_len)
+
+        # print("dyndblarrinit_emit")
+        # from IPython import embed; embed(); exit(1)
 
         str = "//dyn dbl array init\n"
         str += f"\tfor (uint i = 0; i < {buff_nelem}; i++) {{\n"
@@ -327,7 +457,7 @@ class LFBackendDriver(BackendDriver):
         str += f"\t\t{buff_i} = ({dst_type}*)malloc({self.value_emit(var_len)});\n"
         # memcpy
         str += f"\t\tmemcpy({buff_i}, data, {self.value_emit(var_len)});\n"
-        if buff.get_type() in DataLayout.string_types:
+        if tkn_base in DataLayout.string_types:
             # set last element as 0
             str += f"\t\t{buff_i}[{var_lel_val} - 1] = 0;\n"
         # move cursor ahead
@@ -430,7 +560,13 @@ class LFBackendDriver(BackendDriver):
 
         const_attr = "const " if type.is_const else ""
 
+        # DIRTY ACK!
+        if type.token == "u_char**":
+            const_attr = "const "
+
         if buffer.get_alloctype() in [AllocType.HEAP, AllocType.GLOBAL]:
+            if DataLayout.is_ptr_level(type, 2):
+                n_element += 1
             return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}] = {{ 0 }};"
         else:
             return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}];"
@@ -514,13 +650,28 @@ class LFBackendDriver(BackendDriver):
         arg_vars = apicall.arg_vars
         function_name = apicall.function_name
         namespace = apicall.namespace
+        is_vararg = apicall.is_vararg
 
         if namespace is not None and len(namespace) > 0:
             function_name = "::".join(namespace) + "::" + function_name
 
+        if is_vararg:
+            for vv in apicall.vararg_var:
+                arg_vars += [vv] 
 
         ret_var_code = self.value_emit(ret_var)
-        arg_vars_code = ", ".join([self.value_emit(a) for a in arg_vars])
+
+        str_vals = []
+        for p, a in enumerate(arg_vars):
+            x = self.value_emit(a)
+            if apicall.has_max_value(p):
+                m = apicall.get_max_value(p)
+                str_vals += [f" ((uint){x}) % {m}"]
+            else:
+                str_vals += [x]
+
+        arg_vars_code = ", ".join(str_vals)
+
 
         if isinstance(ret_var, Address):
             ret_var_type = ret_var.get_variable().get_type()

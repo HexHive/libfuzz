@@ -3,6 +3,7 @@ import random
 from typing import Dict, List, Optional, Set, Tuple
 
 from common import Api, FunctionConditionsSet, FunctionConditions, DataLayout
+from common import ValueMetadata, AccessTypeSet
 from constraints import ConditionUnsat, RunningContext, ConditionManager
 from dependency import DependencyGraph
 from driver import Driver
@@ -17,6 +18,8 @@ class CBFactory(Factory):
     conditions          : FunctionConditionsSet
     dependency_graph    : Dict[Api, Set[Api]]
     condition_manager   : ConditionManager
+
+    MAX_ALLOC_SIZE = 1024
     
     def __init__(self, api_list: Set[Api], driver_size: int, 
                     dgraph: DependencyGraph, conditions: FunctionConditionsSet):
@@ -47,7 +50,9 @@ class CBFactory(Factory):
 
         self.source_api = list(self.condition_manager.get_source_api())
 
-    attempt = 2
+        self.init_api = list(self.condition_manager.get_init_api())
+
+    attempt = 3
 
     def try_to_instantiate_api_call(self, api_call: ApiCall,
                         conditions: FunctionConditions, 
@@ -69,9 +74,11 @@ class CBFactory(Factory):
                 idx = int(arg_cond.len_depends_on.replace("param_", ""))
                 idx_type = api_call.arg_types[idx]
 
-                if DataLayout.instance().is_enum_type(idx_type.get_token()):
-                    arg_cond.len_depends_on = ""
-                elif isinstance(idx_type, PointerType):
+                # if DataLayout.instance().is_enum_type(idx_type.get_token()):
+                #     arg_cond.len_depends_on = ""
+                # elif isinstance(idx_type, PointerType):
+                #     arg_cond.len_depends_on = ""
+                if idx_type.get_token() not in DataLayout.size_types:
                     arg_cond.len_depends_on = ""
                 else:
                     
@@ -106,7 +113,7 @@ class CBFactory(Factory):
         # if api_call.function_name == "htp_connp_create" and self.attempt > 0:
         #     self.attempt -= 1
 
-        # if api_call.function_name == "minijail_destroy":
+        # if api_call.function_name == "TIFFGetField":
         #     print(f"hook {api_call.function_name}")
         #     # import pdb; pdb.set_trace()
         #     par_debug = 0
@@ -141,13 +148,37 @@ class CBFactory(Factory):
                     #                                  arg_pos)
                     arg_var = rng_ctx.try_to_get_var(api_call, conditions, 
                                                      arg_pos)
-                api_call.set_pos_arg_var(arg_pos, arg_var)
+                
+                if (arg_cond.is_malloc_size and 
+                    arg_type.token in DataLayout.size_types):
+                    api_call.set_pos_arg_var(arg_pos, arg_var, 
+                                             CBFactory.MAX_ALLOC_SIZE)
+                else:
+                    api_call.set_pos_arg_var(arg_pos, arg_var)
             except ConditionUnsat as ex:
-                # if api_call.function_name == "vpx_codec_get_frame":
+                # if api_call.function_name == "vpx_codec_decode" and self.attempt == 0:
                 #     print(f"Unsat for {api_call.function_name}")
                 #     from IPython import embed; embed(); exit(1)
+                # self.attempt -= 1
                 unsat_vars.add((arg_pos, arg_cond))
         
+        if api_call.is_vararg:
+            ats_t = AccessTypeSet()
+            cond_t = ValueMetadata(ats_t, False, False, False, "", [])
+
+            for i, _ in enumerate(api_call.vararg_var):
+                # type.get_pointee_type() == self.stub_void):
+                new_buff = rng_ctx.create_new_var(rng_ctx.stub_char_array, 
+                                                cond_t, False)
+                val = new_buff.get_address()
+                var_t = None
+                if isinstance(val, Address):
+                    var_t = val.get_variable()
+                elif isinstance(val, Variable):
+                    var_t = val
+                api_call.vararg_var[i] = var_t.get_address()
+
+
         ret_cond = conditions.return_at
         ret_type = api_call.ret_type
         try:
@@ -203,6 +234,10 @@ class CBFactory(Factory):
         # List[(ApiCall, RunningContext)]
         drv = list()
 
+        # print("Instantiate the first source api")
+        # print("inspect: ares_parse_a_reply")
+        # from IPython import embed; embed(); exit(1)
+
         begin_api = self.get_random_source_api()
         begin_condition = get_cond(begin_api)
         call_begin = to_api(begin_api)
@@ -232,6 +267,9 @@ class CBFactory(Factory):
                 for next_possible in self.dependency_graph[api_n]:
 
                     if next_possible in self.source_api:
+                        continue
+                
+                    if next_possible in self.init_api:
                         continue
 
                     print(f"[INFO] Trying: {next_possible}")

@@ -12,8 +12,8 @@ export USE_CUSTOM_APIS=0
 case $CONF in
 
   quickcamp)
-    export NUM_OF_DRIVERS=( 30 ) 
-    export NUM_OF_APIs=( 16 )
+    export NUM_OF_DRIVERS=( 20 ) 
+    export NUM_OF_APIs=( 5 )
     export TIMEOUT=10m
     export ITERATIONS=1
     ;;
@@ -41,10 +41,11 @@ case $CONF in
     ;;
 
   minimized)
-    export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" )
+    export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" "libpcap" "c-ares" )
+    # probably we can fix the number of drivers to match 24 hours
     export NUM_OF_DRIVERS=( 20  )
     export NUM_OF_APIs=( 4 8 )
-    export TIMEOUT=1h
+    export TIMEOUT=10m
     export ITERATIONS=1
     export USE_CUSTOM_APIS=1
     ;;
@@ -54,3 +55,11 @@ case $CONF in
     exit 1
     ;;
 esac
+
+# LOG the configuration
+LOG_FILE=config.txt
+date >> $LOG_FILE
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+echo "$SCRIPTPATH/$0" >> $LOG_FILE
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' - >> $LOG_FILE
+env >> $LOG_FILE

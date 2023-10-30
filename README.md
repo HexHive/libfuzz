@@ -21,6 +21,37 @@ https://code.visualstudio.com/docs/remote/containers#_quick-start-open-an-existi
 
 https://code.visualstudio.com/docs/remote/containers#_sharing-git-credentials-with-your-container
 
+**If you do not remember how to Docker your user**
+
+From [here](https://docs.docker.com/engine/install/linux-postinstall/).
+
+TL;DR;
+
+```bash
+# if not docker group exists
+$ sudo groupadd docker
+$ sudo usermod -aG docker $USER
+# IMPORTANT: logout/login
+# IMPORTANT 2: kill/exit tmux sessions (be careful to other tmux users with open sessions)
+```
+
+**Remember to disable multithreading**
+
+<u>Important: do not turn multithreading on, reboot the machine instead</u>
+
+```bash
+echo off | sudo tee /sys/devices/system/cpu/smt/control
+```
+
+**NSF tricks**
+
+```bash
+# install client
+sudo apt install nfs-common
+mkdir $LOCAL_FOLDER
+sudo mount $SERVER_IP:$REMOTE_FOLDER $LOCAL_FOLDER
+```
+
 ## How to inteagrate a new a target (a new library)
 
 - [Add a new Target](./_docs/AddNewTarget.md)
@@ -89,3 +120,5 @@ indicate if the solution requires manual intervention or is completely automatic
     > a library. Many headers are supposed to be private but they are installed
     > as publicly accessible, thus, it is not possible to infer which is which
     > automatically.
+
+#

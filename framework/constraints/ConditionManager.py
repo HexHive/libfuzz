@@ -1,6 +1,6 @@
-from typing import Set, Dict
+from typing import Set, Dict, List, Tuple
 
-from driver.ir import Type, ApiCall, Buffer, PointerType
+from driver.ir import Type, ApiCall, Buffer, PointerType, TypeTag
 from driver.factory import Factory
 
 from common import Api, FunctionConditionsSet, ValueMetadata, Access
@@ -10,6 +10,9 @@ class ConditionManager:
     sink_map            : Dict[Type, Api]
     sinks               : Set[Api]
     api_list            : Set[Api]
+    init_per_type       : Dict[Type, List[Tuple[Api, int]]]
+    set_per_type        : Dict[Type, List[Tuple[Api, int]]]
+    source_per_type     : Dict[Type, List[Tuple[Api, int]]]
     conditions          : FunctionConditionsSet
 
     _instance           : "ConditionManager" = None
@@ -32,11 +35,44 @@ class ConditionManager:
 
         self.init_sinks()
         self.init_source()
+        self.init_init()
+        self.init_source_per_type()
+
+    # this gets ALL the sources for any custom type, not just the ones for
+    # starting a driver
+    def init_source_per_type(self):
+    
+        source_per_type = {}
+    
+        for api in self.api_list:
+
+            # NOTE: some sinks could be misclassifed as source apis
+            if api in self.sinks:
+                continue
+
+            ret_type = api.return_info
+            the_type = Factory.normalize_type(ret_type.type, ret_type.size, 
+                                              ret_type.flag, False)
+            the_type_orig = the_type
+
+            if isinstance(the_type, PointerType):
+                the_type = the_type.get_base_type()
+
+            if (isinstance(the_type_orig, PointerType) and
+                the_type.get_tag() == TypeTag.STRUCT):
+                src_set = source_per_type.get(the_type, set())
+                src_set.add(api)
+                source_per_type[the_type] = src_set
+
+        # print("check source_per_type")
+        # from IPython import embed; embed(); exit(1)
+
+        self.source_per_type = source_per_type
 
     def init_sinks(self):
         # sink map that links Type <=> (Sink)Api
-        self.sink_map = {}
-        self.sinks = set()
+        sink_map = {}
+        sinks = set()
 
         get_cond = lambda x: self.conditions.get_function_conditions(
             x.function_name)
@@ -49,11 +85,14 @@ class ConditionManager:
                 arg = api.arguments_info[0]
                 the_type = Factory.normalize_type(arg.type, arg.size, 
                                                   arg.flag, False)
-                self.sink_map[the_type] = api
-                self.sinks.add(api)
+                sink_map[the_type] = api
+                sinks.add(api)
 
         # print("init_sinks")
         # from IPython import embed; embed(); exit()
+
+        self.sink_map = sink_map
+        self.sinks = sinks
 
     def is_return_sink(self, token_type: str):
         if token_type == "void":
@@ -95,8 +134,8 @@ class ConditionManager:
 
         source_api = set()
 
-        get_cond = lambda x: self.conditions.get_function_conditions(
-            x.function_name)
+        # get_cond = lambda x: self.conditions.get_function_conditions(
+        #     x.function_name)
 
         for api in self.api_list:
             # if DataLayout.instance().has_incomplete_type():
@@ -156,3 +195,113 @@ class ConditionManager:
         # from IPython import embed; embed(); exit(1)
 
         self.source_api = source_api
+
+    def init_init(self):
+        #  api_call: ApiCall, api_cond: FunctionConditions, 
+                    # arg_pos: int):
+        
+        # api_name = api_call.function_name
+        # if api_name == "aom_codec_decode" and arg_pos == 0:
+        #     print("is_init_api")
+        #     from IPython import embed; embed(); exit(1)
+
+        init_per_type = {}
+        set_per_type = {}
+
+        get_cond = lambda x: self.conditions.get_function_conditions(
+            x.function_name)
+        to_api = lambda x: Factory.api_to_apicall(x)
+
+        for api in self.api_list:
+            api_cond = get_cond(api)
+            api_call = to_api(api)
+            
+            for arg_pos, arg_type in enumerate(api_call.arg_types):
+                cond = api_cond.argument_at[arg_pos] 
+
+                if len(cond.setby_dependencies) == 0:
+                    continue
+
+                arg_ok = 0     
+                n_incomplete_type = 0
+                for d in cond.setby_dependencies:
+                    p_idx = int(d.replace("param_", ""))
+                    d_type = api_call.arg_types[p_idx]
+                    
+                    tt = d_type
+                    if isinstance(d_type, PointerType):
+                        tt = d_type.get_base_type()
+
+                    if tt.tag == TypeTag.STRUCT:
+                        token = tt.get_token()
+                        if DataLayout.instance().is_fuzz_friendly(token):
+                            arg_ok += 1
+                        elif tt.is_incomplete:
+                            n_incomplete_type += 1
+                    elif tt.tag == TypeTag.PRIMITIVE:
+                        arg_ok += 1
+
+                if (arg_ok == len(cond.setby_dependencies) - 1 and 
+                    n_incomplete_type == 1):
+                    xx = init_per_type.get(arg_type, set())
+                    xx.add((api, arg_pos))
+                    init_per_type[arg_type] = xx
+                else:
+                    xx = set_per_type.get(arg_type, set())
+                    xx.add((api, arg_pos))
+                    set_per_type[arg_type] = xx
+
+        # print("check init_init")
+        # from IPython import embed; embed(); exit(1)
+
+        self.init_per_type = init_per_type
+        self.set_per_type = set_per_type
+    
+    def get_init_api(self) -> Set[Api]:
+        init_set = set()
+        
+        # init_per_type       : Dict[Type, List[Tuple[Api, int]]]
+        for _, l_api_pos in self.init_per_type.items():
+            for api, _ in l_api_pos:
+                init_set.add(api)
+
+        return init_set
+    
+    # def has_init_api(self, type: Type) -> bool:
+    #     return type in self.init_per_type
+
+    def has_source(self, type: Type) -> bool:
+        return type in self.source_per_type
+    
+    def is_init(self, api_call: ApiCall, arg_pos: int) -> bool:
+        if arg_pos < 0:
+            return False
+        
+        arg_type = api_call.arg_types[arg_pos]
+        api = api_call.original_api
+
+        # this filters out wrong init types that must be actually initialized
+        # through a source
+        if arg_type is self.source_per_type:
+            return False
+
+        if arg_type not in self.init_per_type:
+            return False
+
+        init_list = self.init_per_type[arg_type]
+
+        return (api, arg_pos) in init_list
+    
+    def is_set(self, api_call: ApiCall, arg_pos: int) -> bool:
+        if arg_pos < 0:
+            return False
+        
+        arg_type = api_call.arg_types[arg_pos]
+        api = api_call.original_api
+
+        if arg_type not in self.set_per_type:
+            return False
+
+        set_list = self.set_per_type[arg_type]
+
+        return (api, arg_pos) in set_list
