@@ -98,17 +98,18 @@ do
 
     DRIVER_COVERAGE=${PROJECT_COVERAGE}/${DRIVER_NAME}
     DRIVER_COR=${CORPUS_FOLDER}/${DRIVER_NAME}
-    DRIVER_CORMIN=${CORPUS_FOLDER}/../corpus_mini/${DRIVER_NAME}
-    mkdir -p $DRIVER_CORMIN
     mkdir -p $DRIVER_COVERAGE
-
-    $d -merge=1 $DRIVER_CORMIN $DRIVER_COR
 
     PROFILE_BINARY=${DRIVER_FOLDER}/../profiles/${DRIVER_NAME}_profile
 
-    LLVM_PROFILE_FILE="${DRIVER_NAME}.profraw" $PROFILE_BINARY -runs=0 $DRIVER_CORMIN
-    mv ${DRIVER_NAME}.profraw $PROJECT_COVERAGE
-    llvm-profdata-12 merge -sparse $PROJECT_COVERAGE/${DRIVER_NAME}.profraw -o $PROJECT_COVERAGE/${DRIVER_NAME}.profdata
+    INPUTS="$(ls $DRIVER_COR)"
+    for input in $INPUTS; do
+        LLVM_PROFILE_FILE="${DRIVER_NAME}-${input}.profraw" $PROFILE_BINARY -runs=0 $DRIVER_COR/$input
+        mv ${DRIVER_NAME}-${input}.profraw $PROJECT_COVERAGE
+    done
+
+    llvm-profdata-12 merge -sparse $PROJECT_COVERAGE/${DRIVER_NAME}-*.profraw -o $PROJECT_COVERAGE/${DRIVER_NAME}.profdata
+    rm -f $PROJECT_COVERAGE/${DRIVER_NAME}-*.profraw
     llvm-cov-12 show $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > show
     llvm-cov-12 report $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
     llvm-cov-12 report -show-functions $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
