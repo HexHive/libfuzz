@@ -268,9 +268,6 @@ class CBFactory(Factory):
 
                     if next_possible in self.source_api:
                         continue
-                
-                    if next_possible in self.init_api:
-                        continue
 
                     print(f"[INFO] Trying: {next_possible}")
 
