@@ -45,7 +45,7 @@ case $CONF in
     # probably we can fix the number of drivers to match 24 hours
     export NUM_OF_DRIVERS=( 20  )
     export NUM_OF_APIs=( 4 8 )
-    export TIMEOUT=10m
+    export TIMEOUT=30m
     export ITERATIONS=1
     export USE_CUSTOM_APIS=1
     ;;
