@@ -222,20 +222,23 @@ class RunningContext(Context):
                     # raise ConditionUnsat()
                     raise ConditionUnsat(traceback.format_stack())
         elif is_init:
-            tt = None
-            if isinstance(type, PointerType):
-                if type.get_pointee_type().is_incomplete:
-                    tt = type
-                else:
-                    tt = type.get_pointee_type()
-            else:
-                tt = type
+            # tt = None
+            # if isinstance(type, PointerType):
+            #     if type.get_pointee_type().is_incomplete:
+            #         tt = type
+            #     else:
+            #         tt = type.get_pointee_type()
+            # else:
+            #     tt = type
 
             for v in self.variables_alive:
                 # skip variables with different types and with incompatible
                 # conds
-                if (not ((v.get_type() == tt or v.get_type() == type) and 
-                    self.var_to_cond[v].is_compatible_with(cond))):
+                # if (not ((v.get_type() == tt or v.get_type() == type) and 
+                #     self.var_to_cond[v].is_compatible_with(cond))):
+                #     continue
+                if (v.get_type() != type or 
+                    not self.var_to_cond[v].is_compatible_with(cond)):
                     continue
 
                 c = self.var_to_cond[v]
@@ -247,7 +250,7 @@ class RunningContext(Context):
                 val = self.create_new_var(type, cond, is_ret)
 
             if (isinstance(val, Variable) and 
-                isinstance(val.get_type(), PointerType)):
+                isinstance(type, PointerType)):
                 val = val.get_address()
         elif self.has_vars_type(type, cond):
             try:
