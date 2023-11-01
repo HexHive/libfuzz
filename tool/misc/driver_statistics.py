@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-import csv, argparse, math
+import argparse
 import numpy as np
 import score as scr
 from tabulate import tabulate
+import matplotlib.pyplot as plt
 
 def print_summary(libraries):
     for lib, drvs in libraries.items():
@@ -87,6 +88,27 @@ def print_table(libraries):
 
     print(tabulate(table, headers='firstrow'))
 
+def print_distribution(libraries):
+
+    for lib, drv in libraries.items():
+        covs = []
+
+        for d in drv:
+            # n_api = d["n_apis"]
+            cov = d["cov"]
+            covs += [cov]
+  
+        plt.clf()
+        plt.hist(covs, edgecolor="red", bins=5) 
+
+        # print(dist)
+        # plt.hist(dist)
+        plt.savefig(f"{lib}.png")
+        # print(lib)
+        # exit()
+
+
+
 def _main():
     parser = argparse.ArgumentParser(description='Select stable drivers')
     parser.add_argument('-report', '-r', type=str, help='Report File', required=True)
@@ -100,7 +122,8 @@ def _main():
     libraries = scr.load_report(report, rootdir)
 
     # print_summary(libraries)
-    print_table(libraries)
+    # print_table(libraries)
+    print_distribution(libraries)
 
 if __name__ == "__main__":
     _main()
