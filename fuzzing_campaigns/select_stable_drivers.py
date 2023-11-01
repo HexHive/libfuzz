@@ -58,10 +58,7 @@ def _main():
             print("-" * 30)
 
         exit(0)
-    
-    print("exit anyway")
-    exit(1)
-
+        
     os.system("mkdir -p workdir_backup")
     os.system("mv workdir_*_*/ workdir_backup")
 
