@@ -35,14 +35,8 @@
 #include "Util/SVFUtil.h"
 #include "SVF-LLVM/LLVMUtil.h"
 
-#include "GenericDominatorTy.h"
-#include "Dominators.h"
-#include "PostDominators.h"
-#include "AccessType.h"
 #include "PhiFunction.h"
-#include "IBBG.h"
 #include "TypeMatcher.h"
-#include "LibfuzzUtil.h"
 #include "GlobalStruct.h"
 
 // for random sampling
@@ -56,14 +50,10 @@
 
 #include "md5/md5.h"
 
-
 using namespace std;
 using namespace SVF;
 using namespace SVFUtil;
 using namespace LLVMUtil;
-
-using namespace libfuzz;
-
 
 // std because stdout gives conflict
 enum OutType {txt, json, stdo};
@@ -112,193 +102,149 @@ void setDataLayout(const Function* F) {
     DL = new DataLayout(F->getParent());
 }
 
-int countReachableBB() {
-// SVFValue* val = LLVMModuleSet::getLLVMModuleSet()->getSVFValue(llvmval);
-//     SVFIR* pag = SVFIR::getPAG();
+void dumpToText(std::map<std::string, unsigned int> *weights) {
 
-//     PointerAnalysis* pta = vfg->getPTA(); 
+    ofstream ofile;
+    ofile.open(OutputFile);
+    
+    for (auto el: *weights) {
+        auto fun_name = el.first;
+        auto weight = el.second;
+        ofile << fun_name << " " << weight << "\n";
+    }  
 
-//     PAGNode* pNode = pag->getGNode(pag->getValueNode(val));
-//     // const VFGNode* vNode = vfg->getDefSVFGNode(pNode);
-//     // need a stack -> FILO
-//     // let S be a stack
-//     // std::vector<Path> worklist;
-//     // std::set<Path> visited;
-//     // S.push(v)
-//     // worklist.push_back(Path(vNode));
+    ofile.close();
 
-//     LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
+}
 
-//     ValueMetadata mdata;
-//     mdata.setValue(llvmval);
+void dumpToStdout(std::map<std::string, unsigned int> *weights) {
+    for (auto el: *weights) {
+        auto fun_name = el.first;
+        auto weight = el.second;
+        SVFUtil::outs() << fun_name << " " << weight << "\n";
+    }  
 
-//     SVFModule *svfModule = pag->getModule();
+}
 
-//     ICFG* icfg = pag->getICFG();
+void dumpToJson(std::map<std::string, unsigned int> *weights) {
+    // Json::Value jsonResult = fun_cond_set.toJson(verbose);
 
-//     auto svf_function = pNode->getFunction();
-//     const Function *fun = SVFUtil::dyn_cast<Function>(
-//         llvmModuleSet->getLLVMValue(svf_function));
-//     const SVFFunction *svfun = pNode->getFunction();
+    Json::Value jsonResult(Json::objectValue);
 
-//     FunExitICFGNode *fun_exit = icfg->getFunExitICFGNode(svfun);
-
-//     Type *retType = fun->getReturnType();
-
-//     if (!SVFUtil::isa<llvm::PointerType>(retType))
-//         return mdata;
-
-//     PHIFun phi;
-//     PHIFunInv phi_inv;
-//     getPhiFunction(svfModule, icfg, &phi, &phi_inv);  
-
-//     // std::set<const VFGNode*> alloca_set;
-//     // std::set<const Value*> allocainst_set;
-//     std::set<const Instruction*> allocainst_set;
-//     // std::set<const Value*> bitcastinst_set;
-
-//     std::set<const SVFFunction*> visited_functions;
-
-//     // how many alloca?
-//     FunEntryICFGNode *entry_node = icfg->getFunEntryICFGNode(svfun);
-
-//     std::stack<std::pair<ICFGNode*,std::stack<ICFGEdge*>>> working;
-
-//     std::set<ICFGNode*> visited;
-
-//     std::stack<ICFGEdge*> empty_stack;
-//     working.push(std::make_pair(entry_node, empty_stack));
-
-//     AccessTypeSet *ats = mdata.getAccessTypeSet();
-
-//     while(!working.empty()) {
-
-//         auto el = working.top();
-//         working.pop();
-
-//         ICFGNode *node = el.first;
-//         std::stack<ICFGEdge*> curr_stack = el.second;
-
-//         if (auto intra_stmt = SVFUtil::dyn_cast<IntraICFGNode>(node)) {
-
-//             auto svfinst = intra_stmt->getInst();
-//             auto llvminst = llvmModuleSet->getLLVMValue(svfinst);
-
-//             if (auto alloca = SVFUtil::dyn_cast<AllocaInst>(llvminst)) {
-//                 // // outs() << "[INFO] alloca " << *alloca << "\n";
-//                 if (alloca->getAllocatedType() == retType) {
-//                     // outs() << "[INFO] => type ok!\n";
-//                     // alloca_set.insert(vfgnode);
-//                     allocainst_set.insert(alloca);
-//                 }
-//             } else if (auto callinst = SVFUtil::dyn_cast<CallInst>(llvminst)) {
-//                 // outs() << "[INFO] callinst " << *callinst << "\n";
-//                 FunctionType *ftype = callinst->getFunctionType();
-//                 if (ftype->getReturnType() == retType) {
-//                     // outs() << "[INFO] => type ok!\n";
-//                     // alloca_set.insert(vfgnode);
-//                     allocainst_set.insert(callinst);
-//                 }
-//             } else if (auto bitcastinst = SVFUtil::dyn_cast<BitCastInst>(llvminst)) {
-//                 if (bitcastinst->getDestTy() == retType) {
-//                     // outs() << "[INFO] bitcastinst " << *bitcastinst << "\n";
-//                     // outs() << "[INFO] => type ok!\n";
-//                     // alloca_set.insert(vfgnode);
-//                     allocainst_set.insert(bitcastinst);
-//                     // bitcastinst_set.insert(bitcastinst);
-//                 }
-//             }
-//         }
-//         else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
-//             // Handling calls
-//             if (!consider_indirect_calls && call_node->isIndirectCall())
-//                     continue;
-
-//             auto callee = SVFUtil::getCallee(call_node->getCallSite());
-
-//             auto svfinst = call_node->getCallSite();
-//             auto llvminst = llvmModuleSet->getLLVMValue(svfinst);
-
-//             auto inst = SVFUtil::dyn_cast<CallBase>(llvminst);
-//             // outs() << "[INFO] callinst2 " << *inst << "\n";
-//             FunctionType *ftype = inst->getFunctionType();
-//             if (ftype->getReturnType() == retType) {
-//                 // outs() << "[INFO] => type ok!\n";
-//                 // alloca_set.insert(vfgnode);
-//                 allocainst_set.insert(inst);
-//             }
-
-//             // if (callee != nullptr) {
-//             //     std::string fun = callee->getName();
-//             //     // malloc handler
-//             //     AccessType acNode(retType);
-//             //     handlerDispatcher(&mdata, fun, node, call_node, -1, 
-//             //                         acNode, C_RETURN);
-
-//             //     for (unsigned p = 0; p < ftype->getNumParams(); p++) {
-//             //         handlerDispatcher(&mdata, fun, node, call_node, p, 
-//             //                             acNode, C_RETURN);
-//             //     }
-
-//             // }
-//         }  
-
-//         // We'll go throught the children and add unknown ones to our work list.
-//         // outs() << "NODE: " << node->toString() << "\n";
-//         if (node->hasOutgoingEdge()) {
-//             ICFGNode::const_iterator it = node->OutEdgeBegin();
-//             ICFGNode::const_iterator eit = node->OutEdgeEnd();
+   for (auto el: *weights) {
+        auto fun_name = el.first;
+        auto weight = el.second;
         
-//             for (; it != eit; ++it) {
-//                 ICFGEdge *edge = *it;
-//                 ICFGNode *dst = edge->getDstNode();
+        jsonResult[fun_name] = weight;
+   }
 
-//                 if (visited.find(dst) != visited.end()) {
-//                     // We've seen it already
+    std::ofstream jsonOutFile(OutputFile);
+    Json::StreamWriterBuilder jsonBuilder;
+    if (!verbose)
+        jsonBuilder.settings_["indentation"] = "";
+        
+    std::unique_ptr<Json::StreamWriter> writer(
+        jsonBuilder.newStreamWriter());
 
-//                     // BUG: if CallCFGEdge and already visited, then skip the
-//                     // call and go to the next return                
-//                     if(auto call_edge = SVFUtil::dyn_cast<CallCFGEdge>(edge)) {
-//                         ICFGEdge *next_ret = phi[call_edge];
-//                         ICFGNode *dst_new = next_ret->getDstNode();
-//                         // next_ret
-//                         // curr_stack.push(next_ret);
-//                         working.push(std::make_pair(dst_new, curr_stack));
-//                     }
+    writer->write(jsonResult, &jsonOutFile);
+    jsonOutFile.close();
+}
 
-//                     // outs() << "\talready visited: ";
-//                     // outs() << dst->toString() << "\n";
-//                     continue;
-//                 }
+unsigned int countReachableInst(const SVFG* vfg, const SVFFunction* svfFun) {
+    SVFIR* pag = SVFIR::getPAG();
+
+    PointerAnalysis* pta = vfg->getPTA(); 
+    LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
+    SVFModule *svfModule = pag->getModule();
+    ICFG* icfg = pag->getICFG();
+
+    FunExitICFGNode *fun_exit = icfg->getFunExitICFGNode(svfFun);
+
+    PHIFun phi;
+    PHIFunInv phi_inv;
+    getPhiFunction(svfModule, icfg, &phi, &phi_inv);  
+
+    // std::set<const VFGNode*> alloca_set;
+    // std::set<const Value*> allocainst_set;
+    std::set<const Instruction*> allocainst_set;
+    // std::set<const Value*> bitcastinst_set;
+
+    std::set<const SVFFunction*> visited_functions;
+
+    // how many alloca?
+    FunEntryICFGNode *entry_node = icfg->getFunEntryICFGNode(svfFun);
+
+    std::stack<std::pair<ICFGNode*,std::stack<ICFGEdge*>>> working;
+
+    std::set<ICFGNode*> visited;
+
+    std::stack<ICFGEdge*> empty_stack;
+    working.push(std::make_pair(entry_node, empty_stack));
+
+    while(!working.empty()) {
+
+        auto el = working.top();
+        working.pop();
+
+        ICFGNode *node = el.first;
+        std::stack<ICFGEdge*> curr_stack = el.second;
+
+        // We'll go throught the children and add unknown ones to our work list.
+        // outs() << "NODE: " << node->toString() << "\n";
+        if (node->hasOutgoingEdge()) {
+            ICFGNode::const_iterator it = node->OutEdgeBegin();
+            ICFGNode::const_iterator eit = node->OutEdgeEnd();
+        
+            for (; it != eit; ++it) {
+                ICFGEdge *edge = *it;
+                ICFGNode *dst = edge->getDstNode();
+
+                if (visited.find(dst) != visited.end()) {
+                    // We've seen it already
+
+                    // BUG: if CallCFGEdge and already visited, then skip the
+                    // call and go to the next return                
+                    if(auto call_edge = SVFUtil::dyn_cast<CallCFGEdge>(edge)) {
+                        ICFGEdge *next_ret = phi[call_edge];
+                        ICFGNode *dst_new = next_ret->getDstNode();
+                        // next_ret
+                        // curr_stack.push(next_ret);
+                        working.push(std::make_pair(dst_new, curr_stack));
+                    }
+
+                    // outs() << "\talready visited: ";
+                    // outs() << dst->toString() << "\n";
+                    continue;
+                }
                 
-//                 if(auto ret_edge = SVFUtil::dyn_cast<RetCFGEdge>(edge)) {
+                if(auto ret_edge = SVFUtil::dyn_cast<RetCFGEdge>(edge)) {
 
-//                     if (curr_stack.size() != 0) {
-//                         ICFGEdge *ret = curr_stack.top();
-//                         if (ret_edge == ret) {
-//                             curr_stack.pop();
-//                             working.push(std::make_pair(dst, curr_stack));
-//                             visited.insert(dst);
-//                         }
-//                     }
-//                 }
-//                 else if(auto call_edge = SVFUtil::dyn_cast<CallCFGEdge>(edge)) {
-//                     ICFGEdge *next_ret = phi[call_edge];
-//                     curr_stack.push(next_ret);
-//                     working.push(std::make_pair(dst, curr_stack));
-//                     visited.insert(dst);
-//                 }
-//                  else {
-//                     working.push(std::make_pair(dst, curr_stack));
-//                     visited.insert(dst);
-//                 }
-//             }
-//         }
+                    if (curr_stack.size() != 0) {
+                        ICFGEdge *ret = curr_stack.top();
+                        if (ret_edge == ret) {
+                            curr_stack.pop();
+                            working.push(std::make_pair(dst, curr_stack));
+                            visited.insert(dst);
+                        }
+                    }
+                }
+                else if(auto call_edge = SVFUtil::dyn_cast<CallCFGEdge>(edge)) {
+                    ICFGEdge *next_ret = phi[call_edge];
+                    curr_stack.push(next_ret);
+                    working.push(std::make_pair(dst, curr_stack));
+                    visited.insert(dst);
+                }
+                 else {
+                    working.push(std::make_pair(dst, curr_stack));
+                    visited.insert(dst);
+                }
+            }
+        }
 
-//     }
-//     // We have visited all the nodes
-//     return visited.size();
-    return 0;
+    }
+    // We have visited all the nodes
+    return visited.size();
+    // return 0;
 }
 
 
@@ -320,11 +266,7 @@ int main(int argc, char ** argv)
     }
 
     verbose = Verbose;
-    if (verbose >= Verbosity::v2) {
-        ValueMetadata::debug = true;
-        ValueMetadata::debug_condition = DebugCondition;
-    }
-
+    
     if (Options::WriteAnder() == "ir_annotator")
     {
         LLVMModuleSet::getLLVMModuleSet()->preProcessBCs(moduleNameVec);
@@ -336,8 +278,6 @@ int main(int argc, char ** argv)
     SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
 
     SVFUtil::outs() << "[INFO] Done\n";
-
-    ValueMetadata::consider_indirect_calls = doIndJump;
 
     // I extract all the function names from the LLVM module
     std::set<std::string> functions_llvm;
@@ -428,81 +368,45 @@ int main(int argc, char ** argv)
 
     // svfg->dump("from_extractor");
 
-    // I want to find a minimized set of APIs to analyze
-    if (minimizeApi != "") {
-
-        std::set<std::string> minimize_functions;
-
-        SVF::SVFModule::const_iterator it = svfModule->begin();
-        SVF::SVFModule::const_iterator eit = svfModule->end();
-        for (;it != eit; ++it) {
-            const SVFFunction *fun = *it;
-            std::string fun_name = fun->getName();
-            if (functions.find(fun_name) != functions.end()) {
-                auto cg_node = callgraph->getCallGraphNode(fun);
-
-                bool no_direct_in_edge = true;
-
-                auto it2 = cg_node->directInEdgeBegin();
-                auto eit2 = cg_node->directInEdgeEnd();
-                for (; it2 != eit2; it2++){
-                    no_direct_in_edge = false;
-                    break;
-                }
-                
-                if (no_direct_in_edge)
-                    minimize_functions.insert(fun_name);
-            }
-        }
-
-        // SVFUtil::outs() << "[INFO] The minimize set of function\n";
-        std::ofstream minimizeApiFile(minimizeApi);
-        for (auto f: minimize_functions) {
-            minimizeApiFile << f << "\n";
-        }
-        minimizeApiFile.close();
-        // SVFUtil::outs() << "[INFO] All function\n";
-        // for (auto f: functions)
-        //     SVFUtil::outs() << f << "\n";
-    
-        // SVFUtil::outs() << "[INFO] Total: " << minimize_functions.size() << "\n";
-        // SVFUtil::outs() << "[INFO] Original: " << functions.size() << "\n";
-
-    }
-
     // SVFUtil::outs() << " === EXIT FOR DEBUG ===\n";
     // exit(1);
-
-    FunctionConditionsSet fun_cond_set;
 
     unsigned int tot_function = functions.size();
     unsigned int num_function = 0;
 
+    std::map<std::string, unsigned int> weights;
+
     SVFUtil::outs() << "[INFO] running analysis...\n";
-    for (auto f: functions) {
+    for(const SVFFunction* svfFun : svfModule->getFunctionSet() ){
+        auto llvm_val = llvmModuleSet->getLLVMValue(svfFun);
+        const llvm::Function* F = SVFUtil::dyn_cast<Function>(llvm_val);
+
+        std::string function_name = F->getName().str();
+
+        if (functions.find(function_name) == functions.end())
+            continue;
 
         num_function++;
-        FunctionConditions fun_conds;
         std::string prog = std::to_string(num_function) + "/" + 
                             std::to_string(tot_function);
 
-        const SVFFunction *fun = x.first;
-        if ( fun->getName() != f)
-            continue;
+        // SVFUtil::outs() << "Processing " << f << "\n";
+        SVFUtil::outs() << "[INFO " << prog << "] processing: " 
+                << function_name << "\n";
+
+        unsigned int n_instruction = countReachableInst(svfg, svfFun); 
+        SVFUtil::outs() << "[INFO] N. Inst.: " << n_instruction << "\n";
+        weights[function_name] = n_instruction;
     }
 
 
     if (OutputType == OutType::txt) {
-        FunctionConditionsSet::storeIntoTextFile(
-            fun_cond_set, OutputFile, verbose >= Verbosity::v1);
+        dumpToText(&weights);
     } else if (OutputType == OutType::json) {
-        FunctionConditionsSet::storeIntoJsonFile(
-            fun_cond_set, OutputFile, verbose >= Verbosity::v1);
+        dumpToJson(&weights);
     } else if (OutputType == OutType::stdo) {
-        SVFUtil::outs() << fun_cond_set.toString(verbose >= Verbosity::v1);
+        dumpToStdout(&weights);
     }
-
-    SVFUtil::outs() << fun_cond_set.getSummary();
 
     AndersenWaveDiff::releaseAndersenWaveDiff();
     SVFIR::releaseSVFIR();
