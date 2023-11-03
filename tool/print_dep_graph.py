@@ -29,8 +29,8 @@ def __main():
             "pthreadpool"]
 
     for lib in all_libs:
-        # if not lib == "libhtp":
-        #     continue
+        if not lib == "libtiff":
+            continue
         default_config = PROJECT_FOLDER + f"/targets/{lib}/generator.toml"
         # default_config = PROJECT_FOLDER + "/targets/c-ares/generator.toml"
 
@@ -65,7 +65,7 @@ def __main():
                 done_set.add((dep,api))
     
 
-        # dot = graphviz.Graph(comment=f"DepGraph {dep_graph} for {default_config}")
+        dot = graphviz.Graph(comment=f"DepGraph {dep_graph} for {default_config}")
 
         # dir_dep_graph = dict()
         # pair_don = set()
@@ -79,9 +79,9 @@ def __main():
         #             dir_dep_graph[n1] = adj
 
         # transform in a direct graph
-        # for n, adj in inv_dep_graph.items():
-        #     for nn in adj:
-        #         dot.edge(n.function_name, nn.function_name)
+        for n, adj in inv_dep_graph.items():
+            for nn in adj:
+                dot.edge(n.function_name, nn.function_name)
 
         custom_api = PROJECT_FOLDER + f"/targets/{lib}/custom_apis_minized.txt"
 
@@ -130,7 +130,8 @@ def __main():
         
         print("="*30)
 
-    # dot.save(output)
+        # dot.save(output)
+        # dot.render(directory='doctest-output', view=True)  
 
     # print("manual test")
     # from IPython import embed; embed(); exit(1)    
