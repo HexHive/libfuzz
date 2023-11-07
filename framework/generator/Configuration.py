@@ -1,8 +1,10 @@
 from functools import cached_property
 
-import os
+import os, json
 from os import path
 import tomli, shutil
+
+from typing import Dict, List, Optional, Set, Tuple
 
 from dependency import TypeDependencyGraphGenerator
 from dependency import UndefDependencyGraphGenerator
@@ -16,6 +18,7 @@ from common import Utils, DataLayout
 from driver.factory.only_type import *
 from driver.factory.constraint_based import *
 from driver.factory.constraint_based_weight import *
+from driver.factory.constraint_based_search import *
 
 from generator import Pool
 
@@ -285,10 +288,16 @@ class Configuration:
             return CBFactory(self.api_list, self.driver_size, dep_graph, 
                              self.function_conditions)
         
-        if policy == "constraint_based_weigth":
+        if policy == "constraint_based_weight":
             dep_graph = self.dependency_graph
             return CBWFactory(self.api_list, self.driver_size, dep_graph, 
                               self.function_conditions)
+
+        if policy == "constraint_based_search":
+            dep_graph = self.dependency_graph
+            # pool_size = self.pool.pool_size
+            return CBSFactory(self.api_list, self.driver_size, dep_graph, 
+                              self.function_conditions, self.weights)
 
         raise NotImplementedError
 
@@ -344,10 +353,8 @@ class Configuration:
 
     @cached_property
     def pool(self) -> Pool:
-        # TODO: make pool_size in config
-
         if not "generator" in self._config:
-            raise Exception("'fuzzer' not defined")
+            raise Exception("'generator' not defined")
 
         fuzzer = self._config["generator"]
 
@@ -357,3 +364,22 @@ class Configuration:
         pool_size = fuzzer["pool_size"]
 
         return Pool(pool_size)
+
+
+    @cached_property
+    def weights(self) -> Dict[str,int]:
+        if not "analysis" in self._config:
+            raise Exception("'analysis' not defined")
+
+        analysis = self._config["analysis"]
+
+        if not "weights" in analysis:
+            raise Exception("'weights' not defined")
+
+        weights_file = analysis["weights"]
+
+        with open(weights_file) as  f:
+            ws = json.load(f)
+
+        return ws
+        

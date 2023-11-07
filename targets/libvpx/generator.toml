@@ -11,10 +11,11 @@ minimum_apis = "/workspaces/libfuzz/analysis/libvpx/work/apipass/apis_minimized.
 # minimum_apis = ""
 data_layout = "/workspaces/libfuzz/analysis/libvpx/work/apipass/data_layout.txt"
 enum_types = "/workspaces/libfuzz/analysis/libvpx/work/apipass/enum_types.txt"
+weights = "/workspaces/libfuzz/analysis/libvpx/work/apipass/weights.json"
 
 [generator]
 workdir = "/workspaces/libfuzz/workdir/libvpx"
-policy = "constraint_based"
+policy = "constraint_based_search"
 dep_graph = "type"
 # dep_graph = "undef"
 pool_size = 10

@@ -150,28 +150,19 @@ void dumpToJson(std::map<std::string, unsigned int> *weights) {
     jsonOutFile.close();
 }
 
-unsigned int countReachableInst(const SVFG* vfg, const SVFFunction* svfFun) {
-    SVFIR* pag = SVFIR::getPAG();
+unsigned int countReachableInst(SVFIR* pag, ICFG* icfg, 
+    const SVFFunction* svfFun) {
 
-    PointerAnalysis* pta = vfg->getPTA(); 
-    LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
     SVFModule *svfModule = pag->getModule();
-    ICFG* icfg = pag->getICFG();
-
-    FunExitICFGNode *fun_exit = icfg->getFunExitICFGNode(svfFun);
 
     PHIFun phi;
     PHIFunInv phi_inv;
     getPhiFunction(svfModule, icfg, &phi, &phi_inv);  
 
-    // std::set<const VFGNode*> alloca_set;
-    // std::set<const Value*> allocainst_set;
     std::set<const Instruction*> allocainst_set;
-    // std::set<const Value*> bitcastinst_set;
 
     std::set<const SVFFunction*> visited_functions;
 
-    // how many alloca?
     FunEntryICFGNode *entry_node = icfg->getFunEntryICFGNode(svfFun);
 
     std::stack<std::pair<ICFGNode*,std::stack<ICFGEdge*>>> working;
@@ -244,10 +235,14 @@ unsigned int countReachableInst(const SVFG* vfg, const SVFFunction* svfFun) {
     }
     // We have visited all the nodes
     return visited.size();
-    // return 0;
 }
 
-
+/*
+example of usage:
+./bin/extractor /workspaces/libfuzz/analysis/libaom/work/lib/libaom.a.bc \
+    -interface /workspaces/libfuzz/analysis/libaom/work/apipass/apis_clang.json \
+    -do_indirect_jumps -v v0 -t json -output weights.json
+*/
 int main(int argc, char ** argv)
 {
 
@@ -361,10 +356,10 @@ int main(int argc, char ** argv)
 
     // icfg->dump("icfg_extractor");
 
-    /// Sparse value-flow graph (SVFG)
-    SVFGBuilder svfBuilder;
-    SVFG* svfg = svfBuilder.buildFullSVFG(point_to_analysys);
-    svfg->updateCallGraph(point_to_analysys);
+    // /// Sparse value-flow graph (SVFG)
+    // SVFGBuilder svfBuilder;
+    // SVFG* svfg = svfBuilder.buildFullSVFG(point_to_analysys);
+    // svfg->updateCallGraph(point_to_analysys);
 
     // svfg->dump("from_extractor");
 
@@ -394,7 +389,7 @@ int main(int argc, char ** argv)
         SVFUtil::outs() << "[INFO " << prog << "] processing: " 
                 << function_name << "\n";
 
-        unsigned int n_instruction = countReachableInst(svfg, svfFun); 
+        unsigned int n_instruction = countReachableInst(pag, icfg, svfFun); 
         SVFUtil::outs() << "[INFO] N. Inst.: " << n_instruction << "\n";
         weights[function_name] = n_instruction;
     }

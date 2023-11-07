@@ -106,3 +106,8 @@ class Factory(ABC):
             #     return_type.to_function = a_flag == "fun" and "(" in a_type
 
         return return_type
+        
+class EmptyDriverSpace(Exception):
+    """EmptyDriverSpace, the factory can't generate any other driver"""
+    def __init__(self):
+        pass

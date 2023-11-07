@@ -184,8 +184,8 @@ class RunningContext(Context):
         is_source = ConditionManager.instance().is_source(cond)
         is_init = ConditionManager.instance().is_init(api_call, arg_pos)
         
-        # if (api_call.function_name == "TIFFReadFromUserBuffer" and 
-        #     arg_pos == 4):
+        # if (api_call.function_name == "aom_codec_decode" and 
+        #     arg_pos == 0):
         #     # self.attempt -= 1
         #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
@@ -282,8 +282,9 @@ class RunningContext(Context):
                         # raise ConditionUnsat()
                         raise_an_exception = True
                     if (tt.tag == TypeTag.STRUCT and
-                        not self.is_init_api(api_call, api_cond, arg_pos) 
-                        and not DataLayout.instance().is_fuzz_friendly(
+                        not self.is_init_api(api_call, api_cond, arg_pos) and
+                        # not is_init and
+                        not DataLayout.instance().is_fuzz_friendly(
                             tt.token)):
                             raise_an_exception = True
                     if ConditionManager.instance().has_source(tt):
@@ -708,7 +709,7 @@ class RunningContext(Context):
             if len(type_strings) == 0:
                 # from IPython import embed; embed(); exit(1)
                 # raise Exception("Not found type at [-1]")
-                print("Not found type at [-1]")
+                # print("Not found type at [-1]")
                 type_strings.add(type.get_token())
             
             type_strs = []

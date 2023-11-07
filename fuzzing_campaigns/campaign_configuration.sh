@@ -5,7 +5,7 @@ export NUM_OF_DRIVERS=( 20 )
 export NUM_OF_APIs=( 2 4 8 16 32  )
 export NUM_OF_SEEDS=1
 # export POLICY="constraint_based"
-export POLICY="constraint_based_weigth"
+export POLICY="constraint_based_weight"
 export MAX_CPUs=$(($(nproc) - 1))
 export USE_CUSTOM_APIS=0
 
@@ -48,6 +48,12 @@ case $CONF in
     export TIMEOUT=10m
     export ITERATIONS=1
     export USE_CUSTOM_APIS=1
+    ;;
+
+  search)
+    export POLICY="constraint_based_search"
+    export TIMEOUT=5m
+    export ITERATIONS=1
     ;;
 
   *)
