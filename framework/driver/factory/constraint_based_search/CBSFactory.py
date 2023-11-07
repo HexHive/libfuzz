@@ -170,13 +170,11 @@ class CBSFactory(CBFactory):
                 except:
                     continue
 
-    # x = 0
+        raise EmptyDriverSpace()
 
     def create_random_driver(self) -> Driver:
 
         drv, context = next(self.driver_generator)
-        # print("lemme do a driver..." + str(CBSFactory.x))
-        # CBSFactory.x = CBSFactory.x + 1
 
         statements_apicall = []
         for api_call in drv:
