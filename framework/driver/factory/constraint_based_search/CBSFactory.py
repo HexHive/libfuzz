@@ -1,13 +1,9 @@
-import copy
 import random
 from typing import Dict, List, Optional, Set, Tuple
-
-import networkx as nx
 
 from common import Api, FunctionConditionsSet
 from constraints import RunningContext, ConditionManager
 from dependency import DependencyGraph
-from driver import Driver
 from driver.factory.constraint_based import CBFactory
 from driver.factory import Factory, EmptyDriverSpace
 from driver.ir import PointerType, Variable, AllocType
@@ -24,113 +20,123 @@ class CBSFactory(CBFactory):
     
     def __init__(self, api_list: Set[Api], driver_size: int, 
                     dgraph: DependencyGraph, conditions: FunctionConditionsSet, weights: Dict[str,int]):
-        self.api_list = api_list
-        self.driver_size = driver_size
-        # self.dependency_graph = dgraph
-        self.conditions = conditions
+        super().__init__(api_list, driver_size, dgraph, conditions)
 
-        api_list_name = [a.function_name for a in self.api_list]
+        self.api_initial_weigth = {}
+        self.api_frequency = {}
+        for a in self.dependency_graph.keys():
+            fun_name = a.function_name
+            self.api_initial_weigth[a] = weights[fun_name]
+            # self.api_initial_weigth[a] = len(self.get_reachable_apis(a))
+            # self.api_frequency[a] = 0
 
-        # I need this to build synthetic constraints in "update" method
-        RunningContext.type_to_hash = {}
-        for f, c in self.conditions:
-            for arg in c.argument_at + [c.return_at]:
-                for at in arg.ats:
-                    RunningContext.type_to_hash[at.type_string] = at.type
+        # print("XXXX")
+        # from IPython import embed; embed(); exit(1)
 
-        # DependencyGraph must be inverted, this is an "error". It probably
-        # needs refactor in the future
-        inv_dep_graph = dict((k, set()) for k in list(dgraph.keys()))
-        for api, deps in dgraph.items():
-            for dep in deps:
-                if not dep in inv_dep_graph:
-                    inv_dep_graph[dep] = set()
-                
-                inv_dep_graph[dep].add(api)
-        self.dependency_graph = inv_dep_graph
+        # self.driver_generator = self.get_next_driver()
 
-        self.condition_manager = ConditionManager.instance()
+    def get_random_source_api(self):
+        w = []
+        for sa in self.source_api:
+            w += [self.get_weigth(sa)]
+        s_api = random.choices(self.source_api, weights=w)[0]
+        # self.inc_api_frequency(s_api)
+        return s_api
 
-        self.source_api = list(self.condition_manager.get_source_api())
-        self.init_api = list(self.condition_manager.get_init_api())
-        self.sink_api = list(self.condition_manager.get_sink_api())
-
-        G = nx.DiGraph()
-
-        for api, adj_api in self.dependency_graph.items():
-            weight = 0
-            function_name = api.function_name
-            if function_name in weights:
-                weight = weights[function_name]
-
-            G.add_node(api, weight = weight)
-
-            no_loop = api in self.source_api + self.init_api + self.sink_api
-            
-            if api in self.sink_api:
-                continue
-
-            for api_n in adj_api:
-                if api_n in self.source_api:
-                    continue
-            
-                if api not in self.source_api:
-                    if api_n in self.init_api:
-                        continue
-
-                if no_loop and api_n == api:
-                    continue
-
-                G.add_edge(api, api_n)
-
-        self.G = G
-
-        self.possible_driver_pool = {}
-
-        weights_sorted = sorted(weights.items(), key=lambda x:x[1], 
-                                    reverse=True)
-
-        self.weights = weights_sorted
-
-        self.driver_generator = self.get_next_driver()
-
-    attempt = 3
-
-    def get_api(self, function_name):
-        all_function_name = [a.function_name for a in
-                             self.dependency_graph.keys()]
-
-        if function_name not in all_function_name:
-            return None
-        
-        xx = [a for a in self.dependency_graph.keys() 
-              if a.function_name == function_name]
-
-        return xx[0]
+    def get_random_candidate(self, candidate_api):
+        w = []
+        for ca in candidate_api:
+            # Api object is in position 2
+            w += [self.get_weigth(ca[2])]
+        r_api = random.choices(candidate_api, weights=w)[0] 
+        # self.inc_api_frequency(r_api)
+        return r_api
     
-    def try_to_instantiate_chain(self, chain):
+    # def inc_api_frequency(self, api):
+    #     freq = self.get_api_frequency(api)
+    #     if freq is None:
+    #         freq = 1
+    #     else:
+    #         freq = freq + 1
+    #     self.set_api_frequency(api, freq)
 
-        rng_ctx = RunningContext()
+    def get_weigth(self, api):
 
-        get_cond = lambda x: self.conditions.get_function_conditions(x.function_name)
-        to_api = lambda x: Factory.api_to_apicall(x)
+        # if api not in self.api_frequency:
+        #     # self.api_frequency[api] = 0
+        #     self.api_initial_weigth[api] = max([w for _, w in self.api_initial_weigth.items()])
 
-        inst_chain = []
+        # if self.api_frequency[api] == 0:
+        return self.api_initial_weigth[api]
+        
+        # return float(self.api_initial_weigth[api])/self.api_frequency[api]
+    
+    # def set_api_frequency(self, api, freq):
+    #     if api not in self.api_frequency:
+    #         return
+    #     self.api_frequency[api] = freq
 
-        for api in chain:
+    # def get_api_frequency(self, api):
+    #     if api not in self.api_frequency:
+    #         return None
+    #     return self.api_frequency[api]
+    
+    # def upd_api_frequency(self, api, rel_freq):
+    #     if api not in self.api_frequency:
+    #         return
+    #     self.api_frequency[api] += rel_freq
+
+    # def get_reachable_apis(self, api):
+
+    #     visited_api = set()
+    #     working = [api]
+
+    #     while(len(working) != 0):
+    #         a = working.pop()
+    #         for n in  self.dependency_graph[a]:
+    #             if n in visited_api:
+    #                 continue
+
+    #             visited_api.add(n)
+    #             working += [n]
+
+    #     return visited_api
+
+    # def get_api(self, function_name):
+    #     all_function_name = [a.function_name for a in
+    #                          self.dependency_graph.keys()]
+
+    #     if function_name not in all_function_name:
+    #         return None
+        
+    #     xx = [a for a in self.dependency_graph.keys() 
+    #           if a.function_name == function_name]
+
+    #     return xx[0]
+    
+    # def try_to_instantiate_chain(self, chain):
+
+    #     rng_ctx = RunningContext()
+
+    #     get_cond = lambda x: self.conditions.get_function_conditions(x.function_name)
+    #     to_api = lambda x: Factory.api_to_apicall(x)
+
+    #     inst_chain = []
+
+    #     for api in chain:
                     
-            api_condition = get_cond(api)
-            api_call = to_api(api)
+    #         api_condition = get_cond(api)
+    #         api_call = to_api(api)
 
-            rng_ctx, unsat_var_2 = self.try_to_instantiate_api_call(api_call, api_condition, rng_ctx)      # type: ignore
+    #         rng_ctx, unsat_var_2 = self.try_to_instantiate_api_call(api_call, api_condition, rng_ctx)      # type: ignore
 
-            l_unsat_var = len(unsat_var_2)
-            if l_unsat_var == 0:
-                inst_chain += [api_call]
-            else:
-                return {}
+    #         l_unsat_var = len(unsat_var_2)
+    #         if l_unsat_var == 0:
+    #             inst_chain += [api_call]
+    #         else:
+    #             return {}
             
-        return (inst_chain, rng_ctx)
+    #     return (inst_chain, rng_ctx)
     
 
     # target_list = ["foo", "bar", "zoo"]
@@ -150,63 +156,63 @@ class CBSFactory(CBFactory):
     #                 yield p
 
 
-    def get_next_driver(self):
-        for t_name, _ in self.weights:
-            target = self.get_api(t_name)
+    # def get_next_driver(self):
+    #     for t_name, _ in self.weights:
+    #         target = self.get_api(t_name)
 
-            for source in self.source_api:
+    #         for source in self.source_api:
 
-                try:
-                    for path in nx.all_simple_paths(self.G, 
-                                                source=source, 
-                                                target=target, 
-                                                cutoff=self.driver_size):
+    #             try:
+    #                 for path in nx.all_simple_paths(self.G, 
+    #                                             source=source, 
+    #                                             target=target, 
+    #                                             cutoff=self.driver_size):
                     
-                        a_chain = self.try_to_instantiate_chain(path)
-                        if a_chain == {}:
-                            continue
+    #                     a_chain = self.try_to_instantiate_chain(path)
+    #                     if a_chain == {}:
+    #                         continue
 
-                        yield a_chain
-                except:
-                    continue
+    #                     yield a_chain
+    #             except:
+    #                 continue
 
-        raise EmptyDriverSpace()
+    #     raise EmptyDriverSpace()
 
-    def create_random_driver(self) -> Driver:
+    # def create_random_driver(self) -> Driver:
 
-        drv, context = next(self.driver_generator)
+    #     drv, context = next(self.driver_generator)
 
-        statements_apicall = []
-        for api_call in drv:
-            statements_apicall += [api_call]
-            if (isinstance(api_call.ret_type, PointerType) and
-                not isinstance(api_call.ret_var, NullConstant)):
-                var = api_call.ret_var.get_variable()
-                statements_apicall += [AssertNull(var.get_buffer())]
-            # sink APIs have only 1 argument
-            if self.condition_manager.is_sink(api_call):
-                arg = api_call.arg_vars[0]
-                if isinstance(arg, Address):
-                    buff = arg.get_variable().get_buffer()
-                elif isinstance(arg, Variable):
-                    buff = arg.get_buffer()
-                if buff.alloctype == AllocType.HEAP:
-                    statements_apicall += [SetNull(buff)]
+    #     statements_apicall = []
+    #     for api_call in drv:
+    #         statements_apicall += [api_call]
+    #         if (isinstance(api_call.ret_type, PointerType) and
+    #             not isinstance(api_call.ret_var, NullConstant)):
+    #             var = api_call.ret_var.get_variable()
+    #             statements_apicall += [AssertNull(var.get_buffer())]
+    #         # sink APIs have only 1 argument
+    #         if self.condition_manager.is_sink(api_call):
+    #             arg = api_call.arg_vars[0]
+    #             if isinstance(arg, Address):
+    #                 buff = arg.get_variable().get_buffer()
+    #             elif isinstance(arg, Variable):
+    #                 buff = arg.get_buffer()
+    #             if buff.alloctype == AllocType.HEAP:
+    #                 statements_apicall += [SetNull(buff)]
 
-        context.generate_auxiliary_operations()
+    #     context.generate_auxiliary_operations()
 
-        statements = []
-        statements += context.generate_buffer_decl()
-        statements += context.generate_buffer_init()
-        statements += statements_apicall 
+    #     statements = []
+    #     statements += context.generate_buffer_decl()
+    #     statements += context.generate_buffer_init()
+    #     statements += statements_apicall 
 
-        clean_up_sec = context.generate_clean_up()
-        counter_size = context.get_counter_size()
-        stub_functions = context.get_stub_functions()
+    #     clean_up_sec = context.generate_clean_up()
+    #     counter_size = context.get_counter_size()
+    #     stub_functions = context.get_stub_functions()
 
-        d = Driver(statements, context)
-        d.add_clean_up(clean_up_sec)
-        d.add_counter_size(counter_size)
-        d.add_stub_functions(stub_functions)
+    #     d = Driver(statements, context)
+    #     d.add_clean_up(clean_up_sec)
+    #     d.add_counter_size(counter_size)
+    #     d.add_stub_functions(stub_functions)
 
-        return d
+    #     return d

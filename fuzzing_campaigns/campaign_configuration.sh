@@ -51,9 +51,13 @@ case $CONF in
     ;;
 
   search)
+    export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" "libpcap" "c-ares" )
     export POLICY="constraint_based_search"
-    export TIMEOUT=5m
+    export NUM_OF_DRIVERS=( 20 )
+    export NUM_OF_APIs=( 4 8 )
+    export TIMEOUT=30m
     export ITERATIONS=1
+    export USE_CUSTOM_APIS=1
     ;;
 
   *)
