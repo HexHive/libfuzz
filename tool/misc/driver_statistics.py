@@ -99,7 +99,7 @@ def print_distribution(libraries):
             covs += [cov]
   
         plt.clf()
-        plt.hist(covs, edgecolor="red", bins=5) 
+        plt.hist(covs, edgecolor="red", bins=50) 
 
         # print(dist)
         # plt.hist(dist)

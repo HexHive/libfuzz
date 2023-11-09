@@ -23,9 +23,6 @@ case $CONF in
     ;;
 
   selection)
-    export MAX_CPUs=4
-    export NUM_OF_DRIVERS=( 5 )
-    export NUM_OF_APIs=( 2 4  )
     export TIMEOUT=2m
     export ITERATIONS=1
     ;;

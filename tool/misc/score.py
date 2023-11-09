@@ -74,6 +74,8 @@ def get_best_drivers(drvs, threshold=0.10):
 
     max_api = set()
     for d in sorted(drvs, key=lambda x: x["score"], reverse=True):
+        if d["score"] == 0:
+            continue
         api_set = set(d["metadata"]["api_multiset"].keys())
         # print(f"api set: {api_set}")
         if len(max_api) == 0:
