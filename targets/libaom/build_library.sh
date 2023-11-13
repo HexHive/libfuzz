@@ -18,8 +18,8 @@ export CC="$LLVM_COMPILER_PATH"/clang
 export CXX="$LLVM_COMPILER_PATH"/clang++
 
 echo "make 1"
-mkdir -p "$TARGET/repo/aom_build"
-cd "$TARGET/repo/aom_build"
+mkdir -p "$TARGET/repo/aom_build_cov"
+cd "$TARGET/repo/aom_build_cov"
 
 # Compile library for coverage
 cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_LIBS=off \
@@ -36,12 +36,15 @@ make install
 
 mv "$WORK"/lib/libaom.a "$WORK"/lib/libaom_profile.a
 
+cd ..
+mkdir -p "$TARGET/repo/aom_build_fuzz"
+cd "$TARGET/repo/aom_build_fuzz"
 
 # Compile library for fuzzing
 cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_LIBS=off \
-        -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_C_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g" \
-        -DCMAKE_CXX_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g"
+        -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_C_FLAGS_RELEASE="-fsanitize=fuzzer-no-link,address" \
+        -DCMAKE_CXX_FLAGS_RELEASE="-fsanitize=fuzzer-no-link,address"
 
 echo "make clean"
 make -j"$(nproc)" clean

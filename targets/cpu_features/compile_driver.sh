@@ -30,7 +30,7 @@ do
     DRIVER_NAME=$(basename $d)
     # [TAG] THIS STEP MUST BE ADAPTED FOR EACH LIBRARY
     # Compile driver for fuzzing
-    $CXX -g -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
+    $CXX -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
         $d -Wl,--whole-archive ${TARGET}/work/lib/libcpu_features.a -Wl,--no-whole-archive \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
 
