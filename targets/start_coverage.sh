@@ -105,6 +105,12 @@ do
     INPUTS="$(ls $DRIVER_COR)"
     for input in $INPUTS; do
         LLVM_PROFILE_FILE="${DRIVER_NAME}-${input}.profraw" timeout -k 10s 1m $PROFILE_BINARY -runs=0 $DRIVER_COR/$input
+        # the coverage produces a timeout, we might consider it as a timeout crash
+        if [[ $? -ne 0 ]]; then
+            echo "[INFO] Error while computing the coverage, moving to crashes"
+            CRASH_FOLDER="${CORPUS_FOLDER/corpus_new/crashes}"
+            cp $DRIVER_COR/$input ${CRASH_FOLDER}/${DRIVER_NAME}/coverr-$input
+        fi
         mv ${DRIVER_NAME}-${input}.profraw $PROJECT_COVERAGE
     done
 
