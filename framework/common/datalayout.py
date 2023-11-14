@@ -1,7 +1,3 @@
-
-import json, collections, copy, os
-from typing import List, Set, Dict, Tuple, Optional
-
 from common import Utils
 
 # Extract type system from library (only for structs):
@@ -21,8 +17,10 @@ class DataLayout:
     size_types = ["size_t", "int", "uint32_t", "uint64_t", "__uint32_t", "unsigned int", "int64_t", "unsigned long", "__u_int"]
 
     string_types = ["char*", "unsigned char*", "wchar_t*", \
-                    "char**", "unsigned char**", "wchar_t**" \
-                    "u_char*", "u_char**"]
+                    "u_char*", "u_char"]
+    # string_types = ["char*", "unsigned char*", "wchar_t*", \
+    #                 "char**", "unsigned char**", "wchar_t**" \
+    #                 "u_char*", "u_char**"]
 
     def __init__(self):
         raise Exception("ConditionManager can be obtained through instance() class method")
@@ -149,6 +147,19 @@ class DataLayout:
         # from IPython import embed; embed(); exit(1)
 
     @staticmethod
+    def is_ptr_level(type, lvl: int) -> bool:
+        from driver.ir.PointerType import PointerType
+
+        ptr_level = 0
+
+        tmp_type = type
+        while isinstance(tmp_type, PointerType):
+            ptr_level += 1
+            tmp_type = tmp_type.get_pointee_type()
+
+        return ptr_level == lvl
+
+    @staticmethod
     def is_a_pointer(type) -> bool:
         return "*" in type
 
@@ -188,6 +199,8 @@ class DataLayout:
         elif type == "uint16_t":
             return 8*2
         elif type == "unsigned char":
+            return 8
+        elif type == "bool":
             return 8
         elif type == "wchar_t":
             return 8*4

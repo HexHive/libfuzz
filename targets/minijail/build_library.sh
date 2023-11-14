@@ -42,8 +42,8 @@ mv $WORK/lib/libminijail.pie.a $WORK/lib/libminijail_profile.pie.a
 
 
 # Compile library for fuzzing
-export CFLAGS=$CFLAGS_BASE" -fsanitize=fuzzer-no-link,address -g"
-export CXXFLAGS=$CXXFLAGS_BASE" -fsanitize=fuzzer-no-link,address -g"
+export CFLAGS=$CFLAGS_BASE" -fsanitize=fuzzer-no-link,address"
+export CXXFLAGS=$CXXFLAGS_BASE" -fsanitize=fuzzer-no-link,address"
 
 echo "make clean"
 make -j$(nproc) clean

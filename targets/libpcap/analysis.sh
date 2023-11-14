@@ -73,4 +73,4 @@ extract-bc -b "$WORK"/lib/libpcap.a
     -v v0 -t json -do_indirect_jumps \
     -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
 
-sed -i 's\pcap_next_ex\# pcap_next_ex\g' "$LIBFUZZ_LOG_PATH/apis_minimized.txt"
+# sed -i 's\pcap_next_ex\# pcap_next_ex\g' "$LIBFUZZ_LOG_PATH/apis_minimized.txt"

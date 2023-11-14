@@ -6,7 +6,7 @@ headers = "/workspaces/libfuzz/analysis/libhtp/work/apipass/exported_functions.t
 incomplete_types = "/workspaces/libfuzz/analysis/libhtp/work/apipass/incomplete_types.txt"
 conditions = "/workspaces/libfuzz/analysis/libhtp/work/apipass/conditions.json"
 minimum_apis = "/workspaces/libfuzz/analysis/libhtp/work/apipass/apis_minimized.txt"
-# minimum_apis = "/workspaces/libfuzz/analysis/libhtp/work/apipass/apis_minimized_2.txt"
+# minimum_apis = "/workspaces/libfuzz/targets/libhtp/custom_apis_minized.txt"
 # minimum_apis = "/workspaces/libfuzz/targets/libhtp/apis_minimized.txt"
 # minimum_apis = ""
 data_layout = "/workspaces/libfuzz/analysis/libhtp/work/apipass/data_layout.txt"
@@ -19,7 +19,7 @@ policy = "constraint_based"
 dep_graph = "type"
 # dep_graph = "undef"
 pool_size = 1
-driver_size = 10
+driver_size = 20
 num_seeds = 1
 backend = "libfuzz"
 

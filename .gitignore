@@ -15,6 +15,8 @@ condition_extractor/src_bkp/**/*
 
 condition_extractor/node_modules/**/*
 
+selection_main/*
+
 ## C gitignore
 # Prerequisites
 *.d
@@ -81,6 +83,9 @@ condition_extractor/package-lock.json
 # Fuzzing Campaigns
 fuzzing_campaigns/workdir_*
 fuzzing_campaigns/total_library_coverage*
+fuzzing_campaigns/traces
+fuzzing_campaigns/results.csv
+fuzzing_campaigns/config.txt
 
 
 point_to_test/
