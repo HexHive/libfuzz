@@ -104,7 +104,7 @@ do
 
     INPUTS="$(ls $DRIVER_COR)"
     for input in $INPUTS; do
-        LLVM_PROFILE_FILE="${DRIVER_NAME}-${input}.profraw" $PROFILE_BINARY -runs=0 $DRIVER_COR/$input
+        LLVM_PROFILE_FILE="${DRIVER_NAME}-${input}.profraw" timeout -k 10s 1m $PROFILE_BINARY -runs=0 $DRIVER_COR/$input
         mv ${DRIVER_NAME}-${input}.profraw $PROJECT_COVERAGE
     done
 
