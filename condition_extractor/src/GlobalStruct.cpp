@@ -104,6 +104,8 @@ void GlobalStruct::analyze() {
 
     // SVFUtil::outs() << "[DEBUG] early stop\n";
     // exit(1);
+    
+    this->new_edges = newEdges;
 
     connectCallerAndCallee(newEdges, svfgEdges);
     updateConnectedNodes(svfgEdges);

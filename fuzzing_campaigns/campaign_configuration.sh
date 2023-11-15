@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" "c-ares" "zlib" )
+export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" "c-ares" "zlib" "cjson" )
 export NUM_OF_DRIVERS=( 40 )
 export NUM_OF_APIs=( 2 4 8 16 32  )
 export NUM_OF_SEEDS=1

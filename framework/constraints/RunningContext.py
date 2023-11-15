@@ -1,4 +1,4 @@
-from typing import List, Set, Dict, Tuple, Optional
+from typing import List, Set, Dict, Tuple, Optional, Any
 
 import random, copy, string, traceback
 
@@ -6,7 +6,7 @@ from driver import Context
 from driver.ir import Variable, Type, Value, PointerType, AllocType, CleanBuffer, CleanDblBuffer
 from driver.ir import Address, NullConstant, Buffer, ConstStringDecl, ApiCall
 from driver.ir import BuffDecl, BuffInit, FileInit, Statement, DynArrayInit
-from driver.ir import SetStringNull, TypeTag, Function, DynDblArrInit
+from driver.ir import SetStringNull, TypeTag, Function, DynDblArrInit, Constant
 from . import Conditions, ConditionManager
 from common.conditions import *
 from common import DataLayout
@@ -502,7 +502,7 @@ class RunningContext(Context):
         if ((cond.is_array or type.token in DataLayout.string_types) and
             alloctype == AllocType.STACK):
             new_buffer = Buffer(buff_name, self.MAX_ARRAY_SIZE, type, alloctype)
-        elif type.token == "char**":
+        elif type.token == "char**" or type.token == "char const**":
             new_buffer = Buffer(buff_name, self.DOUBLE_PTR_SIZE, type, alloctype)
         else:
             new_buffer = Buffer(buff_name, 1, type, alloctype)
@@ -511,6 +511,12 @@ class RunningContext(Context):
         self.buffs_counter[type] = buff_counter + 1
 
         return new_buffer
+    
+    def create_new_const_int(self, value: Any):
+        type_token = "int"
+        type_size = DataLayout.instance().get_type_size(type_token)
+        type = Type(type_token, type_size)
+        return Constant(type, value)
 
     def create_new_var(self, type: Type, cond: ValueMetadata, force_pointer: bool):
 
@@ -780,6 +786,9 @@ class RunningContext(Context):
             x1.parent = x0
             synthetic_cond = AccessTypeSet(set([x0, x1]))
             var = val.get_variable()
+        # Constant Values do not need to update conditions
+        elif isinstance(val, Constant):
+            return
         else:
             raise Exception(f"I don't know this val: {val}")
 
@@ -859,6 +868,9 @@ class RunningContext(Context):
                         buff = x.get_variable().get_buffer()
                     elif isinstance(x, Variable):
                         buff = x.get_buffer()
+                    # Constant Values are not buffers
+                    elif isinstance(x, Constant):
+                        continue
                     else:
                         raise Exception(f"{x} did not expected here!")
 
@@ -960,10 +972,16 @@ class RunningContext(Context):
                 counter_size += [len_buff.get_allocated_size()/8]
             elif isinstance(init, DynDblArrInit):
                 len_var = init.get_len_var()
-                len_buff = len_var.get_buffer()
-                buff = init.get_buffer()
-                n_element = buff.get_number_elements()
-                counter_size += [len_buff.get_allocated_size()/8] * n_element
+                if isinstance(len_var, Constant):
+                    n_element = len_var.get_value()
+                    one_cnt_size = len_var.type.get_size()
+                else:
+                    len_buff = len_var.get_buffer()
+                    buff = init.get_buffer()
+                    one_cnt_size = len_buff.get_allocated_size()
+                    n_element = buff.get_number_elements()
+                
+                counter_size += [one_cnt_size/8] * n_element
 
         self.auxiliary_operations_set = True
         self.buff_init = buff_init

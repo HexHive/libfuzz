@@ -8,7 +8,7 @@ from constraints import ConditionUnsat, RunningContext, ConditionManager
 from dependency import DependencyGraph
 from driver import Driver
 from driver.factory import Factory
-from driver.ir import ApiCall, PointerType, Variable, AllocType
+from driver.ir import ApiCall, PointerType, Variable, AllocType, Constant
 from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
 
 
@@ -99,16 +99,37 @@ class CBFactory(Factory):
                     # idx = int(arg_cond.len_depends_on.replace("param_", ""))
                     # idx_type = api_call.arg_types[idx]
                     idx_cond = conditions.argument_at[idx]
-                    b_len = rng_ctx.create_new_var(idx_type, idx_cond, False)
-                    try:
-                        api_call.set_pos_arg_var(idx, b_len)
-                    except:
-                        print("Exception here")
-                        from IPython import embed; embed(); exit(1)
+                    if DataLayout.is_ptr_level(arg_type, 2):
+                        var = arg_var.get_variable()
+                        buff = var.get_buffer()
+                        n_elem = buff.get_number_elements()
+                        b_len = rng_ctx.create_new_const_int(n_elem)
+                        b_len_arg = rng_ctx.create_new_var(idx_type, idx_cond, 
+                                                           False)
+                        # print("DataLayout.is_ptr_level(arg_type, 2)")
+                        # from IPython import embed; embed(); exit(1)
 
-                    rng_ctx.update(api_call, arg_cond, arg_pos)
-                    rng_ctx.update(api_call, idx_cond, idx)
-                    rng_ctx.var_to_cond[x].len_depends_on = b_len
+                        try:
+                            api_call.set_pos_arg_var(idx, b_len)
+                        except:
+                            print("Exception here")
+                            from IPython import embed; embed(); exit(1)
+
+                        rng_ctx.update(api_call, arg_cond, arg_pos)
+                        rng_ctx.update(api_call, idx_cond, idx)
+                        rng_ctx.var_to_cond[x].len_depends_on = b_len_arg
+                    else:
+                        b_len = rng_ctx.create_new_var(idx_type, idx_cond, 
+                                                       False)
+                        try:
+                            api_call.set_pos_arg_var(idx, b_len)
+                        except:
+                            print("Exception here")
+                            from IPython import embed; embed(); exit(1)
+
+                        rng_ctx.update(api_call, arg_cond, arg_pos)
+                        rng_ctx.update(api_call, idx_cond, idx)
+                        rng_ctx.var_to_cond[x].len_depends_on = b_len
 
         # if api_call.function_name == "htp_connp_create" and self.attempt > 0:
         #     self.attempt -= 1
