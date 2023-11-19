@@ -1,7 +1,9 @@
 #include "AccessType.h"
 #include "AccessTypeHandler.h"
 
+#include "Graphs/SVFG.h"
 #include "SVF-LLVM/LLVMUtil.h"
+#include "Util/SVFUtil.h"
 
 #define MAX_STACKSIZE 20
 
@@ -9,6 +11,8 @@
 bool ValueMetadata::debug = false;
 std::string ValueMetadata::debug_condition = "";
 bool ValueMetadata::consider_indirect_calls = false;
+
+ValueMetadata::MyCallEdgeMap ValueMetadata::myCallEdgeMap_inst;
 
 // NOT EXPOSED FUNCTIONS -- THESE FUNCTIONS ARE MEANT FOR ONLY INTERNAL USAGE!
 bool areConnected(const VFGNode*, const VFGNode*);
@@ -190,10 +194,36 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
             auto inst = SVFUtil::dyn_cast<CallBase>(llvminst);
             // outs() << "[INFO] callinst2 " << *inst << "\n";
             FunctionType *ftype = inst->getFunctionType();
+            bool ret_type_is_ok = false;
             if (ftype->getReturnType() == retType) {
                 // outs() << "[INFO] => type ok!\n";
                 // alloca_set.insert(vfgnode);
                 allocainst_set.insert(inst);
+                ret_type_is_ok = true;
+            }
+
+            if (ret_type_is_ok && 
+                ValueMetadata::myCallEdgeMap_inst.find(call_node) != 
+                ValueMetadata::myCallEdgeMap_inst.end()) {
+                // outs() << "[DEBUG] -> call_node is in the edge map\n";
+                auto targets = 
+                    ValueMetadata::myCallEdgeMap_inst[call_node];
+                for (auto t: targets) {
+                    std::string fun = t->getName();
+                    // malloc handler
+                    AccessType acNode(retType);
+                    handlerDispatcher(&mdata, fun, node, call_node, -1, 
+                                        acNode, C_RETURN, nullptr);
+
+                    // handlerDispatcher(&mdata, fun, node, call_node, -1, 
+                    //                     acNode, C_RETURN, nullptr);
+
+                    // for (unsigned p = 0; p < ftype->getNumParams(); p++) {
+                    //     handlerDispatcher(&mdata, fun, node, call_node, p, 
+                    //                         acNode, C_RETURN);
+                    // }
+                }
+                    // visited_functions.insert(t);
             }
 
             // if (callee != nullptr) {
@@ -256,7 +286,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                     working.push(std::make_pair(dst, curr_stack));
                     visited.insert(dst);
                 }
-                 else {
+                else {
                     working.push(std::make_pair(dst, curr_stack));
                     visited.insert(dst);
                 }
@@ -1135,6 +1165,33 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
             } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::BinaryOp) {
                 acNode.setAccess(AccessType::Access::read);
                 ats->insert(acNode, vNode->getICFGNode());
+            } else if (vNode->getNodeKind() == VFGNode::VFGNodeK::AParm) {
+                // outs() << "****: " << vNode->toString() << "\n";
+                auto actual_param = SVFUtil::dyn_cast<ActualParmSVFGNode>(vNode);
+                // 1 - get icfg node from vNode
+                auto icfg_node = actual_param->getICFGNode();
+                // 2 - check it is a call inst
+                auto cs = actual_param->getCallSite();
+                auto param = actual_param->getParam();
+                // 3 - check it is in the newedge relation
+                auto m = ValueMetadata::myCallEdgeMap_inst;
+                if (m.find(cs) != m.end() && param != nullptr) {
+                    // 4 - for each target check handling
+                    for (auto t: m[cs]) {
+
+                        int n_param = 0;
+                        for  (auto p: cs->getActualParms()) {
+                            if (p == param) 
+                                break;
+                            n_param++;
+                        }
+
+                        handlerDispatcher(
+                            &mdata, t->getName(), vNode->getICFGNode(), cs,
+                            n_param, acNode, C_PARAM, &p);
+                    }
+                }
+                
             } 
             // else if (vNode->getNodeKind() == VFGNode::VFGNodeK::FRet) {
             //     // outs() << "[INFO] I found a FormalRet\n";
