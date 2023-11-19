@@ -8,7 +8,7 @@ from constraints import ConditionUnsat, RunningContext, ConditionManager
 from dependency import DependencyGraph
 from driver import Driver
 from driver.factory import Factory
-from driver.ir import ApiCall, PointerType, Variable, AllocType
+from driver.ir import ApiCall, PointerType, Variable, AllocType, Constant
 from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
 
 
@@ -18,6 +18,8 @@ class CBFactory(Factory):
     conditions          : FunctionConditionsSet
     dependency_graph    : Dict[Api, Set[Api]]
     condition_manager   : ConditionManager
+
+    MAX_ALLOC_SIZE = 1024
     
     def __init__(self, api_list: Set[Api], driver_size: int, 
                     dgraph: DependencyGraph, conditions: FunctionConditionsSet):
@@ -48,7 +50,9 @@ class CBFactory(Factory):
 
         self.source_api = list(self.condition_manager.get_source_api())
 
-    attempt = 2
+        self.init_api = list(self.condition_manager.get_init_api())
+
+    attempt = 3
 
     def try_to_instantiate_api_call(self, api_call: ApiCall,
                         conditions: FunctionConditions, 
@@ -70,9 +74,11 @@ class CBFactory(Factory):
                 idx = int(arg_cond.len_depends_on.replace("param_", ""))
                 idx_type = api_call.arg_types[idx]
 
-                if DataLayout.instance().is_enum_type(idx_type.get_token()):
-                    arg_cond.len_depends_on = ""
-                elif isinstance(idx_type, PointerType):
+                # if DataLayout.instance().is_enum_type(idx_type.get_token()):
+                #     arg_cond.len_depends_on = ""
+                # elif isinstance(idx_type, PointerType):
+                #     arg_cond.len_depends_on = ""
+                if idx_type.get_token() not in DataLayout.size_types:
                     arg_cond.len_depends_on = ""
                 else:
                     
@@ -93,16 +99,37 @@ class CBFactory(Factory):
                     # idx = int(arg_cond.len_depends_on.replace("param_", ""))
                     # idx_type = api_call.arg_types[idx]
                     idx_cond = conditions.argument_at[idx]
-                    b_len = rng_ctx.create_new_var(idx_type, idx_cond, False)
-                    try:
-                        api_call.set_pos_arg_var(idx, b_len)
-                    except:
-                        print("Exception here")
-                        from IPython import embed; embed(); exit(1)
+                    if DataLayout.is_ptr_level(arg_type, 2):
+                        var = arg_var.get_variable()
+                        buff = var.get_buffer()
+                        n_elem = buff.get_number_elements()
+                        b_len = rng_ctx.create_new_const_int(n_elem)
+                        b_len_arg = rng_ctx.create_new_var(idx_type, idx_cond, 
+                                                           False)
+                        # print("DataLayout.is_ptr_level(arg_type, 2)")
+                        # from IPython import embed; embed(); exit(1)
 
-                    rng_ctx.update(api_call, arg_cond, arg_pos)
-                    rng_ctx.update(api_call, idx_cond, idx)
-                    rng_ctx.var_to_cond[x].len_depends_on = b_len
+                        try:
+                            api_call.set_pos_arg_var(idx, b_len)
+                        except:
+                            print("Exception here")
+                            from IPython import embed; embed(); exit(1)
+
+                        rng_ctx.update(api_call, arg_cond, arg_pos)
+                        rng_ctx.update(api_call, idx_cond, idx)
+                        rng_ctx.var_to_cond[x].len_depends_on = b_len_arg
+                    else:
+                        b_len = rng_ctx.create_new_var(idx_type, idx_cond, 
+                                                       False)
+                        try:
+                            api_call.set_pos_arg_var(idx, b_len)
+                        except:
+                            print("Exception here")
+                            from IPython import embed; embed(); exit(1)
+
+                        rng_ctx.update(api_call, arg_cond, arg_pos)
+                        rng_ctx.update(api_call, idx_cond, idx)
+                        rng_ctx.var_to_cond[x].len_depends_on = b_len
 
         # if api_call.function_name == "htp_connp_create" and self.attempt > 0:
         #     self.attempt -= 1
@@ -142,27 +169,35 @@ class CBFactory(Factory):
                     #                                  arg_pos)
                     arg_var = rng_ctx.try_to_get_var(api_call, conditions, 
                                                      arg_pos)
-                api_call.set_pos_arg_var(arg_pos, arg_var)
+                
+                if (arg_cond.is_malloc_size and 
+                    arg_type.token in DataLayout.size_types):
+                    api_call.set_pos_arg_var(arg_pos, arg_var, 
+                                             CBFactory.MAX_ALLOC_SIZE)
+                else:
+                    api_call.set_pos_arg_var(arg_pos, arg_var)
             except ConditionUnsat as ex:
-                # if api_call.function_name == "vpx_codec_get_frame":
+                # if api_call.function_name == "vpx_codec_decode" and self.attempt == 0:
                 #     print(f"Unsat for {api_call.function_name}")
                 #     from IPython import embed; embed(); exit(1)
+                # self.attempt -= 1
                 unsat_vars.add((arg_pos, arg_cond))
         
         if api_call.is_vararg:
             ats_t = AccessTypeSet()
             cond_t = ValueMetadata(ats_t, False, False, False, "", [])
 
-            # type.get_pointee_type() == self.stub_void):
-            new_buff = rng_ctx.create_new_var(rng_ctx.stub_char_array, 
-                                              cond_t, False)
-            val = new_buff.get_address()
-            var_t = None
-            if isinstance(val, Address):
-                var_t = val.get_variable()
-            elif isinstance(val, Variable):
-                var_t = val
-            api_call.vararg_var[0] = var_t
+            for i, _ in enumerate(api_call.vararg_var):
+                # type.get_pointee_type() == self.stub_void):
+                new_buff = rng_ctx.create_new_var(rng_ctx.stub_char_array, 
+                                                cond_t, False)
+                val = new_buff.get_address()
+                var_t = None
+                if isinstance(val, Address):
+                    var_t = val.get_variable()
+                elif isinstance(val, Variable):
+                    var_t = val
+                api_call.vararg_var[i] = var_t.get_address()
 
 
         ret_cond = conditions.return_at
@@ -219,6 +254,10 @@ class CBFactory(Factory):
 
         # List[(ApiCall, RunningContext)]
         drv = list()
+
+        # print("Instantiate the first source api")
+        # print("inspect: ares_parse_a_reply")
+        # from IPython import embed; embed(); exit(1)
 
         begin_api = self.get_random_source_api()
         begin_condition = get_cond(begin_api)

@@ -80,9 +80,9 @@ class Factory(ABC):
             #     from IPython import embed; embed()
             #     exit(1)
 
-            # THIS IS A DOUBLE CHECK, NOT SURE WE NEED IT, BETTER SAFE THAN SORRY!!
-            if a_type_core == "void":
-                a_is_incomplete = True
+            # # THIS IS A DOUBLE CHECK, NOT SURE WE NEED IT, BETTER SAFE THAN SORRY!!
+            # if a_type_core == "void":
+            #     a_is_incomplete = True
 
             # NOTE: a_size comes wrong from LLVM analysis, I use this trick to fix
             # the size

@@ -753,6 +753,10 @@ class ValueMetadata {
         static std::string debug_condition;
         static bool consider_indirect_calls;
 
+        typedef std::map<const CallICFGNode *, std::set<const SVFFunction*>> MyCallEdgeMap;
+
+        static MyCallEdgeMap myCallEdgeMap_inst;
+
         static ValueMetadata extractParameterMetadata(
             const SVFG*, const Value*, const Type*);
         static ValueMetadata extractReturnMetadata(

@@ -1,7 +1,3 @@
-
-import json, collections, copy, os
-from typing import List, Set, Dict, Tuple, Optional
-
 from common import Utils
 
 # Extract type system from library (only for structs):
@@ -21,7 +17,7 @@ class DataLayout:
     size_types = ["size_t", "int", "uint32_t", "uint64_t", "__uint32_t", "unsigned int", "int64_t", "unsigned long", "__u_int"]
 
     string_types = ["char*", "unsigned char*", "wchar_t*", \
-                    "u_char*", "u_char*"]
+                    "u_char*", "u_char"]
     # string_types = ["char*", "unsigned char*", "wchar_t*", \
     #                 "char**", "unsigned char**", "wchar_t**" \
     #                 "u_char*", "u_char**"]
@@ -203,6 +199,8 @@ class DataLayout:
         elif type == "uint16_t":
             return 8*2
         elif type == "unsigned char":
+            return 8
+        elif type == "bool":
             return 8
         elif type == "wchar_t":
             return 8*4

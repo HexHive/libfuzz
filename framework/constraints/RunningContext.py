@@ -1,4 +1,4 @@
-from typing import List, Set, Dict, Tuple, Optional
+from typing import List, Set, Dict, Tuple, Optional, Any
 
 import random, copy, string, traceback
 
@@ -6,7 +6,7 @@ from driver import Context
 from driver.ir import Variable, Type, Value, PointerType, AllocType, CleanBuffer, CleanDblBuffer
 from driver.ir import Address, NullConstant, Buffer, ConstStringDecl, ApiCall
 from driver.ir import BuffDecl, BuffInit, FileInit, Statement, DynArrayInit
-from driver.ir import SetStringNull, TypeTag, Function, DynDblArrInit
+from driver.ir import SetStringNull, TypeTag, Function, DynDblArrInit, Constant
 from . import Conditions, ConditionManager
 from common.conditions import *
 from common import DataLayout
@@ -167,10 +167,7 @@ class RunningContext(Context):
         else:
             cond = api_cond.argument_at[arg_pos]
             type = api_call.arg_types[arg_pos]
-
-        is_sink = ConditionManager.instance().is_sink(api_call)
-        is_source = ConditionManager.instance().is_source(cond)
-    
+   
         # if (isinstance(type, PointerType) and 
         # type.get_base_type().token == "TIFF" and 
         # if arg_pos == -1 and api_call.function_name == "pcap_geterr":
@@ -183,7 +180,22 @@ class RunningContext(Context):
         #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
 
+        is_sink = ConditionManager.instance().is_sink(api_call)
+        is_source = ConditionManager.instance().is_source(cond)
+        is_init = ConditionManager.instance().is_init(api_call, arg_pos)
+        
+        # if (api_call.function_name == "TIFFReadFromUserBuffer" and 
+        #     arg_pos == 4):
+        #     # self.attempt -= 1
+        #     print(f"try_to_get_var {type}")
+        #     from IPython import embed; embed(); exit(1)
+
         val = None
+
+
+        # if arg_pos == 0 and type.token == "htp_tx_t*":
+        #     print(f"try_to_get_var {type}")
+        #     from IPython import embed; embed(); exit(1)
 
         # for variables used in ret -> I take any compatible type and overwrite
         # their conditions
@@ -209,9 +221,44 @@ class RunningContext(Context):
                 else:
                     # raise ConditionUnsat()
                     raise ConditionUnsat(traceback.format_stack())
+        elif is_init:
+            # tt = None
+            # if isinstance(type, PointerType):
+            #     if type.get_pointee_type().is_incomplete:
+            #         tt = type
+            #     else:
+            #         tt = type.get_pointee_type()
+            # else:
+            #     tt = type
+
+            for v in self.variables_alive:
+                # skip variables with different types and with incompatible
+                # conds
+                # if (not ((v.get_type() == tt or v.get_type() == type) and 
+                #     self.var_to_cond[v].is_compatible_with(cond))):
+                #     continue
+                if (v.get_type() != type or 
+                    not self.var_to_cond[v].is_compatible_with(cond)):
+                    continue
+
+                c = self.var_to_cond[v]
+                if not c.is_init():
+                    val = v
+                    break
+                    
+            if val is None:
+                val = self.create_new_var(type, cond, is_ret)
+
+            if (isinstance(val, Variable) and 
+                isinstance(type, PointerType)):
+                val = val.get_address()
         elif self.has_vars_type(type, cond):
             try:
-                val = self.randomly_gimme_a_var(type, cond, is_ret)
+                # val = self.randomly_gimme_a_var(type, cond, is_ret)
+                val = self.get_random_var(type, cond)
+                if (isinstance(val, Variable) and 
+                    isinstance(val.get_type(), PointerType)):
+                    val = val.get_address()
             except Exception as e:
                 print("randomly_gimme_a_var empty?!")
                 from IPython import embed; embed(); exit(1)
@@ -231,7 +278,7 @@ class RunningContext(Context):
             else:
                 tt = type
 
-            # check if the ats allow to generate an object
+            # check if the ats allows us to generate an object
             if not is_ret:
                 if not DataLayout.is_ptr_level(type, 2):
                     if tt.is_incomplete:
@@ -241,11 +288,13 @@ class RunningContext(Context):
                         not self.is_init_api(api_call, api_cond, arg_pos) 
                         and not DataLayout.instance().is_fuzz_friendly(
                             tt.token)):
-                            # raise ConditionUnsat()
                             raise_an_exception = True
+                    if ConditionManager.instance().has_source(tt):
+                        raise_an_exception = True
                 # print(f"{tt}is not fuzz friendly")
                 # from IPython import embed; embed(); exit(1)
                 # raise ConditionUnsat()
+                
             elif ((not Conditions.is_unconstraint(cond) or
                 tt.is_incomplete) and 
                 not DataLayout.instance().has_user_define_init(tt.token)):
@@ -453,7 +502,7 @@ class RunningContext(Context):
         if ((cond.is_array or type.token in DataLayout.string_types) and
             alloctype == AllocType.STACK):
             new_buffer = Buffer(buff_name, self.MAX_ARRAY_SIZE, type, alloctype)
-        elif type.token == "char**":
+        elif type.token == "char**" or type.token == "char const**":
             new_buffer = Buffer(buff_name, self.DOUBLE_PTR_SIZE, type, alloctype)
         else:
             new_buffer = Buffer(buff_name, 1, type, alloctype)
@@ -462,6 +511,12 @@ class RunningContext(Context):
         self.buffs_counter[type] = buff_counter + 1
 
         return new_buffer
+    
+    def create_new_const_int(self, value: Any):
+        type_token = "int"
+        type_size = DataLayout.instance().get_type_size(type_token)
+        type = Type(type_token, type_size)
+        return Constant(type, value)
 
     def create_new_var(self, type: Type, cond: ValueMetadata, force_pointer: bool):
 
@@ -711,7 +766,8 @@ class RunningContext(Context):
         return (type_str, type_hash)
     
     def update_var(self, val: Optional[Value], cond: ValueMetadata,
-                   is_ret: bool = False, is_sink: bool = False):
+                   is_ret: bool = False, is_sink: bool = False,
+                   is_init: bool = False, is_set: bool = False):
         synthetic_cond = None
 
         var = None
@@ -730,6 +786,9 @@ class RunningContext(Context):
             x1.parent = x0
             synthetic_cond = AccessTypeSet(set([x0, x1]))
             var = val.get_variable()
+        # Constant Values do not need to update conditions
+        elif isinstance(val, Constant):
+            return
         else:
             raise Exception(f"I don't know this val: {val}")
 
@@ -744,10 +803,16 @@ class RunningContext(Context):
         if already_present and is_sink:
             del self.var_to_cond[var]
             self.variables_alive.remove(var)
+            # double check
             self.remove_from_new_vars(var)
 
         if var in self.var_to_cond and synthetic_cond is not None:
             self.var_to_cond[var].add_conditions(synthetic_cond)
+
+            if is_init or is_set:
+                self.var_to_cond[var].set_init()
+            if is_sink:
+                self.var_to_cond[var].unset_init()
 
             # from IPython import embed; embed(); exit(1);
             # import pdb; pdb.set_trace(); exit(1);
@@ -779,12 +844,13 @@ class RunningContext(Context):
             return
         
         is_sink = ConditionManager.instance().is_sink(api_call)
+        is_init = ConditionManager.instance().is_init(api_call, arg_pos)
+        is_set = ConditionManager.instance().is_set(api_call, arg_pos)
 
-        self.update_var(val, cond, is_ret, is_sink)
-
+        self.update_var(val, cond, is_ret, is_sink, is_init, is_set)
     # the return structure (buff_var, dynamic_buff, fix_buff)
     # dynamic_buff - list of dynamic allocated buffer
-    # fix_buff - list of fixed size buffers
+    # fix_buff - list of fixed size buffer
     def get_fixed_and_dynamic_buffers(self) -> Tuple[List[Buffer],List[Buffer]]:
 
         dyn_buff = []
@@ -802,6 +868,9 @@ class RunningContext(Context):
                         buff = x.get_variable().get_buffer()
                     elif isinstance(x, Variable):
                         buff = x.get_buffer()
+                    # Constant Values are not buffers
+                    elif isinstance(x, Constant):
+                        continue
                     else:
                         raise Exception(f"{x} did not expected here!")
 
@@ -903,10 +972,16 @@ class RunningContext(Context):
                 counter_size += [len_buff.get_allocated_size()/8]
             elif isinstance(init, DynDblArrInit):
                 len_var = init.get_len_var()
-                len_buff = len_var.get_buffer()
-                buff = init.get_buffer()
-                n_element = buff.get_number_elements()
-                counter_size += [len_buff.get_allocated_size()/8] * n_element
+                if isinstance(len_var, Constant):
+                    n_element = len_var.get_value()
+                    one_cnt_size = len_var.type.get_size()
+                else:
+                    len_buff = len_var.get_buffer()
+                    buff = init.get_buffer()
+                    one_cnt_size = len_buff.get_allocated_size()
+                    n_element = buff.get_number_elements()
+                
+                counter_size += [one_cnt_size/8] * n_element
 
         self.auxiliary_operations_set = True
         self.buff_init = buff_init
@@ -951,6 +1026,11 @@ class RunningContext(Context):
         for b in self.buffs_alive: # type: ignore
             if b.get_type().is_const:
                 continue
+
+            # DIRTY ACK!
+            if b.type.token == "u_char**":
+                continue
+
             if b.get_alloctype() == AllocType.HEAP:
                 cm = ConditionManager.instance().find_cleanup_method(b)
                 if DataLayout.is_ptr_level(b.get_type(), 2):
