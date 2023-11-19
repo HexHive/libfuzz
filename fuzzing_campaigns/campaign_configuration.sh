@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" "c-ares" "zlib" "cjson" )
 export NUM_OF_DRIVERS=( 40 )
 export NUM_OF_APIs=( 2 4 8 16 32  )
@@ -33,7 +34,7 @@ case $CONF in
     ;;
 
   bestconf)
-    export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" "minijail" )
+    export PROJECTS=( "libaom" "libvpx" "libhtp" "minijail" )
     export NUM_OF_DRIVERS=( 20  )
     export NUM_OF_APIs=( 4 8  )
     export TIMEOUT=1h
@@ -41,7 +42,7 @@ case $CONF in
     ;;
 
   minimized)
-    export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" "libpcap" "c-ares" )
+    export PROJECTS=( "libaom" "libvpx" "libhtp" )
     # probably we can fix the number of drivers to match 24 hours
     export NUM_OF_DRIVERS=( 20  )
     export NUM_OF_APIs=( 4 8 )

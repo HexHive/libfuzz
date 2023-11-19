@@ -7,4 +7,4 @@
 
 git clone --no-checkout https://android.googlesource.com/platform/external/cpu_features \
     "$TARGET/repo"
-git -C "$TARGET/repo" checkout 925e059f65798dab125ec08bea999308cf00c86e
+git -C "$TARGET/repo" checkout 99eb6aeb118b624ccf0c3ba371c806462b9f9519
