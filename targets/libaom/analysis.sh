@@ -72,3 +72,25 @@ extract-bc -b "$WORK"/lib/libaom.a
     -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
     -v v0 -t json -do_indirect_jumps \
     -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
+
+
+# manual way to modify automatically extracted constraints
+TMP_FILE=/tmp/const.tmp
+
+NEW_FIELD_CONSTRAINT=$(cat <<EOF
+{
+    "access": "delete",
+    "fields": [],
+    "parent": 0,
+    "type": "422ff5a78e8fa96c8729e7aaafcdcdf5",
+    "type_string": "%struct.aom_codec_ctx*"
+}
+EOF
+)
+echo ${NEW_FIELD_CONSTRAINT} > ${TMP_FILE}
+
+$LIBFUZZ/tool/misc/edit_constraints.py -n ${TMP_FILE} \
+                    -f "aom_codec_destroy" -a 0 \
+                    -c "$LIBFUZZ_LOG_PATH/conditions.json"
+
+rm -f ${TMP_FILE}
