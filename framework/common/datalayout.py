@@ -184,6 +184,8 @@ class DataLayout:
             return 8*8
         elif type == "char":
             return 1*8
+        elif type == "char const":
+            return 1*8
         elif type == "void":
             return 0
         elif type == "size_t":
