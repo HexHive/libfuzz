@@ -23,8 +23,10 @@ if [ ${USE_PER_LIBRARY_TIMEBUDGET} -eq 1 ]; then
     while IFS='|' read -r key value; do
         TIMEOUT_PER_LIBRARY[$key]=$value
     done < time_budget.csv
+    TIMEOUT_SYNC=-1s
+else
+    TIMEOUT_SYNC=${TIMEOUT}
 fi
-TIMEOUT_SYNC=-1s
 
 for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
     for napis in "${NUM_OF_APIs[@]}"; do
@@ -43,6 +45,9 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                 fi
 
                 for fuzz_target in $FUZZ_TARGETS; do
+                    if [[ ${TIMEOUT_SYNC::-1} -eq "-1" ]]; then
+                        TIMEOUT_SYNC=${TIMEOUT}
+                    fi
                     echo "Fuzzing ${project}/${fuzz_target}"
 
                     DRIVER_CORPUS=${PROJECT_FOLDER}/corpus/${fuzz_target}
@@ -75,7 +80,9 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                         echo "Total progress: ${COUNTER}/${TOTAL_FUZZERS}"
                         sleep $TIMEOUT_SYNC
                         CPU_ID=0
-                        TIMEOUT_SYNC=-1s
+                        if [ ${USE_PER_LIBRARY_TIMEBUDGET} -eq 1 ]; then
+                            TIMEOUT_SYNC=-1s
+                        fi
                     fi
                 done
             done
