@@ -29,10 +29,10 @@ do
     # Compile driver for fuzzing
     $CXX -std=c++11 -fsanitize=fuzzer,address -I/"${TARGET}"/work/include \
         "$d" -Wl,--whole-archive "${TARGET}"/work/lib/libpcap.a -Wl,--no-whole-archive \
-        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
+        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}" || true
 
     # Compile driver for coverage
     $CXX -g -std=c++11 -fsanitize=fuzzer -fprofile-instr-generate -fcoverage-mapping -I/"${TARGET}"/work/include \
         "$d" -Wl,--whole-archive  "${TARGET}"/work/lib/libpcap_profile.a -Wl,--no-whole-archive \
-        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${DRIVER_FOLDER}/../profiles/${DRIVER_NAME%%.*}_profile"
+        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${DRIVER_FOLDER}/../profiles/${DRIVER_NAME%%.*}_profile" || true
 done

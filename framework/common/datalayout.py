@@ -182,7 +182,7 @@ class DataLayout:
             return 8*8
         elif type == "unsigned long":
             return 8*8
-        elif type == "char":
+        elif type == "char" or type == "const char" or type == "char const":
             return 1*8
         elif type == "void":
             return 0
