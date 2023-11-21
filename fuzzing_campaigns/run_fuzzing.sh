@@ -17,6 +17,14 @@ let TOTAL_FUZZERS="$(find workdir_*_*/*/drivers/ -type f -executable | wc -l)*IT
 COUNTER=0
 CPU_ID=0
 
+# if needed, load custom timebudget per library from select_stable_drivers.py
+if [ ${USE_PER_LIBRARY_TIMEBUDGET} -eq 1 ]; then
+    declare -A TIMEOUT_PER_LIBRARY
+    while IFS='|' read -r key value; do
+        TIMEOUT_PER_LIBRARY[$key]=$value
+    done < time_budget.csv
+fi
+TIMEOUT_SYNC=-1s
 
 for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
     for napis in "${NUM_OF_APIs[@]}"; do
@@ -26,6 +34,14 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                 DRIVER_FOLDER="${PROJECT_FOLDER}/drivers"
                 RESULTS_FOLDER="${PROJECT_FOLDER}/results/iter_${i}"
                 FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -maxdepth 1 -type f -executable -printf '%P\n')"
+
+                if [ ${USE_PER_LIBRARY_TIMEBUDGET} -eq 1 ]; then
+                    TIMEOUT=${TIMEOUT_PER_LIBRARY[$project]}
+                    if [[ ${TIMEOUT_SYNC::-1} -eq "-1" ]] || [[ ${TIMEOUT::-1} -gt ${TIMEOUT_SYNC::-1} ]]; then
+                        TIMEOUT_SYNC=${TIMEOUT}
+                    fi
+                fi
+
                 for fuzz_target in $FUZZ_TARGETS; do
                     echo "Fuzzing ${project}/${fuzz_target}"
 
@@ -57,8 +73,9 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                     then
                         echo "Running ${MAX_CPUs} fuzzers in parallel, sleeping for now."
                         echo "Total progress: ${COUNTER}/${TOTAL_FUZZERS}"
-                        sleep $TIMEOUT
+                        sleep $TIMEOUT_SYNC
                         CPU_ID=0
+                        TIMEOUT_SYNC=-1s
                     fi
                 done
             done
@@ -71,5 +88,5 @@ if [ $SPARE_FUZZERS -ne 0 ]
 then
     echo "Running ${SPARE_FUZZERS} fuzzers in parallel, sleeping for now."
     echo "Total progress: ${COUNTER}/${TOTAL_FUZZERS}"
-    sleep $TIMEOUT
+    sleep $TIMEOUT_SYNC
 fi

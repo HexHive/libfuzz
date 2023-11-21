@@ -28,8 +28,8 @@ case $CONF in
     ;;
 
   long)
-    export TIMEOUT=1h
-    export ITERATIONS=5
+    export USE_PER_LIBRARY_TIMEBUDGET=1
+    export ITERATIONS=1
     ;;
 
   bestconf)

@@ -86,6 +86,7 @@ fuzzing_campaigns/total_library_coverage*
 fuzzing_campaigns/traces
 fuzzing_campaigns/results.csv
 fuzzing_campaigns/config.txt
+fuzzing_campaigns/time_budget.csv
 
 
 point_to_test/
