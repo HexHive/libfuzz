@@ -333,10 +333,17 @@ class Utils:
                 arg_info.type =  apis_clang_list[function_name]["arguments_info"][i]["type_clang"]
                 # {"const": true, "type_clang": "char**"} becomes:
                 # {"const": true, "type_clang": "char const*"}
-                if (not function_name.startswith("minijail_") and 
-                    not function_name.startswith("pcap_") and 
-                    arg_info.is_const and arg_info.type.endswith("char**")):
-                    arg_info.type = "char const**"
+                # if ((not function_name.startswith("minijail_") or
+                #     not function_name.startswith("pcap_")) and 
+                if function_name.startswith("cJSON_"):
+                    if arg_info.is_const and arg_info.type.endswith("char**"):
+                        arg_info.type = "char const**"
+                    if (arg_info.type.endswith("char const*") and
+                        "const" in arg_info.type):
+                        arg_info.type = arg_info.type.replace(" const", "").strip()
+                        # print("clean?")
+                        # print(arg_info.type)
+                        # exit(1)
 
         # if return_info.type == "void*":
         #     print("VOID*?")
