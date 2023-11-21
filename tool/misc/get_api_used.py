@@ -9,7 +9,7 @@ def _main():
     
     args = parser.parse_args()
     
-    d = args.root
+    root_dir = args.root
     # libs =  "cpu_features libtiff minijail pthreadpool libaom libvpx libhtp libpcap c-ares zlib cjson".split()
     # libs =  "cjson".split()
     libs = set()
@@ -18,35 +18,37 @@ def _main():
 
     # n_drivers = 40
     # apis = [2, 4, 8, 16, 32]    
-    apis = []
+    n_apis = []
     n_drivers = set()
 
     workdirs = set()
-    for x in os.listdir(d):
+    for x in os.listdir(root_dir):
         if x.startswith(workdir_token):
-            workdirs.add(os.path.join(d, x))
+            workdirs.add(os.path.join(root_dir, x))
             n_driver, n_api = x.replace(workdir_token, "").split("_")
-            apis += [int(n_api)]
-            n_drivers = int(n_driver)
+            n_apis += [int(n_api)]
+            n_drivers.add(int(n_driver))
     
     for w in workdirs:
         for l in os.listdir(w):
             libs.add(l)
     
-    base_fold = f"{workdir_token}{n_drivers}_"
     
     stats = {}
-    for a in apis:
-        for l in libs:
-            ll = stats.get(l, set())
-            stats[l] = ll
-            for i in range(n_drivers):
-                fp = os.path.join(d, f"{base_fold}{a}", l, "metadata", f"driver{i}.meta")
-                with open(fp, "r") as f:
-                    md = json.load(f)
-                am = md["api_multiset"]
-                for au in am.keys():
-                    stats[l].add(au)
+    for l in libs:
+        for a in n_apis:
+            for d in n_drivers:
+                base_fold = f"{workdir_token}{d}_"    
+                ll = stats.get(l, set())
+                stats[l] = ll
+                for i in range(d):
+                    fp = os.path.join(root_dir, f"{base_fold}{a}", l, "metadata", f"driver{i}.meta")
+                    if os.path.isfile(fp):
+                        with open(fp, "r") as f:
+                            md = json.load(f)
+                        am = md["api_multiset"]
+                        for au in am.keys():
+                            stats[l].add(au)
     for l, s in stats.items():
         print(f"{l}: {len(s)}")
 
