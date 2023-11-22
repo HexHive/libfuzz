@@ -43,7 +43,7 @@ case $CONF in
   minimized)
     export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" "libpcap" "c-ares" "zlib" "cjson" )
     # probably we can fix the number of drivers to match 24 hours
-    export NUM_OF_DRIVERS=( 20  )
+    export NUM_OF_DRIVERS=( 24  )
     export NUM_OF_APIs=( 4 8 )
     export TIMEOUT=30m
     export ITERATIONS=1

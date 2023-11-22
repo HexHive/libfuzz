@@ -93,7 +93,7 @@ done
 SPARE_FUZZERS=$(( COUNTER % MAX_CPUs ))
 if [ $SPARE_FUZZERS -ne 0 ]
 then
-    echo "Running ${SPARE_FUZZERS} fuzzers in parallel, sleeping for now."
+    echo "Running ${SPARE_FUZZERS} fuzzers in parallel, sleeping for ${TIMEOUT_SYNC}."
     echo "Total progress: ${COUNTER}/${TOTAL_FUZZERS}"
     sleep $TIMEOUT_SYNC
 fi
