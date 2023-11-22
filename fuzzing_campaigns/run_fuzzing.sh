@@ -63,22 +63,24 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                     FUZZ_CORPUS=/libfuzzpp/$DRIVER_CORNEW
                     CRASHES=/libfuzzpp/$CRASHES_DIR
 
-                    docker run \
-                        --rm \
-                        --cpuset-cpus $CPU_ID \
-                        -d \
-                        --name ${project}_${fuzz_target}_${ndrivers}_${napis}_${i} \
-                        -v $(pwd):/libfuzzpp \
-                        --mount type=tmpfs,destination=/tmpfs \
-                        -t $IMG_NAME \
-                        timeout -k 10s $TIMEOUT $FUZZ_BINARY $FUZZ_CORPUS -artifact_prefix=${CRASHES}/ -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 -detect_leaks=0 -fork=1
+                    echo "Timeout ${TIMEOUT}"
+                    # docker run \
+                    #     --rm \
+                    #     --cpuset-cpus $CPU_ID \
+                    #     -d \
+                    #     --name ${project}_${fuzz_target}_${ndrivers}_${napis}_${i} \
+                    #     -v $(pwd):/libfuzzpp \
+                    #     --mount type=tmpfs,destination=/tmpfs \
+                    #     -t $IMG_NAME \
+                    #     timeout -k 10s $TIMEOUT $FUZZ_BINARY $FUZZ_CORPUS -artifact_prefix=${CRASHES}/ -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 -detect_leaks=0 -fork=1
                     COUNTER=$(( COUNTER + 1 ))
                     CPU_ID=$(( CPU_ID + 1 ))
-                    if [ $CPU_ID -eq $MAX_CPUs ]
+                    if [ $CPU_ID -eq $MAX_CPUs ];
                     then
                         echo "Running ${MAX_CPUs} fuzzers in parallel, sleeping for now."
                         echo "Total progress: ${COUNTER}/${TOTAL_FUZZERS}"
-                        sleep $TIMEOUT_SYNC
+                        echo "Sleeping for ${TIMEOUT_SYNC}"
+                        # sleep $TIMEOUT_SYNC
                         CPU_ID=0
                         if [ ${USE_PER_LIBRARY_TIMEBUDGET} -eq 1 ]; then
                             TIMEOUT_SYNC=-1s
