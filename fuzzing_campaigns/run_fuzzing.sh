@@ -48,7 +48,7 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                     if [[ ${TIMEOUT_SYNC::-1} -eq "-1" ]]; then
                         TIMEOUT_SYNC=${TIMEOUT}
                     fi
-                    echo "Fuzzing ${project}/${fuzz_target}"
+                    echo "Fuzzing ./workdir_${ndrivers}_${napis}/${project}/${fuzz_target} [${i}/${ITERATIONS}] w/ t.o. ${TIMEOUT}"
 
                     DRIVER_CORPUS=${PROJECT_FOLDER}/corpus/${fuzz_target}
                     DRIVER_CORNEW=${RESULTS_FOLDER}/corpus_new/${fuzz_target}
@@ -63,24 +63,22 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                     FUZZ_CORPUS=/libfuzzpp/$DRIVER_CORNEW
                     CRASHES=/libfuzzpp/$CRASHES_DIR
 
-                    echo "Timeout ${TIMEOUT}"
-                    # docker run \
-                    #     --rm \
-                    #     --cpuset-cpus $CPU_ID \
-                    #     -d \
-                    #     --name ${project}_${fuzz_target}_${ndrivers}_${napis}_${i} \
-                    #     -v $(pwd):/libfuzzpp \
-                    #     --mount type=tmpfs,destination=/tmpfs \
-                    #     -t $IMG_NAME \
-                    #     timeout -k 10s $TIMEOUT $FUZZ_BINARY $FUZZ_CORPUS -artifact_prefix=${CRASHES}/ -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 -detect_leaks=0 -fork=1
+                    docker run \
+                        --rm \
+                        --cpuset-cpus $CPU_ID \
+                        -d \
+                        --name ${project}_${fuzz_target}_${ndrivers}_${napis}_${i} \
+                        -v $(pwd):/libfuzzpp \
+                        --mount type=tmpfs,destination=/tmpfs \
+                        -t $IMG_NAME \
+                        timeout -k 10s $TIMEOUT $FUZZ_BINARY $FUZZ_CORPUS -artifact_prefix=${CRASHES}/ -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 -detect_leaks=0 -fork=1
                     COUNTER=$(( COUNTER + 1 ))
                     CPU_ID=$(( CPU_ID + 1 ))
                     if [ $CPU_ID -eq $MAX_CPUs ];
                     then
-                        echo "Running ${MAX_CPUs} fuzzers in parallel, sleeping for now."
+                        echo "Running ${MAX_CPUs} fuzzers in parallel, sleeping for ${TIMEOUT_SYNC}."
                         echo "Total progress: ${COUNTER}/${TOTAL_FUZZERS}"
-                        echo "Sleeping for ${TIMEOUT_SYNC}"
-                        # sleep $TIMEOUT_SYNC
+                        sleep $TIMEOUT_SYNC
                         CPU_ID=0
                         if [ ${USE_PER_LIBRARY_TIMEBUDGET} -eq 1 ]; then
                             TIMEOUT_SYNC=-1s
