@@ -7,7 +7,10 @@ export NUM_OF_SEEDS=1
 # export POLICY="constraint_based"
 export POLICY="constraint_based_weigth"
 export MAX_CPUs=$(($(nproc) - 1))
+# used w/ CONF=minimized
 export USE_CUSTOM_APIS=0
+# used w/ CONF=long
+export USE_PER_LIBRARY_TIMEBUDGET=0
 
 case $CONF in
 
