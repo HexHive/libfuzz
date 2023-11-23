@@ -9,6 +9,11 @@ sys.path.append(PROJECT_FOLDER)
 
 import tool.misc.score as scr
 
+seconds_per_unit = {"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800}
+
+def normalize_time_boudget(s):
+    return int(s[:-1]) * seconds_per_unit[s[-1]]
+
 def _main():
 
     parser = argparse.ArgumentParser(description='Select stable drivers')
@@ -21,6 +26,9 @@ def _main():
     parser.add_argument('-simulate', '-s', action='store_true',
                         help='Simulation only, not moving files around', 
                         required=False)
+    parser.add_argument('-timebudget', '-b', type=str,
+                        help='Compute budget time for long testing', 
+                        required=True)
 
     args = parser.parse_args()
 
@@ -28,16 +36,19 @@ def _main():
     rootdir = args.rootdir
     simulate = args.simulate
     threshold = args.threshold
+    timebudget = normalize_time_boudget(args.timebudget)
 
     libraries = scr.load_report(report, rootdir)
 
     best_drivers = {}
 
+    timebudget_per_libary = {}
+
     # print(libraries)
     for lib, drvs in libraries.items():
         best_drvs = scr.get_best_drivers(drvs, threshold)
-
         best_drivers[lib] = best_drvs
+        timebudget_per_libary[lib] = f"{int(timebudget/len(best_drvs))}s"
         # print("-" * 10)
         # print(lib)
         # print(best_drvs)
@@ -45,7 +56,8 @@ def _main():
     if simulate:
         print("[INFO] Only simulation, here the drivers I would select:")
         for lib, drvs in best_drivers.items():
-            print(f"{lib}: {len(drvs)} drivers")
+            tb = timebudget_per_libary[lib]
+            print(f"{lib}: {len(drvs)} drivers w/ timebudget {tb}")
             for d in drvs:
                 n_drivers = d['n_drivers']
                 n_apis = d['n_apis']
@@ -90,6 +102,11 @@ def _main():
             # os.system(f"cp -r workdir_{n_drivers}_{n_apis}/{lib}/corpus_new/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus_new")
 
             os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/crashes/{driver}")
+
+    # save timebudget per library
+    with open("./time_budget.csv", "w") as f:
+        for l, t in timebudget_per_libary.items():
+            f.write(f"{l}|{t}\n")
 
 
 if __name__ == "__main__":

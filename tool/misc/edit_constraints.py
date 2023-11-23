@@ -9,7 +9,7 @@ def __main():
                         help='New constraint to add', required=True)
     parser.add_argument('-function', '-f', type=str, 
                         help='Function to work on', required=True)
-    parser.add_argument('-argument', '-a', type=str, 
+    parser.add_argument('-argument', '-a', type=int, 
                         help='Argument to work on (-1 for return value)', 
                         required=True)
     parser.add_argument('-constraints', '-c', type=str, help='Constraint File', 

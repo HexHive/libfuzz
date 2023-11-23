@@ -76,18 +76,19 @@ def get_best_drivers(drvs, threshold=0.10):
     for d in sorted(drvs, key=lambda x: x["score"], reverse=True):
         if d["score"] == 0:
             continue
-        api_set = set(d["metadata"]["api_multiset"].keys())
-        # print(f"api set: {api_set}")
-        if len(max_api) == 0:
-            max_api = api_set
-            best_driver += [d]
-            # print("first set")
-        elif not api_set.issubset(max_api):
-            max_api = max_api.union(api_set)
-            best_driver += [d]
-            # print(f"new max_api: {max_api}")
-        # else:
-        #     print("skip!")
+        # api_set = set(d["metadata"]["api_multiset"].keys())
+        # # print(f"api set: {api_set}")
+        # if len(max_api) == 0:
+        #     max_api = api_set
+        #     best_driver += [d]
+        #     # print("first set")
+        # elif not api_set.issubset(max_api):
+        #     max_api = max_api.union(api_set)
+        #     best_driver += [d]
+        #     # print(f"new max_api: {max_api}")
+        # # else:
+        # #     print("skip!")
+        best_driver += [d]
         
         if len(best_driver) >= perc_ok:
             break
