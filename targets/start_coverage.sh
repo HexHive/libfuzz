@@ -36,6 +36,23 @@ if [[ $TOTAL_LIBRARY_COVERAGE ]]; then
     mv show fuzzing_campaigns/total_library_coverage/${TARGET_NAME}
     mv report fuzzing_campaigns/total_library_coverage/${TARGET_NAME}
     mv functions fuzzing_campaigns/total_library_coverage/${TARGET_NAME}
+
+    for i in $( eval echo {1..$ITERATIONS} ); do
+        TARGET_ITER=fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/iter_${i}
+
+        MERGED_PROFDATAS="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/coverage_data/iter_${i}/merged.profdata)"
+        mkdir -p ${TARGET_ITER}
+        llvm-profdata-12 merge -sparse $MERGED_PROFDATAS -o ${TARGET_ITER}/merged.profdata
+
+        llvm-cov-12 show $OBJECTS -instr-profile=${TARGET_ITER}/merged.profdata > show
+        llvm-cov-12 report $OBJECTS -instr-profile=${TARGET_ITER}/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
+        llvm-cov-12 report -show-functions $OBJECTS -instr-profile=${TARGET_ITER}/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
+
+        mv show ${TARGET_ITER}/
+        mv report ${TARGET_ITER}/
+        mv functions ${TARGET_ITER}/
+    done
+
     exit 0
 fi
 
