@@ -76,7 +76,7 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                     CPU_ID=$(( CPU_ID + 1 ))
                     if [ $CPU_ID -eq $MAX_CPUs ];
                     then
-                        echo "Running ${MAX_CPUs} fuzzers in parallel, sleeping for ${TIMEOUT_SYNC}."
+                        echo "Running ${MAX_CPUs} fuzzers in parallel, sleeping for ${TIMEOUT_SYNC}"
                         echo "Total progress: ${COUNTER}/${TOTAL_FUZZERS}"
                         sleep $TIMEOUT_SYNC
                         CPU_ID=0
@@ -93,7 +93,7 @@ done
 SPARE_FUZZERS=$(( COUNTER % MAX_CPUs ))
 if [ $SPARE_FUZZERS -ne 0 ]
 then
-    echo "Running ${SPARE_FUZZERS} fuzzers in parallel, sleeping for ${TIMEOUT_SYNC}."
+    echo "Running ${SPARE_FUZZERS} fuzzers in parallel, sleeping for ${TIMEOUT_SYNC}"
     echo "Total progress: ${COUNTER}/${TOTAL_FUZZERS}"
     sleep $TIMEOUT_SYNC
 fi

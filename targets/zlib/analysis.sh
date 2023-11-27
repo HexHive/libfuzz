@@ -75,3 +75,10 @@ $TOOLS_DIR/condition_extractor/bin/extractor \
     -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
     -v v0 -t json -do_indirect_jumps \
     -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
+
+APIS="adler32_z adler32 crc32 crc32_z gzwrite gzread"
+
+for a in ${APIS}; do
+    $LIBFUZZ/tool/misc/edit_constraints_2.py -v "param_1=>param_2" \
+                    -f ${a} -c "$LIBFUZZ_LOG_PATH/conditions.json"
+done
