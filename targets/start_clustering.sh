@@ -5,7 +5,7 @@ echo "[INFO] CLUSTERING: ${TARGET_NAME}"
 
 source "$HOME/.cargo/env"
 
-DRIVER_FOLDER=${TARGET_WORKDIR}/drivers
+DRIVER_FOLDER=${TARGET_WORKDIR}/cluster_drivers
 CRASHES=${TARGET_WORKDIR}/crashes
 OUTPUT=${TARGET_WORKDIR}/clusters
 LOGS=${OUTPUT}/logs
@@ -14,7 +14,6 @@ rm -Rf $OUTPUT $LOGS || true
 mkdir -p $OUTPUT $LOGS
 
 FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
-
 
 echo $DRIVER_FOLDER
 
