@@ -37,6 +37,29 @@ make install
 mv "$WORK"/lib/libaom.a "$WORK"/lib/libaom_profile.a
 
 cd ..
+mkdir -p "$TARGET/repo/aom_build_cluster"
+cd "$TARGET/repo/aom_build_cluster"
+
+# Compile library for fuzzing
+cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_LIBS=off \
+        -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=DEBUG \
+        -DCMAKE_C_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address" \
+        -DCMAKE_CXX_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address"
+
+echo "make clean"
+make -j"$(nproc)" clean
+echo "make"
+make -j"$(nproc)"
+echo "make install"
+make install
+
+mv "$WORK"/lib/libaom.a "$WORK"/lib/libaom_cluster.a
+
+cd ..
+mkdir -p "$TARGET/repo/aom_build_fuzz"
+cd "$TARGET/repo/aom_build_fuzz"
+
+cd ..
 mkdir -p "$TARGET/repo/aom_build_fuzz"
 cd "$TARGET/repo/aom_build_fuzz"
 
