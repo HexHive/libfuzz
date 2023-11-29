@@ -39,7 +39,7 @@ mv "$WORK"/lib/libcares_static.a "$WORK"/lib/libcares_static_profile.a
 mkdir -p "$TARGET/repo/c-ares_build_cluster"
 cd "$TARGET/repo/c-ares_build_cluster"
 
-# Compile library for coverage
+# Compile library for clustering
 cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_LIBS=off \
         -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug -DCARES_STATIC=on \
         -DCMAKE_C_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g" \

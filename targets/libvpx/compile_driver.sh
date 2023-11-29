@@ -34,15 +34,15 @@ do
     # [TAG] THIS STEP MUST BE ADAPTED FOR EACH LIBRARY
     $CXX -std=c++11 -fsanitize=fuzzer,address -I/${TARGET}/work/include \
         $d -Wl,--whole-archive ${TARGET}/work/lib/libvpx.a -Wl,--no-whole-archive \
-        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
+        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}" || true
 
     # Compile drvier for clustering
     $CXX -g -std=c++11 -fsanitize=fuzzer,address -I/${TARGET}/work/include \
         $d -Wl,--whole-archive ${TARGET}/work/lib/libvpx_cluster.a -Wl,--no-whole-archive \
-        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${CLUSTER_DRIVERS}/${DRIVER_NAME%%.*}_cluster"
+        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${CLUSTER_DRIVERS}/${DRIVER_NAME%%.*}_cluster" || true
 
     # Compile driver for coverage
     $CXX -g -std=c++11  -fsanitize=fuzzer -fprofile-instr-generate -fcoverage-mapping \
         -I/${TARGET}/work/include $d -Wl,--whole-archive ${TARGET}/work/lib/libvpx_profile.a -Wl,--no-whole-archive \
-        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${PROFILE_DRIVERS}/${DRIVER_NAME%%.*}_profile"
+        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${PROFILE_DRIVERS}/${DRIVER_NAME%%.*}_profile" || true
 done

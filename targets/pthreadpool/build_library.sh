@@ -52,8 +52,8 @@ cd "$TARGET/repo/pthreadpool_cluster"
 
 cmake .. -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
         -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_C_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address" \
-        -DCMAKE_CXX_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address" \
+        -DCMAKE_C_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g" \
+        -DCMAKE_CXX_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g" \
         -DBENCHMARK_ENABLE_GTEST_TESTS=off \
         -DBENCHMARK_ENABLE_INSTALL=off
 

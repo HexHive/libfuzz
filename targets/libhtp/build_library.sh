@@ -40,8 +40,7 @@ make -j$(nproc) clean
 # Compile library for clustering
 ./configure --disable-shared --prefix="$WORK" \
         CXXFLAGS="-fsanitize=fuzzer-no-link,address -g" \
-        CFLAGS="-fsanitize=fuzzer-no-link,address -g" \
-        --disable-debug 
+        CFLAGS="-fsanitize=fuzzer-no-link,address -g"
 
 echo "make clean"
 make -j$(nproc) clean

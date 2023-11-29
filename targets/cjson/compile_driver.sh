@@ -34,6 +34,7 @@ do
         "$d" -Wl,--whole-archive "${TARGET}"/work/lib/libcjson.a -Wl,--no-whole-archive \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}" || true
 
+    # Compile driver per cluster
     $CXX -g -std=c++11  -fsanitize=fuzzer,address -I/"${TARGET}"/work/include \
         "$d" -Wl,--whole-archive "${TARGET}"/work/lib/libcjson_cluster.a -Wl,--no-whole-archive \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${CLUSTER_DRIVERS}/${DRIVER_NAME%%.*}_cluster" || true
@@ -41,5 +42,5 @@ do
     # Compile driver for coverage
     $CXX -g -std=c++11  -fsanitize=fuzzer -fprofile-instr-generate -fcoverage-mapping -I/"${TARGET}"/work/include \
         "$d" -Wl,--whole-archive  "${TARGET}"/work/lib/libcjson_profile.a -Wl,--no-whole-archive \
-        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${PROFILE_DRIVERS}/${DRIVER_NAME%%.*}_profile"
+        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${PROFILE_DRIVERS}/${DRIVER_NAME%%.*}_profile" || true
 done
