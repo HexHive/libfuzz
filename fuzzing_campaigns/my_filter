@@ -1,0 +1,7 @@
+FILES
+/drivers/*
+FUNCTIONS
+LLVMFuzzerTestOneInput
+_start
+__libc_start_main
+main

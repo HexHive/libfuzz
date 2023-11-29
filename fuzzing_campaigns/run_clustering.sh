@@ -34,9 +34,7 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
 		continue
 	    fi
             CRASHES=${PROJECT_WORKDIR}/crashes
-
-            HAVE_SOMETHING=0
-
+            
             for i in $( eval echo {1..$ITERATIONS} ); do
                 for driver_name in $DRIVER_NAMES; do
                     driver_name=$(basename $driver_name)
@@ -45,16 +43,13 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
 
                     DRIVER_CRASHES="${PROJECT_WORKDIR}/results/iter_${i}/crashes/${driver_name}"
                     [ "$(ls -A ${DRIVER_CRASHES})" ] \
-                        && cp ${DRIVER_CRASHES}/* ${CRASHES}/${driver_name}; HAVE_SOMETHING=1; echo "xx" || echo "No crashes for ${project}/${driver_name} on iter ${i}"
+                        && cp ${DRIVER_CRASHES}/* ${CRASHES}/${driver_name} || echo "No crashes for ${project}/${driver_name} on iter ${i}"
                 done
             done
             
-            echo "${HAVE_SOMETHING}"
-            if [[ ${HAVE_SOMETHING} -eq 1 ]]; then
-                PROJECT_FOLDER="/workspaces/libfuzz/fuzzing_campaigns/workdir_${ndrivers}_${napis}/${project}"
-                docker run --privileged --env TARGET=${project} --env TARGET_WORKDIR=${PROJECT_FOLDER} \
-                    -v $(pwd)/..:/workspaces/libfuzz "${IMG_NAME}-${project}"
-            fi
+            PROJECT_FOLDER="/workspaces/libfuzz/fuzzing_campaigns/workdir_${ndrivers}_${napis}/${project}"
+            docker run --privileged --env TARGET=${project} --env TARGET_WORKDIR=${PROJECT_FOLDER} \
+                    -v $(pwd)/..:/workspaces/libfuzz "${IMG_NAME}-${project}" || true
         done
     done
 done
