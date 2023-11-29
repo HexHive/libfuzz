@@ -43,6 +43,21 @@ make install
 mv $WORK/lib/libtiff.a $WORK/lib/libtiff_profile.a
 mv $WORK/lib/libtiffxx.a $WORK/lib/libtiffxx_profile.a
 
+# Compile library for clustering
+./configure --disable-shared --prefix="$WORK" \
+        CXXFLAGS="-fsanitize=fuzzer-no-link,address -g" \
+        CFLAGS="-fsanitize=fuzzer-no-link,address -g"
+
+echo "make clean"
+make -j$(nproc) clean
+echo "make"
+make -j$(nproc)
+echo "make install"
+make install
+
+mv $WORK/lib/libtiff.a $WORK/lib/libtiff_cluster.a
+mv $WORK/lib/libtiffxx.a $WORK/lib/libtiffxx_cluster.a
+
 # Compile library for fuzzing
 ./configure --disable-shared --prefix="$WORK" \
         CXXFLAGS="-fsanitize=fuzzer-no-link,address" \

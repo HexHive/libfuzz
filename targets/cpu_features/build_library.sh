@@ -47,6 +47,25 @@ make install
 mv $WORK/lib/libcpu_features.a $WORK/lib/libcpu_features_profile.a
 
 cd ..
+mkdir -p "$TARGET/repo/cpu_features_build_cluster"
+cd "$TARGET/repo/cpu_features_build_cluster"
+
+# Compile library for clustering
+cmake .. -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
+        -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=DEBUG \
+        -DCMAKE_C_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g" \
+        -DCMAKE_CXX_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g"
+
+echo "make clean"
+make -j$(nproc) clean
+echo "make"
+make -j$(nproc)
+echo "make install"
+make install
+
+mv $WORK/lib/libcpu_features.a $WORK/lib/libcpu_features_cluster.a
+
+cd ..
 mkdir -p "$TARGET/repo/cpu_features_build_fuzz"
 cd "$TARGET/repo/cpu_features_build_fuzz"
 

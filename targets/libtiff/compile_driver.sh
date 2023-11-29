@@ -21,7 +21,10 @@ CXX=$LLVM_DIR/bin/clang++
 CC=$LLVM_DIR/bin/clang
 
 echo "Compiling: ${DRIVER_FOLDER}/${DRIVER}.cc"
-mkdir -p ${DRIVER_FOLDER}/../profiles
+PROFILE_DRIVERS="${DRIVER_FOLDER}"/../profiles
+mkdir -p $PROFILE_DRIVERS
+CLUSTER_DRIVERS="${DRIVER_FOLDER}"/../cluster_drivers
+mkdir -p $CLUSTER_DRIVERS
 
 
 # [TAG] FIRST LOOP FOR COMPILATION!!!
@@ -33,10 +36,15 @@ do
     # Compile driver for fuzzing
     $CXX -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
         $d -Wl,--whole-archive ${TARGET}/work/lib/libtiff.a ${TARGET}/work/lib/libtiffxx.a -Wl,--no-whole-archive \
-        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
+        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}" || true
+    
+    # Compile driver for clustering
+    $CXX -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
+        $d -Wl,--whole-archive ${TARGET}/work/lib/libtiff_cluster.a ${TARGET}/work/lib/libtiffxx_cluster.a -Wl,--no-whole-archive \
+        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${CLUSTER_DRIVERS}/${DRIVER_NAME%%.*}_cluster" || true
 
     # Compile driver for coverage
     $CXX -g -std=c++11  -fsanitize=fuzzer -fprofile-instr-generate -fcoverage-mapping \
         -I/${TARGET}/work/include $d -Wl,--whole-archive ${TARGET}/work/lib/libtiff_profile.a ${TARGET}/work/lib/libtiffxx_profile.a -Wl,--no-whole-archive \
-        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${DRIVER_FOLDER}/../profiles/${DRIVER_NAME%%.*}_profile"
+        -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${PROFILE_DRIVERS}/${DRIVER_NAME%%.*}_profile" || true
 done
