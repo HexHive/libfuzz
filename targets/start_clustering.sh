@@ -10,9 +10,6 @@ CRASHES=${TARGET_WORKDIR}/crashes
 OUTPUT=${TARGET_WORKDIR}/clusters
 LOGS=${OUTPUT}/logs
 
-rm -Rf $OUTPUT $LOGS || true
-mkdir -p $OUTPUT $LOGS
-
 FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
 
 echo $DRIVER_FOLDER
@@ -23,17 +20,21 @@ if [[ $TOTAL_LIBRARY_CLUSTER ]]; then
 
     TARGET_FOLDER=fuzzing_campaigns/total_library_cluster/${TARGET_NAME}
     TARGET_CRASHES=${TARGET_FOLDER}/crashes
-    TARGET_CLUSTERS=${TARGET_CLUSTER}/clusters
+    TARGET_CLUSTERS=${TARGET_FOLDER}/clusters
 
     mkdir -p ${TARGET_CRASHES}
     mkdir -p ${TARGET_CLUSTERS}
 
-    find ${CRASHES} -name "*.casrep" -exec cp {} ${TARGET_CRASHES} \;
+    echo "serach .casrep here ${OUTPUT}"
+    find ${OUTPUT} -name "*.casrep" -exec cp {} ${TARGET_CRASHES} \;
 
-    casr-cluster --ignore ${CLUSTER_FILTER} -c ${TARGET_CRASHES} ${TARGET_CLUSTERS}
+    casr-cluster --ignore ${CLUSTER_FILTER} -c ${TARGET_CRASHES} ${TARGET_CLUSTERS} || true
 
     exit 0
 fi
+
+rm -Rf $OUTPUT $LOGS || true
+mkdir -p $OUTPUT $LOGS
 
 for d in $FUZZ_TARGETS
 do

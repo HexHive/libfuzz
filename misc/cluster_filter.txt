@@ -1,5 +1,6 @@
 FILES
 /drivers/*
+/cluster_drivers/*
 FUNCTIONS
 LLVMFuzzerTestOneInput
 _start
