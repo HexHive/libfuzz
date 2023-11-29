@@ -1,9 +1,12 @@
 #!/bin/bash
+set -x
+set -e
 
 source campaign_configuration.sh
 
-mv ../overwrite.toml ../overwrite_backup.toml
+#mv ../overwrite.toml ../overwrite_backup.toml
 mv ../workdir ../workdir_backup 2> /dev/null
+mkdir ../workdir
 
 for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
     for napis in "${NUM_OF_APIs[@]}"; do
@@ -26,17 +29,17 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
             # ../docker/run_drivergeneration.sh
 
             # COPY FROM workdir_${ndrivers}_${napis}/${project} into ../workdir/${project}
-
+            cp -r  workdir_${ndrivers}_${napis}/${project} ../workdir/${project}
             # Dirty way to compile all drivers
             export TIMEOUT=0
             ../docker/run_fuzzing.sh
             # rm -Rf workdir_${ndrivers}_${napis}/${project} || true
-            mv ../workdir/${project} workdir_${ndrivers}_${napis}/${project}
+            cp -r ../workdir/${project} workdir_${ndrivers}_${napis}/${project}
         done
     done
 done
 
-mv ../overwrite_backup.toml ../overwrite.toml
+#mv ../overwrite_backup.toml ../overwrite.toml
 mv ../workdir_backup ../workdir 2> /dev/null
 
 all_exec=$(find workdir_*_*/*/drivers -type f -executable | wc -l)
