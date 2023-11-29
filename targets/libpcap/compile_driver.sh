@@ -35,7 +35,7 @@ do
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}" || true
     
     # Compile driver for clustering
-    $CXX -std=c++11 -fsanitize=fuzzer,address -I/"${TARGET}"/work/include \
+    $CXX -g -std=c++11 -fsanitize=fuzzer,address -I/"${TARGET}"/work/include \
         "$d" -Wl,--whole-archive "${TARGET}"/work/lib/libpcap_cluster.a -Wl,--no-whole-archive \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${CLUSTER_DRIVERS}/${DRIVER_NAME%%.*}_cluster" || true
 
