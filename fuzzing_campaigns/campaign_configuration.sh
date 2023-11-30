@@ -15,9 +15,10 @@ export USE_PER_LIBRARY_TIMEBUDGET=0
 case $CONF in
 
   quickcamp)
-    export NUM_OF_DRIVERS=( 20 ) 
-    export NUM_OF_APIs=( 5 )
-    export TIMEOUT=10m
+    export PROJECTS=( "libaom" "libvpx" )
+    export NUM_OF_DRIVERS=( 1 ) 
+    export NUM_OF_APIs=( 1 )
+    export TIMEOUT=1m
     export ITERATIONS=1
     ;;
 

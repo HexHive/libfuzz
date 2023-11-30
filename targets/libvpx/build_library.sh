@@ -14,6 +14,11 @@ if [ ! -d "$TARGET/repo" ]; then
     exit 1
 fi
 
+# NOTE: if TOOLD_DIR is unset, I assume to find stuffs in LIBFUZZ folder
+if [ -z "$TOOLS_DIR" ]; then
+    TOOLS_DIR=$LIBFUZZ
+fi
+
 export CC=$LLVM_DIR/bin/clang
 export CXX=$LLVM_DIR/bin/clang++
 
@@ -21,7 +26,6 @@ WORK="$TARGET/work"
 rm -rf "$WORK"
 mkdir -p "$WORK"
 mkdir -p "$WORK/lib" "$WORK/include"
-
 echo "make 1"
 cd "$TARGET/repo"
 
@@ -122,5 +126,8 @@ make clean
 make -j all
 make install
 popd
+
+cp -r $TARGET/repo/vpx_* "$WORK/include"
+cp -r "$build_dir/vpx_config.h" "$WORK/include"
 
 echo "[INFO] Library installed in: $WORK"

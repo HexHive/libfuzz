@@ -8,6 +8,18 @@ if [ -z "$TOOLS_DIR" ]; then
     TOOLS_DIR=$LIBFUZZ
 fi
 
+##
+# Pre-requirements:
+# - env TARGET: path to target work dir
+# - env OUT: path to directory where artifacts are stored
+# - env CC, CXX, FLAGS, LIBS, etc...
+##
+
+if [ ! -d "$TARGET/repo" ]; then
+    echo "fetch.sh must be executed first."
+    exit 1
+fi
+
 WORK="$TARGET/work"
 rm -rf "$WORK"
 mkdir -p "$WORK"
@@ -75,5 +87,11 @@ echo "make"
 make -j"$(nproc)"
 echo "make install"
 make install
+
+cp -r $TARGET/repo/common $WORK/include 
+cp -r $TARGET/repo/aom_build_fuzz/config $WORK/include
+cp -r $TARGET/repo/aom_ports $WORK/include
+
+
 # configure compiles some shits for testing, better remove it
 echo "[INFO] Library installed in: $WORK"
