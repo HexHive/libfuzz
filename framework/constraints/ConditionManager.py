@@ -246,6 +246,10 @@ class ConditionManager:
                     xx = init_per_type.get(arg_type, set())
                     xx.add((api, arg_pos))
                     init_per_type[arg_type] = xx
+                elif (arg_ok == len(cond.setby_dependencies)):
+                    xx = init_per_type.get(arg_type, set())
+                    xx.add((api, arg_pos))
+                    init_per_type[arg_type] = xx
                 else:
                     xx = set_per_type.get(arg_type, set())
                     xx.add((api, arg_pos))

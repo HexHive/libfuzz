@@ -1,6 +1,15 @@
-aom_codec_av1_dx
+# aom_codec_av1_dx
+# aom_codec_dec_init_ver
+# mem_get_le32
+# aom_codec_decode
+# aom_codec_get_frame
+# # aom_codec_destroy
+
+aom_img_wrap
+aom_img_alloc
+aom_codec_av1_cx
+aom_codec_enc_config_default
 aom_codec_dec_init_ver
-mem_get_le32
-aom_codec_decode
-aom_codec_get_frame
-# aom_codec_destroy
+aom_codec_control
+aom_codec_encode
+aom_codec_destroy
