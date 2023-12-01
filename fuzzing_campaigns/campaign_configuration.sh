@@ -20,7 +20,6 @@ case $CONF in
     export NUM_OF_APIs=( 4 )
     export TIMEOUT=10m
     export ITERATIONS=1
-    export USE_CUSTOM_APIS=1
     export POLICY="constraint_based"
     ;;
 

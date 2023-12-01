@@ -48,10 +48,25 @@ class CBFactory(Factory):
 
         self.condition_manager = ConditionManager.instance()
 
-        self.source_api = list(self.condition_manager.get_source_api())
+        # self.source_api = list(self.condition_manager.get_source_api())
+        self.source_api = set()
 
         self.init_api = list(self.condition_manager.get_init_api())
 
+        for api in self.dependency_graph.keys():
+            ca = self.conditions.get_function_conditions(api.function_name)
+            aa = Factory.api_to_apicall(api)
+            _, unsat_var = self.try_to_instantiate_api_call(aa, ca, 
+                RunningContext())
+
+            if len(unsat_var) > 0:
+                continue
+
+            self.source_api.add(api)
+
+        self.source_api = list(self.source_api)
+
+        # print("new attempt source api")
         # from IPython import embed; embed(); exit(1)
 
     attempt = 3
@@ -237,7 +252,7 @@ class CBFactory(Factory):
     def get_random_source_api(self):
         # print("get_random_source_api")
         # from IPython import embed; embed(); exit(1)
-        return random.choice(self.source_api + self.init_api)
+        return random.choice(self.source_api)
 
     def get_random_candidate(self, candidate_api):
         return random.choice(candidate_api)
@@ -253,7 +268,7 @@ class CBFactory(Factory):
         get_cond = lambda x: self.conditions.get_function_conditions(x.function_name)
         to_api = lambda x: Factory.api_to_apicall(x)
 
-        if len(self.source_api + self.init_api) == 0:
+        if len(self.source_api) == 0:
             raise Exception("I cannot find APIs to begin with :(")
 
         # List[(ApiCall, RunningContext)]
