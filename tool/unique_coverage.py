@@ -90,17 +90,14 @@ class Library:
 
     def unique_visits(self, libB, file_to_consider):
         unique = 0
-        #print("\n".join(set(self.files.keys()).difference(set(libB.files.keys()))))
         for filename in file_to_consider:
             found = False
             for fn, file in self.files.items():
                 if filename.split('/')[-1] == fn.split('/')[-1]:
                     found = True
                     break
-            #print(fn)
-            #print(file)
             if not found:
-                #print("Error: {} not found in libB".format(filename))
+                # file not present in this lib
                 continue
             found = False
             for filenameB, fileB in libB.files.items():
@@ -118,10 +115,10 @@ class Library:
                     unique += d.total_visits()
                     found = True
                     break
+            # file is not found in other lib but was part of the file to
+            # consider, counting every line touched.
             if not found and file.total_visits() > 0:
-                #print(file.lines.keys())
                 unique += len(file.lines.keys())
-                #print("Error: {} not found in libB".format(filename))
                 continue
         return unique
     
@@ -150,13 +147,10 @@ def main():
     target_folder = [args.utopia_folder, args.libfuzz_folder]
     for folder in target_folder:
         for target in os.listdir(folder):
-            #if not "cpu" in target:
-            #    continue
             target_path = os.path.join(folder, target)
             runs = []
             for iteration in os.listdir(target_path):
                 iteration_path = os.path.join(target_path, iteration)
-                #print(iteration)
                 if os.path.isdir(iteration_path) and 'show' in os.listdir(iteration_path):
                     library_log_file_path = os.path.join(iteration_path, 'show')
                     runs.append(Library(library_log_file_path))
