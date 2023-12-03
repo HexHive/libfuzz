@@ -3,6 +3,7 @@ workdir_*_*/*
 analysis/*
 **/*.pyc
 .vscode/
+results
 libfuzz.code-workspace
 
 LLVM/llvm-build
