@@ -74,10 +74,10 @@ def _main():
 
     # from IPython import embed; embed(); exit(1)
 
-    for p, l in sorted(line_gt.items()):
-        print(f"{p},{l}")
+    # for p, l in sorted(line_gt.items()):
+    #     print(f"{p},{l}")
 
-    exit(1)
+    # exit(1)
 
     projects = set()
 
