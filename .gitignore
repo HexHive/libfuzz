@@ -4,6 +4,7 @@ analysis/*
 **/*.pyc
 .vscode/
 results
+crashes
 libfuzz.code-workspace
 
 LLVM/llvm-build
