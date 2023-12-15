@@ -275,7 +275,7 @@ class CBFactory(Factory):
         print(f"[INFO] starting with {call_begin.function_name}")
         drv += [(call_begin, rng_ctx_1)]
 
-        # print("after create_random_driver")
+        # print(f"after {call_begin.function_name}")
         # from IPython import embed; embed(); exit(1)
 
         api_n = begin_api
@@ -289,6 +289,9 @@ class CBFactory(Factory):
 
                     if next_possible in self.source_api:
                         continue
+                
+                    # if next_possible in self.init_api:
+                    #     continue
 
                     print(f"[INFO] Trying: {next_possible}")
 

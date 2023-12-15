@@ -11,15 +11,16 @@ minimum_apis = "/workspaces/libfuzz/analysis/libaom/work/apipass/apis_minimized.
 # minimum_apis = ""
 data_layout = "/workspaces/libfuzz/analysis/libaom/work/apipass/data_layout.txt"
 enum_types = "/workspaces/libfuzz/analysis/libaom/work/apipass/enum_types.txt"
+weights = "/workspaces/libfuzz/analysis/libaom/work/apipass/weights.json"
 
 
 [generator]
 workdir = "/workspaces/libfuzz/workdir/libaom"
-policy = "constraint_based"
+policy = "constraint_based_search"
 dep_graph = "type"
 # dep_graph = "undef"
-pool_size = 40
-driver_size = 10
+pool_size = 20
+driver_size = 5
 num_seeds = 1
 backend = "libfuzz"
 

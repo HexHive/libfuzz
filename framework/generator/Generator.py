@@ -1,6 +1,7 @@
 import os, json
 
 from driver.ir import ApiCall
+from driver.factory import EmptyDriverSpace
 class Generator:
     def __init__(self, config):
         config.build_data_layout()
@@ -20,7 +21,12 @@ class Generator:
         print("Generating drivers...")
 
         while not self._pool.full():
-            self._pool.add_driver(self._factory.create_random_driver())
+            try:
+                self._pool.add_driver(self._factory.create_random_driver())
+            except EmptyDriverSpace as ex:
+                print(f"Impossible to produce more than {len(self._pool)} drivers!")
+                break
+
         print(f"I have done {len(self._pool)} drivers!")
 
         api_freq = dict([(x, 0) for x in self._factory.dependency_graph.keys()])

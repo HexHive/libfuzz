@@ -15,7 +15,14 @@
 	},
 
 	"workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/libfuzz,type=bind",
-	"workspaceFolder": "/workspaces/libfuzz"
+	"workspaceFolder": "/workspaces/libfuzz",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"Stephanvs.dot"
+			]
+		}
+	}
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],

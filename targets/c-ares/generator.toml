@@ -12,6 +12,7 @@ minimum_apis = "/workspaces/libfuzz/analysis/c-ares/work/apipass/apis_minimized.
 # minimum_apis = ""
 data_layout = "/workspaces/libfuzz/analysis/c-ares/work/apipass/data_layout.txt"
 enum_types = "/workspaces/libfuzz/analysis/c-ares/work/apipass/enum_types.txt"
+weights = "/workspaces/libfuzz/analysis/c-ares/work/apipass/weights.json"
 
 
 [generator]

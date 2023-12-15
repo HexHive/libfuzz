@@ -11,6 +11,7 @@ minimum_apis = "/workspaces/libfuzz/analysis/minijail/work/apipass/apis_minimize
 # minimum_apis = ""
 data_layout = "/workspaces/libfuzz/analysis/minijail/work/apipass/data_layout.txt"
 enum_types = "/workspaces/libfuzz/analysis/minijail/work/apipass/enum_types.txt"
+weights = "/workspaces/libfuzz/analysis/minijail/work/apipass/weights.json"
 
 
 [generator]

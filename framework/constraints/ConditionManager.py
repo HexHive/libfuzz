@@ -105,6 +105,9 @@ class ConditionManager:
 
     def is_sink(self, api_call: ApiCall) -> bool:
         return api_call.original_api in self.sinks
+    
+    def get_sink_api(self) -> Set[Api]:
+        return self.sinks
 
     def is_a_sink_condition(self, cond: ValueMetadata) -> bool:
         deletes_root = any([c.access == Access.DELETE and c.fields == [] 
