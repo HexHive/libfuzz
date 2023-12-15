@@ -98,6 +98,10 @@ def _main():
             os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/corpus")
             os.system(f"cp -r {rootdir}/workdir_{n_drivers}_{n_apis}/{lib}/corpus/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus")
 
+            # cp metadata for driver
+            os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/metadata")
+            os.system(f"cp -r {rootdir}/workdir_{n_drivers}_{n_apis}/{lib}/metadata/{driver}.meta workdir_{n_drivers}_{n_apis}/{lib}/metadata")
+
             # os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/corpus_new")
             # os.system(f"cp -r workdir_{n_drivers}_{n_apis}/{lib}/corpus_new/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus_new")
 
