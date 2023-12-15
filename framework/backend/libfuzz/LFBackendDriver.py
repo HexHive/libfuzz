@@ -3,7 +3,7 @@ from driver.ir import ApiCall, BuffDecl, BuffInit, FileInit, AllocType
 from driver.ir import PointerType, Address, Variable, Type, DynArrayInit
 from driver.ir import Statement, Value, NullConstant, ConstStringDecl
 from driver.ir import AssertNull, CleanBuffer, SetNull, SetStringNull, Function
-from driver.ir import DynDblArrInit, CleanDblBuffer
+from driver.ir import DynDblArrInit, CleanDblBuffer, Constant
 from backend import BackendDriver
 from common import DataLayout
 
@@ -407,23 +407,37 @@ class LFBackendDriver(BackendDriver):
     def cleandblbuffer_emit(self, stmt: CleanDblBuffer) -> str:
         buff            = stmt.get_buffer()
         cleanup_method  = stmt.get_cleanup_method()
-
         buff_nelem      = buff.get_number_elements()
+        buff_type       = buff.get_type()
 
         # v = self.value_emit(buff[0])
 
         # NOTE: this is super ugly but not sure how to do otherwise
-        num_extra_brackets = buff.type.token.count("*")-1
+        # num_extra_brackets = buff.type.token.count("*")-1
         # print("cleanbuffer_emit")
         # from IPython import embed; embed(); exit(1)
 
         # extra_brackets = "[0]" * num_extra_brackets
 
+        # this trick removes `const` from the double arrays that require const
+        # arrays
+        cast_str = ""
+        if "const" in buff_type.token:
+            pointee_type_token = buff_type.get_pointee_type().token
+            pointee_type_token = pointee_type_token.replace(" const", "")
+            cast_str = f"({pointee_type_token})"
+
         buff_i = f"{self.value_emit(buff[0])}[i]"
+
+        # add a shadow copy for the array
+        x_idx = 0
+        x_token = self.clean_token(buff.get_token()) + "_shadow"
+        x_value = f"{x_token}[{x_idx}][i]"
 
         str = "//clean dbl array\n"
         str += f"\tfor (uint i = 0; i < {buff_nelem}; i++) "
-        str += f" if ({buff_i} != 0) {cleanup_method}({buff_i});\n"
+        str += f" if ({buff_i} != 0 && {x_value} == {buff_i} ) "
+        str += f"{cleanup_method}({cast_str}{buff_i});\n"
 
         return str
 
@@ -448,6 +462,17 @@ class LFBackendDriver(BackendDriver):
         # print("dyndblarrinit_emit")
         # from IPython import embed; embed(); exit(1)
 
+        # this trick removes `const` from the double arrays that require const
+        # arrays
+        cast_str = ""
+        is_const = False
+        if "const" in buff_type.token:
+            pointee_type_token = buff_type.get_pointee_type().token
+            pointee_type_token = pointee_type_token.replace(" const", "")
+            cast_str = f"({pointee_type_token})"
+            tkn_base = tkn_base.replace(" const", "")
+            is_const = True
+
         str = "//dyn dbl array init\n"
         str += f"\tfor (uint i = 0; i < {buff_nelem}; i++) {{\n"
         
@@ -455,11 +480,25 @@ class LFBackendDriver(BackendDriver):
         str += "\t\t" + self.buffinit_emit(var_len_init) + "\n"
         # malloc
         str += f"\t\t{buff_i} = ({dst_type}*)malloc({self.value_emit(var_len)});\n"
+
+        # add a shadow copy for the array
+        x_idx = 0
+        x_token = self.clean_token(buff.get_token()) + "_shadow"
+        x_value = f"{x_token}[{x_idx}][i]"
+
+        str += f"\t\t{x_value} = {buff_i};\n"
+
         # memcpy
-        str += f"\t\tmemcpy({buff_i}, data, {self.value_emit(var_len)});\n"
+        str += f"\t\tmemcpy({cast_str}{buff_i}, data, {self.value_emit(var_len)});\n"
         if tkn_base in DataLayout.string_types:
-            # set last element as 0
-            str += f"\t\t{buff_i}[{var_lel_val} - 1] = 0;\n"
+            # set NULL-pointer strings
+            if is_const:
+                # char* xx = (char*)charconst_pp_h0[0][i];
+                str += f"\t\t{tkn_base} xx = {cast_str}{buff_i};\n"
+                # xx[int_s0[0] - 1] = 0;
+                str += f"\t\txx[{var_lel_val} - 1] = 0;\n"
+            else:
+                str += f"\t\t{buff_i}[{var_lel_val} - 1] = 0;\n"
         # move cursor ahead
         str += f"\t\tdata += {self.value_emit(var_len)};\n"
 
@@ -507,7 +546,16 @@ class LFBackendDriver(BackendDriver):
             v_stack = self.clean_token(buff.token)
             return f"{cleanup_method}({v_stack});"
         elif buff.alloctype == AllocType.HEAP:
-            return f"if ({v}{extra_brackets} != 0) {cleanup_method}({v}{extra_brackets});"
+            # add a shadow copy for the array
+            x_idx = 0
+            x_token = self.clean_token(buff.get_token()) + "_shadow"
+            x_value = f"{x_token}[{x_idx}]"
+
+            to_ret = f"if ({v}{extra_brackets} != 0 && "
+            to_ret += f"{x_value} == {v}{extra_brackets}) "
+            to_ret += f"{cleanup_method}({v}{extra_brackets});"
+
+            return to_ret
 
     # ConstStringDecl
     def conststringdecl_emit(self, cnststrdecl: ConstStringDecl) -> str:
@@ -567,7 +615,13 @@ class LFBackendDriver(BackendDriver):
         if buffer.get_alloctype() in [AllocType.HEAP, AllocType.GLOBAL]:
             if DataLayout.is_ptr_level(type, 2):
                 n_element += 1
-            return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}] = {{ 0 }};"
+            to_ret = f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}] = {{ 0 }};"
+
+            if buffer.get_alloctype() == AllocType.HEAP:
+                to_ret += "\n\t"
+                to_ret += f"{const_attr}{self.type_emit(type)} {str_stars}{token}_shadow{n_brackets}[{n_element}] = {{ 0 }};"
+
+            return to_ret
         else:
             return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}];"
 
@@ -589,6 +643,11 @@ class LFBackendDriver(BackendDriver):
         stmt += "\t" + self.buffinit_emit(var_len_init) + "\n"
         # malloc
         stmt += f"\t{self.value_emit(buff[0])} = ({dst_type}*)malloc({self.value_emit(var_len)});\n"
+        # add a shadow copy for the array
+        x_idx = 0
+        x_token = self.clean_token(buff.get_token()) + "_shadow"
+        x_value = f"{x_token}[{x_idx}]"
+        stmt += f"\t{x_value} = {self.value_emit(buff[0])};\n"
         # memcpy
         stmt += f"\tmemcpy({self.value_emit(buff[0])}, data, {self.value_emit(var_len)});\n"
         # move cursor ahead
@@ -706,9 +765,14 @@ class LFBackendDriver(BackendDriver):
             return self.nullconst_emit(value)
         if isinstance(value, Function):
             return self.function_emit(value)
+        if isinstance(value, Constant):
+            return self.constant_emit(value)
 
         raise Exception(f"I don't know {value}")
     
+    # Constant
+    def constant_emit(self, const: Constant):
+        return f"{const.value}"
 
     # Function
     def function_emit(self, function: Function):

@@ -36,6 +36,23 @@ if [[ $TOTAL_LIBRARY_COVERAGE ]]; then
     mv show fuzzing_campaigns/total_library_coverage/${TARGET_NAME}
     mv report fuzzing_campaigns/total_library_coverage/${TARGET_NAME}
     mv functions fuzzing_campaigns/total_library_coverage/${TARGET_NAME}
+
+    for i in $( eval echo {1..$ITERATIONS} ); do
+        TARGET_ITER=fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/iter_${i}
+
+        MERGED_PROFDATAS="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/coverage_data/iter_${i}/merged.profdata)"
+        mkdir -p ${TARGET_ITER}
+        llvm-profdata-12 merge -sparse $MERGED_PROFDATAS -o ${TARGET_ITER}/merged.profdata
+
+        llvm-cov-12 show $OBJECTS -instr-profile=${TARGET_ITER}/merged.profdata > show
+        llvm-cov-12 report $OBJECTS -instr-profile=${TARGET_ITER}/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
+        llvm-cov-12 report -show-functions $OBJECTS -instr-profile=${TARGET_ITER}/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
+
+        mv show ${TARGET_ITER}/
+        mv report ${TARGET_ITER}/
+        mv functions ${TARGET_ITER}/
+    done
+
     exit 0
 fi
 
@@ -98,17 +115,24 @@ do
 
     DRIVER_COVERAGE=${PROJECT_COVERAGE}/${DRIVER_NAME}
     DRIVER_COR=${CORPUS_FOLDER}/${DRIVER_NAME}
-    DRIVER_CORMIN=${CORPUS_FOLDER}/../corpus_mini/${DRIVER_NAME}
-    mkdir -p $DRIVER_CORMIN
     mkdir -p $DRIVER_COVERAGE
-
-    $d -merge=1 $DRIVER_CORMIN $DRIVER_COR
 
     PROFILE_BINARY=${DRIVER_FOLDER}/../profiles/${DRIVER_NAME}_profile
 
-    LLVM_PROFILE_FILE="${DRIVER_NAME}.profraw" $PROFILE_BINARY -runs=0 $DRIVER_CORMIN
-    mv ${DRIVER_NAME}.profraw $PROJECT_COVERAGE
-    llvm-profdata-12 merge -sparse $PROJECT_COVERAGE/${DRIVER_NAME}.profraw -o $PROJECT_COVERAGE/${DRIVER_NAME}.profdata
+    INPUTS="$(ls $DRIVER_COR)"
+    for input in $INPUTS; do
+        LLVM_PROFILE_FILE="${DRIVER_NAME}-${input}.profraw" timeout -k 10s 1m $PROFILE_BINARY -runs=0 $DRIVER_COR/$input
+        # the coverage produces a timeout, we might consider it as a timeout crash
+        if [[ $? -ne 0 ]]; then
+            echo "[INFO] Error while computing the coverage, moving to crashes"
+            CRASH_FOLDER="${CORPUS_FOLDER/corpus_new/crashes}"
+            cp $DRIVER_COR/$input ${CRASH_FOLDER}/${DRIVER_NAME}/coverr-$input
+        fi
+        mv ${DRIVER_NAME}-${input}.profraw $PROJECT_COVERAGE
+    done
+
+    llvm-profdata-12 merge -sparse $PROJECT_COVERAGE/${DRIVER_NAME}-*.profraw -o $PROJECT_COVERAGE/${DRIVER_NAME}.profdata
+    rm -f $PROJECT_COVERAGE/${DRIVER_NAME}-*.profraw
     llvm-cov-12 show $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > show
     llvm-cov-12 report $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
     llvm-cov-12 report -show-functions $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions

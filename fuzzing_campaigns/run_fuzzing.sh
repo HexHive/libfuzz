@@ -17,6 +17,16 @@ let TOTAL_FUZZERS="$(find workdir_*_*/*/drivers/ -type f -executable | wc -l)*IT
 COUNTER=0
 CPU_ID=0
 
+# if needed, load custom timebudget per library from select_stable_drivers.py
+if [ ${USE_PER_LIBRARY_TIMEBUDGET} -eq 1 ]; then
+    declare -A TIMEOUT_PER_LIBRARY
+    while IFS='|' read -r key value; do
+        TIMEOUT_PER_LIBRARY[$key]=$value
+    done < time_budget.csv
+    TIMEOUT_SYNC=-1s
+else
+    TIMEOUT_SYNC=${TIMEOUT}
+fi
 
 for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
     for napis in "${NUM_OF_APIs[@]}"; do
@@ -26,8 +36,19 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                 DRIVER_FOLDER="${PROJECT_FOLDER}/drivers"
                 RESULTS_FOLDER="${PROJECT_FOLDER}/results/iter_${i}"
                 FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -maxdepth 1 -type f -executable -printf '%P\n')"
+
+                if [ ${USE_PER_LIBRARY_TIMEBUDGET} -eq 1 ]; then
+                    TIMEOUT=${TIMEOUT_PER_LIBRARY[$project]}
+                    if [[ ${TIMEOUT_SYNC::-1} -eq "-1" ]] || [[ ${TIMEOUT::-1} -gt ${TIMEOUT_SYNC::-1} ]]; then
+                        TIMEOUT_SYNC=${TIMEOUT}
+                    fi
+                fi
+
                 for fuzz_target in $FUZZ_TARGETS; do
-                    echo "Fuzzing ${project}/${fuzz_target}"
+                    if [[ ${TIMEOUT_SYNC::-1} -eq "-1" ]]; then
+                        TIMEOUT_SYNC=${TIMEOUT}
+                    fi
+                    echo "Fuzzing ./workdir_${ndrivers}_${napis}/${project}/${fuzz_target} [${i}/${ITERATIONS}] w/ t.o. ${TIMEOUT}"
 
                     DRIVER_CORPUS=${PROJECT_FOLDER}/corpus/${fuzz_target}
                     DRIVER_CORNEW=${RESULTS_FOLDER}/corpus_new/${fuzz_target}
@@ -50,15 +71,18 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                         -v $(pwd):/libfuzzpp \
                         --mount type=tmpfs,destination=/tmpfs \
                         -t $IMG_NAME \
-                        timeout $TIMEOUT $FUZZ_BINARY $FUZZ_CORPUS -artifact_prefix=${CRASHES}/ -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 -detect_leaks=0 -fork=1
+                        timeout -k 10s $TIMEOUT $FUZZ_BINARY $FUZZ_CORPUS -artifact_prefix=${CRASHES}/ -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 -detect_leaks=0 -fork=1
                     COUNTER=$(( COUNTER + 1 ))
                     CPU_ID=$(( CPU_ID + 1 ))
-                    if [ $CPU_ID -eq $MAX_CPUs ]
+                    if [ $CPU_ID -eq $MAX_CPUs ];
                     then
-                        echo "Running ${MAX_CPUs} fuzzers in parallel, sleeping for now."
+                        echo "Running ${MAX_CPUs} fuzzers in parallel, sleeping for ${TIMEOUT_SYNC}"
                         echo "Total progress: ${COUNTER}/${TOTAL_FUZZERS}"
-                        sleep $TIMEOUT
+                        sleep $TIMEOUT_SYNC
                         CPU_ID=0
+                        if [ ${USE_PER_LIBRARY_TIMEBUDGET} -eq 1 ]; then
+                            TIMEOUT_SYNC=-1s
+                        fi
                     fi
                 done
             done
@@ -66,4 +90,10 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
     done
 done
 
-sleep $TIMEOUT
+SPARE_FUZZERS=$(( COUNTER % MAX_CPUs ))
+if [ $SPARE_FUZZERS -ne 0 ]
+then
+    echo "Running ${SPARE_FUZZERS} fuzzers in parallel, sleeping for ${TIMEOUT_SYNC}"
+    echo "Total progress: ${COUNTER}/${TOTAL_FUZZERS}"
+    sleep $TIMEOUT_SYNC
+fi

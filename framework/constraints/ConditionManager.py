@@ -259,6 +259,9 @@ class ConditionManager:
 
         self.init_per_type = init_per_type
         self.set_per_type = set_per_type
+
+    def get_sink_api(self) -> Set[Api]:
+        return self.sinks
     
     def get_init_api(self) -> Set[Api]:
         init_set = set()

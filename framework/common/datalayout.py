@@ -14,7 +14,7 @@ class DataLayout:
 
     _instance           : "DataLayout" = None
     
-    size_types = ["size_t", "int", "uint32_t", "uint64_t", "__uint32_t", "unsigned int", "int64_t", "unsigned long", "__u_int"]
+    size_types = ["size_t", "int", "uint32_t", "uint64_t", "__uint32_t", "unsigned int", "int64_t", "unsigned long", "__u_int", "__off_t"]
 
     string_types = ["char*", "unsigned char*", "wchar_t*", \
                     "u_char*", "u_char"]
@@ -182,7 +182,7 @@ class DataLayout:
             return 8*8
         elif type == "unsigned long":
             return 8*8
-        elif type == "char":
+        elif type == "char" or type == "const char" or type == "char const":
             return 1*8
         elif type == "void":
             return 0

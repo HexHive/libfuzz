@@ -18,8 +18,8 @@ export CC="$LLVM_COMPILER_PATH"/clang
 export CXX="$LLVM_COMPILER_PATH"/clang++
 
 echo "make 1"
-mkdir -p "$TARGET/repo/c-ares_build"
-cd "$TARGET/repo/c-ares_build"
+mkdir -p "$TARGET/repo/c-ares_build_cov"
+cd "$TARGET/repo/c-ares_build_cov"
 
 # Compile library for coverage
 cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_LIBS=off \
@@ -36,12 +36,33 @@ make install
 
 mv "$WORK"/lib/libcares_static.a "$WORK"/lib/libcares_static_profile.a
 
+mkdir -p "$TARGET/repo/c-ares_build_cluster"
+cd "$TARGET/repo/c-ares_build_cluster"
 
-# Compile library for fuzzing
+# Compile library for clustering
 cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_LIBS=off \
         -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug -DCARES_STATIC=on \
         -DCMAKE_C_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g" \
         -DCMAKE_CXX_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g"
+
+echo "make clean"
+make -j"$(nproc)" clean
+echo "make"
+make -j"$(nproc)"
+echo "make install"
+make install
+
+mv "$WORK"/lib/libcares_static.a "$WORK"/lib/libcares_static_cluster.a
+
+cd ..
+mkdir -p "$TARGET/repo/c-ares_build_fuzz"
+cd "$TARGET/repo/c-ares_build_fuzz"
+
+# Compile library for fuzzing
+cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_LIBS=off \
+        -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Release -DCARES_STATIC=on \
+        -DCMAKE_C_FLAGS_RELEASE="-fsanitize=fuzzer-no-link,address" \
+        -DCMAKE_CXX_FLAGS_RELEASE="-fsanitize=fuzzer-no-link,address"
 
 echo "make clean"
 make -j"$(nproc)" clean

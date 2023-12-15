@@ -21,7 +21,10 @@ CXX=$LLVM_DIR/bin/clang++
 CC=$LLVM_DIR/bin/clang
 
 echo "Compiling: ${DRIVER_FOLDER}/${DRIVER}.cc"
-mkdir -p ${DRIVER_FOLDER}/../profiles
+PROFILE_DRIVERS="${DRIVER_FOLDER}"/../profiles
+mkdir -p $PROFILE_DRIVERS
+CLUSTER_DRIVERS="${DRIVER_FOLDER}"/../cluster_drivers
+mkdir -p $CLUSTER_DRIVERS
 
 
 # [TAG] FIRST LOOP FOR COMPILATION!!!
@@ -31,12 +34,17 @@ do
     DRIVER_NAME=$(basename $d)
     # [TAG] THIS STEP MUST BE ADAPTED FOR EACH LIBRARY
     # Compile driver for fuzzing
-    $CXX -g -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
+    $CXX -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
         $d -Wl,--whole-archive ${TARGET}/work/lib/libminijail.pie.a -Wl,--no-whole-archive \
-        -lcap -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}"
+        -lcap -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}" || true
+    
+    # Compile driver for clustering
+    $CXX -g -std=c++11  -fsanitize=fuzzer,address -I/${TARGET}/work/include \
+        $d -Wl,--whole-archive ${TARGET}/work/lib/libminijail_cluster.pie.a -Wl,--no-whole-archive \
+        -lcap -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${CLUSTER_DRIVERS}/${DRIVER_NAME%%.*}_cluster" || true
 
     # Compile driver for coverage
     $CXX -g -std=c++11  -fsanitize=fuzzer -fprofile-instr-generate -fcoverage-mapping \
         -I/${TARGET}/work/include $d -Wl,--whole-archive ${TARGET}/work/lib/libminijail_profile.pie.a -Wl,--no-whole-archive \
-        -lcap -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${DRIVER_FOLDER}/../profiles/${DRIVER_NAME%%.*}_profile"
+        -lcap -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${PROFILE_DRIVERS}/${DRIVER_NAME%%.*}_profile" || true
 done

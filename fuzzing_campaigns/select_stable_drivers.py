@@ -9,32 +9,68 @@ sys.path.append(PROJECT_FOLDER)
 
 import tool.misc.score as scr
 
+seconds_per_unit = {"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800}
+
+def normalize_time_boudget(s):
+    return int(s[:-1]) * seconds_per_unit[s[-1]]
+
 def _main():
 
     parser = argparse.ArgumentParser(description='Select stable drivers')
-    parser.add_argument('-report', '-r', type=str, help='Report File', required=True)
-    parser.add_argument('-rootdir', '-d', type=str, help='Driver Folder', required=False)
+    parser.add_argument('-report', '-r', type=str, 
+                        help='Report File', required=True)
+    parser.add_argument('-rootdir', '-d', type=str, 
+                        help='Driver Folder', required=False)
+    parser.add_argument('-threshold', '-t', type=float, default=0.10,
+                        help='Threshold for selection', required=False)
+    parser.add_argument('-simulate', '-s', action='store_true',
+                        help='Simulation only, not moving files around', 
+                        required=False)
+    parser.add_argument('-timebudget', '-b', type=str,
+                        help='Compute budget time for long testing', 
+                        required=True)
 
     args = parser.parse_args()
 
     report = args.report
     rootdir = args.rootdir
+    simulate = args.simulate
+    threshold = args.threshold
+    timebudget = normalize_time_boudget(args.timebudget)
 
     libraries = scr.load_report(report, rootdir)
 
     best_drivers = {}
 
+    timebudget_per_libary = {}
+
     # print(libraries)
     for lib, drvs in libraries.items():
-        best_drvs = scr.get_best_drivers(drvs)
-
+        best_drvs = scr.get_best_drivers(drvs, threshold)
         best_drivers[lib] = best_drvs
+        timebudget_per_libary[lib] = f"{int(timebudget/len(best_drvs))}s"
         # print("-" * 10)
         # print(lib)
         # print(best_drvs)
-    
-    # exit(1)
 
+    if simulate:
+        print("[INFO] Only simulation, here the drivers I would select:")
+        for lib, drvs in best_drivers.items():
+            tb = timebudget_per_libary[lib]
+            print(f"{lib}: {len(drvs)} drivers w/ timebudget {tb}")
+            for d in drvs:
+                n_drivers = d['n_drivers']
+                n_apis = d['n_apis']
+                driver = d['driver']
+                cov = d['cov']
+
+                d_path = f"workdir_{n_drivers}_{n_apis}/{lib}/drivers/{driver}"
+                print(f"{d_path}: {cov}")
+
+            print("-" * 30)
+
+        exit(0)
+        
     os.system("mkdir -p workdir_backup")
     os.system("mv workdir_*_*/ workdir_backup")
 
@@ -62,10 +98,19 @@ def _main():
             os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/corpus")
             os.system(f"cp -r {rootdir}/workdir_{n_drivers}_{n_apis}/{lib}/corpus/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus")
 
+            # cp metadata for driver
+            os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/metadata")
+            os.system(f"cp -r {rootdir}/workdir_{n_drivers}_{n_apis}/{lib}/metadata/{driver}.meta workdir_{n_drivers}_{n_apis}/{lib}/metadata")
+
             # os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/corpus_new")
             # os.system(f"cp -r workdir_{n_drivers}_{n_apis}/{lib}/corpus_new/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus_new")
 
             os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/crashes/{driver}")
+
+    # save timebudget per library
+    with open("./time_budget.csv", "w") as f:
+        for l, t in timebudget_per_libary.items():
+            f.write(f"{l}|{t}\n")
 
 
 if __name__ == "__main__":

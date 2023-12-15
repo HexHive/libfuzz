@@ -53,10 +53,12 @@ public:
     /// Finalize analysis
     void finalize() override;
 
+    CallEdgeMap get_new_edges() {return new_edges;}
 
 protected:
     static std::unique_ptr<GlobalStruct> gspta;
 
+    CallEdgeMap new_edges;
 
     void get_function_pointers(const llvm::Value*,
             std::map<std::string, std::set<const llvm::Function*>>*);

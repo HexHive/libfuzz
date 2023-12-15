@@ -1,13 +1,16 @@
 #!/bin/bash
 
-export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" "c-ares" )
-export NUM_OF_DRIVERS=( 20 )
+export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" "c-ares" "zlib" "cjson" )
+export NUM_OF_DRIVERS=( 40 )
 export NUM_OF_APIs=( 2 4 8 16 32  )
 export NUM_OF_SEEDS=1
 # export POLICY="constraint_based"
 export POLICY="constraint_based_weight"
 export MAX_CPUs=$(($(nproc) - 1))
+# used w/ CONF=minimized
 export USE_CUSTOM_APIS=0
+# used w/ CONF=long
+export USE_PER_LIBRARY_TIMEBUDGET=0
 
 case $CONF in
 
@@ -23,13 +26,13 @@ case $CONF in
     ;;
 
   selection)
-    export TIMEOUT=10m
+    export TIMEOUT=5m
     export ITERATIONS=1
     ;;
 
   long)
-    export TIMEOUT=1h
-    export ITERATIONS=5
+    export USE_PER_LIBRARY_TIMEBUDGET=1
+    export ITERATIONS=1
     ;;
 
   bestconf)
@@ -41,11 +44,11 @@ case $CONF in
     ;;
 
   minimized)
-    export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" "libpcap" "c-ares" )
+    export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" "libpcap" "c-ares" "zlib" "cjson" )
     # probably we can fix the number of drivers to match 24 hours
-    export NUM_OF_DRIVERS=( 20  )
+    export NUM_OF_DRIVERS=( 24  )
     export NUM_OF_APIs=( 4 8 )
-    export TIMEOUT=10m
+    export TIMEOUT=30m
     export ITERATIONS=1
     export USE_CUSTOM_APIS=1
     ;;
