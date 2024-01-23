@@ -37,7 +37,7 @@ mv $WORK/lib/libhtp.a $WORK/lib/libhtp_profile.a
 echo "make clean"
 make -j$(nproc) clean
 
-# Compile library for clustering
+# Compile library for debugging
 ./configure --disable-shared --prefix="$WORK" \
         CXXFLAGS="-fsanitize=fuzzer-no-link,address -g" \
         CFLAGS="-fsanitize=fuzzer-no-link,address -g"

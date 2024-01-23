@@ -34,7 +34,7 @@ do
         "$d" -Wl,--whole-archive "${TARGET}"/work/lib/libcjson.a -Wl,--no-whole-archive \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${d%%.*}" || true
 
-    # Compile driver per cluster
+    # Compile driver per debugging
     $CXX -g -std=c++11  -fsanitize=fuzzer,address -I/"${TARGET}"/work/include \
         "$d" -Wl,--whole-archive "${TARGET}"/work/lib/libcjson_cluster.a -Wl,--no-whole-archive \
         -lz -ljpeg -Wl,-Bstatic -llzma -Wl,-Bdynamic -lstdc++ -o "${CLUSTER_DRIVERS}/${DRIVER_NAME%%.*}_cluster" || true
