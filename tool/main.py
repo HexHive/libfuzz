@@ -11,7 +11,7 @@ from generator import Generator, Configuration
 import logging
 
 logging.getLogger().setLevel(logging.WARN)
-logging.getLogger("generator").setLevel(logging.DEBUG)
+logging.getLogger("generator").setLevel(logging.DEBUG) 
 
 
 def __main():
