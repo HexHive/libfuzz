@@ -19,7 +19,8 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"Stephanvs.dot"
+				"Stephanvs.dot",
+				"mohsen1.prettify-json"
 			]
 		}
 	}

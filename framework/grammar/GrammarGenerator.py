@@ -2,6 +2,7 @@
 from dependency import DependencyGraph
 
 from . import Grammar, Terminal, NonTerminal, Symbol, ExpantionRule
+from driver.factory import Factory
 
 class GrammarGenerator:
     def __init__(self, start_term, end_term):
@@ -50,10 +51,19 @@ class GrammarGenerator:
             expantion_rule = ExpantionRule([t, self.start_term])
             grammar.add_expantion_rule(nt, expantion_rule)
 
+        grammar.dependency_graph = inv_dep_graph
+
         return grammar
 
     def has_incomplete_type(self, api):
-        return any(arg.is_type_incomplete for arg in api.arguments_info)
+
+        arg_list_type = []
+        for _, arg in enumerate(api.arguments_info):
+            # NOTE: for simplicity, const type as arguments can be consider non-const, see `Driver_IR.md` for more info
+            the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, False)
+            arg_list_type += [the_type]
+
+        return any(arg.is_incomplete for arg in arg_list_type)
 
 #     # {"close": ["connect","close"],
 #     # "connect": ["connect", "send_msg", "receive_msg", "close"],
