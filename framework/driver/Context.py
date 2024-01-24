@@ -33,6 +33,7 @@ class Context:
         # TODO: make this from config?
         # self.MAX_ARRAY_SIZE = 1024
         self.MAX_ARRAY_SIZE = 128
+        self.DOUBLE_PTR_SIZE = 16
 
         self.stub_functions = {}
 
