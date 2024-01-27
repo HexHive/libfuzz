@@ -9,6 +9,8 @@ type_incomplete = set()    # List of incomplete types
 apis_definition = []       # List of APIs with original argument types and extra info (e.g., const)
 type_enum = set()
 
+all_types = set()
+
 def find_api(api, apis_definition):
     # from IPython import embed; embed(); exit(1)
     api_hash = str(api)
@@ -32,6 +34,8 @@ def get_argument_info(type):
         type_str = atd.underlying_typedef_type.spelling
     else:
         type_str = type.spelling
+
+    all_types.add(type_str)
 
     # type is a function pointer
     if "(*)" in type_str:
@@ -210,6 +214,10 @@ def _main():
     public_headers = args.public_headers
     enum_list = args.enum_list
 
+    target = os.environ["TARGET_NAME"]
+
+    type_log = f"./alltypes_{target}.txt"
+
     tmp_file = get_stub_file(include_folder, public_headers)
 
     print(tmp_file)
@@ -238,6 +246,11 @@ def _main():
 
     root = tu.cursor        # Get the root of the AST
     traverse(root, include_folder, [])
+
+    # FOR DEBUGGING TYPE PARSING
+    with open(type_log, "w") as log:
+        for t in all_types:
+            log.write(f"{t}\n")
 
     with open(exported_functions, 'w') as out_f:
         for f in function_declarations:

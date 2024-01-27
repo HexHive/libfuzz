@@ -1,6 +1,7 @@
 workdir/*
 workdir_*_*/*
 analysis/*
+analysis_old/*
 **/*.pyc
 .vscode/
 results

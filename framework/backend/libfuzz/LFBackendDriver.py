@@ -298,63 +298,6 @@ class LFBackendDriver(BackendDriver):
 
         cm += "}\n"
 
-        # cm += "\tsize_t counter_size_sum = 0;\n"
-        # cm += "\tfor (int i = 0; i < COUNTER_NUMBER; i++)\n"
-        # cm += "\t\tcounter_size_sum += counter_size[i];\n\n"
-
-        # cm += "\tif (Size < FIXED_SIZE ||\n"
-        # cm += "\t\tSize >= (NEW_DATA_LEN-counter_size_sum))\n"
-        # cm += "\t\treturn 0;\n"
-        # cm += "\tunsigned cut[COUNTER_NUMBER] = { 0 };\n"
-        # cm += "\tuint8_t NewData[NEW_DATA_LEN];\n"
-        # cm += "\tsize_t NewDataSize = sizeof(NewData);\n"
-
-        # cm += "\tuint8_t *NewDataPtr = NewData;\n"
-        # cm += "\tuint8_t *DataPtr = Data;\n"
-
-        # cm += "\tsize_t NewDataLen = LLVMFuzzerMutate(Data, Size, NEW_DATA_LEN);\n"
-
-        # cm += "\tif (NewDataLen < FIXED_SIZE ||\n"
-        # cm += "\t\t NewDataLen >= (NEW_DATA_LEN-counter_size_sum))\n"       
-        # cm += "\t\treturn 0;\n"
-
-        # cm += "\tsize_t DynamicPart = NewDataLen - FIXED_SIZE;\n"
-
-        # cm += "\tcut[0] = 0;\n"
-        # cm += "\tif (DynamicPart == 0) {\n"
-        # cm += "\t\tfor (int i = 1; i < COUNTER_NUMBER; i++) cut[i] = 0;\n";
-        # cm += "\t} else {\n"
-        # cm += "\t\tfor (int i = 1; i < COUNTER_NUMBER; i++)\n"
-        # cm += "\t\t\tcut[i] = rand() % DynamicPart;\n"
-        # cm += "\t\tqsort(cut, COUNTER_NUMBER, sizeof(unsigned), cmpfunc);\n"
-        # cm += "\t}\n"
-
-        # cm += "\t// copy Fixed Part\n"
-        # cm += "\tsize_t slice_len = FIXED_SIZE;\n"
-        # cm += "\tmemcpy(NewDataPtr, DataPtr, slice_len);\n"
-        # cm += "\tDataPtr += slice_len;\n"
-        # cm += "\tNewDataPtr += slice_len;\n"
-
-        # cm += "\tsize_t NewDataFinalLen = slice_len;\n"
-    
-        # cm += "\tfor (int i = 0; i < COUNTER_NUMBER; i++) {\n"
-        # cm += "\t\tif (i == COUNTER_NUMBER - 1)\n"
-        # cm += "\t\t\tslice_len = DynamicPart - cut[i];\n"
-        # cm += "\t\telse\n"
-        # cm += "\t\t\tslice_len = cut[i+1] - cut[i];\n"
-        # cm += "\t\tmemcpy(NewDataPtr, &slice_len, counter_size[i]);\n"
-        # cm += "\t\tNewDataPtr += counter_size[i];\n"
-        # cm += "\t\tmemcpy(NewDataPtr, DataPtr, slice_len);\n"
-        # cm += "\t\tDataPtr += slice_len;\n"
-        # cm += "\t\tNewDataPtr += slice_len;\n"
-        # cm += "\t\tNewDataFinalLen += slice_len + counter_size[i];\n"
-        # cm += "\t}\n"
-
-        # cm += "\tmemcpy(Data, NewData, NewDataFinalLen);\n"
-
-        # cm += "\treturn NewDataFinalLen;\n"
-        # cm += "}\n"
-
         return cm
 
     # Address
@@ -608,9 +551,9 @@ class LFBackendDriver(BackendDriver):
 
         const_attr = "const " if type.is_const else ""
 
-        # DIRTY ACK!
-        if type.token == "u_char**":
-            const_attr = "const "
+        # # DIRTY ACK!
+        # if type.token == "u_char**":
+        #     const_attr = "const "
 
         if buffer.get_alloctype() in [AllocType.HEAP, AllocType.GLOBAL]:
             if DataLayout.is_ptr_level(type, 2):
