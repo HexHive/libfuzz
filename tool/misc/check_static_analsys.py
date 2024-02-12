@@ -47,16 +47,16 @@ def get_targets_data(targets):
             except:
                 pass
 
-        if t == "libaom":
-            apis = config.api_list_all
-            for a in apis:
-                cc = config.function_conditions.get_function_conditions(a.function_name)
-                for arg in cc.argument_at:
-                    if arg.len_depends_on != "":
-                        print(a)
+        # if t == "libaom":
+        #     apis = config.api_list_all
+        #     for a in apis:
+        #         cc = config.function_conditions.get_function_conditions(a.function_name)
+        #         for arg in cc.argument_at:
+        #             if arg.len_depends_on != "":
+        #                 print(a)
             
-            print("get_targets_data")
-            from IPython import embed; embed(); exit(1)
+            # print("get_targets_data")
+            # from IPython import embed; embed(); exit(1)
 
     return targets_data
             

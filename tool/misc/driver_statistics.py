@@ -121,9 +121,9 @@ def _main():
 
     libraries = scr.load_report(report, rootdir)
 
-    # print_summary(libraries)
+    print_summary(libraries)
     # print_table(libraries)
-    print_distribution(libraries)
+    # print_distribution(libraries)
 
 if __name__ == "__main__":
     _main()
