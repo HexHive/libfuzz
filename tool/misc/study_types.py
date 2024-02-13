@@ -34,7 +34,7 @@ def get_argument_info(type_str):
                 type_str_token.remove(bad_token)
         
         n_const = n_asterix             
-        const_pos = [False for _ in range(n_const)]
+        const_pos = [False for _ in range(n_const + 1)]
 
         print(type_str_token)
 

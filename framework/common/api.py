@@ -5,7 +5,7 @@ class Arg:
     size: int
     type: str
     # these are attributes from my perspective
-    is_const: bool
+    is_const: List[bool]
 
     def __init__(self, name, flag, size, type, is_const):
         self.name = name
@@ -26,7 +26,7 @@ class Arg:
         arg_lst += [self.flag]
         arg_lst += [self.size]
         arg_lst += [self.type]
-        arg_lst += [self.is_const]
+        arg_lst += ["".join([f"{x}" for x in self.is_const])]
         return tuple(arg_lst)
 
     def __hash__(self):

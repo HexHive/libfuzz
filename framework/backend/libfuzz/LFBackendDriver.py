@@ -362,13 +362,12 @@ class LFBackendDriver(BackendDriver):
 
         # extra_brackets = "[0]" * num_extra_brackets
 
-        # this trick removes `const` from the double arrays that require const
-        # arrays
+        # NOTE: remove "const" adjustments
         cast_str = ""
-        if "const" in buff_type.token:
-            pointee_type_token = buff_type.get_pointee_type().token
-            pointee_type_token = pointee_type_token.replace(" const", "")
-            cast_str = f"({pointee_type_token})"
+        # if "const" in buff_type.token:
+        #     pointee_type_token = buff_type.get_pointee_type().token
+        #     pointee_type_token = pointee_type_token.replace(" const", "")
+        #     cast_str = f"({pointee_type_token})"
 
         buff_i = f"{self.value_emit(buff[0])}[i]"
 
@@ -405,24 +404,25 @@ class LFBackendDriver(BackendDriver):
         # print("dyndblarrinit_emit")
         # from IPython import embed; embed(); exit(1)
 
-        # this trick removes `const` from the double arrays that require const
-        # arrays
+        # NOTE: remove "const" adjustment
         cast_str = ""
         is_const = False
-        if "const" in buff_type.token:
-            pointee_type_token = buff_type.get_pointee_type().token
-            pointee_type_token = pointee_type_token.replace(" const", "")
-            cast_str = f"({pointee_type_token})"
-            tkn_base = tkn_base.replace(" const", "")
-            is_const = True
+        # if "const" in buff_type.token:
+        #     pointee_type_token = buff_type.get_pointee_type().token
+        #     pointee_type_token = pointee_type_token.replace(" const", "")
+        #     cast_str = f"({pointee_type_token})"
+        #     tkn_base = tkn_base.replace(" const", "")
+        #     is_const = True
 
         str = "//dyn dbl array init\n"
         str += f"\tfor (uint i = 0; i < {buff_nelem}; i++) {{\n"
         
+        x_elm_size = f"*sizeof({buff_i}[0])"
+        
         # var_len from fuzzer seed
         str += "\t\t" + self.buffinit_emit(var_len_init) + "\n"
         # malloc
-        str += f"\t\t{buff_i} = ({dst_type}*)malloc({self.value_emit(var_len)});\n"
+        str += f"\t\t{buff_i} = ({dst_type}*)malloc({self.value_emit(var_len)}{x_elm_size});\n"
 
         # add a shadow copy for the array
         x_idx = 0
@@ -549,9 +549,9 @@ class LFBackendDriver(BackendDriver):
             str_stars = "*"
             n_brackets = "[1]"*(n_stars-1)
 
-        const_attr = "const " if type.is_const else ""
-
-        # # DIRTY ACK!
+        # NOTE: all declarations are not-const!
+        const_attr = ""
+        # const_attr = "const " if type.is_const else ""
         # if type.token == "u_char**":
         #     const_attr = "const "
 
@@ -580,12 +580,15 @@ class LFBackendDriver(BackendDriver):
         buff = dynarrayinit.get_buffer()
         
         dst_type = self.type_emit(buff.get_type())
+        
+        # TODO: check if this is a good idea!
+        x_elm_size = f"*sizeof({self.value_emit(buff[0])}[0])"
 
         # var_len from fuzzer seed
         var_len_init = BuffInit(var_len.get_buffer())
         stmt += "\t" + self.buffinit_emit(var_len_init) + "\n"
         # malloc
-        stmt += f"\t{self.value_emit(buff[0])} = ({dst_type}*)malloc({self.value_emit(var_len)});\n"
+        stmt += f"\t{self.value_emit(buff[0])} = ({dst_type}*)malloc({self.value_emit(var_len)}{x_elm_size});\n"
         # add a shadow copy for the array
         x_idx = 0
         x_token = self.clean_token(buff.get_token()) + "_shadow"
@@ -650,6 +653,7 @@ class LFBackendDriver(BackendDriver):
         ret_var = apicall.ret_var
         ret_type = apicall.ret_type
         arg_vars = apicall.arg_vars
+        arg_types = apicall.arg_types
         function_name = apicall.function_name
         namespace = apicall.namespace
         is_vararg = apicall.is_vararg
@@ -666,6 +670,21 @@ class LFBackendDriver(BackendDriver):
         str_vals = []
         for p, a in enumerate(arg_vars):
             x = self.value_emit(a)
+            
+            va = a
+            if isinstance(va, Address):
+                va = va.get_variable()
+            
+            # print("type cast?")
+            # from IPython import embed; embed(); exit(1)
+            
+            if self.has_some_const(arg_types[p]):
+            # != va.get_type():
+                # print("xxxaaa")
+                # from IPython import embed; embed(); exit(1)
+                cast = self.full_type_emit(arg_types[p])
+                x = f"({cast}){x}"
+            
             if apicall.has_max_value(p):
                 m = apicall.get_max_value(p)
                 str_vals += [f" ((uint){x}) % {m}"]
@@ -689,14 +708,55 @@ class LFBackendDriver(BackendDriver):
         #     from IPython import embed; embed(); exit()
 
         cast_operator = ""
+        
+        # if function_name == "cJSON_Version":
+        #     print("apicall_emit")
+        #     from IPython import embed; embed(); exit(1)
 
-        if ret_type != ret_var_type:
+        if ret_type != ret_var_type or self.has_some_const(ret_type):
             # type_emit = self.type_emit(ret_var_type)
+            # print("Xxxx")
             # from IPython import embed; embed(); exit()
             # type_emit = self.clean_token()
-            cast_operator = f"({ret_var_type.token})"
+            cast_operator = f"({self.full_type_emit(ret_type, False)})"
 
         return f"{ret_var_code} = {cast_operator} {function_name}({arg_vars_code});"
+    
+    def full_type_emit(self, type, with_const: bool = True):
+        
+        if isinstance(type, PointerType):
+            
+            base_token = self.clean_token(type.get_base_type().get_token())
+            consts = type.get_all_consts()
+            if not with_const:
+                consts = [False for _ in consts]
+                
+            pointer_level = DataLayout.get_ptr_level(type)
+            
+            s = ""
+            
+            i = 0
+            while i < pointer_level:
+                if consts[i]:
+                    s += "const "
+                if i == 0:
+                    s += f"{base_token} "
+                s += "* "
+                i = i + 1
+            
+            # print(f"full_type_emit {type}")
+            # from IPython import embed; embed(); exit(1)
+            
+            return s
+            
+        else:
+            return self.type_emit(type)
+    
+    def has_some_const(self, type):
+        if isinstance(type, PointerType):
+            return any(type.get_all_consts())
+        
+        return type.is_const
     
     # Value
     def value_emit(self, value: Value) -> str:

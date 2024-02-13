@@ -52,7 +52,7 @@ class ConditionManager:
 
             ret_type = api.return_info
             the_type = Factory.normalize_type(ret_type.type, ret_type.size, 
-                                              ret_type.flag, False)
+                                              ret_type.flag, ret_type.is_const)
             the_type_orig = the_type
 
             if isinstance(the_type, PointerType):
@@ -84,7 +84,7 @@ class ConditionManager:
                 self.is_a_sink_condition(fun_cond.argument_at[0])):
                 arg = api.arguments_info[0]
                 the_type = Factory.normalize_type(arg.type, arg.size, 
-                                                  arg.flag, False)
+                                                  arg.flag, arg.is_const)
                 sink_map[the_type] = api
                 sinks.add(api)
 
@@ -161,13 +161,13 @@ class ConditionManager:
 
             # fun_cond = get_cond(api)
 
-            # if api.function_name == "aom_img_flip":
+            # if api.function_name == "cJSON_ParseWithOpts":
             #     print(f"get_source_api {api.function_name}")
             #     from IPython import embed; embed(); exit(1)
 
             num_arg_ok = 0
             for arg in api.arguments_info:
-                the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, False)
+                the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, arg.is_const)
                 the_type_orig = the_type
                 # arg_cond = fun_cond.argument_at[arg_p]
                 if isinstance(the_type, PointerType):

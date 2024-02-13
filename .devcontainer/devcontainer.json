@@ -20,7 +20,9 @@
 		"vscode": {
 			"extensions": [
 				"Stephanvs.dot",
-				"mohsen1.prettify-json"
+				"mohsen1.prettify-json",
+				"ms-python.python",
+				"tamasfe.even-better-toml"
 			]
 		}
 	}

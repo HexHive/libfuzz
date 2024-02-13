@@ -81,12 +81,15 @@ class DataLayout:
         return l_type, l_size
 
     
-    def multi_level_size_infer(self, ttype, function_name, pos, is_original):
+    def multi_level_size_infer(self, ttype: str, function_name: str, pos: int, is_original: bool):
         t_size = 0
 
         # if ttype == "cpu_features::CacheInfo" and pos == -1:
         #     print("multi_level_size_infer")
         #     from IPython import embed; embed(); exit(1)
+        
+        # sanity check for annoying spaces
+        ttype = ttype.replace(" ", "")
 
         # first step, search in the tables
         known_type = False
@@ -132,14 +135,14 @@ class DataLayout:
         while pointer_level > 0:
 
             t_size = self.multi_level_size_infer(tmp_type, function_name, arg_pos, is_original)
-            self.layout[tmp_type] = t_size
+            self.layout[tmp_type.replace(" ", "")] = t_size
 
             tmp_type = tmp_type[:-1]
             pointer_level = tmp_type.count("*")
             is_original = False
 
         t_size = t_size = self.multi_level_size_infer(tmp_type, function_name, arg_pos, is_original)
-        self.layout[tmp_type] = t_size
+        self.layout[tmp_type.replace(" ", "")] = t_size
 
         # if self.layout[type_clang] == 0:
         #     print(f"[DEBUG] size of {type_clang} is {self.layout[type_clang]}")
@@ -148,6 +151,19 @@ class DataLayout:
 
     @staticmethod
     def is_ptr_level(type, lvl: int) -> bool:
+        # from driver.ir.PointerType import PointerType
+
+        # ptr_level = 0
+
+        # tmp_type = type
+        # while isinstance(tmp_type, PointerType):
+        #     ptr_level += 1
+        #     tmp_type = tmp_type.get_pointee_type()
+
+        return DataLayout.get_ptr_level(type) == lvl
+    
+    @staticmethod
+    def get_ptr_level(type) -> int:
         from driver.ir.PointerType import PointerType
 
         ptr_level = 0
@@ -157,7 +173,7 @@ class DataLayout:
             ptr_level += 1
             tmp_type = tmp_type.get_pointee_type()
 
-        return ptr_level == lvl
+        return ptr_level
 
     @staticmethod
     def is_a_pointer(type) -> bool:

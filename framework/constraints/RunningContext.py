@@ -455,10 +455,14 @@ class RunningContext(Context):
             #     alloctype = default_alloctype
             if cond.len_depends_on != "":
                 alloctype = AllocType.HEAP
-            if type.is_const:
-                alloctype = default_alloctype
+            # if type.is_const:
+            #     alloctype = default_alloctype
             if force_pointer:
                 alloctype = default_alloctype
+                
+        # if isinstance(type, PointerType) and type.get_token() == "int*" and not force_pointer:
+        #     print("int*??")
+        #     from IPython import embed; embed(); exit(1)
 
         # double pointers -> always in heap
         if DataLayout.is_ptr_level(type, 2):
@@ -901,8 +905,8 @@ class RunningContext(Context):
             if x in set(dyn_buff).union(var_buff):
                 continue
 
-            if t.is_const:
-                continue
+            # if t.is_const:
+            #     continue
             
             if x.get_alloctype() in [AllocType.HEAP, AllocType.GLOBAL]:
                 continue
@@ -1025,12 +1029,8 @@ class RunningContext(Context):
         clean_up = []
 
         for b in self.buffs_alive: # type: ignore
-            if b.get_type().is_const:
-                continue
-
-            # DIRTY ACK!
-            if b.type.token == "u_char**":
-                continue
+            # if b.get_type().is_const:
+            #     continue
 
             if b.get_alloctype() == AllocType.HEAP:
                 cm = ConditionManager.instance().find_cleanup_method(b)
