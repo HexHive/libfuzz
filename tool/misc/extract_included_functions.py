@@ -71,7 +71,7 @@ def get_argument_info(type):
         n_asterix = type_str.count("*") + type_str.count("[")
         if "[" in type_str:
             # stuffs like char[100] into char*
-            type_str = re.sub('\[\d*\]', '', type_str)
+            type_str = re.sub('\[\d*\]', '*', type_str)
         # type_str = type_str.replace("*","")
         
         
