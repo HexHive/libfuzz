@@ -198,7 +198,7 @@ class DataLayout:
             return 8*8
         elif type == "unsigned long":
             return 8*8
-        elif type == "char" or type == "const char" or type == "char const":
+        elif type == "char" or type == "signed char":
             return 1*8
         elif type == "void":
             return 0
@@ -219,6 +219,8 @@ class DataLayout:
         elif type == "bool":
             return 8
         elif type == "wchar_t":
+            return 8*4
+        elif type == "unsigned short":
             return 8*4
         else:
             raise Exception(f"I don't know the size of '{type}'")

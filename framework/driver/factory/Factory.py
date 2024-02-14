@@ -79,6 +79,13 @@ class Factory(ABC):
                 a_type_core = "unsigned long"
             if a_type_core == "unsignedint":
                 a_type_core = "unsigned int"
+            if a_type_core == "signedchar":
+                a_type_core = "signed char"
+            if a_type_core == "unsignedchar":
+                a_type_core = "unsigned char"
+            if a_type_core == "unsignedshort":
+                a_type_core = "unsigned short"
+            
 
             # if a_type == "void *":
             #     print(f"normalize_type {a_type_core}")

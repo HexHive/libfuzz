@@ -417,7 +417,9 @@ class LFBackendDriver(BackendDriver):
         str = "//dyn dbl array init\n"
         str += f"\tfor (uint i = 0; i < {buff_nelem}; i++) {{\n"
         
-        x_elm_size = f"*sizeof({buff_i}[0])"
+        x_elm_size = ""
+        if not buff_type.get_pointee_type().is_incomplete:
+            x_elm_size = f"*sizeof({buff_i}[0])"
         
         # var_len from fuzzer seed
         str += "\t\t" + self.buffinit_emit(var_len_init) + "\n"
@@ -579,10 +581,15 @@ class LFBackendDriver(BackendDriver):
         var_len = dynarrayinit.get_len_var()
         buff = dynarrayinit.get_buffer()
         
-        dst_type = self.type_emit(buff.get_type())
+        buff_type = buff.get_type()
+        dst_type = self.type_emit(buff_type)
         
         # TODO: check if this is a good idea!
-        x_elm_size = f"*sizeof({self.value_emit(buff[0])}[0])"
+        
+        x_elm_size = ""
+        if (isinstance(buff_type, PointerType) and 
+            not buff_type.get_pointee_type().is_incomplete):
+            x_elm_size = f"*sizeof({self.value_emit(buff[0])}[0])"
 
         # var_len from fuzzer seed
         var_len_init = BuffInit(var_len.get_buffer())
@@ -678,7 +685,8 @@ class LFBackendDriver(BackendDriver):
             # print("type cast?")
             # from IPython import embed; embed(); exit(1)
             
-            if self.has_some_const(arg_types[p]):
+            if (self.has_some_const(arg_types[p]) and 
+                not arg_types[p].to_function):
             # != va.get_type():
                 # print("xxxaaa")
                 # from IPython import embed; embed(); exit(1)
@@ -721,6 +729,10 @@ class LFBackendDriver(BackendDriver):
             cast_operator = f"({self.full_type_emit(ret_type, False)})"
 
         return f"{ret_var_code} = {cast_operator} {function_name}({arg_vars_code});"
+    
+    # def is_pointer_function(self, type) -> bool:
+    #     return isinstance(type, PointerType) and type.get_base_type().to_function
+    #     arg_types[p].to_function
     
     def full_type_emit(self, type, with_const: bool = True):
         
