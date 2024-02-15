@@ -685,7 +685,8 @@ class LFBackendDriver(BackendDriver):
             # print("type cast?")
             # from IPython import embed; embed(); exit(1)
             
-            if (self.has_some_const(arg_types[p]) and 
+            if (p < len(arg_types) and
+                self.has_some_const(arg_types[p]) and 
                 not arg_types[p].to_function):
             # != va.get_type():
                 # print("xxxaaa")

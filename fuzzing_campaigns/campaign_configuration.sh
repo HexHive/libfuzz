@@ -64,7 +64,7 @@ case $CONF in
     ;;
 
   *)
-    echo -n "unknown CONF"
+    echo -n "unknown CONF=${CONF}"
     exit 1
     ;;
 esac
