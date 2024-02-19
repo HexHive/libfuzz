@@ -41,7 +41,7 @@ do
                 --platform linux/amd64 \
                 -d \
                 --name ${fuzz_target}_iter_${i} \
-                -v /home/zuka/fuzz-drivers-evaluation/utopia:/utopia \
+		-v $(pwd):/utopia \
                 -t utopia_clang12:latest \
                 timeout $TIMEOUT $FUZZ_BINARY $CORPUS -fork=1 -ignore_timeouts=1 -ignore_crashes=1 -ignore_ooms=1 -artifact_prefix=$CRASHES
             cpu_id=$(( cpu_id + 1 ))
