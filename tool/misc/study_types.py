@@ -24,7 +24,7 @@ def get_argument_info(type_str):
         n_asterix = type_str.count("*") + type_str.count("[")
         if "[" in type_str:
             # stuffs like char[100] into char*
-            type_str = re.sub('\[\d*\]', '', type_str)
+            type_str = re.sub('\[\d*\]', '*', type_str)
         # type_str = type_str.replace("*","")
         
         
@@ -122,7 +122,7 @@ def _main():
         print("-"*30)
         print(target)
         for s, t in tt:
-            if s.count("const") > 1:
+            if "TIFFFieldInfo" in s:
                 print(f"{s} | {t}")
 
         

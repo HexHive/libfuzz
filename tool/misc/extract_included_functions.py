@@ -288,10 +288,10 @@ def _main():
     root = tu.cursor        # Get the root of the AST
     traverse(root, include_folder, [])
 
-    # # FOR DEBUGGING TYPE PARSING
-    # with open(type_log, "w") as log:
-    #     for t in all_types:
-    #         log.write(f"{t}\n")
+    # FOR DEBUGGING TYPE PARSING
+    with open(type_log, "w") as log:
+        for t in all_types:
+            log.write(f"{t}\n")
 
     with open(exported_functions, 'w') as out_f:
         for f in function_declarations:
