@@ -571,12 +571,18 @@ class LFBackendDriver(BackendDriver):
             return to_ret
         else:
             
-            def_value = ""
-            if (not isinstance(type, PointerType) and 
-                DataLayout.instance().is_enum_type(type.get_token())):
-                def_value = f"({self.type_emit(type)})"
-                
-            return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}] = {{ {def_value}0 }};"
+            decl_str = f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}];"
+            
+            type_base = type
+            if isinstance(type_base, PointerType):
+                type_base = type_base.get_pointee_type()
+            
+            # if a type is not fuzz friendly, using memset is the most compatible way to initiliaze it
+            # if (DataLayout.instance().is_enum_type(type_base.get_token()) or
+            #     not DataLayout.instance().is_fuzz_friendly(type_base.get_token())):
+            decl_str += f"\n\tmemset({str_stars}{token}, 0x0, sizeof({str_stars}{token}));"
+        
+            return decl_str
 
     def get_new_file_pointer(self):
         cnt = self.file_pointer_cnt
