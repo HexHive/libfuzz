@@ -420,6 +420,8 @@ class LFBackendDriver(BackendDriver):
         x_elm_size = ""
         if not buff_type.get_pointee_type().is_incomplete:
             x_elm_size = f"*sizeof({buff_i}[0])"
+        else:
+            raise Exception(f"sizeof({buff_i}) is incomplete in dyndblarrinit_emit!")
         
         # var_len from fuzzer seed
         str += "\t\t" + self.buffinit_emit(var_len_init) + "\n"
@@ -568,7 +570,13 @@ class LFBackendDriver(BackendDriver):
 
             return to_ret
         else:
-            return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}];"
+            
+            def_value = ""
+            if (not isinstance(type, PointerType) and 
+                DataLayout.instance().is_enum_type(type.get_token())):
+                def_value = f"({self.type_emit(type)})"
+                
+            return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}] = {{ {def_value}0 }};"
 
     def get_new_file_pointer(self):
         cnt = self.file_pointer_cnt
@@ -590,6 +598,9 @@ class LFBackendDriver(BackendDriver):
         if (isinstance(buff_type, PointerType) and 
             not buff_type.get_pointee_type().is_incomplete):
             x_elm_size = f"*sizeof({self.value_emit(buff[0])}[0])"
+        else:
+            raise Exception(f"sizeof({buff[0]}) is incomplete in dynarrayinit_emit!")
+            
 
         # var_len from fuzzer seed
         var_len_init = BuffInit(var_len.get_buffer())

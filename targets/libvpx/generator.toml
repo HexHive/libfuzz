@@ -15,7 +15,7 @@ weights = "/workspaces/libfuzz/analysis/libvpx/work/apipass/weights.json"
 
 [generator]
 workdir = "/workspaces/libfuzz/workdir/libvpx"
-policy = "constraint_based_search"
+policy = "constraint_based"
 dep_graph = "type"
 # dep_graph = "undef"
 pool_size = 10

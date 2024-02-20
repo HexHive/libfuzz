@@ -1,4 +1,10 @@
-bstr_util_mem_index_of_c
-bstr_wrap_c
-bstr_adjust_realptr
-htp_get_version
+# htp_config_create
+# htp_mpartp_create
+# htp_mpartp_find_boundary
+# htp_mpartp_get_multipart
+# htp_mpartp_destroy
+# htp_mpartp_finalize
+# htp_mpartp_parse
+bstr_builder_create
+bstr_builder_to_str
+bstr_builder_appendn

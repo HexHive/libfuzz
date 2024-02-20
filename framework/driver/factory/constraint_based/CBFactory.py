@@ -70,7 +70,15 @@ class CBFactory(Factory):
             arg_cond = conditions.argument_at[arg_pos]
             #  TODO: add and test if it works
             #  and not isinstance(arg_type, PonterType)
-            if arg_cond.len_depends_on != "":
+            # if arg_type.token == "htp_mpartp_t*":
+            #     print("try_to_instantiate_api_call")
+            #     from IPython import embed; embed(); exit(1)
+            
+            # if (arg_cond.len_depends_on != ""):
+            if (arg_cond.len_depends_on != "" and 
+                (isinstance(arg_type, PointerType) and
+                not arg_type.get_base_type().is_incomplete or
+                arg_type.get_base_type() == rng_ctx.stub_void)):
                 idx = int(arg_cond.len_depends_on.replace("param_", ""))
                 idx_type = api_call.arg_types[idx]
 
