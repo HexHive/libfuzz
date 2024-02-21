@@ -1,6 +1,6 @@
 from typing import List, Set, Dict, Tuple, Optional, Any
 
-import random, copy, string, traceback
+import random, string, traceback, sys
 
 from driver import Context
 from driver.ir import Variable, Type, Value, PointerType, AllocType, CleanBuffer, CleanDblBuffer
@@ -323,7 +323,16 @@ class RunningContext(Context):
         is_heap_wo_len = (not isinstance(val, NullConstant) and
             cond.len_depends_on == "" and
             var_t.get_buffer().get_alloctype() == AllocType.HEAP and 
-            var_t.get_type().get_base_type().get_tag() == TypeTag.PRIMITIVE)
+            var_t.get_type().get_base_type().get_tag() == TypeTag.PRIMITIVE and 
+            var_t.get_type().get_base_type() != self.stub_void)
+        
+        # is_heap_wo_len_OLD = (not isinstance(val, NullConstant) and
+        #     cond.len_depends_on == "" and
+        #     var_t.get_buffer().get_alloctype() == AllocType.HEAP and 
+        #     var_t.get_type().get_base_type().get_tag() == TypeTag.PRIMITIVE)
+        
+        # if is_heap_wo_len_OLD != is_heap_wo_len:
+        #     print("INFO: I saved you ass!", file=sys.stderr)
 
         is_file_path = (cond.is_file_path and 
             not isinstance(val, NullConstant))

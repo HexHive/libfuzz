@@ -214,9 +214,6 @@ class CBFactory(Factory):
             if isinstance(ret_type, PointerType) and ret_type.to_function:
                 ret_var = rng_ctx.get_null_constant()
             else:
-                # ret_var = rng_ctx.try_to_get_var(ret_type, ret_cond,
-                #                                  fun_name, conditions,
-                #                                  -1)
                 ret_var = rng_ctx.try_to_get_var(api_call, conditions, -1)
             api_call.set_ret_var(ret_var)
         except ConditionUnsat:

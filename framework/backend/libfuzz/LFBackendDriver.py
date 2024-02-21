@@ -128,6 +128,8 @@ class LFBackendDriver(BackendDriver):
         cm += "\n#define MIN(x,y) ((x < y) ? x : y)\n\n"
 
         return cm
+    
+    last_stmt = None
 
     def emit_driver(self, driver: Driver, driver_filename: str):
 
@@ -137,6 +139,8 @@ class LFBackendDriver(BackendDriver):
         seed_fix_size = driver.get_input_size()
         counter_size = driver.get_counter_size()
         stub_functions = driver.get_stub_functions()
+        
+        LFBackendDriver.drv = driver
 
         with open(os.path.join(self.working_dir, driver_filename), "w") as f:
             # TODO: add headers inclusion
