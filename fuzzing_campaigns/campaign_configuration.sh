@@ -26,6 +26,7 @@ case $CONF in
     ;;
 
   selection)
+    export PROJECTS=( "libtiff" )
     export TIMEOUT=5m
     export ITERATIONS=1
     ;;

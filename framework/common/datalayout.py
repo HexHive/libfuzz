@@ -61,10 +61,12 @@ class DataLayout:
             #     from IPython import embed; embed(); exit(1)
             for arg_pos, arg in enumerate(api["arguments_info"]):
                 type_clang = arg["type_clang"]
-                self.populate_table(type_clang, function_name, arg_pos)
+                llvm_arg_flag = self.apis_llvm[function_name]["arguments_info"][arg_pos]["flag"]
+                self.populate_table(type_clang, function_name, arg_pos, llvm_arg_flag)
 
             type_clang = api["return_info"]["type_clang"]
-            self.populate_table(type_clang, function_name, -1)
+            llvm_arg_flag = self.apis_llvm[function_name]["return_info"]["flag"]
+            self.populate_table(type_clang, function_name, -1, llvm_arg_flag)
 
         # print(self.layout)
         # from IPython import embed; embed(); exit(1)
@@ -126,7 +128,13 @@ class DataLayout:
 
         return t_size
     
-    def populate_table(self, type_clang, function_name, arg_pos):
+    def populate_table(self, type_clang, function_name, arg_pos, arg_flag):
+
+        # function ponters
+        if arg_flag == "fun":
+            t_size = self.multi_level_size_infer(type_clang, function_name, arg_pos, True)
+            self.layout[type_clang.replace(" ", "")] = t_size
+            return
 
         # remove pointers
         tmp_type = type_clang
