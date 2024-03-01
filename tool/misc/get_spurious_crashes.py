@@ -29,8 +29,6 @@ def _main():
                 n_iter = len(os.listdir(os.path.join(rootdir, l, t, "results")))
                 for i in range(1, n_iter + 1):
                     for d in range(n_driver):
-                        # print("XXX")
-                        # from IPython import embed; embed(); exit(1)
                         n_crashes += len(os.listdir(os.path.join(rootdir, l, t, "results", f"iter_{i}", "crashes", f"driver{d}")))
                                 
                 sum_crashes[t] = n_crashes
