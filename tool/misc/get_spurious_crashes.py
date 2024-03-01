@@ -40,7 +40,7 @@ def _main():
         
         # print(l)
         
-    for t, s in sum_crashes.items():
+    for t, s in dict(sorted(sum_crashes.items())).items():
         print(f"{t}: {s}")
     
 if __name__ == "__main__":
