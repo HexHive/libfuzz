@@ -229,7 +229,7 @@ class DataLayout:
         elif type == "wchar_t":
             return 8*4
         elif type == "unsigned short":
-            return 8*4
+            return 8*2
         else:
             raise Exception(f"I don't know the size of '{type}'")
 

@@ -23,7 +23,7 @@ def _main():
                         help='Driver Folder', required=False)
     parser.add_argument('-threshold', '-t', type=float, default=0.10,
                         help='Threshold for selection', required=False)
-    parser.add_argument('-simulate', '-s', action='store_true',
+    parser.add_argument('-simulate', '-s', choices=['full', 'short'], const='full', nargs='?',
                         help='Simulation only, not moving files around', 
                         required=False)
     parser.add_argument('-timebudget', '-b', type=str,
@@ -37,7 +37,7 @@ def _main():
     simulate = args.simulate
     threshold = args.threshold
     timebudget = normalize_time_boudget(args.timebudget)
-
+    
     libraries = scr.load_report(report, rootdir)
 
     best_drivers = {}
@@ -53,21 +53,22 @@ def _main():
         # print(lib)
         # print(best_drvs)
 
-    if simulate:
+    if simulate in ["full", "short"]:
         print("[INFO] Only simulation, here the drivers I would select:")
         for lib, drvs in best_drivers.items():
             tb = timebudget_per_libary[lib]
             print(f"{lib}: {len(drvs)} drivers w/ timebudget {tb}")
-            for d in drvs:
-                n_drivers = d['n_drivers']
-                n_apis = d['n_apis']
-                driver = d['driver']
-                cov = d['cov']
+            if simulate == "full":
+                for d in drvs:
+                    n_drivers = d['n_drivers']
+                    n_apis = d['n_apis']
+                    driver = d['driver']
+                    cov = d['cov']
 
-                d_path = f"workdir_{n_drivers}_{n_apis}/{lib}/drivers/{driver}"
-                print(f"{d_path}: {cov}")
+                    d_path = f"workdir_{n_drivers}_{n_apis}/{lib}/drivers/{driver}"
+                    print(f"{d_path}: {cov}")
 
-            print("-" * 30)
+                print("-" * 30)
 
         exit(0)
         

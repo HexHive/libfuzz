@@ -381,9 +381,12 @@ class LFBackendDriver(BackendDriver):
         x_value = f"{x_token}[{x_idx}][i]"
 
         str = "//clean dbl array\n"
+        # str += f"\tfor (uint i = 0; i < {buff_nelem}; i++) "
+        # str += f" if ({buff_i} != 0 && {x_value} == {buff_i} ) "
+        # str += f"{cleanup_method}({cast_str}{buff_i});\n"
         str += f"\tfor (uint i = 0; i < {buff_nelem}; i++) "
-        str += f" if ({buff_i} != 0 && {x_value} == {buff_i} ) "
-        str += f"{cleanup_method}({cast_str}{buff_i});\n"
+        str += f" if ({x_value} != 0 )"
+        str += f" {cleanup_method}({cast_str}{x_value});\n"
 
         return str
 
@@ -502,9 +505,12 @@ class LFBackendDriver(BackendDriver):
             x_token = self.clean_token(buff.get_token()) + "_shadow"
             x_value = f"{x_token}[{x_idx}]"
 
-            to_ret = f"if ({v}{extra_brackets} != 0 && "
-            to_ret += f"{x_value} == {v}{extra_brackets}) "
-            to_ret += f"{cleanup_method}({v}{extra_brackets});"
+            # to_ret = f"if ({v}{extra_brackets} != 0 && "
+            # to_ret += f"{x_value} == {v}{extra_brackets}) "
+            # to_ret += f"{cleanup_method}({v}{extra_brackets});"
+            
+            to_ret = f"if ({x_value} != 0)"
+            to_ret += f" {cleanup_method}({x_value});"
 
             return to_ret
 
