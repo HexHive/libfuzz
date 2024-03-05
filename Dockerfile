@@ -59,6 +59,11 @@ RUN --mount=type=cache,target=/var/cache/apt sudo apt-get update && sudo apt-get
     sudo apt-get -y install --no-install-suggests --no-install-recommends \
         gcc g++ libncurses5  clang-12 llvm-12-dev
 
+# gef
+RUN echo "export LC_CTYPE=C.UTF-8" >> ~/.bashrc
+RUN echo "export LC_CTYPE=C.UTF-8" >> ~/.zshrc
+RUN bash -c "$(curl -fsSL https://gef.blah.cat/sh)"
+
 # SVF
 
 RUN --mount=type=cache,target=${HOME}/.ccache/ git clone https://github.com/SVF-tools/SVF.git && \
