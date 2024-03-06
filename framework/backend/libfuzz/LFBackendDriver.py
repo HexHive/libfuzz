@@ -510,7 +510,8 @@ class LFBackendDriver(BackendDriver):
             # to_ret += f"{cleanup_method}({v}{extra_brackets});"
             
             to_ret = f"if ({x_value} != 0)"
-            to_ret += f" {cleanup_method}({x_value});"
+            # to_ret += f" {cleanup_method}({x_value});" // clean the shadow var
+            to_ret += f" {cleanup_method}({v}{extra_brackets});"
 
             return to_ret
 

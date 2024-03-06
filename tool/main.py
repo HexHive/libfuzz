@@ -28,8 +28,8 @@ def __main():
     # default_config = PROJECT_FOLDER + "/targets/pthreadpool/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libaom/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libpcap/generator.toml"
-    default_config = PROJECT_FOLDER + "/targets/c-ares/generator.toml"
-    # default_config = PROJECT_FOLDER +"/targets/cjson/generator.toml"
+    # default_config = PROJECT_FOLDER + "/targets/c-ares/generator.toml"
+    default_config = PROJECT_FOLDER +"/targets/cjson/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/zlib/generator.toml"
 
     parser = argparse.ArgumentParser(description='Automatic Driver Generator')
