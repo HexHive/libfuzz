@@ -183,19 +183,26 @@ class RunningContext(Context):
         is_sink = ConditionManager.instance().is_sink(api_call)
         is_source = ConditionManager.instance().is_source(cond)
         is_init = ConditionManager.instance().is_init(api_call, arg_pos)
+        is_setby = ConditionManager.instance().is_setby(api_call, arg_pos)
         
-        # if (api_call.function_name == "aom_codec_decode" and 
+        # if api_call.function_name == "TIFFCIELabToRGBInit" and arg_pos == 0:
+        #     is_setby = True
+        #     print(f"try_to_get_var {type}")
+        #     from IPython import embed; embed(); exit(1)
+        
+        # if (api_call.function_name == "TIFFCIELabToXYZ" and 
         #     arg_pos == 0):
         #     # self.attempt -= 1
         #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
 
         val = None
-
-
+        
+        
         # if arg_pos == 0 and type.token == "htp_tx_t*":
         #     print(f"try_to_get_var {type}")
-        #     from IPython import embed; embed(); exit(1)
+        #     is_setby = True
+        #     # from IPython import embed; embed(); exit(1)
 
         # for variables used in ret -> I take any compatible type and overwrite
         # their conditions
@@ -221,7 +228,7 @@ class RunningContext(Context):
                 else:
                     # raise ConditionUnsat()
                     raise ConditionUnsat(traceback.format_stack())
-        elif is_init:
+        elif is_init or is_setby:
             # tt = None
             # if isinstance(type, PointerType):
             #     if type.get_pointee_type().is_incomplete:
@@ -284,11 +291,19 @@ class RunningContext(Context):
                     if tt.is_incomplete:
                         # raise ConditionUnsat()
                         raise_an_exception = True
-                    if (tt.tag == TypeTag.STRUCT and
-                        not self.is_init_api(api_call, api_cond, arg_pos) and
-                        # not is_init and
-                        not DataLayout.instance().is_fuzz_friendly(
-                            tt.token)):
+                    if tt.tag == TypeTag.STRUCT:
+                        call_can_be_done = self.is_init_api(api_call, api_cond, arg_pos)
+                        type_is_friendly = DataLayout.instance().is_fuzz_friendly(tt.token)
+                        needs_init_or_setby = ConditionManager.instance().needs_init_or_setby(type)
+                        
+                        # if (api_call.function_name == "TIFFCIELabToXYZ" and 
+                        #     arg_pos == 0):
+                        #     # self.attempt -= 1
+                        #     print(f"try_to_get_var {type} and {arg_pos}")
+                        #     from IPython import embed; embed(); exit(1)
+                        
+                        if (not call_can_be_done and 
+                            type_is_friendly and needs_init_or_setby):                            
                             raise_an_exception = True
                     if ConditionManager.instance().has_source(tt):
                         raise_an_exception = True
@@ -393,8 +408,42 @@ class RunningContext(Context):
 
         return val
     
+    # def should_have_init_or_setby(self, api_call: ApiCall, api_cond: FunctionConditions, 
+    #                 arg_pos: int) -> bool:
+    
+    #     if arg_pos == -1:
+    #         return False
+        
+    #     cm = ConditionManager.instance()
+        
+    #     cm.is_init(api_call, arg_pos)
+
+    #     if len(cond.setby_dependencies) == 0:
+    #         return False
+
+    #     arg_ok = 0
+    #     for d in cond.setby_dependencies:
+    #         p_idx = int(d.replace("param_", ""))
+    #         d_type = api_call.arg_types[p_idx]
+    #         d_cond = api_cond.argument_at[p_idx]
+
+    #         if self.has_vars_type(d_type, d_cond):
+    #             arg_ok += 1
+    #         elif d_type.tag == TypeTag.STRUCT:
+    #             tt = d_type
+    #             if isinstance(d_type, PointerType):
+    #                 tt = d_type.get_base_type()
+    #             if (DataLayout.instance().is_fuzz_friendly(tt.get_token()) or
+    #                 not tt.is_incomplete):
+    #                 arg_ok += 1
+    #         elif d_type.tag == TypeTag.PRIMITIVE:
+    #             arg_ok += 1
+
+    #     # the idea is that I can control all the dependncies
+    #     return arg_ok == len(cond.setby_dependencies)
+    
     def is_init_api(self, api_call: ApiCall, api_cond: FunctionConditions, 
-                    arg_pos: int):
+                    arg_pos: int) -> bool:
         
         # api_name = api_call.function_name
         # if api_name == "aom_codec_decode" and arg_pos == 0:
@@ -421,7 +470,10 @@ class RunningContext(Context):
                 tt = d_type
                 if isinstance(d_type, PointerType):
                     tt = d_type.get_base_type()
-                if (DataLayout.instance().is_fuzz_friendly(tt.get_token()) or
+                is_setby = ConditionManager.instance().is_setby(api_call, arg_pos)
+                is_init = ConditionManager.instance().is_setby(api_call, arg_pos)
+                if ((DataLayout.instance().is_fuzz_friendly(tt.get_token()) and 
+                     not is_setby and not is_init) or
                     not tt.is_incomplete):
                     arg_ok += 1
             elif d_type.tag == TypeTag.PRIMITIVE:
