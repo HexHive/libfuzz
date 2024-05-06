@@ -2,8 +2,10 @@
 #include "AccessTypeHandler.h"
 
 #include "Graphs/SVFG.h"
+#include "SVF-LLVM/BasicTypes.h"
 #include "SVF-LLVM/LLVMUtil.h"
 #include "Util/SVFUtil.h"
+#include <vector>
 
 #define MAX_STACKSIZE 20
 
@@ -21,10 +23,14 @@ std::set<const VFGNode*> getDefinitionSet(const VFGNode*);
 std::set<const VFGNode*> getDefinitionSetCtx(const VFGNode*, Path*);
 std::set<const VFGNode*> getDefinitionSetForRet(const VFGNode*,
     std::set<const SVFFunction*>*);
+// bool leadsToBitCastOfType(const ICFGNode*,Type*,const Instruction**);
+bool leadsToBitCastOfType(const VFGNode*, Type*);
 bool areCompatible(FunctionType*,FunctionType*);
 bool handlerDispatcher(ValueMetadata*, std::string,
     const ICFGNode*, const CallICFGNode*, int, AccessType, H_SCOPE h_scope, 
     Path *path);
+bool hasHandlerDispatcher(ValueMetadata*, std::string, const ICFGNode*, const CallICFGNode*, int,
+    H_SCOPE h_scope);
 // NOT EXPOSED FUNCTIONS -- END!
 
 /**
@@ -61,6 +67,38 @@ bool handlerDispatcher(ValueMetadata *mdata, std::string fun,
         }
     }
     return true;
+}
+
+/**
+It checks if the target function is handled by our dispatchers.
+
+@param: ats: the access type set to be updated by the handler
+@param: fun: the name of the function
+@param: node: the node currently analyzed
+
+@return: boolean value indicating if the function is handled by our dispacthers
+*/
+bool hasHandlerDispatcher(ValueMetadata *mdata, std::string fun, 
+    const ICFGNode * icfgNode, const CallICFGNode* cs, int param_num, H_SCOPE h_scope) {
+
+    std::string suffix = "*";
+    for (auto f: accessTypeHandlers) {
+        std::string fk = f.first;
+        auto handler = f.second;
+
+        int fk_size = fk.length() - suffix.length();
+        if (fk.compare(fk_size, suffix.length(), suffix) == 0 && 
+            fun.size() >= fk_size) {
+            std::string fk_clean = fk.substr(0, fk_size);
+            std::string fun_clean = fun.substr(0, fk_size);
+            if (fk_clean == fun_clean)
+                return true;
+        }
+        else if (fun == f.first) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool areCompatible(FunctionType* caller,FunctionType* callee) {
@@ -183,6 +221,9 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
         }
         else if (auto call_node = SVFUtil::dyn_cast<CallICFGNode>(node)) {
             // Handling calls
+
+            // outs() << "[INFO] " << call_node->toString() << " \n";
+
             if (!consider_indirect_calls && call_node->isIndirectCall())
                     continue;
 
@@ -201,6 +242,23 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                 allocainst_set.insert(inst);
                 ret_type_is_ok = true;
             }
+            else if (ValueMetadata::myCallEdgeMap_inst.find(call_node) != 
+                     ValueMetadata::myCallEdgeMap_inst.end()) {
+                // outs() << "[DEBUG] -> call_node is in the edge map\n";
+                outs() << "[INFO] call_node: " << call_node->toString() << " has ind jump? \n";
+                auto targets = 
+                    ValueMetadata::myCallEdgeMap_inst[call_node];
+                for (auto t: targets) {
+                    std::string fun = t->getName();
+                    outs() << "[INFO] t->getName(): " << fun << "\n";
+                    if (hasHandlerDispatcher(&mdata, fun, node, call_node,
+                                            -1, C_RETURN)) {
+                        outs() << "[INFO] has dispatcher!\n";
+                        // allocainst_set.insert(inst);
+                        ret_type_is_ok = true;
+                    }
+                }
+            }
 
             if (ret_type_is_ok && 
                 ValueMetadata::myCallEdgeMap_inst.find(call_node) != 
@@ -212,16 +270,48 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
                     std::string fun = t->getName();
                     // malloc handler
                     AccessType acNode(retType);
-                    handlerDispatcher(&mdata, fun, node, call_node, -1, 
+                    ValueMetadata mdata_tmp;
+                    handlerDispatcher(&mdata_tmp, fun, node, call_node, -1, 
                                         acNode, C_RETURN, nullptr);
+                    outs() << "[INFO] After handlerDispatcher\nmeta_tmp:\n";
+                    outs() << mdata_tmp.toString(false) << "\n";
+                    // check if mdata_tmp has "create"
+                    bool added_create = false;
+                    for (auto at: *mdata_tmp.getAccessTypeSet()) {
+                        if (at.getAccess() == AccessType::create) {
+                            outs() << "I added a create!!!\n";
+                            added_create = true;
+                            break;
+                        }
+                    }
+                    auto ret_node = call_node->getRetICFGNode();
+                    auto ret_node_val = ret_node->getActualRet();
 
-                    // handlerDispatcher(&mdata, fun, node, call_node, -1, 
-                    //                     acNode, C_RETURN, nullptr);
-
-                    // for (unsigned p = 0; p < ftype->getNumParams(); p++) {
-                    //     handlerDispatcher(&mdata, fun, node, call_node, p, 
-                    //                         acNode, C_RETURN);
-                    // }
+                    if (ret_node_val) {
+                        const auto xx = ret_node_val->getValue();
+                        PAGNode* zz = pag->getGNode(pag->getValueNode(xx));
+                        const VFGNode* vNode;
+                        if (!vfg->hasDefSVFGNode(zz)) {
+                            outs() << "zz has not Def Nodes\n";
+                        }
+                        else {
+                            vNode = vfg->getDefSVFGNode(zz);
+                            outs() << "vNode: " << vNode->toString() << "\n";
+                        }
+                        
+                        // if a "create" is added, I need to check it leads
+                        // to a bitcast, otherwise I ignore it
+                        // const Instruction **inst_bitcast;
+                        if (added_create && leadsToBitCastOfType(vNode, retType)) {
+                            // allocainst_set.insert(*inst_bitcast);
+                            outs() << "I allocated a bitcast!!\n";
+                            // outs() << "bitcast: " << *(*inst_bitcast) << "\n";
+                            AccessType acNode(retType);
+                            // ValueMetadata mdata;
+                            handlerDispatcher(&mdata, fun, node, call_node, -1, 
+                                                acNode, C_RETURN, nullptr);
+                        }
+                    }
                 }
                     // visited_functions.insert(t);
             }
@@ -385,8 +475,8 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
     // std::map<const Instruction*, AccessTypeSet> all_ats;
     std::map<const Instruction*, ValueMetadata> all_ats;
     for (auto a: allocainst_set) {
-        // outs() << "[INFO] paramAT() " << *a << " -- ";
-        // outs() << a->getFunction()->getName().str() << "\n";
+        outs() << "[INFO] paramAT() " << *a << " -- ";
+        outs() << a->getFunction()->getName().str() << "\n";
         ValueMetadata mdata = ValueMetadata::extractParameterMetadata(
             vfg, a, retType);
 
@@ -397,8 +487,9 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
         //     outs() << "IsFilePath -> False \n";
         // }
 
-        // outs() << "[STARTING POINT] " << *a << "\n";
-        // outs() << " result -> " << mdata.getAccessNum() << "AT\n";
+        outs() << "[STARTING POINT] " << *a << "\n";
+        outs() << " result -> " << mdata.getAccessNum() << "AT\n";
+        outs() << " result -> " << mdata.toString(false) << "\n";
         // // exit(1);
 
         // XXX: TO REMOVE LATER
@@ -688,6 +779,77 @@ std::string ValueMetadata::extractLenDependencyParameter(
     return dependent_param;
 }
 
+bool leadsToBitCastOfType(const VFGNode* vn, Type *targetType) {
+    // TODO: follow def-use only inside the function!
+    // return true of n leads to a bitcast whose destination is of type targetType
+
+    LLVMModuleSet *llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
+
+    outs() << "Analyze: " << vn->toString() << "\n";
+
+    // for (auto vn: n->getVFGNodes()) {
+
+        std::set<const VFGNode*> visited;
+        std::vector<const VFGNode*> worklist;
+
+        worklist.push_back(vn);
+
+        outs() << "vn: " << vn->toString() << "\n";
+
+        while(!worklist.empty()) {
+            
+            auto n = worklist.back();
+            worklist.pop_back();
+            
+            if (visited.find(n) != visited.end())
+                continue;
+            
+            if (SVFUtil::isa<GepVFGNode>(n))
+                continue;
+
+            // only intra-exploration
+            if (SVFUtil::isa<InterPHIVFGNode>(n))
+                continue;
+
+            // NOTE: alternative way to remain in function, to use as alternative
+            // auto fun = n->getFun();
+            // // I am visiting a non-visted function, skip it
+            // if (vf->find(fun) == vf->end())
+            //     continue;
+
+            
+            if (n->getNodeKind() == VFGNode::VFGNodeK::Copy &&
+                SVFUtil::isa<StmtVFGNode>(n)) {
+                
+                auto stmt_vfg_node = SVFUtil::dyn_cast<StmtVFGNode>(n);
+                auto inst = llvmModuleSet->getLLVMValue(
+                    stmt_vfg_node->getInst());
+                
+                if (auto bitcastinst = SVFUtil::dyn_cast<BitCastInst>(inst)) {
+                    auto dst_typ = bitcastinst->getDestTy();
+                    auto src_typ = bitcastinst->getSrcTy();
+
+                    if (dst_typ == targetType){
+                        // const Instruction **AAA;
+                        // *bitcast_ret = bitcastinst;
+                        return true;
+                    }
+                }
+            }
+            
+            for(auto in: n->getOutEdges()) {
+                auto pn = in->getDstNode();
+                worklist.push_back(pn);
+            }     
+
+            visited.insert(n);
+        }
+
+    // }
+
+    return false;
+}
+
 std::set<const VFGNode*> getDefinitionSetForRet(const VFGNode *n, std::set<const SVFFunction*> *vf) {
 
     std::set<const VFGNode*> definitions;
@@ -858,6 +1020,10 @@ ValueMetadata ValueMetadata::extractParameterMetadata(
 
     auto llvm_val = llvmModuleSet->getSVFValue(val);
     PAGNode* pNode = pag->getGNode(pag->getValueNode(llvm_val));
+    if (!vfg->hasDefSVFGNode(pNode)) {
+        ValueMetadata mdata_empty;
+        return mdata_empty;
+    }
     const VFGNode* vNode = vfg->getDefSVFGNode(pNode);
 
     ValueMetadata mdata;
