@@ -228,6 +228,11 @@ class RunningContext(Context):
                 else:
                     # raise ConditionUnsat()
                     raise ConditionUnsat(traceback.format_stack())
+        # special case for void* types
+        elif (isinstance(type, PointerType) and 
+            type.get_pointee_type() == self.stub_void):
+            new_buff = self.create_new_var(self.stub_char_array, cond, False)
+            val = new_buff.get_address()
         elif is_init or is_setby:
             # tt = None
             # if isinstance(type, PointerType):
@@ -271,11 +276,6 @@ class RunningContext(Context):
                 from IPython import embed; embed(); exit(1)
                 # else:
                 #     raise ConditionUnsat()
-        # special case for void* types
-        elif (isinstance(type, PointerType) and 
-            type.get_pointee_type() == self.stub_void):
-            new_buff = self.create_new_var(self.stub_char_array, cond, False)
-            val = new_buff.get_address()
         else:
             raise_an_exception = False
 

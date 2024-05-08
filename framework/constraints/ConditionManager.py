@@ -299,9 +299,9 @@ class ConditionManager:
         if type in self.init_per_type:
             return True
         
-        if type in self.set_per_type:
-            ss = self.set_per_type[type]
-            return len(ss) == 1
+        # if type in self.set_per_type:
+        #     ss = self.set_per_type[type]
+        #     return len(ss) == 1
                 
         return False
     

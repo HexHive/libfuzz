@@ -1,1 +1,2 @@
 htp_base64_decoder_init
+htp_base64_decode
