@@ -44,13 +44,18 @@ def get_driver(raw_values, rootdir = None, lib = None):
 
     metadata = {}
     if rootdir is not None and lib is not None:
-        metadata_file =  os.path.join(rootdir, 
-                                      f"workdir_{n_drivers}_{n_apis}", 
-                                      lib, "metadata", 
-                                      f"{driver_id}.meta"
-                                      )
-        with open(metadata_file) as fp:
-            metadata = json.load(fp)
+
+
+        try:
+            metadata_file =  os.path.join(rootdir, 
+                                       f"workdir_{n_drivers}_{n_apis}", 
+                                       lib, "metadata", 
+                                       f"{driver_id}.meta"
+                                       )
+            with open(metadata_file) as fp:
+                metadata = json.load(fp)
+        except:
+            pass
 
     return {"driver": driver_id, 
             "n_drivers": n_drivers,
