@@ -163,3 +163,13 @@ FROM libfuzzpp_dev_image AS libfuzzpp_fuzzing_campaigns
 COPY LLVM/update-alternatives-clang.sh .
 RUN sudo ./update-alternatives-clang.sh 12 200
 WORKDIR ${LIBFUZZ}
+
+# ------------------------------------------------------------------------------------------------------------------
+# TARGET FOR DYNAMIC DRIVER CREATION
+FROM libfuzzpp_fuzzing AS libfuzzpp_dyndrvgen
+COPY LLVM/update-alternatives-clang.sh .
+RUN sudo ./update-alternatives-clang.sh 12 200
+ENV DRIVER_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
+ENV CORPUS_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/corpus_new
+WORKDIR ${LIBFUZZ}
+CMD ${LIBFUZZ}/targets/start_dyndrvcreation.sh

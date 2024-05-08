@@ -47,6 +47,16 @@ class Configuration:
         self.start_term = NonTerminal("start")
         self.end_term = Terminal("end")
 
+        self._config_path = config_path
+        self._overwrite_path = overwrite_path
+
+    def get_info(self):
+        if self._overwrite_path is not None:
+            return f"{self._config_path}({self._overwrite_path})"
+    
+        return f"{self._config_path}"
+
+
     @cached_property
     def driver_size(self):
 
