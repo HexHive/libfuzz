@@ -9,6 +9,8 @@ type_incomplete = set()    # List of incomplete types
 apis_definition = []       # List of APIs with original argument types and extra info (e.g., const)
 type_enum = set()
 
+all_types = set()
+
 def find_api(api, apis_definition):
     # from IPython import embed; embed(); exit(1)
     api_hash = str(api)
@@ -33,28 +35,71 @@ def get_argument_info(type):
     else:
         type_str = type.spelling
 
+    all_types.add(type_str)
+
+    ## OLD const handling
+    # # type is a function pointer
+    # if "(*)" in type_str:
+    #     info["type_clang"] = type_str
+    #     info["const"] = False
+    # else:
+    #     # clean any form of [] and *
+    #     n_asterix = type_str.count("*") + type_str.count("[")
+    #     if "[" in type_str:
+    #         # stuffs like char[100] into char*
+    #         type_str = re.sub('\[\d*\]', '', type_str)
+    #     type_str = type_str.replace("*","")
+        
+    #     info["const"] = False
+    #     type_str_token = type_str.strip().split(" ")
+    #     for bad_token in ["enum", "struct", "const"]:
+    #         if bad_token in type_str_token:
+    #             type_str_token.remove(bad_token)
+    #             if bad_token == "const":
+    #                 info["const"] = True
+
+    #     # re-append the * at the end of the type
+    #     info["type_clang"] = " ".join(type_str_token) + "*"*n_asterix
+    ## OLD const handling
+
     # type is a function pointer
     if "(*)" in type_str:
         info["type_clang"] = type_str
-        info["const"] = False
+        info["const"] = []
     else:
         # clean any form of [] and *
         n_asterix = type_str.count("*") + type_str.count("[")
         if "[" in type_str:
             # stuffs like char[100] into char*
-            type_str = re.sub('\[\d*\]', '', type_str)
-        type_str = type_str.replace("*","")
+            type_str = re.sub('\[\d*\]', '*', type_str)
+        # type_str = type_str.replace("*","")
         
-        info["const"] = False
-        type_str_token = type_str.strip().split(" ")
-        for bad_token in ["enum", "struct", "const"]:
+        
+        type_str_token = type_str.strip().replace("*", " * ").split()
+        for bad_token in ["enum", "struct"]:
             if bad_token in type_str_token:
                 type_str_token.remove(bad_token)
-                if bad_token == "const":
-                    info["const"] = True
+        
+        n_const = n_asterix             
+        const_pos = [False for _ in range(n_const + 1)]
 
-        # re-append the * at the end of the type
-        info["type_clang"] = " ".join(type_str_token) + "*"*n_asterix
+        print(type_str_token)
+
+        i = 0
+        for t in type_str_token:
+            if t == "const":
+                if i < len(const_pos):
+                    const_pos[i] = True
+            elif t == "*" and i == 1:
+                continue
+            else:
+                i = i + 1
+
+        while "const" in type_str_token:
+            type_str_token.remove("const")
+    
+        info["type_clang"] = " ".join(type_str_token)
+        info["const"] = const_pos
 
     return info
 
@@ -210,6 +255,10 @@ def _main():
     public_headers = args.public_headers
     enum_list = args.enum_list
 
+    target = os.environ["TARGET_NAME"]
+
+    type_log = f"./alltypes_{target}.txt"
+
     tmp_file = get_stub_file(include_folder, public_headers)
 
     print(tmp_file)
@@ -238,6 +287,11 @@ def _main():
 
     root = tu.cursor        # Get the root of the AST
     traverse(root, include_folder, [])
+
+    # FOR DEBUGGING TYPE PARSING
+    with open(type_log, "w") as log:
+        for t in all_types:
+            log.write(f"{t}\n")
 
     with open(exported_functions, 'w') as out_f:
         for f in function_declarations:

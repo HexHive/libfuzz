@@ -1,4 +1,4 @@
-from . import Value, Type, Address
+from . import Value, Type
 
 class NullConstant(Value):
     type: Type

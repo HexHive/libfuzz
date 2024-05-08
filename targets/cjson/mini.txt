@@ -1,0 +1,2 @@
+#cJSON_ParseWithLengthOpts
+cJSON_ParseWithLength

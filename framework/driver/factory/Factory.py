@@ -31,11 +31,11 @@ class Factory(ABC):
         arg_list_type = []
         for _, arg in enumerate(arguments_info):
             # NOTE: for simplicity, const type as arguments can be consider non-const, see `Driver_IR.md` for more info
-            the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, False)
+            the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, arg.is_const)
             arg_list_type += [the_type]
 
         if return_info.size == 0:
-            ret_type = Factory.normalize_type('void', 0, "val", False)
+            ret_type = Factory.normalize_type('void', 0, "val", [False])
         else:
             ret_type = Factory.normalize_type(return_info.type, return_info.size, return_info.flag, return_info.is_const)
         
@@ -44,13 +44,12 @@ class Factory(ABC):
     @staticmethod
     def normalize_type(a_type, a_size, a_flag, a_is_const) -> Type:
         
+        if not isinstance(a_is_const, list):
+            raise Exception(f"a_is_const must be a list, \"{type(a_is_const)}\" given!")
+        
         if a_flag == "ref" or a_flag == "ret":
             if not re.search("\*$", a_type) and "*" in a_type:
                 raise Exception(f"Type '{a_type}' is not a valid pointer")
-        # elif a_flag == "fun" and "(" in a_type :
-        #     # FIXME: for the time being, function pointers become i8*
-        #     # FIXME: add casting in the backend, if needed (?)
-        #     a_type = "char*"
         elif a_flag == "val":
             if "*" in a_type:
                 raise Exception(f"Type '{a_type}' seems a pointer while expecting a 'val'")
@@ -73,10 +72,23 @@ class Factory(ABC):
         else:
 
             pointer_level = a_type.count("*")
-            a_type_core = a_type.replace("*", "")
+            a_type_core = a_type.replace("*", "").replace(" ", "")
+            
+            # some types are fuck'd up. They need to be rebuilt.
+            if a_type_core == "unsignedlong":
+                a_type_core = "unsigned long"
+            if a_type_core == "unsignedint":
+                a_type_core = "unsigned int"
+            if a_type_core == "signedchar":
+                a_type_core = "signed char"
+            if a_type_core == "unsignedchar":
+                a_type_core = "unsigned char"
+            if a_type_core == "unsignedshort":
+                a_type_core = "unsigned short"
+            
 
-            # if a_type_core == "u_char":
-            #     print("normalize_type")
+            # if a_type == "void *":
+            #     print(f"normalize_type {a_type_core}")
             #     from IPython import embed; embed()
             #     exit(1)
 
@@ -89,20 +101,26 @@ class Factory(ABC):
             a_size = DataLayout.instance().get_type_size(a_type_core)
             a_incomplete_core = DataLayout.instance().is_incomplete(a_type_core)
 
+            # is this guy a STRUCT or a PRIMITIVE?
             type_tag = TypeTag.PRIMITIVE
             if DataLayout.instance().is_a_struct(a_type_core):
-                # print("is this a struct?")
-                # from IPython import embed; embed(); exit(1)
                 type_tag = TypeTag.STRUCT
                 
-            type_core = Type(a_type_core, a_size, a_incomplete_core, a_is_const, type_tag)
+            type_core = Type(a_type_core, a_size, a_incomplete_core, a_is_const[-1], type_tag)
 
             return_type = type_core
             for x in range(1, pointer_level + 1):
-                return_type = copy.deepcopy(PointerType( a_type_core + "*"*x , copy.deepcopy(return_type)))
+                return_type = copy.deepcopy(PointerType( a_type_core + "*"*x , copy.deepcopy(return_type), a_is_const[-(x+1)]))
 
             return_type.to_function = False
-            # if isinstance(return_type, PointerType):
-            #     return_type.to_function = a_flag == "fun" and "(" in a_type
+            
+            if return_type.token == "unsignedlong":
+                print("unsignedlong?")
+                from IPython import embed; embed(); exit(1)
 
         return return_type
+        
+class EmptyDriverSpace(Exception):
+    """EmptyDriverSpace, the factory can't generate any other driver"""
+    def __init__(self):
+        pass

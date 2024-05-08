@@ -505,6 +505,14 @@ int main(int argc, char ** argv)
 
     SVFUtil::outs() << "[INFO] Analysis done!\n";
 
+    GlobalStruct::CallEdgeMap newEdges = point_to_analysys->get_new_edges();
+    // NOTE: copy callsite->target relation in a neutral structure
+    for (auto x: newEdges) {
+        auto cs = x.first;
+        for (auto t: x.second)
+            ValueMetadata::myCallEdgeMap_inst[cs].insert(t);
+    }
+
     Dominator *dom = nullptr;
     PostDominator *pDom = nullptr;
 

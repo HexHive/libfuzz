@@ -1,0 +1,42 @@
+# where libfuzz is 0
+bstr_builder.c => I should do better driver, restricting to bstr_*
+# # custom set:
+# bstr_builder_appendn
+# bstr_builder_append_c
+# bstr_builder_append_mem
+# bstr_builder_clear
+# bstr_builder_create
+# bstr_builder_destroy
+# bstr_builder_size
+# bstr_builder_to_str
+
+htp_content_handlers.c <- manual search space
+# # custom set:
+# bstr_dup_c
+# htp_config_create
+# htp_mpartp_create
+# htp_mpartp_find_boundary
+# htp_mpartp_get_multipart
+# htp_mpartp_destroy
+# htp_mpartp_finalize
+# htp_mpartp_parse
+
+htp_decompressors.c <- manual search space
+# custom set:
+# htp_config_create
+# htp_connp_create
+# htp_gzip_decompressor_create
+# htp_gzip_decompressor_destroy
+
+htp_request_apache_2_2.c <- not sure
+htp_response_generic.c <- not sure
+htp_transcoder.c <- not sure
+
+# non 0 in custom
+htp_cookies.c
+htp_multipart.c
+htp_parsers.c
+htp_request.c
+htp_request_generic.c
+htp_response.c
+htp_urlencoded.c

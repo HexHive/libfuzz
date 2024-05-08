@@ -2,7 +2,9 @@ from typing import List, Set, Dict
 import random, hashlib
 
 from .ir import Type, PointerType, Variable, BuffDecl, BuffInit, Function
-from .ir import Statement, Value, NullConstant, Buffer, AllocType 
+from .ir import Statement, Value, NullConstant, Buffer, AllocType, TypeTag
+# from .ir import ConditionUnsat
+from common import DataLayout
 
 class Context:
     # trace the variable alives in this buffers within the context
@@ -31,6 +33,7 @@ class Context:
         # TODO: make this from config?
         # self.MAX_ARRAY_SIZE = 1024
         self.MAX_ARRAY_SIZE = 128
+        self.DOUBLE_PTR_SIZE = 16
 
         self.stub_functions = {}
 
@@ -43,31 +46,92 @@ class Context:
     def get_null_constant(self):
         return NullConstant(self.stub_void)
 
-    def create_new_buffer(self, type):
-        # if isinstance(type, PointerType):
-        #     raise Exception(f"This function creates buffers only for base types (no pointers!) {type}")
+    def create_new_buffer(self, type, force_pointer: bool):
+        # if "char" in type.token:
+        #     print("create_new_buffer")
+        #     from IPython import embed; embed(); exit(1)
+
+        #     # "access": "create",
+        #     # "fields": [],
+
+
+        default_alloctype = AllocType.HEAP
+            
+        alloctype = AllocType.STACK
+        if isinstance(type, PointerType):
+            # if "UriQueryListW" in type.token:
+            #     print("what allocatype I need?")
+            #     from IPython import embed; embed(); exit(1)
+            t_base = type.get_base_type()
+            if (t_base.is_incomplete and 
+                t_base.tag == TypeTag.STRUCT):
+                alloctype = default_alloctype
+            # if (DataLayout.instance().is_fuzz_friendly(t_base.get_token()) and
+            #     t_base.tag == TypeTag.STRUCT):
+            #     alloctype = default_alloctype
+            if type.is_const:
+                alloctype = default_alloctype
+            if force_pointer:
+                alloctype = default_alloctype
+
+        # double pointers -> always in heap
+        if DataLayout.is_ptr_level(type, 2):
+            if type.get_base_type().is_incomplete:
+                alloctype = default_alloctype
+            else:
+                alloctype = AllocType.HEAP
+        #     # .get_token() in DataLayout.string_types
+        # elif (isinstance(type, PointerType) and
+            
+            
 
         buff_counter = self.buffs_counter.get(type, 0)
         
-        pnt = "_p" if isinstance(type, PointerType) else ""
+        pnt = ""
+        tt = type
+        ps = ""
+        while isinstance(tt, PointerType):
+            ps += "p"
+            tt = tt.get_pointee_type()
+        if ps != "":
+            pnt = f"_{ps}"
         cst = "c" if type.is_const else ""
+        # so far, only HEAP and STACK
+        decrt = ""
+        if alloctype == AllocType.HEAP:
+            decrt = "h" 
+        elif alloctype == AllocType.STACK:
+            decrt = "s"
 
-        buff_name = f"{type.token}{pnt}_{cst}{buff_counter}"
+        namespace_sep = "::"
+        if namespace_sep in type.token:
+            namespace_idx = type.token.index(namespace_sep) + len(namespace_sep)
+            clean_token = type.token[namespace_idx:]
+        else:
+            clean_token = type.token
+        buff_name = f"{clean_token}{pnt}_{cst}{decrt}{buff_counter}"
         buff_name = buff_name.replace(" ", "")
-        new_buffer = Buffer(buff_name, self.MAX_ARRAY_SIZE, type)
+        # NOTE: char* => always considered as array!
+        if ((type.token in DataLayout.string_types) and
+            alloctype == AllocType.STACK):
+            new_buffer = Buffer(buff_name, self.MAX_ARRAY_SIZE, type, alloctype)
+        elif type.token == "char**":
+            new_buffer = Buffer(buff_name, self.DOUBLE_PTR_SIZE, type, alloctype)
+        else:
+            new_buffer = Buffer(buff_name, 1, type, alloctype)
 
         self.buffs_alive.add(new_buffer)
         self.buffs_counter[type] = buff_counter + 1
 
         return new_buffer
 
-    def create_new_var(self, type: Type):
+    def create_new_var(self, type: Type, force_pointer: bool):
 
         # in case of void, I just return a void from a buffer void
         if type == self.stub_void:
             return self.buffer_void[0]
 
-        buffer = self.create_new_buffer(type)
+        buffer = self.create_new_buffer(type, force_pointer)
 
         # for the time being, I always return the first element
         return buffer[0]
@@ -99,31 +163,73 @@ class Context:
 
         v = None
 
+        # if type.is_const and is_ret:
+        #     print("type is const")
+        #     from IPython import embed; embed(); exit(1)
+
         if isinstance(type, PointerType):
+            is_incomplete = False
             if type.get_pointee_type().is_incomplete or is_ret:
                 tt = type
+                if not is_ret:
+                    is_incomplete = type.get_pointee_type().is_incomplete
             else:
                 tt = type.get_pointee_type()
+                is_incomplete = tt.is_incomplete
 
-            if is_ret:
+            # If asking for ret value, I always need a pointer
+            if (is_ret or
+                type.get_base_type().token != "char"):
                 a_choice = Context.POINTER_STRATEGY_ARRAY
             else:
                 a_choice = random.choice(self.poninter_strategies)
 
-
             # just NULL
             if a_choice == Context.POINTER_STRATEGY_NULL:
+                # print("choosing null")
+                # from IPython import embed; embed(); exit(1)
                 v = NullConstant(tt)
             # a vector
             elif a_choice == Context.POINTER_STRATEGY_ARRAY:
-                if random.getrandbits(1) == 0 or not self.has_buffer_type(tt):
-                    try:
-                        vp = self.create_new_buffer(tt)
-                    except Exception as e:
-                        print("within 'a_choice == Context.POINTER_STRATEGY_ARRAY'")
-                        from IPython import embed; embed(); exit()
+                # print("elif a_choice == Context.POINTER_STRATEGY_ARRAY:")
+                pick_random = random.getrandbits(1) == 0
+
+                if not self.has_vars_type(type):
+                    # print("self.has_vars_type")
+                    pick_random = False
+                elif ((tt.tag == TypeTag.STRUCT and
+                      not DataLayout.instance().is_fuzz_friendly(tt.token)) or 
+                      is_incomplete):
+                    # print("not DataLayout.instance().is_fuzz_friendly")
+                    # if tt.token == "char":
+                    #     from IPython import embed; embed(); exit(1)
+                    pick_random = True                
+                # elif not is_incomplete:
+                #     pick_random = False
+                elif is_ret:
+                    pick_random = False
+
+                vp = None
+                if pick_random:
+                    # print("self.get_random_buffer")
+                    vp = self.get_random_buffer(type)
                 else:
-                    vp = self.get_random_buffer(tt)
+                    # print("self.create_new_buffer")
+                    vp = self.create_new_buffer(type, is_ret)
+                 
+                # if vp is None:
+                #     raise ConditionUnsat()
+
+                # if ((random.getrandbits(1) == 0 or
+                #     not self.has_vars_type(type, cond)) and 
+                #     not is_incomplete):
+                #     try:
+                #         vp = self.create_new_buffer(type, cond, is_ret)
+                #     except Exception as e:
+                #         print("within 'a_choice == Context.POINTER_STRATEGY_ARRAY'")
+                #         from IPython import embed; embed(); exit()
+                # else:
+                #     vp = self.get_random_buffer(type, cond)
 
                 v = vp.get_address()
 
@@ -137,7 +243,7 @@ class Context:
             if not self.has_vars_type(type):
                 # print(f"=> {t} not in context, new one")
                 try:
-                    v = self.create_new_var(type)
+                    v = self.create_new_var(type, is_ret)
                 except:
                     print("within 'not self.has_vars_type(type):'")
                     from IPython import embed; embed(); exit()
@@ -149,7 +255,7 @@ class Context:
                 # or create a new var
                 else:
                     # print(f"=> decided to create a new {t}")
-                    v = self.create_new_var(type)
+                    v = self.create_new_var(type, is_ret)
 
         if v is None:
             raise Exception("v was not assigned!")

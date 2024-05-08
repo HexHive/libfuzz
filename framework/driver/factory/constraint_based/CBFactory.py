@@ -8,7 +8,7 @@ from constraints import ConditionUnsat, RunningContext, ConditionManager
 from dependency import DependencyGraph
 from driver import Driver
 from driver.factory import Factory
-from driver.ir import ApiCall, PointerType, Variable, AllocType
+from driver.ir import ApiCall, PointerType, Variable, AllocType, Constant
 from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
 
 
@@ -70,7 +70,15 @@ class CBFactory(Factory):
             arg_cond = conditions.argument_at[arg_pos]
             #  TODO: add and test if it works
             #  and not isinstance(arg_type, PonterType)
-            if arg_cond.len_depends_on != "":
+            # if arg_type.token == "htp_mpartp_t*":
+            #     print("try_to_instantiate_api_call")
+            #     from IPython import embed; embed(); exit(1)
+            
+            # if (arg_cond.len_depends_on != ""):
+            if (arg_cond.len_depends_on != "" and 
+                (isinstance(arg_type, PointerType) and
+                not arg_type.get_base_type().is_incomplete or
+                arg_type.get_base_type() == rng_ctx.stub_void)):
                 idx = int(arg_cond.len_depends_on.replace("param_", ""))
                 idx_type = api_call.arg_types[idx]
 
@@ -99,16 +107,37 @@ class CBFactory(Factory):
                     # idx = int(arg_cond.len_depends_on.replace("param_", ""))
                     # idx_type = api_call.arg_types[idx]
                     idx_cond = conditions.argument_at[idx]
-                    b_len = rng_ctx.create_new_var(idx_type, idx_cond, False)
-                    try:
-                        api_call.set_pos_arg_var(idx, b_len)
-                    except:
-                        print("Exception here")
-                        from IPython import embed; embed(); exit(1)
+                    if DataLayout.is_ptr_level(arg_type, 2):
+                        var = arg_var.get_variable()
+                        buff = var.get_buffer()
+                        n_elem = buff.get_number_elements()
+                        b_len = rng_ctx.create_new_const_int(n_elem)
+                        b_len_arg = rng_ctx.create_new_var(idx_type, idx_cond, 
+                                                           False)
+                        # print("DataLayout.is_ptr_level(arg_type, 2)")
+                        # from IPython import embed; embed(); exit(1)
 
-                    rng_ctx.update(api_call, arg_cond, arg_pos)
-                    rng_ctx.update(api_call, idx_cond, idx)
-                    rng_ctx.var_to_cond[x].len_depends_on = b_len
+                        try:
+                            api_call.set_pos_arg_var(idx, b_len)
+                        except:
+                            print("Exception here")
+                            from IPython import embed; embed(); exit(1)
+
+                        rng_ctx.update(api_call, arg_cond, arg_pos)
+                        rng_ctx.update(api_call, idx_cond, idx)
+                        rng_ctx.var_to_cond[x].len_depends_on = b_len_arg
+                    else:
+                        b_len = rng_ctx.create_new_var(idx_type, idx_cond, 
+                                                       False)
+                        try:
+                            api_call.set_pos_arg_var(idx, b_len)
+                        except:
+                            print("Exception here")
+                            from IPython import embed; embed(); exit(1)
+
+                        rng_ctx.update(api_call, arg_cond, arg_pos)
+                        rng_ctx.update(api_call, idx_cond, idx)
+                        rng_ctx.var_to_cond[x].len_depends_on = b_len
 
         # if api_call.function_name == "htp_connp_create" and self.attempt > 0:
         #     self.attempt -= 1
@@ -185,9 +214,6 @@ class CBFactory(Factory):
             if isinstance(ret_type, PointerType) and ret_type.to_function:
                 ret_var = rng_ctx.get_null_constant()
             else:
-                # ret_var = rng_ctx.try_to_get_var(ret_type, ret_cond,
-                #                                  fun_name, conditions,
-                #                                  -1)
                 ret_var = rng_ctx.try_to_get_var(api_call, conditions, -1)
             api_call.set_ret_var(ret_var)
         except ConditionUnsat:
@@ -254,7 +280,7 @@ class CBFactory(Factory):
         print(f"[INFO] starting with {call_begin.function_name}")
         drv += [(call_begin, rng_ctx_1)]
 
-        # print("after create_random_driver")
+        # print(f"after {call_begin.function_name}")
         # from IPython import embed; embed(); exit(1)
 
         api_n = begin_api
@@ -269,8 +295,8 @@ class CBFactory(Factory):
                     if next_possible in self.source_api:
                         continue
                 
-                    if next_possible in self.init_api:
-                        continue
+                    # if next_possible in self.init_api:
+                    #     continue
 
                     print(f"[INFO] Trying: {next_possible}")
 

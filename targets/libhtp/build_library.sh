@@ -34,14 +34,31 @@ echo "make install"
 make install
 
 mv $WORK/lib/libhtp.a $WORK/lib/libhtp_profile.a
+echo "make clean"
+make -j$(nproc) clean
 
-# Compile library for fuzzing
+# Compile library for debugging
 ./configure --disable-shared --prefix="$WORK" \
         CXXFLAGS="-fsanitize=fuzzer-no-link,address -g" \
         CFLAGS="-fsanitize=fuzzer-no-link,address -g"
 
 echo "make clean"
 make -j$(nproc) clean
+echo "make"
+make -j$(nproc)
+echo "make install"
+make install
+
+mv $WORK/lib/libhtp.a $WORK/lib/libhtp_cluster.a
+echo "make clean"
+make -j$(nproc) clean
+
+# Compile library for fuzzing
+./configure --disable-shared --prefix="$WORK" \
+        CXXFLAGS="-fsanitize=fuzzer-no-link,address" \
+        CFLAGS="-fsanitize=fuzzer-no-link,address" \
+        --disable-debug 
+
 echo "make"
 make -j$(nproc)
 echo "make install"

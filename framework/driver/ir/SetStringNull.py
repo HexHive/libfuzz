@@ -15,8 +15,8 @@ class SetStringNull(Statement):
         # I want a Pointer(Type), no multiple pointers, no base types
         # if type.token != "char*" and type.token != "unsigned char*":
         if type.token not in DataLayout.string_types:
-            print("SetStringNull")
-            from IPython import embed; embed(); exit(1)
+            # print("SetStringNull")
+            # from IPython import embed; embed(); exit(1)
             raise Exception(f"ConstStringDecl accepts only 'char*', {type} received")
 
         self.buffer = buffer

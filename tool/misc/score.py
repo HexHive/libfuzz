@@ -6,7 +6,8 @@ def sig(x):
     
 def calc_score(cov, n_crashes, n_unicrsh):
     # return cov * sig(n_unicrsh) / sig(n_crashes)
-    return cov / (1 + n_crashes)
+    # return cov / (1 + n_crashes)
+    return cov
 
 def load_report(report, rootdir = None):
     libraries = {}
@@ -61,11 +62,11 @@ def get_driver(raw_values, rootdir = None, lib = None):
             "metadata": metadata}
 
 
-def get_best_drivers(drvs):
+def get_best_drivers(drvs, threshold=0.10):
 
 
     # keep only 10%
-    perc_ok = math.ceil(len(drvs) * 0.10)
+    perc_ok = math.ceil(len(drvs) * threshold)
     print(f"select {perc_ok}/{len(drvs)}")
     # return sorted(drvs, key=lambda x: x["score"], reverse=True)[:perc_ok]
 
@@ -73,18 +74,21 @@ def get_best_drivers(drvs):
 
     max_api = set()
     for d in sorted(drvs, key=lambda x: x["score"], reverse=True):
-        api_set = set(d["metadata"]["api_multiset"].keys())
-        # print(f"api set: {api_set}")
-        if len(max_api) == 0:
-            max_api = api_set
-            best_driver += [d]
-            # print("first set")
-        elif not api_set.issubset(max_api):
-            max_api = max_api.union(api_set)
-            best_driver += [d]
-            # print(f"new max_api: {max_api}")
-        # else:
-        #     print("skip!")
+        if d["score"] == 0:
+            continue
+        # api_set = set(d["metadata"]["api_multiset"].keys())
+        # # print(f"api set: {api_set}")
+        # if len(max_api) == 0:
+        #     max_api = api_set
+        #     best_driver += [d]
+        #     # print("first set")
+        # elif not api_set.issubset(max_api):
+        #     max_api = max_api.union(api_set)
+        #     best_driver += [d]
+        #     # print(f"new max_api: {max_api}")
+        # # else:
+        # #     print("skip!")
+        best_driver += [d]
         
         if len(best_driver) >= perc_ok:
             break

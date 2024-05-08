@@ -15,8 +15,8 @@ class AssertNull(Statement):
 
         # I want a Pointer(Type), no multiple pointers, no base types
         if not isinstance(type, PointerType):
-            print("AssertNull")
-            from IPython import embed; embed(); exit(1)
+            # print("AssertNull")
+            # from IPython import embed; embed(); exit(1)
             raise Exception(f"AssertNull accepts only PointerType, {type} received")
 
         self.buffer = buffer
