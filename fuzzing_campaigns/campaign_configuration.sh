@@ -6,6 +6,7 @@ export NUM_OF_APIs=( 2 4 8 16 32  )
 export NUM_OF_SEEDS=1
 # export POLICY="constraint_based"
 export POLICY="constraint_based_weight"
+# export MAX_CPUs=6
 export MAX_CPUs=$(($(nproc) - 1))
 # used w/ CONF=minimized
 export USE_CUSTOM_APIS=0
@@ -64,7 +65,7 @@ case $CONF in
     ;;
 
   *)
-    echo -n "unknown CONF"
+    echo -n "unknown CONF=${CONF}"
     exit 1
     ;;
 esac

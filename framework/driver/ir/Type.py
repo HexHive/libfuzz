@@ -21,7 +21,8 @@ class Type:
         self.tag            = tag
 
     def __str__(self):
-        return f"{self.__class__.__name__}(name={self.token})"
+        sc = "1" if self.is_const else "0"
+        return f"{self.__class__.__name__}(name={self.token},cons={sc})"
     
     def __repr__(self):
         return str(self)

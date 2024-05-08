@@ -21,7 +21,7 @@ def __main():
     # default_config = PROJECT_FOLDER + "/regression_tests/condition_extractor/test_full/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/uriparser/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libhtp/generator.toml"
-    default_config = PROJECT_FOLDER + "/targets/libtiff/generator.toml"
+    # default_config = PROJECT_FOLDER + "/targets/libtiff/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/cpu_features/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/minijail/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libvpx/generator.toml"
@@ -29,7 +29,7 @@ def __main():
     # default_config = PROJECT_FOLDER + "/targets/libaom/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libpcap/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/c-ares/generator.toml"
-    # default_config = PROJECT_FOLDER + "/targets/cjson/generator.toml"
+    default_config = PROJECT_FOLDER +"/targets/cjson/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/zlib/generator.toml"
 
     parser = argparse.ArgumentParser(description='Automatic Driver Generator')

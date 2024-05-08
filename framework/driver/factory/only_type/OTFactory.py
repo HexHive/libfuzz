@@ -31,11 +31,8 @@ class OTFactory(Factory):
         for api in apis_list:
             stmt = Factory.api_to_apicall(api)
             for a in stmt.arg_types:
-                if "cJSON const" in a.token:
-                    a.token = a.token.replace("cJSON const", "cJSON")
-                    if isinstance(a, PointerType):
-                        bb = a.get_base_type()
-                        bb.token = bb.token.replace("cJSON const", "cJSON")
+                if isinstance(a, PointerType):
+                    bb = a.get_base_type()
             concretization_logic[Terminal(api.function_name)] = stmt
             
         return concretization_logic
