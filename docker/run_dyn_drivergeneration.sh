@@ -5,8 +5,8 @@ if [ -z $TARGET ]; then
     exit 1
 fi
 
-TIMEOUT=5m
-SEED_TIMEOUT=1m
+TIMEOUT=1m
+DRIVER_TIMEOUT=10s
 
 IMG_NAME="libpp-dyndrvgen-$TARGET"
 LIBPP=../
@@ -22,4 +22,4 @@ set +x
 echo "[INFO] Running: $IMG_NAME"
 
 docker run --env DRIVER=${DRIVER} --env WHOLE_TIMEOUT=${TIMEOUT} \
-    --env TIMEOUT=${SEED_TIMEOUT} -v $(pwd)/..:/workspaces/libfuzz $IMG_NAME
+    --env TIMEOUT=${DRIVER_TIMEOUT} -v $(pwd)/..:/workspaces/libfuzz $IMG_NAME

@@ -94,4 +94,4 @@ fuzzing_campaigns/time_budget.csv
 
 
 point_to_test/
-targets/service.log
+service.log

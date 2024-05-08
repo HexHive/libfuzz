@@ -4,6 +4,27 @@
 # export TARGET=${LIBFUZZ}/analysis/${TARGET}
 # ENV TARGET_NAME ${target_name}
 
+convert_to_seconds() {
+    local time_string="$1"
+    local seconds=0
+    
+    # Loop through each character in the time string
+    while [[ -n "$time_string" ]]; do
+        local num=${time_string%[a-zA-Z]*}  # Extract the number from the string
+        local unit=${time_string##*[0-9]}    # Extract the unit from the string
+        
+        case "$unit" in
+            "s") seconds=$((seconds + num));;
+            "m") seconds=$((seconds + num * 60));;
+            "h") seconds=$((seconds + num * 3600));;
+        esac
+        
+        time_string=${time_string#*[a-zA-Z]}  # Remove the processed part from the string
+    done
+    
+    echo "$seconds"
+}
+
 # echo "[TOOLS_DIR] ${TOOLS_DIR}"
 echo "[TARGET] ${TARGET}"
 
@@ -23,14 +44,29 @@ SERVICE_ENDPOINT="http://127.0.0.1:5000"
 # export CORPUS_FOLDER=${LIBFUZZ}/workdir/${TARGET_NAME}/corpus_new
 # export LLVM_DIR=/usr
 
-for i in $(seq 1 3); do
+# timeout  -k 10s ${WHOLE_TIMEOUT} -c \
+
+loop_duration=$(convert_to_seconds ${WHOLE_TIMEOUT})
+echo "[INFO] whole fuzzing campaing is ${loop_duration}s"
+echo "[INFO] single driver is ${TIMEOUT}"
+
+start_time=$(date +%s)
+
+while true
+do
+    current_time=$(date +%s)
+    time_passed=$((current_time - start_time))
+    if [ $time_passed -ge $loop_duration ]; then
+        echo "Loop duration reached. Exiting loop."
+        break
+    fi
+
     export DRIVER=$(curl http://127.0.0.1:5000/get_new_driver 2> /dev/null)
     echo "[INFO] Get driver $DRIVER"
-    export TIMEOUT=20
     ${LIBFUZZ}/targets/start_fuzz_driver.sh
     echo "[INFO] Send feedback to the driver generator"
-    # TODO: find a way to get execution time from the fuzzer
     curl http://127.0.0.1:5000/push_feedback?driver=${DRIVER}\&time=10 &> /dev/null
+
 done
 
 # bloddy way to kill the service w no mercy
