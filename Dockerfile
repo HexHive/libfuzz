@@ -117,9 +117,11 @@ ARG target_name=simple_connection
 # ARG timeout=10m
 # ARG driver=*.cc
 
-COPY LLVM/update-alternatives-clang.sh .
-RUN sudo ./update-alternatives-clang.sh 12 200
-ENV LLVM_DIR /usr
+# COPY LLVM/update-alternatives-clang.sh .
+# RUN sudo ./update-alternatives-clang.sh 12 200
+# ENV LLVM_DIR /usr
+COPY ./llvm-project/build ${HOME}/LLVM
+ENV LLVM_DIR ${HOME}/LLVM
 
 ENV TARGET_NAME ${target_name}
 ENV TARGET ${HOME}/library
@@ -167,8 +169,6 @@ WORKDIR ${LIBFUZZ}
 # ------------------------------------------------------------------------------------------------------------------
 # TARGET FOR DYNAMIC DRIVER CREATION
 FROM libfuzzpp_fuzzing AS libfuzzpp_dyndrvgen
-COPY LLVM/update-alternatives-clang.sh .
-RUN sudo ./update-alternatives-clang.sh 12 200
 ENV DRIVER_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
 ENV CORPUS_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/corpus_new
 WORKDIR ${LIBFUZZ}

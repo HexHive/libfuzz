@@ -48,7 +48,7 @@ void StoreFeedbackAndExit(char cause) {
   auto Now = system_clock::now();
   auto FuzzingLast = duration_cast<seconds>(Now - Fuzzer::FuzzingStart).count();
 
-  printf("[INFO] I store and exit!\n");
+  Printf("[INFO] I store and exit!\n");
   std::ofstream feedbackFile;
   feedbackFile.open ("feedback.txt");
   feedbackFile << cause << "\n";

@@ -57,11 +57,16 @@ def push_feedback():
     if driver == '':
         return "Error: no driver name"
     
-    # event = request.args.get('event', 'None')
-    
     time = request.args.get('time', -1)
     if time == -1:
         return "Error: time not given"
+
+    cause = request.args.get('cause', '')
+    if cause == -1:
+        return "Error: cause not given"
+
+    with open("/workspaces/libfuzz/feedback_received.txt", "a") as f:
+        f.write(f"{driver}|{time}|{cause}\n")
 
     return "ok"
 

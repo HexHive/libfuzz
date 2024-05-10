@@ -63,9 +63,13 @@ do
 
     export DRIVER=$(curl http://127.0.0.1:5000/get_new_driver 2> /dev/null)
     echo "[INFO] Get driver $DRIVER"
+    # 60s w/o new seeds? let's change...
+    export COV_PLATEAU_TIMEOUT=60
     ${LIBFUZZ}/targets/start_fuzz_driver.sh
     echo "[INFO] Send feedback to the driver generator"
-    curl http://127.0.0.1:5000/push_feedback?driver=${DRIVER}\&time=10 &> /dev/null
+    CAUSE_DRIVER_STOP=$(sed '1q;d' feedback.txt)
+    DRIVER_EXEC_TIME=$(sed '2q;d' feedback.txt)
+    curl http://127.0.0.1:5000/push_feedback?driver=${DRIVER}\&time=${DRIVER_EXEC_TIME}\&cause=${CAUSE_DRIVER_STOP} &> /dev/null
 
 done
 

@@ -5,11 +5,17 @@ if [ -z $TARGET ]; then
     exit 1
 fi
 
-TIMEOUT=1m
-DRIVER_TIMEOUT=10s
+TIMEOUT=5m
+DRIVER_TIMEOUT=2m
 
 IMG_NAME="libpp-dyndrvgen-$TARGET"
 LIBPP=../
+
+# FLAVIO: this block makes sure to recompile LLVM and make it available for the next script
+set -x
+DOCKER_BUILDKIT=1 docker build --target libfuzzpp_dev_image -t libfuzzpp_dev_image -f "$LIBPP/Dockerfile" "$LIBPP"
+docker run -v $(pwd)/..:/workspaces/libfuzz libfuzzpp_dev_image /workspaces/libfuzz/llvm-project/build.sh
+set +x
 
 set -x
 DOCKER_BUILDKIT=1 docker build \
@@ -20,6 +26,5 @@ DOCKER_BUILDKIT=1 docker build \
 set +x
 
 echo "[INFO] Running: $IMG_NAME"
-
 docker run --env DRIVER=${DRIVER} --env WHOLE_TIMEOUT=${TIMEOUT} \
     --env TIMEOUT=${DRIVER_TIMEOUT} -v $(pwd)/..:/workspaces/libfuzz $IMG_NAME
