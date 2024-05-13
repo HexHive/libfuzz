@@ -276,6 +276,8 @@ void Fuzzer::ExitCallback() {
   Printf("SUMMARY: libFuzzer: fuzz target exited\n");
   DumpCurrentUnit("crash-");
   PrintFinalStats();
+  if (Fuzzer::MeasureCoveragePlateau)
+    StoreFeedbackAndExit('I');
   _Exit(Options.ErrorExitCode);
 }
 
@@ -914,9 +916,6 @@ void Fuzzer::Loop(std::vector<SizedFile> &CorporaFiles) {
 
   TmpMaxMutationLen =
       Min(MaxMutationLen, Max(size_t(4), Corpus.MaxInputSize()));
-  
-  // here, it works for non-forking mode
-  Fuzzer::FuzzingStart = system_clock::now();
 
   while (true) {
     auto Now = system_clock::now();

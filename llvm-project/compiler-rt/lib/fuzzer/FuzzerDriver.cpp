@@ -646,6 +646,7 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
   /// FLAVIO: To handle Seed Plateau -- start
   if (const char* EnvCovPlateauTimeout = std::getenv("COV_PLATEAU_TIMEOUT")) {
     Fuzzer::MeasureCoveragePlateau = true;
+    Fuzzer::FuzzingStart = system_clock::now();
     Fuzzer::CovPlateauTimeout = std::stol(EnvCovPlateauTimeout);
     Printf("INFO: Coverage Plateau Mode: Ativated w/ timeout: %lus\n", Fuzzer::CovPlateauTimeout);
   }
