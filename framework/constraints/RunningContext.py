@@ -719,7 +719,8 @@ class RunningContext(Context):
         # if ((v.get_type() == tt or v.get_type() == type)
         #     and self.var_to_cond[v].is_compatible_with(cond)):
         if (var.get_type() == type and
-            self.var_to_cond[var].is_compatible_with(cond)):
+            self.var_to_cond[var].is_compatible_with(cond) and 
+            self.var_to_cond[var].len_depends_on is None):
             return True
         return False
     
