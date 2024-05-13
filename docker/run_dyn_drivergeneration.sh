@@ -5,8 +5,8 @@ if [ -z $TARGET ]; then
     exit 1
 fi
 
-TIMEOUT=5m
-DRIVER_TIMEOUT=2m
+TIMEOUT=12h
+DRIVER_TIMEOUT=5m
 
 IMG_NAME="libpp-dyndrvgen-$TARGET"
 LIBPP=../
