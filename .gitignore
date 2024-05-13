@@ -94,3 +94,6 @@ fuzzing_campaigns/time_budget.csv
 
 
 point_to_test/
+service.log
+
+llvm-project/build

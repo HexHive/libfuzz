@@ -1,5 +1,5 @@
 [generator]
-pool_size = 40
-driver_size = 2
+pool_size = 1
+driver_size = 4
 num_seeds = 1
 policy = "constraint_based_weight"
