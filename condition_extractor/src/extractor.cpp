@@ -377,6 +377,7 @@ void setDataLayout(const Function* F) {
 
 int main(int argc, char ** argv)
 {
+    auto start_timer = std::chrono::system_clock::now();
 
     int arg_num = 0;
     char **arg_value = new char*[argc];
@@ -582,6 +583,9 @@ int main(int argc, char ** argv)
         // SVFUtil::outs() << libfuzz::logTime() << "[INFO] Original: " << functions.size() << "\n";
 
     }
+    auto end_timer = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end_timer-start_timer;
+    SVFUtil::outs() << libfuzz::logTime() << "[INFO] Elapsed analysis time [s]: " << elapsed_seconds.count() << "\n";
 
     // SVFUtil::outs() << " === EXIT FOR DEBUG ===\n";
     // exit(1);
@@ -593,6 +597,7 @@ int main(int argc, char ** argv)
 
     SVFUtil::outs() << libfuzz::logTime() << "[INFO] running analysis...\n";
     for (auto f: functions) {
+        start_timer = std::chrono::system_clock::now();
 
         num_function++;
         FunctionConditions fun_conds;
@@ -761,6 +766,10 @@ int main(int argc, char ** argv)
         }
 
         fun_cond_set.addFunctionConditions(fun_conds);
+
+        end_timer = std::chrono::system_clock::now();
+        elapsed_seconds = end_timer-start_timer;
+        SVFUtil::outs() << libfuzz::logTime() << "[INFO] Analysis time [s] for " << f <<  elapsed_seconds.count() << "\n";
 
     }
 
