@@ -144,6 +144,8 @@ namespace libfuzz {
   void dumpApiInfo(function_record a_fun);
 
   uint64_t estimate_size(llvm::Type* a_type, bool has_byval, llvm::DataLayout *DL);
+
+  std::string logTime();
   
 } // llvm namespace
 #endif  // LLVM_TRANSFORMS_UTILS_HEXTYPE_H

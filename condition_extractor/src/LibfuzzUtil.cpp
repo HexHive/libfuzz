@@ -28,6 +28,8 @@
 #include <iostream>
 #include <fstream>
 #include <ios>
+#include <iomanip>
+#include <ctime>
 
 #define MAXLEN 1000
 
@@ -109,5 +111,13 @@ namespace libfuzz {
 
     return typ_pointed->isSized() ? DL->getTypeSizeInBits(typ_pointed) : 0;
   }
+  
+  std::string logTime() {
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%d-%m-%Y %H-%M-%S ");
+    return oss.str();
+  };
 
 }

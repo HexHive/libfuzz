@@ -8,6 +8,7 @@
 
 #include "GlobalStruct.h"
 #include "TypeMatcher.h"
+#include "LibfuzzUtil.h"
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -102,7 +103,7 @@ void GlobalStruct::analyze() {
         // SVFUtil::outs() << "----\n";
     }
 
-    // SVFUtil::outs() << "[DEBUG] early stop\n";
+    // SVFUtil::outs() << libfuzz::logTime() << "[DEBUG] early stop\n";
     // exit(1);
 
     connectCallerAndCallee(newEdges, svfgEdges);

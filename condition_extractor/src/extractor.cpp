@@ -282,7 +282,7 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
     for (auto i: meta.getAccessTypeSet()->getAllICFGNodes())
             cond_nodes.insert(i);
 
-    SVFUtil::outs() << "[DEBUG] All nodes from ATS: " << cond_nodes.size() << "\n";
+    SVFUtil::outs() << libfuzz::logTime() << "[DEBUG] All nodes from ATS: " << cond_nodes.size() << "\n";
 
     std::set<const ICFGNode*> not_found;
     for (auto i: cond_nodes) {
@@ -290,7 +290,7 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
             not_found.insert(i);
     }
 
-    SVFUtil::outs() << "[DEBUG] Not found " << not_found.size() << "\n";
+    SVFUtil::outs() << libfuzz::logTime() << "[DEBUG] Not found " << not_found.size() << "\n";
     // std::set<const SVFFunction*> funs;
     // for (auto i: not_found) {
     //     // SVFUtil::outs() << i->toString() << "\n";
@@ -311,7 +311,7 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
 
 //     // find common subset (if any) and check if the 2 doms are coherent
 
-//     SVFUtil::outs() << "[DOING DOM TESTING]\n";
+//     SVFUtil::outs() << libfuzz::logTime() << "[DOING DOM TESTING]\n";
 
 //     // std::set<ICFGNode*> all_nodes = dom->getRelevantNodes();
 //     IBBGraph::NodeIDSet all_nodes_id = ibbg->getNodeIdAllocated();
@@ -339,7 +339,7 @@ void testDom2(FunctionConditions *fun_conds, IBBGraph* ibbg) {
 //             SVFUtil::isa<FunEntryICFGNode>(node2))
 //             continue;
 
-//         SVFUtil::outs() << "[INFO] TEST " << i << "/" << MAX_TEST << ")\r";
+//         SVFUtil::outs() << libfuzz::logTime() << "[INFO] TEST " << i << "/" << MAX_TEST << ")\r";
 
 //         bool n1_d_n2_a = dom->dominates(node1, node2);
 //         bool n2_d_n1_a = dom->dominates(node2, node1);
@@ -403,12 +403,12 @@ int main(int argc, char ** argv)
         LLVMModuleSet::getLLVMModuleSet()->preProcessBCs(moduleNameVec);
     }
 
-    SVFUtil::outs() << "[INFO] Loading library...\n";
+    SVFUtil::outs() << libfuzz::logTime() << "[INFO] Loading library...\n";
 
     LLVMModuleSet* llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
     SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
 
-    SVFUtil::outs() << "[INFO] Done\n";
+    SVFUtil::outs() << libfuzz::logTime() << "[INFO] Done\n";
 
     ValueMetadata::consider_indirect_calls = doIndJump;
 
@@ -425,7 +425,7 @@ int main(int argc, char ** argv)
     std::set<std::string> functions;
     // read all the functions from apis_clang.json
     if (all_functions) {
-        SVFUtil::outs() << "[INFO] I analyze all the functions\n";
+        SVFUtil::outs() << libfuzz::logTime() << "[INFO] I analyze all the functions\n";
 
         ifstream f(LibInterface);
 
@@ -453,13 +453,13 @@ int main(int argc, char ** argv)
         f.close();
     }
     else {
-        SVFUtil::outs() << "[INFO] analyzing function: " << function << "\n";
+        SVFUtil::outs() << libfuzz::logTime() << "[INFO] analyzing function: " << function << "\n";
         // functions.push_back(function);
         functions.insert(function);
     }
 
     if (OutputType == OutType::stdo)
-        SVFUtil::outs() << "[WARNING] outputting in stdout, ignoring OutputFile\n";
+        SVFUtil::outs() << libfuzz::logTime() << "[WARNING] outputting in stdout, ignoring OutputFile\n";
 
     // Dump LLVM apis function per function
     for(const SVFFunction* svfFun : svfModule->getFunctionSet() ){
@@ -503,7 +503,7 @@ int main(int argc, char ** argv)
 
     point_to_analysys->analyze();
 
-    SVFUtil::outs() << "[INFO] Analysis done!\n";
+    SVFUtil::outs() << libfuzz::logTime() << "[INFO] Analysis done!\n";
 
     GlobalStruct::CallEdgeMap newEdges = point_to_analysys->get_new_edges();
     // NOTE: copy callsite->target relation in a neutral structure
@@ -568,18 +568,18 @@ int main(int argc, char ** argv)
             }
         }
 
-        // SVFUtil::outs() << "[INFO] The minimize set of function\n";
+        // SVFUtil::outs() << libfuzz::logTime() << "[INFO] The minimize set of function\n";
         std::ofstream minimizeApiFile(minimizeApi);
         for (auto f: minimize_functions) {
             minimizeApiFile << f << "\n";
         }
         minimizeApiFile.close();
-        // SVFUtil::outs() << "[INFO] All function\n";
+        // SVFUtil::outs() << libfuzz::logTime() << "[INFO] All function\n";
         // for (auto f: functions)
         //     SVFUtil::outs() << f << "\n";
     
-        // SVFUtil::outs() << "[INFO] Total: " << minimize_functions.size() << "\n";
-        // SVFUtil::outs() << "[INFO] Original: " << functions.size() << "\n";
+        // SVFUtil::outs() << libfuzz::logTime() << "[INFO] Total: " << minimize_functions.size() << "\n";
+        // SVFUtil::outs() << libfuzz::logTime() << "[INFO] Original: " << functions.size() << "\n";
 
     }
 
@@ -591,7 +591,7 @@ int main(int argc, char ** argv)
     unsigned int tot_function = functions.size();
     unsigned int num_function = 0;
 
-    SVFUtil::outs() << "[INFO] running analysis...\n";
+    SVFUtil::outs() << libfuzz::logTime() << "[INFO] running analysis...\n";
     for (auto f: functions) {
 
         num_function++;
@@ -605,12 +605,12 @@ int main(int argc, char ** argv)
             if ( fun->getName() != f)
                 continue;
 
-            SVFUtil::outs() << "[INFO " << prog << "] processing params for: " 
+            SVFUtil::outs() << libfuzz::logTime() << "[INFO " << prog << "] processing params for: " 
                 << fun->getName() << "\n";
                         
             for (auto const& p : x.second) {
                 if (verbose >= Verbosity::v1)
-                    SVFUtil::outs() << "[INFO] param: " << p->toString() << "\n";
+                    SVFUtil::outs() << libfuzz::logTime() << "[INFO] param: " << p->toString() << "\n";
 
                 auto val = p->getValue();
                 auto llvm_val = llvmModuleSet->getLLVMValue(val);
@@ -648,12 +648,12 @@ int main(int argc, char ** argv)
             if ( fun->getName() != f)
                 continue;
 
-            SVFUtil::outs() << "[INFO " << prog << "] processing return for: " 
+            SVFUtil::outs() << libfuzz::logTime() << "[INFO " << prog << "] processing return for: " 
                 << fun->getName() << "\n";
 
             auto p = x.second;
             if (verbose >= Verbosity::v1)
-                SVFUtil::outs() << "[INFO] return: " << p->toString() << "\n";
+                SVFUtil::outs() << libfuzz::logTime() << "[INFO] return: " << p->toString() << "\n";
             auto llvm_value = llvmModuleSet->getLLVMValue(p->getValue());
             ValueMetadata returnMetadata =
                 ValueMetadata::extractReturnMetadata(svfg, llvm_value);
@@ -683,23 +683,23 @@ int main(int argc, char ** argv)
                 std::string postdom_cache_file = getCachePostDomFile(fun_name);
 
                 dom = new Dominator(point_to_analysys, fun_entry, doIndJump);
-                // SVFUtil::outs() << "[INFO] Running pruneUnreachableFunctions()\n";
+                // SVFUtil::outs() << libfuzz::logTime() << "[INFO] Running pruneUnreachableFunctions()\n";
                 // dom->pruneUnreachableFunctions();
-                // SVFUtil::outs() << "[INFO] Running buildPhiFun()\n";
+                // SVFUtil::outs() << libfuzz::logTime() << "[INFO] Running buildPhiFun()\n";
                 // dom->buildPhiFun();
-                // SVFUtil::outs() << "[INFO] Running inferSubGraph()\n";
+                // SVFUtil::outs() << libfuzz::logTime() << "[INFO] Running inferSubGraph()\n";
                 // dom->inferSubGraph();
                 if (cacheFolder != "" && doesFileExists(dom_cache_file)) {
-                    SVFUtil::outs() << "[INFO] There is DOM cache, loading it\n";
+                    SVFUtil::outs() << libfuzz::logTime() << "[INFO] There is DOM cache, loading it\n";
                     dom->loadDom(dom_cache_file);
                 } else {
-                    SVFUtil::outs() << "[INFO] No DOM cache, computing from scratch and save\n";
+                    SVFUtil::outs() << libfuzz::logTime() << "[INFO] No DOM cache, computing from scratch and save\n";
                     auto begin = chrono::high_resolution_clock::now();    
                     dom->createDom();
                     auto end = chrono::high_resolution_clock::now();    
                     auto dur = end - begin;
                     auto min = std::chrono::duration_cast<std::chrono::minutes>(dur).count();
-                    SVFUtil::outs() << "[TIME] Dom: " << min << "min\n";
+                    SVFUtil::outs() << libfuzz::logTime() << "[TIME] Dom: " << min << "min\n";
                     // dom->saveIBBGraph("ibbgraph_2");
                     
                     if (cacheFolder != "")
@@ -709,16 +709,16 @@ int main(int argc, char ** argv)
                 pDom = new PostDominator(point_to_analysys, fun_entry, 
                                         fun_exit, doIndJump);
                 if (cacheFolder != "" && doesFileExists(postdom_cache_file)) {
-                    SVFUtil::outs() << "[INFO] There is POSTDOM cache, loading it\n";
+                    SVFUtil::outs() << libfuzz::logTime() << "[INFO] There is POSTDOM cache, loading it\n";
                     pDom->loadDom(postdom_cache_file);
                 } else {
-                    SVFUtil::outs() << "[INFO] No POSTDOM cache, computing from scratch and save\n";
+                    SVFUtil::outs() << libfuzz::logTime() << "[INFO] No POSTDOM cache, computing from scratch and save\n";
                     auto begin = chrono::high_resolution_clock::now();    
                     pDom->createDom();
                     auto end = chrono::high_resolution_clock::now();    
                     auto dur = end - begin;
                     auto min = std::chrono::duration_cast<std::chrono::minutes>(dur).count();
-                    SVFUtil::outs() << "[TIME] Postdom: " << min << "min\n";
+                    SVFUtil::outs() << libfuzz::logTime() << "[TIME] Postdom: " << min << "min\n";
                     // pDom->saveIBBGraph("ibbgraph_3");
 
                     if (cacheFolder != "")
@@ -726,7 +726,7 @@ int main(int argc, char ** argv)
                 }
 
                 if (printDominator) {
-                    SVFUtil::outs() << "[INFO] dumping dominators...\n";
+                    SVFUtil::outs() << libfuzz::logTime() << "[INFO] dumping dominators...\n";
                     std::string str1, str2;
                     if (dom) {
                         dom->dumpTransRed("./" + dom_cache_file);
@@ -800,7 +800,7 @@ int main(int argc, char ** argv)
             fw.close();
         }        
 
-        SVFUtil::outs() << "[INFO] struct data layout done!\n";
+        SVFUtil::outs() << libfuzz::logTime() << "[INFO] struct data layout done!\n";
     }
 
     // clean up memory
