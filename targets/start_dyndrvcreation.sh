@@ -30,7 +30,8 @@ echo "[TARGET] ${TARGET}"
 
 ${LIBFUZZ}/tool/service.py \
     --config ${LIBFUZZ}/targets/${TARGET_NAME}/generator.toml \
-    --overwrite ${LIBFUZZ}/overwrite.toml &> service.log &
+    --overwrite ${LIBFUZZ}/overwrite.toml --target ${TARGET_NAME} &> ${LIBFUZZ}/workdir/${TARGET_NAME}/service.log & 
+
 
 # http://127.0.0.1:5000 -- localhost
 SERVICE_ENDPOINT="http://127.0.0.1:5000"
@@ -78,7 +79,7 @@ do
 done
 
 # get statistics about the corred and failed paths observed
-curl http://127.0.0.1:5000 > paths_observed.txt
+curl http://127.0.0.1:5000 > ${LIBFUZZ}/workdir/${TARGET_NAME}/paths_observed.txt
 
 ## FLAVIO: zsh is for debug
 # zsh
@@ -86,4 +87,4 @@ curl http://127.0.0.1:5000 > paths_observed.txt
 # bloddy way to kill the service w no mercy
 kill -9 $(lsof -i :5000 | awk 'NR > 1 {print $2}')
 
-mv paths_observed.txt service.log feedback_received.txt ${LIBFUZZ}/workdir/${TARGET_NAME}
+# mv paths_observed.txt service.log feedback_received.txt ${LIBFUZZ}/workdir/${TARGET_NAME}
