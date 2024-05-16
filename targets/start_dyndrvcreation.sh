@@ -72,8 +72,9 @@ do
     export COV_PLATEAU_TIMEOUT=30
     ${LIBFUZZ}/targets/start_fuzz_driver.sh &> /dev/null
     echo "[INFO] Send feedback to the driver generator"
-    CAUSE_DRIVER_STOP=$(sed '1q;d' feedback.txt)
-    DRIVER_EXEC_TIME=$(sed '2q;d' feedback.txt)
+    FEEDBACK=${LIBFUZZ}/workdir/${TARGET_NAME}/feedback.txt
+    CAUSE_DRIVER_STOP=$(sed '1q;d' ${FEEDBACK})
+    DRIVER_EXEC_TIME=$(sed '2q;d' ${FEEDBACK})
     curl http://127.0.0.1:5000/push_feedback?driver=${DRIVER}\&time=${DRIVER_EXEC_TIME}\&cause=${CAUSE_DRIVER_STOP}\&time_plateau=${COV_PLATEAU_TIMEOUT} &> /dev/null
 
 done
