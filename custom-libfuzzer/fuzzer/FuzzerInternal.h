@@ -93,6 +93,7 @@ public:
   static system_clock::time_point FuzzingStart;
   static bool MeasureCoveragePlateau;
   static long CovPlateauTimeout; // seconds
+  static std::string FeedbackPath; // ${LIBFUZZ}/workdir/${TARGET_NAME}/feedback.txt
 
 private:
   void AlarmCallback();
