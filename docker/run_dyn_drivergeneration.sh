@@ -20,7 +20,7 @@ LIBPP=../
 
 # FLAVIO: this block makes sure to recompile LLVM and make it available for the next script
 set -x
-DOCKER_BUILDKIT=1 docker build --target libfuzzpp_dev_image -t libfuzzpp_dev_image -f "$LIBPP/Dockerfile" "$LIBPP"
+DOCKER_BUILDKIT=1 docker build --build-arg USER_UID=$(id -u) --target libfuzzpp_dev_image -t libfuzzpp_dev_image -f "$LIBPP/Dockerfile" "$LIBPP"
 docker run -v $(pwd)/..:/workspaces/libfuzz libfuzzpp_dev_image /workspaces/libfuzz/llvm-project/build.sh
 set +x
 

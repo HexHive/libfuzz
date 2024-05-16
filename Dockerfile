@@ -172,4 +172,6 @@ FROM libfuzzpp_fuzzing AS libfuzzpp_dyndrvgen
 ENV DRIVER_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
 ENV CORPUS_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/corpus_new
 WORKDIR ${LIBFUZZ}
+COPY LLVM/update-alternatives-clang.sh .
+RUN sudo ./update-alternatives-clang.sh 12 200
 CMD ${LIBFUZZ}/targets/start_dyndrvcreation.sh
