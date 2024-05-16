@@ -15,8 +15,8 @@ class SetNull(Statement):
 
         # I want a Pointer(Type), no multiple pointers, no base types
         if not isinstance(type, PointerType):
-            print("SetNull")
-            from IPython import embed; embed(); exit(1)
+            # print("SetNull")
+            # from IPython import embed; embed(); exit(1)
             raise Exception(f"SetNull accepts only PointerType, {type} received")
 
         self.buffer = buffer

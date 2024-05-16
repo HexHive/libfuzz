@@ -52,7 +52,7 @@ class ConditionManager:
 
             ret_type = api.return_info
             the_type = Factory.normalize_type(ret_type.type, ret_type.size, 
-                                              ret_type.flag, False)
+                                              ret_type.flag, ret_type.is_const)
             the_type_orig = the_type
 
             if isinstance(the_type, PointerType):
@@ -84,7 +84,7 @@ class ConditionManager:
                 self.is_a_sink_condition(fun_cond.argument_at[0])):
                 arg = api.arguments_info[0]
                 the_type = Factory.normalize_type(arg.type, arg.size, 
-                                                  arg.flag, False)
+                                                  arg.flag, arg.is_const)
                 sink_map[the_type] = api
                 sinks.add(api)
 
@@ -161,13 +161,13 @@ class ConditionManager:
 
             # fun_cond = get_cond(api)
 
-            # if api.function_name == "aom_img_flip":
+            # if api.function_name == "cJSON_ParseWithOpts":
             #     print(f"get_source_api {api.function_name}")
             #     from IPython import embed; embed(); exit(1)
 
             num_arg_ok = 0
             for arg in api.arguments_info:
-                the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, False)
+                the_type = Factory.normalize_type(arg.type, arg.size, arg.flag, arg.is_const)
                 the_type_orig = the_type
                 # arg_cond = fun_cond.argument_at[arg_p]
                 if isinstance(the_type, PointerType):
@@ -259,6 +259,22 @@ class ConditionManager:
 
         self.init_per_type = init_per_type
         self.set_per_type = set_per_type
+        
+        # set_init = self.get_init_api()
+        setby_set = set()
+        
+        # init_per_type       : Dict[Type, List[Tuple[Api, int]]]
+        for _, l_api_pos in self.set_per_type.items():
+            if len(l_api_pos) > 1:
+                for api, _ in l_api_pos:
+                    setby_set.add(api)
+        
+        for a in setby_set:
+            if a in self.source_api:
+                self.source_api.remove(a)
+               
+        # print("clean wrong sources")
+        # from IPython import embed; embed(); exit()
 
     def get_sink_api(self) -> Set[Api]:
         return self.sinks
@@ -278,6 +294,35 @@ class ConditionManager:
 
     def has_source(self, type: Type) -> bool:
         return type in self.source_per_type
+    
+    def needs_init_or_setby(self, type: Type) -> bool:
+        if type in self.init_per_type:
+            return True
+        
+        # if type in self.set_per_type:
+        #     ss = self.set_per_type[type]
+        #     return len(ss) == 1
+                
+        return False
+    
+    def is_setby(self, api_call: ApiCall, arg_pos: int) -> bool:
+        if arg_pos < 0:
+            return False
+        
+        arg_type = api_call.arg_types[arg_pos]
+        api = api_call.original_api
+
+        # this filters out wrong init types that must be actually initialized
+        # through a source
+        if arg_type is self.source_per_type:
+            return False
+
+        if arg_type not in self.set_per_type:
+            return False
+
+        setby_list = self.set_per_type[arg_type]
+
+        return (api, arg_pos) in setby_list and len(setby_list) == 1
     
     def is_init(self, api_call: ApiCall, arg_pos: int) -> bool:
         if arg_pos < 0:

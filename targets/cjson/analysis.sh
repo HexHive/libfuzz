@@ -74,26 +74,26 @@ extract-bc -b "$WORK"/lib/libcjson.a
     -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
 
 # manual way to modify automatically extracted constraints
-TMP_FILE=/tmp/const.tmp
+# TMP_FILE=/tmp/const.tmp
 
-NEW_FIELD_CONSTRAINT=$(cat <<EOF
-{
-    "access": "create",
-    "fields": [],
-    "parent": 0,
-    "type": "13e78f7269fb4001160f783455a4ca4d",
-    "type_string": "%struct.cJSON*"
-}
-EOF
-)
-echo ${NEW_FIELD_CONSTRAINT} > ${TMP_FILE}
+# NEW_FIELD_CONSTRAINT=$(cat <<EOF
+# {
+#     "access": "create",
+#     "fields": [],
+#     "parent": 0,
+#     "type": "13e78f7269fb4001160f783455a4ca4d",
+#     "type_string": "%struct.cJSON*"
+# }
+# EOF
+# )
+# echo ${NEW_FIELD_CONSTRAINT} > ${TMP_FILE}
 
-APIS="cJSON_CreateBool cJSON_AddNumberToObject cJSON_ParseWithOpts cJSON_CreateStringArray cJSON_CreateObjectReference cJSON_AddStringToObject cJSON_CreateArray cJSON_CreateTrue cJSON_AddTrueToObject cJSON_AddNullToObject  cJSON_CreateRaw cJSON_AddObjectToObject cJSON_Parse cJSON_AddBoolToObject cJSON_ParseWithLengthOpts cJSON_CreateString cJSON_CreateFalse cJSON_ParseWithLength cJSON_CreateNumber cJSON_AddArrayToObject cJSON_CreateArrayReference cJSON_CreateIntArray cJSON_CreateObject cJSON_CreateDoubleArray cJSON_AddFalseToObject cJSON_Duplicate cJSON_AddRawToObject cJSON_CreateStringReference cJSON_CreateNull cJSON_CreateFloatArray"
+# APIS="cJSON_CreateBool cJSON_AddNumberToObject cJSON_ParseWithOpts cJSON_CreateStringArray cJSON_CreateObjectReference cJSON_AddStringToObject cJSON_CreateArray cJSON_CreateTrue cJSON_AddTrueToObject cJSON_AddNullToObject  cJSON_CreateRaw cJSON_AddObjectToObject cJSON_Parse cJSON_AddBoolToObject cJSON_ParseWithLengthOpts cJSON_CreateString cJSON_CreateFalse cJSON_ParseWithLength cJSON_CreateNumber cJSON_AddArrayToObject cJSON_CreateArrayReference cJSON_CreateIntArray cJSON_CreateObject cJSON_CreateDoubleArray cJSON_AddFalseToObject cJSON_Duplicate cJSON_AddRawToObject cJSON_CreateStringReference cJSON_CreateNull cJSON_CreateFloatArray"
 
-for a in ${APIS}; do
-    $LIBFUZZ/tool/misc/edit_constraints.py -n ${TMP_FILE} \
-                    -f ${a} -a -1 \
-                    -c "$LIBFUZZ_LOG_PATH/conditions.json"
-done
+# for a in ${APIS}; do
+#     $LIBFUZZ/tool/misc/edit_constraints.py -n ${TMP_FILE} \
+#                     -f ${a} -a -1 \
+#                     -c "$LIBFUZZ_LOG_PATH/conditions.json"
+# done
 
-rm -f ${TMP_FILE}
+# rm -f ${TMP_FILE}

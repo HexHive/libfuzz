@@ -63,10 +63,20 @@ export LIBFUZZ_LOG_PATH=`pwd` \
     -v v1 -t json -do_indirect_jumps \
     -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
 
+export LIBFUZZ_LOG_PATH=`pwd`/out \
 ./bin/extractor \
     /workspaces/libfuzz/analysis/cjson/work/lib/libcjson.a.bc \
-    -function cJSON_Delete \
+    -function cJSON_CreateBool \
     -output "$LIBFUZZ_LOG_PATH/conditions.json" \
     -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
     -v v1 -t json -do_indirect_jumps \
+    -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"
+
+
+export  LIBFUZZ_LOG_PATH=`pwd`/out \
+./bin/extractor \
+    -interface "$LIBFUZZ_LOG_PATH/apis_clang.json" \
+    -output "$LIBFUZZ_LOG_PATH/conditions.json" \
+    -minimize_api "$LIBFUZZ_LOG_PATH/apis_minimized.txt" \
+    -v v0 -t json -do_indirect_jumps \
     -data_layout "$LIBFUZZ_LOG_PATH/data_layout.txt"

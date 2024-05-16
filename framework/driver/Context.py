@@ -115,7 +115,7 @@ class Context:
         if ((type.token in DataLayout.string_types) and
             alloctype == AllocType.STACK):
             new_buffer = Buffer(buff_name, self.MAX_ARRAY_SIZE, type, alloctype)
-        elif type.token == "char**" or type.token == "char const**":
+        elif type.token == "char**":
             new_buffer = Buffer(buff_name, self.DOUBLE_PTR_SIZE, type, alloctype)
         else:
             new_buffer = Buffer(buff_name, 1, type, alloctype)
