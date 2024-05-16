@@ -120,7 +120,7 @@ ARG target_name=simple_connection
 # COPY LLVM/update-alternatives-clang.sh .
 # RUN sudo ./update-alternatives-clang.sh 12 200
 # ENV LLVM_DIR /usr
-COPY --link ./llvm-project/build ${HOME}/LLVM
+COPY --link ./llvm-project/build ${HOME}/LLVM/
 ENV LLVM_DIR ${HOME}/LLVM
 
 ENV TARGET_NAME ${target_name}

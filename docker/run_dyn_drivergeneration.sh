@@ -5,8 +5,15 @@ if [ -z $TARGET ]; then
     exit 1
 fi
 
-TIMEOUT=10m
-DRIVER_TIMEOUT=2m
+if [ -z $TIMEOUT ]; then
+    TIMEOUT=12h
+fi
+
+if [ -z $HOST_PORT ]; then
+    HOST_PORT=5000
+fi
+
+DRIVER_TIMEOUT=5m
 
 IMG_NAME="libpp-dyndrvgen-$TARGET"
 LIBPP=../
@@ -26,5 +33,5 @@ DOCKER_BUILDKIT=1 docker build \
 set +x
 
 echo "[INFO] Running: $IMG_NAME"
-docker run --env DRIVER=${DRIVER} --env WHOLE_TIMEOUT=${TIMEOUT} \
+docker run -p ${HOST_PORT}:5000 --rm --env DRIVER=${DRIVER} --env WHOLE_TIMEOUT=${TIMEOUT} \
     --env TIMEOUT=${DRIVER_TIMEOUT} -v $(pwd)/..:/workspaces/libfuzz $IMG_NAME

@@ -32,12 +32,16 @@ ${LIBFUZZ}/tool/service.py \
     --config ${LIBFUZZ}/targets/${TARGET_NAME}/generator.toml \
     --overwrite ${LIBFUZZ}/overwrite.toml &> service.log &
 
-SRV_TO_START=3s
-echo "[INFO] Wait ${SRV_TO_START} till service bootsrap"
-sleep ${SRV_TO_START}
-
 # http://127.0.0.1:5000 -- localhost
 SERVICE_ENDPOINT="http://127.0.0.1:5000"
+
+SRV_TO_START=5s
+# echo "[INFO] Wait ${SRV_TO_START} till service bootsrap"
+# sleep ${SRV_TO_START}
+until curl --output /dev/null --silent --head --fail ${SERVICE_ENDPOINT}; do
+    echo "[INFO] Waiting for driver generator service (${SRV_TO_START})"
+    sleep ${SRV_TO_START}
+done
 
 # # NOTE: these env vars must be set in Dockerfile
 # export DRIVER_FOLDER=${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
@@ -64,14 +68,22 @@ do
     export DRIVER=$(curl http://127.0.0.1:5000/get_new_driver 2> /dev/null)
     echo "[INFO] Get driver $DRIVER"
     # 60s w/o new seeds? let's change...
-    export COV_PLATEAU_TIMEOUT=60
-    ${LIBFUZZ}/targets/start_fuzz_driver.sh
+    export COV_PLATEAU_TIMEOUT=30
+    ${LIBFUZZ}/targets/start_fuzz_driver.sh &> /dev/null
     echo "[INFO] Send feedback to the driver generator"
     CAUSE_DRIVER_STOP=$(sed '1q;d' feedback.txt)
     DRIVER_EXEC_TIME=$(sed '2q;d' feedback.txt)
-    curl http://127.0.0.1:5000/push_feedback?driver=${DRIVER}\&time=${DRIVER_EXEC_TIME}\&cause=${CAUSE_DRIVER_STOP} &> /dev/null
+    curl http://127.0.0.1:5000/push_feedback?driver=${DRIVER}\&time=${DRIVER_EXEC_TIME}\&cause=${CAUSE_DRIVER_STOP}\&time_plateau=${COV_PLATEAU_TIMEOUT} &> /dev/null
 
 done
 
+# get statistics about the corred and failed paths observed
+curl http://127.0.0.1:5000 > paths_observed.txt
+
+## FLAVIO: zsh is for debug
+# zsh
+
 # bloddy way to kill the service w no mercy
 kill -9 $(lsof -i :5000 | awk 'NR > 1 {print $2}')
+
+mv paths_observed.txt service.log feedback_received.txt ${LIBFUZZ}/workdir/${TARGET_NAME}

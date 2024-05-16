@@ -19,6 +19,7 @@ from driver.factory.only_type import *
 from driver.factory.constraint_based import *
 from driver.factory.constraint_based_weight import *
 from driver.factory.constraint_based_search import *
+from driver.factory.constraint_based_grammar import *
 
 from generator import Pool
 
@@ -301,6 +302,11 @@ class Configuration:
         if policy == "constraint_based_weight":
             dep_graph = self.dependency_graph
             return CBWFactory(self.api_list, self.driver_size, dep_graph, 
+                              self.function_conditions)
+            
+        if policy == "constraint_based_grammar":
+            dep_graph = self.dependency_graph
+            return CBGFactory(self.api_list, self.driver_size, dep_graph, 
                               self.function_conditions)
 
         if policy == "constraint_based_search":

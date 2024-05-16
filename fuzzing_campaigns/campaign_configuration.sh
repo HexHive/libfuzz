@@ -63,6 +63,9 @@ case $CONF in
     export USE_CUSTOM_APIS=1
     ;;
 
+  grammar)
+    export TIMEOUT=12h
+
   *)
     echo -n "unknown CONF"
     exit 1

@@ -155,6 +155,8 @@ void Fuzzer::HandleMalloc(size_t Size) {
   Printf("   To change the out-of-memory limit use -rss_limit_mb=<N>\n\n");
   PrintStackTrace();
   DumpCurrentUnit("oom-");
+  if (Fuzzer::MeasureCoveragePlateau)
+      StoreFeedbackAndExit('O');
   Printf("SUMMARY: libFuzzer: out-of-memory\n");
   PrintFinalStats();
   _Exit(Options.OOMExitCode); // Stop right now.
@@ -261,6 +263,8 @@ void Fuzzer::CrashCallback() {
          "crash reports.\n");
   Printf("SUMMARY: libFuzzer: deadly signal\n");
   DumpCurrentUnit("crash-");
+  if (Fuzzer::MeasureCoveragePlateau)
+      StoreFeedbackAndExit('C');
   PrintFinalStats();
   _Exit(Options.ErrorExitCode); // Stop right now.
 }
@@ -277,7 +281,7 @@ void Fuzzer::ExitCallback() {
   DumpCurrentUnit("crash-");
   PrintFinalStats();
   if (Fuzzer::MeasureCoveragePlateau)
-    StoreFeedbackAndExit('I');
+    StoreFeedbackAndExit('C');
   _Exit(Options.ErrorExitCode);
 }
 
@@ -325,6 +329,8 @@ void Fuzzer::AlarmCallback() {
     Printf("       and the timeout value is %d (use -timeout=N to change)\n",
            Options.UnitTimeoutSec);
     DumpCurrentUnit("timeout-");
+    if (Fuzzer::MeasureCoveragePlateau)
+      StoreFeedbackAndExit('T');
     Printf("==%lu== ERROR: libFuzzer: timeout after %d seconds\n", GetPid(),
            Seconds);
     PrintStackTrace();
@@ -344,6 +350,8 @@ void Fuzzer::RssLimitCallback() {
   Printf("   To change the out-of-memory limit use -rss_limit_mb=<N>\n\n");
   PrintMemoryProfile();
   DumpCurrentUnit("oom-");
+  if (Fuzzer::MeasureCoveragePlateau)
+      StoreFeedbackAndExit('O');
   Printf("SUMMARY: libFuzzer: out-of-memory\n");
   PrintFinalStats();
   _Exit(Options.OOMExitCode); // Stop right now.
@@ -599,6 +607,8 @@ void Fuzzer::CrashOnOverwrittenData() {
   PrintStackTrace();
   Printf("SUMMARY: libFuzzer: overwrites-const-input\n");
   DumpCurrentUnit("crash-");
+  if (Fuzzer::MeasureCoveragePlateau)
+      StoreFeedbackAndExit('C');
   PrintFinalStats();
   _Exit(Options.ErrorExitCode); // Stop right now.
 }
@@ -736,6 +746,8 @@ void Fuzzer::TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size,
     Printf("INFO: to ignore leaks on libFuzzer side use -detect_leaks=0.\n\n");
     CurrentUnitSize = Size;
     DumpCurrentUnit("leak-");
+    if (Fuzzer::MeasureCoveragePlateau)
+      StoreFeedbackAndExit('L');
     PrintFinalStats();
     _Exit(Options.ErrorExitCode); // not exit() to disable lsan further on.
   }

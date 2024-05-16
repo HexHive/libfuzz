@@ -20,6 +20,9 @@ condition_extractor/node_modules/**/*
 
 selection_main/*
 
+feedback.txt
+feedback_received.txt
+
 ## C gitignore
 # Prerequisites
 *.d
