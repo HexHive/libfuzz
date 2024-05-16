@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if ! clang -v &> /dev/null
+then
+    echo "[INFO] clang not found, installing clang"
+    sudo ${LIBFUZZ}/update-alternatives-clang.sh 12 200
+fi
+
 rm -Rf ${LIBFUZZ}/llvm-project/compiler-rt/lib/fuzzer
 cp -r ${LIBFUZZ}/custom-libfuzzer/fuzzer ${LIBFUZZ}/llvm-project/compiler-rt/lib/fuzzer
 
