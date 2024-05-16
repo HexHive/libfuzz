@@ -13,6 +13,8 @@ app = Flask(__name__)
 import argparse
 from framework import * 
 from generator import Generator, Configuration
+from framework.driver.factory.constraint_based_grammar import ApiSeqState
+import html
 import logging
 
 # Shared counter variable
@@ -27,7 +29,17 @@ def index():
         return "Session not loaded. Check configuration."
     else:
         config_info = sess._config.get_info()
-        return f"Session loaded w/: {config_info}"
+        s = f"Session loaded w/: {config_info}<br />\n"
+
+        factory_str = html.escape(str(sess._factory))
+        s += f"Factory: {factory_str} <br />\n"
+
+        s += f"Drivers generated: {len(drivers_list)}<br />\n"
+        for d, (l, t) in drivers_list.items():
+            x = ";".join([str(l.function_name) for l, _ in l])
+            s += f"{d}: {x} [{t}]<br />\n"
+        
+        return s
 
 @app.route('/get_new_driver')
 def get_new_driver():
@@ -46,29 +58,52 @@ def get_new_driver():
 
     if driver_name.endswith(".cc"):
         driver_name = driver_name[:-3]
-
-    drivers_list[driver_name] = driver
+        
+    if hasattr(driver, "statements_apicall"):
+        drivers_list[driver_name] = (driver.statements_apicall, ApiSeqState.UNKNOWN)
+    else:
+        drivers_list[driver_name] = (driver, ApiSeqState.UNKNOWN)
 
     return driver_name
 
 @app.route('/push_feedback')
 def push_feedback():
-    driver = request.args.get('driver', '')
-    if driver == '':
+    driver_name = request.args.get('driver', '')
+    if driver_name == '':
         return "Error: no driver name"
     
-    time = request.args.get('time', -1)
+    time = request.args.get('time', -1, type=int)
     if time == -1:
         return "Error: time not given"
+
+    time_plateau = request.args.get('time_plateau', -1, type=int)
+    if time_plateau == -1:
+        return "Error: time_plateau not given"
 
     cause = request.args.get('cause', '')
     if cause == -1:
         return "Error: cause not given"
 
     with open("/workspaces/libfuzz/feedback_received.txt", "a") as f:
-        f.write(f"{driver}|{time}|{cause}\n")
+        f.write(f"{driver_name}|{time}|{cause}\n")
+       
+    api_cause = ApiSeqState.NEGATIVE
+    if cause == "I":
+        api_cause = ApiSeqState.POSITIVE
 
-    return "ok"
+    if ((cause == "O" or cause == "P") and 
+        time > time_plateau):
+        api_cause = ApiSeqState.POSITIVE
+    
+    # I am not sure the factory implements the method "update_api_state"
+    update_api_state = getattr(sess._factory, "update_api_state", None)
+    if update_api_state is not None and callable(update_api_state):
+        driver, _ = drivers_list[driver_name]
+        api_state = sess._factory.update_api_state(driver, api_cause)
+        drivers_list[driver_name] = (driver, api_state)
+        return "ok"
+    else:
+        return "error: factory {sess._factory} does not have \"update_api_state\" method"
 
 if __name__ == '__main__':
 
@@ -98,4 +133,4 @@ if __name__ == '__main__':
 
     sess = Generator(config)
 
-    app.run(debug=True)
+    app.run(host="0.0.0.0", debug=True)
