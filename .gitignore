@@ -100,3 +100,4 @@ point_to_test/
 service.log
 
 llvm-project/build
+llvm-project-old
