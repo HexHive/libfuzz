@@ -5,10 +5,10 @@ source campaign_configuration.sh
 
 IMG_NAME="fuzzing_campaigns"
 set -x
-# FLAVIO: this block makes sure to recompile LLVM and make it available for the next script
-DOCKER_BUILDKIT=1 docker build --target libfuzzpp_dev_image -f ../Dockerfile ..
-docker run -v $(pwd)/..:/workspaces/libfuzz libfuzzpp_dev_image \
-    /workspaces/libfuzz/llvm-project/build.sh
+# # FLAVIO: this block makes sure to recompile LLVM and make it available for the next script
+# DOCKER_BUILDKIT=1 docker build --target libfuzzpp_dev_image -f ../Dockerfile ..
+# docker run -v $(pwd)/..:/workspaces/libfuzz libfuzzpp_dev_image \
+#     /workspaces/libfuzz/llvm-project/build.sh
 
 DOCKER_BUILDKIT=1 docker build \
     --build-arg USER_UID=$(id -u) --build-arg GROUP_UID=$(id -g) \
