@@ -30,7 +30,7 @@ echo "[TARGET] ${TARGET}"
 
 ${LIBFUZZ}/tool/service.py \
     --config ${LIBFUZZ}/targets/${TARGET_NAME}/generator.toml \
-    --overwrite ${LIBFUZZ}/overwrite.toml --target ${TARGET_NAME} &> ${LIBFUZZ}/workdir/${TARGET_NAME}/service.log & 
+    --overwrite ${LIBFUZZ}/overwrite.toml --target ${TARGET_NAME} &> service_${TARGET_NAME}.log & 
 
 
 # http://127.0.0.1:5000 -- localhost
@@ -88,4 +88,4 @@ curl http://127.0.0.1:5000 > ${LIBFUZZ}/workdir/${TARGET_NAME}/paths_observed.tx
 # bloddy way to kill the service w no mercy
 kill -9 $(lsof -i :5000 | awk 'NR > 1 {print $2}')
 
-# mv paths_observed.txt service.log feedback_received.txt ${LIBFUZZ}/workdir/${TARGET_NAME}
+mv service_${TARGET_NAME}.log ${LIBFUZZ}/workdir/${TARGET_NAME}

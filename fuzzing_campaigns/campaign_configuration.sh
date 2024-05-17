@@ -66,6 +66,8 @@ case $CONF in
 
   grammar)
     export TIMEOUT=12h
+    export NUM_OF_DRIVERS=( "X" )
+    export NUM_OF_APIs=( "X" )
     ;;
 
   *)

@@ -8,7 +8,6 @@ set -x
 # # FLAVIO: this block makes sure to recompile LLVM and make it available for the next script
 # DOCKER_BUILDKIT=1 docker build --target libfuzzpp_dev_image -f ../Dockerfile ..
 # docker run -v $(pwd)/..:/workspaces/libfuzz libfuzzpp_dev_image \
-#     /workspaces/lib
 
 for project in "${PROJECTS[@]}"; do
     DOCKER_BUILDKIT=1 docker build \

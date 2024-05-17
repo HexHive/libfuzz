@@ -649,6 +649,12 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
     Fuzzer::FuzzingStart = system_clock::now();
     Fuzzer::CovPlateauTimeout = std::stol(EnvCovPlateauTimeout);
     Printf("INFO: Coverage Plateau Mode: Ativated w/ timeout: %lus\n", Fuzzer::CovPlateauTimeout);
+
+    const char* Libfuzz = std::getenv("LIBFUZZ");
+    std::string LibfuzzStr(Libfuzz);
+    const char* TargetName = std::getenv("TARGET_NAME");
+    std::string TargetNameStr(TargetName);
+    Fuzzer::FeedbackPath = LibfuzzStr + "/workdir/" + TargetNameStr + "/feedback.txt";
   }
   /// FLAVIO: To handle Seed Plateau -- end
 
