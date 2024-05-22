@@ -104,6 +104,13 @@ do
     DRIVER_EXEC_TIME=$(sed '2q;d' ${FEEDBACK})
     curl http://127.0.0.1:5000/push_feedback?driver=${DRIVER}\&time=${DRIVER_EXEC_TIME}\&cause=${CAUSE_DRIVER_STOP}\&time_plateau=${COV_PLATEAU_TIMEOUT} &> /dev/null
 
+    # to save some space, I delete the drivers that do not contribute to new coverage
+    if [[ $(ls ${RESULTS_FOLDER}/corpus_new/${DRIVER} | wc -l) -eq 1 ]]; then
+        rm ${RESULTS_FOLDER}/drivers/${DRIVER}
+        rm ${RESULTS_FOLDER}/profiles/${DRIVER}_profile 
+        rm ${RESULTS_FOLDER}/cluster_drivers/${DRIVER}_cluster 
+    fi
+
 done
 
 # get statistics about the corred and failed paths observed
