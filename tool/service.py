@@ -22,7 +22,7 @@ import logging
 lock = threading.Lock()  # Lock to ensure thread safety
 sess = None
 drivers_list = dict()
-target = ""
+result_folder = ""
 
 @app.route('/')
 def index():
@@ -85,7 +85,7 @@ def push_feedback():
     if cause == -1:
         return "Error: cause not given"
 
-    with open(f"/workspaces/libfuzz/workdir/{target}/feedback_received.txt", "a") as f:
+    with open(f"{result_folder}/feedback_received.txt", "a") as f:
         f.write(f"{driver_name}|{time}|{cause}\n")
        
     api_cause = ApiSeqState.NEGATIVE
@@ -128,13 +128,12 @@ if __name__ == '__main__':
 
     parser.add_argument('--overwrite', type=str, help='Set of parameters that overwrite the `config` toml file. Used to standardize configuration when testing multipe libraries.')
 
-    parser.add_argument('--target', type=str, help='Target name', default="")
-
     args = parser.parse_args()
 
     config = Configuration(args.config, args.overwrite)
 
-    target = args.target
+    # very dangerous :) but it should be ok here
+    result_folder = config.work_dir
 
     sess = Generator(config)
 
