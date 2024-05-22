@@ -1,16 +1,20 @@
 #!/bin/bash
 
-if [ -z $TARGET ]; then
+if [ -z ${TARGET} ]; then
     echo '$TARGET must be specified as environment variables.'
     exit 1
 fi
 
-if [ -z $TIMEOUT ]; then
+if [ -z ${TIMEOUT} ]; then
     TIMEOUT=12h
 fi
 
-if [ -z $HOST_PORT ]; then
+if [ -z ${HOST_PORT} ]; then
     HOST_PORT=5000
+fi
+
+if [ -z ${POLICY} ]; then
+    POLICY="constraint_based_grammar"
 fi
 
 PARALLEL_OPTS=""
@@ -38,4 +42,5 @@ set +x
 echo "[INFO] Running: $IMG_NAME"
 docker run ${PARALLEL_OPTS} -p ${HOST_PORT}:5000 --rm --env DRIVER=${DRIVER} \
     --env WHOLE_TIMEOUT=${TIMEOUT} --env RESULTS_FOLDER=${RESULTS_FOLDER} \
-    --env TIMEOUT=${DRIVER_TIMEOUT} -v $(pwd)/..:/workspaces/libfuzz $IMG_NAME
+    --env TIMEOUT=${DRIVER_TIMEOUT} --env POLICY=${POLICY} \
+    -v $(pwd)/..:/workspaces/libfuzz $IMG_NAME
