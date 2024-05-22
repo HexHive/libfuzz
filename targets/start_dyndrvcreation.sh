@@ -53,7 +53,7 @@ echo "[generator]" > ${OVERWRITE_FILE}
 echo "pool_size = 1" >> ${OVERWRITE_FILE}
 echo "driver_size = 1" >> ${OVERWRITE_FILE}
 echo "num_seeds = 1" >> ${OVERWRITE_FILE}
-echo "policy = \"constraint_based_grammar\"" >> ${OVERWRITE_FILE}
+echo "policy = \"${POLICY}\"" >> ${OVERWRITE_FILE}
 echo "workdir = \"${RESULTS_FOLDER}\"" >> ${OVERWRITE_FILE}
 
 ${LIBFUZZ}/tool/service.py \

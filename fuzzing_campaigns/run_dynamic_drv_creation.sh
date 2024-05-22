@@ -11,6 +11,7 @@ for cpu in $( eval echo {0..${MAX_CPUs}} ); do
 done
 
 function find_free_cpuid() {
+    local i
     for i in "${!CPU_ALLOCATED[@]}"; do
         if [[ ${CPU_ALLOCATED[$i]} = "x" ]]; then
             echo $i
@@ -40,9 +41,9 @@ for i in $( eval echo {1..$ITERATIONS} ); do
         done
 
         # free CPU ID
-        for i in "${!CPU_ALLOCATED[@]}"; do
-            if [ ! "$(docker ps --format \"{{.Names}}\" | grep ${CPU_ALLOCATED[$i]})" ]; then
-                CPU_ALLOCATED[$i]="x"
+        for c in "${!CPU_ALLOCATED[@]}"; do
+            if [ ! "$(docker ps --format \"{{.Names}}\" | grep ${CPU_ALLOCATED[$c]})" ]; then
+                CPU_ALLOCATED[$c]="x"
             fi
         done
 
