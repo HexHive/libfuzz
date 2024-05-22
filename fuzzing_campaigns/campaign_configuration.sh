@@ -65,7 +65,10 @@ case $CONF in
     ;;
 
   grammar)
-    export TIMEOUT=12h
+    export PROJECTS=( "libtiff")
+    export TIMEOUT=5m
+    export ITERATIONS=3
+    # NOTE: these Xs need for run_coverage.sh and run_custer.sh
     export NUM_OF_DRIVERS=( "X" )
     export NUM_OF_APIs=( "X" )
     ;;

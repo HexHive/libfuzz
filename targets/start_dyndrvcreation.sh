@@ -28,9 +28,37 @@ convert_to_seconds() {
 # echo "[TOOLS_DIR] ${TOOLS_DIR}"
 echo "[TARGET] ${TARGET}"
 
+if [ -z ${RESULTS_FOLDER} ]; then
+    RESULTS_FOLDER=${LIBFUZZ}/workdir/${TARGET_NAME}
+    export DRIVER_FOLDER=${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
+fi
+
+if [ -z ${DRIVER_FOLDER} ]; then
+    export DRIVER_FOLDER="${RESULTS_FOLDER}/drivers"
+fi
+
+mkdir -p ${RESULTS_FOLDER}
+
+echo ${DRIVER_FOLDER}
+echo ${RESULTS_FOLDER}
+echo "wait..."
+sleep 10s
+
+LOGS_ID=$(date +%s%N | cut -b1-13)
+SERVICE_LOG="service_${LOGS_ID}.log"
+OVERWRITE_FILE="${LIBFUZZ}/overwrite_${LOGS_ID}.toml"
+
+# taken from env?
+echo "[generator]" > ${OVERWRITE_FILE}
+echo "pool_size = 1" >> ${OVERWRITE_FILE}
+echo "driver_size = 1" >> ${OVERWRITE_FILE}
+echo "num_seeds = 1" >> ${OVERWRITE_FILE}
+echo "policy = \"constraint_based_grammar\"" >> ${OVERWRITE_FILE}
+echo "workdir = \"${RESULTS_FOLDER}\"" >> ${OVERWRITE_FILE}
+
 ${LIBFUZZ}/tool/service.py \
     --config ${LIBFUZZ}/targets/${TARGET_NAME}/generator.toml \
-    --overwrite ${LIBFUZZ}/overwrite.toml --target ${TARGET_NAME} &> service_${TARGET_NAME}.log & 
+    --overwrite ${OVERWRITE_FILE} &> ${SERVICE_LOG} & 
 
 
 # http://127.0.0.1:5000 -- localhost
@@ -49,30 +77,29 @@ done
 # export CORPUS_FOLDER=${LIBFUZZ}/workdir/${TARGET_NAME}/corpus_new
 # export LLVM_DIR=/usr
 
-# timeout  -k 10s ${WHOLE_TIMEOUT} -c \
-
 loop_duration=$(convert_to_seconds ${WHOLE_TIMEOUT})
 echo "[INFO] whole fuzzing campaing is ${loop_duration}s"
 echo "[INFO] single driver is ${TIMEOUT}"
 
 start_time=$(date +%s)
 
+export FEEDBACK=${RESULTS_FOLDER}/feedback.txt
+# 60s w/o new seeds? let's change...
+export COV_PLATEAU_TIMEOUT=30
+
 while true
 do
     current_time=$(date +%s)
     time_passed=$((current_time - start_time))
     if [ $time_passed -ge $loop_duration ]; then
-        echo "Loop duration reached. Exiting loop."
+        echo "[INFO] Loop duration reached. Exiting loop."
         break
     fi
 
     export DRIVER=$(curl http://127.0.0.1:5000/get_new_driver 2> /dev/null)
     echo "[INFO] Get driver $DRIVER"
-    # 60s w/o new seeds? let's change...
-    export COV_PLATEAU_TIMEOUT=30
     ${LIBFUZZ}/targets/start_fuzz_driver.sh &> /dev/null
     echo "[INFO] Send feedback to the driver generator"
-    FEEDBACK=${LIBFUZZ}/workdir/${TARGET_NAME}/feedback.txt
     CAUSE_DRIVER_STOP=$(sed '1q;d' ${FEEDBACK})
     DRIVER_EXEC_TIME=$(sed '2q;d' ${FEEDBACK})
     curl http://127.0.0.1:5000/push_feedback?driver=${DRIVER}\&time=${DRIVER_EXEC_TIME}\&cause=${CAUSE_DRIVER_STOP}\&time_plateau=${COV_PLATEAU_TIMEOUT} &> /dev/null
@@ -80,12 +107,13 @@ do
 done
 
 # get statistics about the corred and failed paths observed
-curl http://127.0.0.1:5000 > ${LIBFUZZ}/workdir/${TARGET_NAME}/paths_observed.txt
+curl http://127.0.0.1:5000 > ${RESULTS_FOLDER}/paths_observed.txt
 
 ## FLAVIO: zsh is for debug
 # zsh
 
 # bloddy way to kill the service w no mercy
-kill -9 $(lsof -i :5000 | awk 'NR > 1 {print $2}')
+# kill -9 $(lsof -i :5000 | awk 'NR > 1 {print $2}')
 
-mv service_${TARGET_NAME}.log ${LIBFUZZ}/workdir/${TARGET_NAME}
+mv ${SERVICE_LOG} ${RESULTS_FOLDER}/service.log
+mv ${OVERWRITE_FILE} ${RESULTS_FOLDER}/overwrite.toml

@@ -165,12 +165,12 @@ class CBGFactory(CBFactory):
                     # if next_possible in self.init_api:
                     #     continue
                     
-                    print("[INFO] Again...")
+                    # print("[INFO] Again...")
                     
                     api_state = self.calc_api_state(drv, next_possible)
-                    print(f"[INFO] Get API State: {api_state}")
+                    # print(f"[INFO] Get API State: {api_state}")
                     if api_state == ApiSeqState.NEGATIVE:
-                        print("[INFO] skip")
+                        # print("[INFO] skip")
                         continue
                     
                     # if next_possible.function_name == "TIFFGetField":
@@ -178,7 +178,7 @@ class CBGFactory(CBFactory):
                     #     from IPython import embed; embed()
                     #     print("[INFO] doesn't matter...")
                     
-                    print("[INFO] continue...")
+                    # print("[INFO] continue...")
 
                     print(f"[INFO] Trying: {next_possible}")
 
