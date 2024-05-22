@@ -61,7 +61,6 @@ done
 
 echo "[INFO] Waiting for docker containers to terminate"
 while [[ $(count_docker_running) -gt 0 ]]; do
-    echo "sleep 1m [END..]"
     sleep 1m
 done
 
