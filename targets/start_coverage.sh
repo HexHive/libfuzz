@@ -14,10 +14,17 @@ DRIVER_PATH_REGEX="\/workspaces\/libfuzz\/workdir\/.*\/drivers\/.*\.cc"
 
 
 if [[ $TOTAL_LIBRARY_COVERAGE ]]; then
-    MERGED_PROFDATAS="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/coverage_data/iter_*/merged.profdata)"
+
+    if [[ -z ${GRAMMAR_MODE} ]]; then
+        MERGED_PROFDATAS="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/coverage_data/iter_*/merged.profdata)"
+        PROFILES="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/profiles/*_profile)"
+    else
+        MERGED_PROFDATAS="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/iter_*/coverage_data/merged.profdata)"
+        PROFILES="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/iter_*/profiles/*_profile)"
+    fi
+
     mkdir -p fuzzing_campaigns/total_library_coverage/${TARGET_NAME}
     ${LLVM_DIR}/bin/llvm-profdata merge -sparse $MERGED_PROFDATAS -o fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/merged.profdata
-    PROFILES="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/profiles/*_profile)"
 
     OBJECTS=""
     for profile in $PROFILES; do
@@ -40,7 +47,12 @@ if [[ $TOTAL_LIBRARY_COVERAGE ]]; then
     for i in $( eval echo {1..$ITERATIONS} ); do
         TARGET_ITER=fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/iter_${i}
 
-        MERGED_PROFDATAS="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/coverage_data/iter_${i}/merged.profdata)"
+        if [[ -z ${GRAMMAR_MODE} ]]; then
+            MERGED_PROFDATAS="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/coverage_data/iter_${i}/merged.profdata)"
+        else
+            MERGED_PROFDATAS="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/iter_${i}/coverage_data/merged.profdata)"
+        fi
+
         mkdir -p ${TARGET_ITER}
         ${LLVM_DIR}/bin/llvm-profdata merge -sparse $MERGED_PROFDATAS -o ${TARGET_ITER}/merged.profdata
 
@@ -62,7 +74,11 @@ if [[ $TOTAL_DRIVER_COVERAGE ]]; then
     FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
     for d in $FUZZ_TARGETS; do
         DRIVER_NAME=$(basename $d)
-        DRIVER_PROFDATAS="$(ls -d ${PROJECT_FOLDER}/coverage_data/iter_*/${DRIVER_NAME}.profdata)"
+        if [[ -z ${GRAMMAR_MODE} ]]; then
+            DRIVER_PROFDATAS="$(ls -d ${PROJECT_FOLDER}/coverage_data/iter_*/${DRIVER_NAME}.profdata)"
+        else
+            DRIVER_PROFDATAS="$(ls -d ${PROJECT_FOLDER}/iter_*/coverage_data/${DRIVER_NAME}.profdata)"
+        fi
         mkdir -p ${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}
         ${LLVM_DIR}/bin/llvm-profdata merge -sparse $DRIVER_PROFDATAS -o ${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}/merged.profdata
 
@@ -80,10 +96,15 @@ if [[ $TOTAL_DRIVER_COVERAGE ]]; then
 fi
 
 if [[ $TOTAL_LIBRARY_COVERAGE_FOR_CONFIGURATION ]]; then
-    MERGED_PROFDATAS="$(ls -d ${PROJECT_FOLDER}/coverage_data/iter_*/merged.profdata)"
+    if [[ -z ${GRAMMAR_MODE} ]]; then
+        MERGED_PROFDATAS="$(ls -d ${PROJECT_FOLDER}/coverage_data/iter_*/merged.profdata)"
+        PROFILES="$(ls -d ${PROJECT_FOLDER}/profiles/*_profile)"
+    else
+        MERGED_PROFDATAS="$(ls -d ${PROJECT_FOLDER}/iter_*/coverage_data/merged.profdata)"
+        PROFILES="$(ls -d ${PROJECT_FOLDER}/iter_*/profiles/*_profile)"
+    fi    
     mkdir -p ${PROJECT_FOLDER}/coverage_data/total
     ${LLVM_DIR}/bin/llvm-profdata merge -sparse $MERGED_PROFDATAS -o ${PROJECT_FOLDER}/coverage_data/total/merged.profdata
-    PROFILES="$(ls -d ${PROJECT_FOLDER}/profiles/*_profile)"
 
     OBJECTS=""
     for profile in $PROFILES; do
