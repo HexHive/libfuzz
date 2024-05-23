@@ -28,11 +28,11 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
 
             PROJECT_WORKDIR="./workdir_${ndrivers}_${napis}/${project}"
             DRIVER_FOLDER="${PROJECT_WORKDIR}/drivers"
-	    if [ -d "$DRIVER_FOLDER" ]; then
-            	DRIVER_NAMES="$(find ${DRIVER_FOLDER} -type f -executable)"
-	    else 
-		continue
-	    fi
+            if [ -d "$DRIVER_FOLDER" ]; then
+                DRIVER_NAMES="$(find ${DRIVER_FOLDER} -type f -executable)"
+            else 
+                continue
+            fi
             CRASHES=${PROJECT_WORKDIR}/crashes
             
             for i in $( eval echo {1..$ITERATIONS} ); do
