@@ -65,12 +65,14 @@ case $CONF in
     ;;
 
   grammar)
-    export TIMEOUT=24h
-    export ITERATIONS=3
+    export PROJECTS=( "libtiff" )
+    export TIMEOUT=5m
+    export ITERATIONS=2
     export POLICY="constraint_based_grammar"
     # NOTE: these Xs need for run_coverage.sh and run_custer.sh
     export NUM_OF_DRIVERS=( "X" )
     export NUM_OF_APIs=( "X" )
+    export GRAMMAR_MODE=1
     ;;
 
   *)
