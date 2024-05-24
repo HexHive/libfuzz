@@ -25,6 +25,7 @@ function count_docker_running() {
     echo $(docker ps --format "{{.Names}}" | grep "libpp-dyndrvgen-" | wc -l)
 }
 
+LIBPP=".."
 for project in "${PROJECTS[@]}"; do
     set -x
     IMG_NAME="libpp-fuzzing-$project"
@@ -32,7 +33,7 @@ for project in "${PROJECTS[@]}"; do
         --build-arg USER_UID=$(id -u) --build-arg GROUP_UID=$(id -g) \
         --build-arg target_name="$project" \
         -t "${IMG_NAME}" --target libfuzzpp_fuzzing \
-        -f "$LIBPP/Dockerfile" "$LIBPP"
+        -f "$LIBPP/Dockerfile" "$LIBPP" 
     set +x
 done
 
