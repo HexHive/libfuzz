@@ -12,6 +12,8 @@ LOGS=${OUTPUT}/logs
 
 FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
 
+export ASAN_SYMBOLIZER_PATH=${LLVM_DIR}/bin/llvm-symbolizer
+
 echo $DRIVER_FOLDER
 
 if [[ $TOTAL_LIBRARY_CLUSTER ]]; then
@@ -40,6 +42,6 @@ for d in $FUZZ_TARGETS
 do
     DRIVER_NAME=$(basename $d)
     DRIVER_NAME=${DRIVER_NAME/_cluster/}
-    echo "CLUSTERING: ${DRIVER_NAME}"
+    echo "CLUSTERING: ${DRIVER_NAME} -i ${CRASHES}/${DRIVER_NAME} -o ${OUTPUT}/${DRIVER_NAME}"
     casr-libfuzzer -i ${CRASHES}/${DRIVER_NAME} -o ${OUTPUT}/${DRIVER_NAME} -- $d &> ${LOGS}/${DRIVER_NAME}
 done
