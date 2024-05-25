@@ -10,7 +10,11 @@ rm -Rf ${PROJECT_COVERAGE} || true
 mkdir -p ${PROJECT_COVERAGE}
 
 SOURCES="$(find $REPO -iname '*.h' -or -iname '*.cpp' -or -iname '*.c' -or -iname '*.cc')"
-DRIVER_PATH_REGEX="\/workspaces\/libfuzz\/workdir\/.*\/drivers\/.*\.cc"
+if [[ -z ${GRAMMAR_MODE} ]]; then
+    DRIVER_PATH_REGEX="\/workspaces\/libfuzz\/workdir\/.*\/drivers\/.*\.cc"
+else
+    DRIVER_PATH_REGEX="\/workspaces\/libfuzz\/fuzzing_campaigns\/workdir_X_X\/${TARGET_NAME}/iter_.*\/drivers\/.*\.cc"
+fi
 
 
 if [[ $TOTAL_LIBRARY_COVERAGE ]]; then
