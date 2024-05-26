@@ -33,18 +33,19 @@ do
     # timeout $TIMEOUT $d ${DRIVER_CORPUS} \
     #     -artifact_prefix=${CRASHES_DIR}/ || echo "Done: $d"
 
-    FORK_MODE=""
-    if [ -z "${COV_PLATEAU_TIMEOUT}" ]; then
-        FORK_MODE="-fork=1"
-    fi
-
     # echo "COV_PLATEAU_TIMEOUT: ${COV_PLATEAU_TIMEOUT}"
     echo "FORK_MODE: ${FORK_MODE}"
 
-    # FORK_MODE CONTROLS FORK-MODE (captain obvious here!).  
-    # IF COV_PLATEAU_TIMEOUT, I DO NOT WANT TO FORK.   
-    # IF FORK MODE IS ON, KEEP GOING TILL SOMEONE KILLS THE FUZZER
-    (sleep $TIMEOUT && pkill ${DRIVER_NAME}) &
-    $d ${DRIVER_CORNEW} -artifact_prefix=${CRASHES_DIR}/ -ignore_crashes=1 \
-        -ignore_timeouts=1 -ignore_ooms=1 -detect_leaks=0 ${FORK_MODE} -max_len=16384 || echo "Done: $d"
+    if [[ -z ${FORK_MODE} ]]; then
+        (sleep $TIMEOUT && pkill ${DRIVER_NAME}) &
+        $d ${DRIVER_CORNEW} -artifact_prefix=${CRASHES_DIR}/ -ignore_crashes=1 \
+            -ignore_timeouts=1 -ignore_ooms=1 -detect_leaks=0 || echo "Done: $d"
+        pkill -9 $d
+    else
+        timeout -k 10s $TIMEOUT \
+        $d ${DRIVER_CORNEW} -artifact_prefix=${CRASHES_DIR}/ -ignore_crashes=1 \
+            -ignore_timeouts=1 -ignore_ooms=1 -detect_leaks=0 -fork=1
+    fi
+
+    
 done
