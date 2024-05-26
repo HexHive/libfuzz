@@ -43,4 +43,5 @@ echo "[INFO] Running: $IMG_NAME"
 docker run ${PARALLEL_OPTS} -p ${HOST_PORT}:5000 --rm --env DRIVER=${DRIVER} \
     --env WHOLE_TIMEOUT=${TIMEOUT} --env RESULTS_FOLDER=${RESULTS_FOLDER} \
     --env TIMEOUT=${DRIVER_TIMEOUT} --env POLICY=${POLICY} \
+    --mount type=tmpfs,destination=/tmpfs \
     -v $(pwd)/..:/workspaces/libfuzz $IMG_NAME

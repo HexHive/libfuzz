@@ -86,6 +86,8 @@ start_time=$(date +%s)
 export FEEDBACK=${RESULTS_FOLDER}/feedback.txt
 # 60s w/o new seeds? let's change...
 export COV_PLATEAU_TIMEOUT=30
+# this tells start_fuzz_driver to use libfuzzer in fork-mode
+export FORK_MODE=1
 
 while true
 do

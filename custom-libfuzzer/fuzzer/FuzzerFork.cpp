@@ -300,12 +300,61 @@ struct JobQueue {
   }
 };
 
+GlobalEnv Env;
+bool firstCov = true;
+std::set<uint32_t> OldCov;
+system_clock::time_point LastSeedFound2;
+
 void WorkerThread(JobQueue *FuzzQ, JobQueue *MergeQ) {
   while (auto Job = FuzzQ->Pop()) {
     // Printf("WorkerThread: job %p\n", Job);
     Job->ExitCode = ExecuteCommand(Job->Cmd);
     MergeQ->Push(Job);
   }
+}
+
+void startPeriodicHandler() {
+  
+  while(true) {
+
+    Printf("INFO: startPeriodicHandler\n");
+    if (firstCov) {
+      Printf("INFO: Collect coverage!\n");
+      OldCov = Env.Cov;
+      LastSeedFound2 = system_clock::now();
+      firstCov = false;
+    } else {
+      // I have new coverage
+      if (OldCov != Env.Cov) {
+        Printf("INFO: The coverage changed!\n");
+        LastSeedFound2 = system_clock::now();
+        OldCov = Env.Cov;
+      // Coverage does not change
+      } else {
+        auto TimeFromLastSeedFound2 = duration_cast<seconds>(
+          system_clock::now() - LastSeedFound2).count();
+        Printf("INFO: Coverage is the same!\n");
+        Printf("INFO: Fuzzer::CovPlateauTimeout %d\n", Fuzzer::CovPlateauTimeout);
+        if (TimeFromLastSeedFound2 >= Fuzzer::CovPlateauTimeout) {
+          Printf("INFO: TRY TO STOP!!!\n");
+          StoreFeedbackAndExit('P');
+          // StopJobs();
+          // break;
+          exit(0);
+        }
+      }
+    }
+
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+
+  }
+
+    
+}
+
+void periodiCheckCoverage() {
+    std::thread periodicThread(startPeriodicHandler);
+    periodicThread.detach();
 }
 
 // This is just a skeleton of an experimental -fork=1 feature.
@@ -317,7 +366,11 @@ void FuzzWithFork(Random &Rand, const FuzzingOptions &Options,
   // here, it works for forking mode
   Fuzzer::FuzzingStart = system_clock::now();
 
-  GlobalEnv Env;
+  if (Fuzzer::MeasureCoveragePlateau) {
+    periodiCheckCoverage();
+  }
+
+  // GlobalEnv Env;
   Env.Args = Args;
   Env.CorpusDirs = CorpusDirs;
   Env.Rand = &Rand;

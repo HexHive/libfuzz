@@ -65,8 +65,8 @@ case $CONF in
     ;;
 
   grammar)
-    export PROJECTS=( "libtiff" )
-    export TIMEOUT=5m
+    # export PROJECTS=( "pthreadpool" "minijail" )
+    export TIMEOUT=24h
     export ITERATIONS=2
     export POLICY="constraint_based_grammar"
     # NOTE: these Xs need for run_coverage.sh and run_custer.sh
