@@ -125,9 +125,8 @@ fuzz)
     set_arg --mem-limit ${MEM_LIMIT:-}
     set_arg --func-pattern ${FUNC_PATTERN:-}
     set_arg --custom-rules ${CUSTOM_RULES:-}
-    find_core_for_task_set
     FUZZER="$OUTPUT_DIR/bin/hopper-fuzzer"
-    cmd="$ENVS $TASK_SET_CMD $FUZZER ${ARGS}"
+    cmd="$ENVS $FUZZER ${ARGS}"
     info "${cmd}"
     eval ${cmd}
     ;;

@@ -8,9 +8,5 @@ export TARGET=$(pwd)/${TARGET}
 
 
 cd ${TARGET_NAME}
-./preinstall.sh
-./fetch.sh
-./build_library.sh
-#hopper compile
-#./compile_profile.sh
+./compile_profile.sh
 

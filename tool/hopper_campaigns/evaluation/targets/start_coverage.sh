@@ -6,5 +6,6 @@ set -x
 
 cd ${TARGET}
 
-SEED_DIR=./output/queue hopper cov output_cov
+SEED_DIR=./output_${ITER}/queue hopper cov output_${ITER}_cov
+
 

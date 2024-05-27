@@ -17,7 +17,7 @@ export CXX=clang++
 echo "make 1"
 cd "$TARGET/repo"
 echo "cmake"
-mkdir "$TARGET/repo/pthreadpool_cov"
+mkdir -p "$TARGET/repo/pthreadpool_cov"
 cd "$TARGET/repo/pthreadpool_cov"
 # Compile library for coverage
 cmake .. -DCMAKE_INSTALL_PREFIX=$WORK_PROFILE -DBUILD_SHARED_LIBS=on \
@@ -35,7 +35,7 @@ echo "make install"
 make install
 
 cd ..
-mkdir "$TARGET/repo/pthreadpool_fuzz"
+mkdir -p "$TARGET/repo/pthreadpool_fuzz"
 cd "$TARGET/repo/pthreadpool_fuzz"
 
 
