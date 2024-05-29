@@ -1,6 +1,8 @@
 #!/bin/bash
 
 export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" "c-ares" "zlib" "cjson" )
+# trick to make ${PROJECTS} visible outside
+export PROJECTS_STRING=$(IFS=:; echo "${PROJECTS[*]}")
 export NUM_OF_DRIVERS=( 40 )
 export NUM_OF_APIs=( 2 4 8 16 32  )
 export NUM_OF_SEEDS=1
@@ -65,7 +67,6 @@ case $CONF in
     ;;
 
   grammar)
-    # export PROJECTS=( "pthreadpool" "minijail" )
     export TIMEOUT=24h
     export ITERATIONS=2
     export POLICY="constraint_based_grammar"
