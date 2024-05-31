@@ -34,6 +34,8 @@ class CBGFactory(CBFactory):
             self.api_frequency[a] = 0
             
         self.history_api_sequence = {}
+        
+        self.max_driver_size = 10
 
     def get_random_source_api(self):
         
@@ -151,7 +153,7 @@ class CBGFactory(CBFactory):
         # from IPython import embed; embed(); exit(1)
 
         api_n = begin_api
-        while True:
+        while len(drv) < self.max_driver_size:
 
             # List[(ApiCall, RunningContext, Api, ApiSeqState)]
             candidate_api = []
@@ -222,23 +224,7 @@ class CBGFactory(CBFactory):
                     break
             else:
                 break
-            # else:
-            #     api_n = self.get_random_source_api()
-            #     begin_condition = get_cond(api_n)
-            #     call_begin = to_api(api_n)
-
-            #     print(f"[INFO] starting new chain with {api_n.function_name}")
-
-            #     rng_ctx_1, unsat_var_1 = self.try_to_instantiate_api_call(call_begin, begin_condition, rng_ctx_1)
-
-            #     if len(unsat_var_1) > 0:
-            #         print("[ERROR] Cannot instantiate the first function [second] :(")
-            #         print(unsat_var_1)
-            #         from IPython import embed; embed(); exit(1)
-            #         exit(1)
-
-            #     drv += [(call_begin, rng_ctx_1)]
-
+            
         # print("after loop, debug exit..")
         # exit()
 

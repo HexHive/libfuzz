@@ -67,9 +67,20 @@ def create_driver_generator_conf(project, iteration, config):
         
     return generator_conf_path
 
-def get_new_driver(sess, drivers_list):
+def get_new_driver(sess, drivers_list, driver_list_history):
     
-    driver = sess._factory.create_random_driver()
+    max_trial = 10
+    while max_trial > 0:
+        driver = sess._factory.create_random_driver()
+        apichain = driver.statements_apicall
+        apichain_str = ";".join([str(l.function_name) for l, _ in apichain])
+        if apichain_str in driver_list_history:
+            max_trial -= 1
+            continue            
+        else:
+            break
+
+    driver_list_history.add(apichain_str)
     driver_name = sess._backend.get_name()
 
     print(f"Storing driver: {driver_name}") 
@@ -194,6 +205,7 @@ def dyn_drv_gen(project, iteration, conf, running_threads):
     _ = config.work_dir
     sess = Generator(config)
     drivers_list = dict()
+    driver_list_history = set()
     
     whole_timeout = convert_to_seconds(conf['TIMEOUT'])
     
@@ -209,7 +221,7 @@ def dyn_drv_gen(project, iteration, conf, running_threads):
             break
     
         # get a new driver
-        driver_name = get_new_driver(sess, drivers_list)
+        driver_name = get_new_driver(sess, drivers_list, driver_list_history)
         
         # clean feedback on the host
         feedback_file = os.path.join(host_result_folder, "feedback.txt")
