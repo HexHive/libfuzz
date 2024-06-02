@@ -318,7 +318,7 @@ def init(l):
     
 def error_callback(exception):
     with open('errors.log', 'a') as f:
-        f.write("\n[INFO] A TASK CRASHESD!\n")        
+        f.write("\n[INFO] A TASK CRASHED!\n")        
         for l in traceback.format_exception(exception):
             f.write(f"{l}\n")
         f.write("\n")
