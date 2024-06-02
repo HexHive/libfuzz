@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import subprocess, itertools, os, sys, multiprocessing
+import subprocess, itertools, os, sys, multiprocessing, argparse, traceback
 from datetime import datetime
 
 global base_dir
@@ -11,6 +11,7 @@ from framework import *
 from generator import Generator, Configuration
 from framework.driver.factory.constraint_based_grammar import ApiSeqState
 
+is_debug = False
 
 def source_bash_file(file_path):
     """Sources a bash file and returns the environment variables."""
@@ -96,9 +97,9 @@ def get_new_driver(sess, drivers_list, driver_list_history):
         driver_name = driver_name[:-3]
         
     if hasattr(driver, "statements_apicall"):
-        drivers_list[driver_name] = (driver.statements_apicall, ApiSeqState.UNKNOWN)
+        drivers_list[driver_name] = (driver.statements_apicall, ApiSeqState.UNKNOWN, 0)
     else:
-        drivers_list[driver_name] = (driver, ApiSeqState.UNKNOWN)
+        drivers_list[driver_name] = (driver, ApiSeqState.UNKNOWN, 0)
 
     return driver_name
 
@@ -138,12 +139,18 @@ def kick_fuzzing_camp(project, iteration, driver_name, cpu_id, time_plateau):
             # start_fuzz_driver.sh"""
     # timeout -k 10s $TIMEOUT $FUZZ_BINARY $FUZZ_CORPUS -artifact_prefix=${CRASHES}/ -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 -detect_leaks=0 -fork=1"
     
+    global is_debug
+    
     try:
-        subprocess.run(cmd.split(), check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if is_debug:
+            subprocess.run(cmd.split(), check=True)
+        else:
+            subprocess.run(cmd.split(), check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)        
     except subprocess.CalledProcessError as e:
-        print(f"Error: Failed to start '{cmd}': {e}")
-
-def push_feedfback(sess, result_folder, driver_name, time, cause, time_plateau, drivers_list):
+        if is_debug:
+            print(f"Error: Failed to start '{cmd}': {e}")
+    
+def push_feedfback(sess, result_folder, driver_name, time, cause, time_plateau, drivers_list, n_seeds):
     
     global base_dir
     
@@ -151,7 +158,7 @@ def push_feedfback(sess, result_folder, driver_name, time, cause, time_plateau, 
     time = int(time)
     
     with open(f"{result_folder}/feedback_received.txt", "a") as f:
-        f.write(f"{driver_name}|{time}|{cause}\n")
+        f.write(f"{driver_name}|{time}|{cause}|{n_seeds}\n")
        
     api_cause = ApiSeqState.NEGATIVE
     if cause == "I":
@@ -163,9 +170,9 @@ def push_feedfback(sess, result_folder, driver_name, time, cause, time_plateau, 
     
     update_api_state = getattr(sess._factory, "update_api_state", None)
     if update_api_state is not None and callable(update_api_state):
-        driver, _ = drivers_list[driver_name]
-        api_state = sess._factory.update_api_state(driver, api_cause)
-        drivers_list[driver_name] = (driver, api_state)
+        driver, _, _ = drivers_list[driver_name]
+        api_state = sess._factory.update_api_state(driver, api_cause, n_seeds)
+        drivers_list[driver_name] = (driver, api_state, n_seeds)
         
 def convert_to_seconds(timeout):
     if timeout.endswith("h"):
@@ -179,18 +186,32 @@ def convert_to_seconds(timeout):
         
     return t
 
-def dyn_drv_gen(project, iteration, conf, running_threads):
-    cpu_id = -1
-    with lock:
-        for k in running_threads.keys():
-            if running_threads[k] == False:
-                cpu_id = k
-                break
-        running_threads[cpu_id] = True
-        
-    if cpu_id == -1:
-        print("ERROR, cpu_id == -1")
-        return
+def get_produced_seed(project, driver_name, iteration):     
+    global base_dir
+    corpus_folder = os.path.join(base_dir, "workdir_X_X", project, f"iter_{iteration}", "corpus_new", driver_name)
+    
+    items = os.listdir(corpus_folder)
+    files = [f for f in items if os.path.isfile(os.path.join(corpus_folder, f))]
+    n_seeds = len(files)
+    
+    return n_seeds
+
+def dyn_drv_gen(project, iteration, conf, running_threads = None):
+    
+    if running_threads is not None:
+        cpu_id = -1
+        with lock:
+            for k in running_threads.keys():
+                if running_threads[k] == False:
+                    cpu_id = k
+                    break
+            running_threads[cpu_id] = True
+            
+        if cpu_id == -1:
+            print("ERROR, cpu_id == -1")
+            return
+    else:
+        cpu_id = 0
     
     print(f"Starting {project}-{iteration} on CPU {cpu_id}")
     
@@ -239,23 +260,25 @@ def dyn_drv_gen(project, iteration, conf, running_threads):
                 cause_driver_stop = f.readline()[:-1]
                 driver_exec_time = f.readline()[:-1]
                 
+            n_seeds = get_produced_seed(project, driver_name, iteration)
+                
             push_feedfback(sess, host_result_folder, driver_name, driver_exec_time, 
-                        cause_driver_stop, time_plateau, drivers_list)
+                        cause_driver_stop, time_plateau, drivers_list, n_seeds)
             
-        # to save some space, I delete the drivers that do not contribute to new coverage
-        if len(os.listdir(os.path.join(host_result_folder, "corpus_new", driver_name))) == 1:
-            try:
-                os.remove(os.path.join(host_result_folder, "drivers", driver_name))
-                os.remove(os.path.join(host_result_folder, "profiles", f"{driver_name}_profile"))
-                os.remove(os.path.join(host_result_folder, "cluster_drivers", f"{driver_name}_cluster"))
-            except:
-                pass
+            # to save some space, I delete the drivers that do not contribute to new coverage
+            if len(os.listdir(os.path.join(host_result_folder, "corpus_new", driver_name))) == 1:
+                try:
+                    os.remove(os.path.join(host_result_folder, "drivers", driver_name))
+                    os.remove(os.path.join(host_result_folder, "profiles", f"{driver_name}_profile"))
+                    os.remove(os.path.join(host_result_folder, "cluster_drivers", f"{driver_name}_cluster"))
+                except:
+                    pass
         
     print("[INFO] Storing paths observed")
     with open(os.path.join(host_result_folder, "paths_observed.txt"), "w") as file:
-        for d, (l, t) in drivers_list.items():
+        for d, (l, t, s) in drivers_list.items():
             x = ";".join([str(l.function_name) for l, _ in l])
-            file.write(f"{d}: {x} [{t}]\n")            
+            file.write(f"{d}:{x}:{t}:{s}]\n")
             
     # mv the generator.toml file in the workdir folder
     config_file_name = os.path.basename(config_file)
@@ -263,8 +286,9 @@ def dyn_drv_gen(project, iteration, conf, running_threads):
     
     print(f"[INFO] Terminate fuzzing session for {project}-{iteration}")
     
-    with lock:
-        running_threads[cpu_id] = False
+    if running_threads is not None:
+        with lock:
+            running_threads[cpu_id] = False
       
 def build_container(project):
 
@@ -291,9 +315,24 @@ def build_container(project):
 def init(l):
     global lock
     lock = l
+    
+def error_callback(exception):
+    with open('errors.log', 'a') as f:
+        f.write("\n[INFO] A TASK CRASHESD!\m")
+        f.write(f"Exception: {exception}\n")
+        f.write(f"Traceback: {traceback.format_exc()}\n")
+        f.write("\n")
 
 def _main():
     
+    parser = argparse.ArgumentParser(description='Automatic Driver Generator')
+    parser.add_argument('--debug',  action='store_true', help='Run generation in debug mode')
+
+    args = parser.parse_args()
+    
+    global is_debug
+    is_debug = args.debug
+
     my_conf = source_bash_file("campaign_configuration.sh")
 
     projects = my_conf['PROJECTS_STRING'].split(":")
@@ -307,23 +346,30 @@ def _main():
     for p in projects:
         build_container(p)
         
-    manager = multiprocessing.Manager()
-    running_threads = manager.dict()
-    lock = multiprocessing.Lock()
-    # lock = manager.Lock()
-    
-    for c in range(max_cpu):
-        running_threads[c] = False
-    
-    # Create a pool of worker processes
-    with multiprocessing.Pool(processes=max_cpu, initializer=init, initargs=(lock,)) as pool:
-
-        for p, i in itertools.product(projects, iterations):
-            pool.apply_async(func=dyn_drv_gen, args=(p, i, my_conf, running_threads))
+    if is_debug:
         
-        # Close the pool and wait for the work to finish
-        pool.close()
-        pool.join()
+        for p, i in itertools.product(projects, iterations):
+            dyn_drv_gen(p, i, my_conf)
+        
+    else:
+            
+        manager = multiprocessing.Manager()
+        running_threads = manager.dict()
+        lock = multiprocessing.Lock()
+        # lock = manager.Lock()
+
+        for c in range(max_cpu):
+            running_threads[c] = False
+            
+        # Create a pool of worker processes
+        with multiprocessing.Pool(processes=max_cpu, initializer=init, initargs=(lock,)) as pool:
+            
+            for p, i in itertools.product(projects, iterations):
+                pool.apply_async(func=dyn_drv_gen, args=(p, i, my_conf, running_threads), error_callback=error_callback)
+            
+            # Close the pool and wait for the work to finish
+            pool.close()
+            pool.join()
 
 if __name__ == "__main__":
     _main()

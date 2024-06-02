@@ -27,11 +27,11 @@ class CBGFactory(CBFactory):
                     dgraph: DependencyGraph, conditions: FunctionConditionsSet):
         super().__init__(api_list, driver_size, dgraph, conditions)
 
-        self.api_initial_weigth = {}
-        self.api_frequency = {}
-        for a in self.dependency_graph.keys():
-            self.api_initial_weigth[a] = len(self.get_reachable_apis(a))
-            self.api_frequency[a] = 0
+        # self.api_initial_weigth = {}
+        # self.api_frequency = {}
+        # for a in self.dependency_graph.keys():
+        #     self.api_initial_weigth[a] = len(self.get_reachable_apis(a))
+        #     self.api_frequency[a] = 0
             
         self.history_api_sequence = {}
         
@@ -43,34 +43,86 @@ class CBGFactory(CBFactory):
         tmp_source_api = list()
         
         for sa in self.source_api:
-            if self.history_api_sequence.get(sa.function_name, None) == ApiSeqState.NEGATIVE:
+            if sa.function_name in self.history_api_sequence:
+                api_state, _ = self.history_api_sequence[sa.function_name]
+            else:
+                api_state = None
+                
+            if api_state == ApiSeqState.NEGATIVE:
                 continue
-            w += [self.get_weigth(sa)]
-            tmp_source_api += [sa]
             
-        s_api = random.choices(tmp_source_api, weights=w)[0]
-        self.inc_api_frequency(s_api)
+            tmp_source_api += [(sa, None, None, None)]
+            
+        return self.get_random_candidate([], tmp_source_api)[0]
+            
+        # s_api = random.choices(tmp_source_api, weights=w)[0]
+        # # self.inc_api_frequency(s_api)
         
-        return s_api
-
-    def get_random_candidate(self, candidate_api):
-        w = []
-        for ca in candidate_api:
-            # Api object is in position 2
-            w += [self.get_weigth(ca[2])]
-        r_api = random.choices(candidate_api, weights=w)[0] 
-        self.inc_api_frequency(r_api)
-        return r_api
+        # return s_api
     
-    def inc_api_frequency(self, api):
-        freq = self.get_api_frequency(api)
-        if freq is None:
-            freq = 1
-        else:
-            freq = freq + 1
-        self.set_api_frequency(api, freq)
+    def calc_seeds(self, driver, api_call):
+        
+        api_seq_str = self.calc_api_seq_str(driver, api_call)
+        
+        # sum_positive = 0
+        # nun_negative = 0
+        # tot_leafes = 0
+        # for seq, (state, n_seeds) in self.history_api_sequence.items():
+        #     if seq.startswith(api_seq_str):
+                
+        return self.history_api_sequence[api_seq_str][1]
 
-    def get_weigth(self, api):
+    def get_random_candidate(self, driver, candidate_api):
+        # w = []
+        # for ca in candidate_api:
+        #     # Api object is in position 2
+        #     w += [self.get_weigth(ca[2])]
+        
+        positive_weights = []
+        unknown_weights = []
+        for call_next, x, y, api_state in candidate_api:
+            if api_state == ApiSeqState.UNKNOWN:
+                unknown_weights += [(call_next, x, y, api_state)]
+            elif api_state == ApiSeqState.POSITIVE:
+                n_seeds = self.calc_seeds(driver, call_next)
+                positive_weights += [((call_next, x, y, api_state), n_seeds)]
+            elif api_state == ApiSeqState.NEGATIVE:
+                continue
+            
+        n_unk_weights = len(unknown_weights)
+        n_pos_weights = len(positive_weights)
+        
+        if n_pos_weights > 0:
+            
+            sum_pos_weights = sum([w for _, w in positive_weights])
+            
+            prob_unkn = float(n_unk_weights)/(n_unk_weights+n_pos_weights)
+            
+            sum_unk_weights = prob_unkn/(1.0-prob_unkn)*sum_pos_weights
+            
+            candidate_api_new = positive_weights
+            for u in unknown_weights:
+                candidate_api_new += [(u, sum_unk_weights/n_unk_weights)]
+            
+            w = [ww for _, ww in candidate_api_new]
+            candidate_api = [c for c, _ in candidate_api_new]
+            r_api = random.choices(candidate_api, weights=w)[0] 
+            return r_api
+        else:
+            w = [1 for _ in candidate_api]
+            r_api = random.choices(candidate_api, weights=w)[0] 
+            return r_api
+            
+    
+    # def inc_api_frequency(self, api):
+    #     freq = self.get_api_frequency(api)
+    #     if freq is None:
+    #         freq = 1
+    #     else:
+    #         freq = freq + 1
+    #     self.set_api_frequency(api, freq)
+
+    def get_weigth(self, drv, api):
 
         if api not in self.api_frequency:
             self.api_frequency[api] = 0
@@ -81,20 +133,20 @@ class CBGFactory(CBFactory):
         
         return float(self.api_initial_weigth[api])/self.api_frequency[api]
     
-    def set_api_frequency(self, api, freq):
-        if api not in self.api_frequency:
-            return
-        self.api_frequency[api] = freq
+    # def set_api_frequency(self, api, freq):
+    #     if api not in self.api_frequency:
+    #         return
+    #     self.api_frequency[api] = freq
 
-    def get_api_frequency(self, api):
-        if api not in self.api_frequency:
-            return None
-        return self.api_frequency[api]
+    # def get_api_frequency(self, api):
+    #     if api not in self.api_frequency:
+    #         return None
+    #     return self.api_frequency[api]
     
-    def upd_api_frequency(self, api, rel_freq):
-        if api not in self.api_frequency:
-            return
-        self.api_frequency[api] += rel_freq
+    # def upd_api_frequency(self, api, rel_freq):
+    #     if api not in self.api_frequency:
+    #         return
+    #     self.api_frequency[api] += rel_freq
 
     def get_reachable_apis(self, api):
 
@@ -212,7 +264,7 @@ class CBGFactory(CBFactory):
                 
             if candidate_api:
                 # (ApiCall, RunningContext, Api)
-                (api_call, rng_ctx_1, api_n, api_state) = self.get_random_candidate(candidate_api)
+                (api_call, rng_ctx_1, api_n, api_state) = self.get_random_candidate(drv, candidate_api)
                 print(f"[INFO] choose {api_call.function_name}")
 
                 # if api_call.function_name == "TIFFReadRGBAImage":
@@ -274,14 +326,8 @@ class CBGFactory(CBFactory):
         d.statements_apicall = drv
 
         return d
-
-
-    def calc_api_state(self, driver, api = None) -> ApiSeqState:
-        
-        # if api is not None and api.function_name == "TIFFGetField":
-        #     print("calc_api_state")
-        #     from IPython import embed; embed();
-        #     print("continue...")
+    
+    def calc_api_seq_str(self, driver, api = None) -> str:
         
         api_seq = []
         for s in driver:
@@ -293,18 +339,23 @@ class CBGFactory(CBFactory):
                 api_seq_str += f"{api.function_name}"
             else:
                 api_seq_str += f";{api.function_name}"
+                
+        return api_seq_str
+
+
+    def calc_api_state(self, driver, api = None):
+        
+        api_seq_str = self.calc_api_seq_str(driver, api)
         
         if api_seq_str not in self.history_api_sequence:
             return ApiSeqState.UNKNOWN
         
-        return self.history_api_sequence[api_seq_str]
+        return self.history_api_sequence[api_seq_str][0]
     
-    def update_api_state(self, driver, api_seq_state) -> ApiSeqState:
-        api_seq = []
-        for s in driver:
-            api_seq += [s[0].original_api.function_name]
-        api_seq_str = ";".join(api_seq)
+    def update_api_state(self, driver, api_seq_state, n_seeds) -> ApiSeqState:
         
-        self.history_api_sequence[api_seq_str] = api_seq_state
+        api_seq_str = self.calc_api_seq_str(driver)
+        
+        self.history_api_sequence[api_seq_str] = (api_seq_state, n_seeds)
         
         return api_seq_state
