@@ -154,9 +154,19 @@ def push_feedfback(sess, result_folder, driver_name, time, cause, time_plateau, 
     
     global base_dir
     
-    time_plateau = int(time_plateau)
-    time = int(time)
-    
+    try:        
+        time_plateau = int(time_plateau)
+    except:
+        time_plateau = 0
+        
+    try:
+        time = int(time)
+    except:
+        time = 0
+        
+    if cause == "":
+        cause = "C"
+            
     with open(f"{result_folder}/feedback_received.txt", "a") as f:
         f.write(f"{driver_name}|{time}|{cause}|{n_seeds}\n")
        
