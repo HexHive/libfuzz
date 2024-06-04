@@ -5,18 +5,19 @@ source campaign_configuration.sh
 
 IMG_NAME="fuzzing_campaigns"
 set -x
-# FLAVIO: this block makes sure to recompile LLVM and make it available for the next script
-DOCKER_BUILDKIT=1 docker build --target libfuzzpp_dev_image -f ../Dockerfile ..
-docker run -v $(pwd)/..:/workspaces/libfuzz libfuzzpp_dev_image \
-    /workspaces/libfuzz/llvm-project/build.sh
+# # FLAVIO: this block makes sure to recompile LLVM and make it available for the next script
+# DOCKER_BUILDKIT=1 docker build --target libfuzzpp_dev_image -f ../Dockerfile ..
+# docker run -v $(pwd)/..:/workspaces/libfuzz libfuzzpp_dev_image \
+#     /workspaces/lib
 
-DOCKER_BUILDKIT=1 docker build \
-    --build-arg USER_UID=$(id -u) --build-arg GROUP_UID=$(id -g) \
-    --build-arg target_name="$TARGET" \
-    -t "$IMG_NAME" --target libfuzzpp_fuzzing \
-    -f "../Dockerfile" "../"
-set +x
-
+for project in "${PROJECTS[@]}"; do
+    DOCKER_BUILDKIT=1 docker build \
+        --build-arg USER_UID=$(id -u) --build-arg GROUP_UID=$(id -g) \
+        --build-arg target_name="$project" \
+        -t "$IMG_NAME-$project" --target libfuzzpp_fuzzing \
+        -f "../Dockerfile" "../"
+    set +x
+done
 
 let TOTAL_FUZZERS="$(find workdir_*_*/*/drivers/ -type f -executable | wc -l)*ITERATIONS"
 COUNTER=0
@@ -75,7 +76,7 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
                         --name ${project}_${fuzz_target}_${ndrivers}_${napis}_${i} \
                         -v $(pwd):/libfuzzpp \
                         --mount type=tmpfs,destination=/tmpfs \
-                        -t $IMG_NAME \
+                        -t "$IMG_NAME-$project" \
                         timeout -k 10s $TIMEOUT $FUZZ_BINARY $FUZZ_CORPUS -artifact_prefix=${CRASHES}/ -ignore_crashes=1 -ignore_timeouts=1 -ignore_ooms=1 -detect_leaks=0 -fork=1
                     COUNTER=$(( COUNTER + 1 ))
                     CPU_ID=$(( CPU_ID + 1 ))

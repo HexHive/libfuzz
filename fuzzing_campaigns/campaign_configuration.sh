@@ -66,6 +66,7 @@ case $CONF in
 
   grammar)
     export TIMEOUT=12h
+    ;;
 
   *)
     echo -n "unknown CONF=${CONF}"
