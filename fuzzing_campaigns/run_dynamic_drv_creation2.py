@@ -288,7 +288,7 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
     with open(os.path.join(host_result_folder, "paths_observed.txt"), "w") as file:
         for d, (l, t, s) in drivers_list.items():
             x = ";".join([str(l.function_name) for l, _ in l])
-            file.write(f"{d}:{x}:{t}:{s}]\n")
+            file.write(f"{d}:{x}:{t}:{s}\n")
             
     # mv the generator.toml file in the workdir folder
     config_file_name = os.path.basename(config_file)
