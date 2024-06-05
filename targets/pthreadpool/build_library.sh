@@ -37,6 +37,8 @@ cmake .. -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
         -DBENCHMARK_ENABLE_GTEST_TESTS=off \
         -DBENCHMARK_ENABLE_INSTALL=off
 
+find . -name "*.make" -exec sed -i 's/\-Werror//g' {} \;
+
 echo "make clean"
 make -j$(nproc) clean
 echo "make"
@@ -57,6 +59,8 @@ cmake .. -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
         -DBENCHMARK_ENABLE_GTEST_TESTS=off \
         -DBENCHMARK_ENABLE_INSTALL=off
 
+find . -name "*.make" -exec sed -i 's/\-Werror//g' {} \;
+
 echo "make clean"
 make -j$(nproc) clean
 echo "make"
@@ -76,6 +80,8 @@ cmake .. -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
         -DCMAKE_CXX_FLAGS_RELEASE="-fsanitize=fuzzer-no-link,address" \
         -DBENCHMARK_ENABLE_GTEST_TESTS=off \
         -DBENCHMARK_ENABLE_INSTALL=off
+
+find . -name "*.make" -exec sed -i 's/\-Werror//g' {} \;
 
 echo "make clean"
 make -j$(nproc) clean

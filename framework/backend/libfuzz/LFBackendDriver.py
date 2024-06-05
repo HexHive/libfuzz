@@ -128,6 +128,8 @@ class LFBackendDriver(BackendDriver):
         cm += "\n#define MIN(x,y) ((x < y) ? x : y)\n\n"
 
         return cm
+    
+    last_stmt = None
 
     def emit_driver(self, driver: Driver, driver_filename: str):
 
@@ -137,6 +139,8 @@ class LFBackendDriver(BackendDriver):
         seed_fix_size = driver.get_input_size()
         counter_size = driver.get_counter_size()
         stub_functions = driver.get_stub_functions()
+        
+        LFBackendDriver.drv = driver
 
         with open(os.path.join(self.working_dir, driver_filename), "w") as f:
             # TODO: add headers inclusion
@@ -298,63 +302,6 @@ class LFBackendDriver(BackendDriver):
 
         cm += "}\n"
 
-        # cm += "\tsize_t counter_size_sum = 0;\n"
-        # cm += "\tfor (int i = 0; i < COUNTER_NUMBER; i++)\n"
-        # cm += "\t\tcounter_size_sum += counter_size[i];\n\n"
-
-        # cm += "\tif (Size < FIXED_SIZE ||\n"
-        # cm += "\t\tSize >= (NEW_DATA_LEN-counter_size_sum))\n"
-        # cm += "\t\treturn 0;\n"
-        # cm += "\tunsigned cut[COUNTER_NUMBER] = { 0 };\n"
-        # cm += "\tuint8_t NewData[NEW_DATA_LEN];\n"
-        # cm += "\tsize_t NewDataSize = sizeof(NewData);\n"
-
-        # cm += "\tuint8_t *NewDataPtr = NewData;\n"
-        # cm += "\tuint8_t *DataPtr = Data;\n"
-
-        # cm += "\tsize_t NewDataLen = LLVMFuzzerMutate(Data, Size, NEW_DATA_LEN);\n"
-
-        # cm += "\tif (NewDataLen < FIXED_SIZE ||\n"
-        # cm += "\t\t NewDataLen >= (NEW_DATA_LEN-counter_size_sum))\n"       
-        # cm += "\t\treturn 0;\n"
-
-        # cm += "\tsize_t DynamicPart = NewDataLen - FIXED_SIZE;\n"
-
-        # cm += "\tcut[0] = 0;\n"
-        # cm += "\tif (DynamicPart == 0) {\n"
-        # cm += "\t\tfor (int i = 1; i < COUNTER_NUMBER; i++) cut[i] = 0;\n";
-        # cm += "\t} else {\n"
-        # cm += "\t\tfor (int i = 1; i < COUNTER_NUMBER; i++)\n"
-        # cm += "\t\t\tcut[i] = rand() % DynamicPart;\n"
-        # cm += "\t\tqsort(cut, COUNTER_NUMBER, sizeof(unsigned), cmpfunc);\n"
-        # cm += "\t}\n"
-
-        # cm += "\t// copy Fixed Part\n"
-        # cm += "\tsize_t slice_len = FIXED_SIZE;\n"
-        # cm += "\tmemcpy(NewDataPtr, DataPtr, slice_len);\n"
-        # cm += "\tDataPtr += slice_len;\n"
-        # cm += "\tNewDataPtr += slice_len;\n"
-
-        # cm += "\tsize_t NewDataFinalLen = slice_len;\n"
-    
-        # cm += "\tfor (int i = 0; i < COUNTER_NUMBER; i++) {\n"
-        # cm += "\t\tif (i == COUNTER_NUMBER - 1)\n"
-        # cm += "\t\t\tslice_len = DynamicPart - cut[i];\n"
-        # cm += "\t\telse\n"
-        # cm += "\t\t\tslice_len = cut[i+1] - cut[i];\n"
-        # cm += "\t\tmemcpy(NewDataPtr, &slice_len, counter_size[i]);\n"
-        # cm += "\t\tNewDataPtr += counter_size[i];\n"
-        # cm += "\t\tmemcpy(NewDataPtr, DataPtr, slice_len);\n"
-        # cm += "\t\tDataPtr += slice_len;\n"
-        # cm += "\t\tNewDataPtr += slice_len;\n"
-        # cm += "\t\tNewDataFinalLen += slice_len + counter_size[i];\n"
-        # cm += "\t}\n"
-
-        # cm += "\tmemcpy(Data, NewData, NewDataFinalLen);\n"
-
-        # cm += "\treturn NewDataFinalLen;\n"
-        # cm += "}\n"
-
         return cm
 
     # Address
@@ -419,13 +366,12 @@ class LFBackendDriver(BackendDriver):
 
         # extra_brackets = "[0]" * num_extra_brackets
 
-        # this trick removes `const` from the double arrays that require const
-        # arrays
+        # NOTE: remove "const" adjustments
         cast_str = ""
-        if "const" in buff_type.token:
-            pointee_type_token = buff_type.get_pointee_type().token
-            pointee_type_token = pointee_type_token.replace(" const", "")
-            cast_str = f"({pointee_type_token})"
+        # if "const" in buff_type.token:
+        #     pointee_type_token = buff_type.get_pointee_type().token
+        #     pointee_type_token = pointee_type_token.replace(" const", "")
+        #     cast_str = f"({pointee_type_token})"
 
         buff_i = f"{self.value_emit(buff[0])}[i]"
 
@@ -435,9 +381,12 @@ class LFBackendDriver(BackendDriver):
         x_value = f"{x_token}[{x_idx}][i]"
 
         str = "//clean dbl array\n"
+        # str += f"\tfor (uint i = 0; i < {buff_nelem}; i++) "
+        # str += f" if ({buff_i} != 0 && {x_value} == {buff_i} ) "
+        # str += f"{cleanup_method}({cast_str}{buff_i});\n"
         str += f"\tfor (uint i = 0; i < {buff_nelem}; i++) "
-        str += f" if ({buff_i} != 0 && {x_value} == {buff_i} ) "
-        str += f"{cleanup_method}({cast_str}{buff_i});\n"
+        str += f" if ({x_value} != 0 )"
+        str += f" {cleanup_method}({cast_str}{x_value});\n"
 
         return str
 
@@ -462,24 +411,29 @@ class LFBackendDriver(BackendDriver):
         # print("dyndblarrinit_emit")
         # from IPython import embed; embed(); exit(1)
 
-        # this trick removes `const` from the double arrays that require const
-        # arrays
+        # NOTE: remove "const" adjustment
         cast_str = ""
         is_const = False
-        if "const" in buff_type.token:
-            pointee_type_token = buff_type.get_pointee_type().token
-            pointee_type_token = pointee_type_token.replace(" const", "")
-            cast_str = f"({pointee_type_token})"
-            tkn_base = tkn_base.replace(" const", "")
-            is_const = True
+        # if "const" in buff_type.token:
+        #     pointee_type_token = buff_type.get_pointee_type().token
+        #     pointee_type_token = pointee_type_token.replace(" const", "")
+        #     cast_str = f"({pointee_type_token})"
+        #     tkn_base = tkn_base.replace(" const", "")
+        #     is_const = True
 
         str = "//dyn dbl array init\n"
         str += f"\tfor (uint i = 0; i < {buff_nelem}; i++) {{\n"
         
+        x_elm_size = ""
+        if not buff_type.get_pointee_type().is_incomplete:
+            x_elm_size = f"*sizeof({buff_i}[0])"
+        else:
+            raise Exception(f"sizeof({buff_i}) is incomplete in dyndblarrinit_emit!")
+        
         # var_len from fuzzer seed
         str += "\t\t" + self.buffinit_emit(var_len_init) + "\n"
         # malloc
-        str += f"\t\t{buff_i} = ({dst_type}*)malloc({self.value_emit(var_len)});\n"
+        str += f"\t\t{buff_i} = ({dst_type}*)malloc({self.value_emit(var_len)}{x_elm_size});\n"
 
         # add a shadow copy for the array
         x_idx = 0
@@ -551,9 +505,13 @@ class LFBackendDriver(BackendDriver):
             x_token = self.clean_token(buff.get_token()) + "_shadow"
             x_value = f"{x_token}[{x_idx}]"
 
-            to_ret = f"if ({v}{extra_brackets} != 0 && "
-            to_ret += f"{x_value} == {v}{extra_brackets}) "
-            to_ret += f"{cleanup_method}({v}{extra_brackets});"
+            # to_ret = f"if ({v}{extra_brackets} != 0 && "
+            # to_ret += f"{x_value} == {v}{extra_brackets}) "
+            # to_ret += f"{cleanup_method}({v}{extra_brackets});"
+            
+            to_ret = f"if ({x_value} != 0)"
+            # to_ret += f" {cleanup_method}({x_value});" // clean the shadow var
+            to_ret += f" {cleanup_method}({v}{extra_brackets});"
 
             return to_ret
 
@@ -606,11 +564,11 @@ class LFBackendDriver(BackendDriver):
             str_stars = "*"
             n_brackets = "[1]"*(n_stars-1)
 
-        const_attr = "const " if type.is_const else ""
-
-        # DIRTY ACK!
-        if type.token == "u_char**":
-            const_attr = "const "
+        # NOTE: all declarations are not-const!
+        const_attr = ""
+        # const_attr = "const " if type.is_const else ""
+        # if type.token == "u_char**":
+        #     const_attr = "const "
 
         if buffer.get_alloctype() in [AllocType.HEAP, AllocType.GLOBAL]:
             if DataLayout.is_ptr_level(type, 2):
@@ -623,7 +581,19 @@ class LFBackendDriver(BackendDriver):
 
             return to_ret
         else:
-            return f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}];"
+            
+            decl_str = f"{const_attr}{self.type_emit(type)} {str_stars}{token}{n_brackets}[{n_element}];"
+            
+            type_base = type
+            if isinstance(type_base, PointerType):
+                type_base = type_base.get_pointee_type()
+            
+            # if a type is not fuzz friendly, using memset is the most compatible way to initiliaze it
+            # if (DataLayout.instance().is_enum_type(type_base.get_token()) or
+            #     not DataLayout.instance().is_fuzz_friendly(type_base.get_token())):
+            decl_str += f"\n\tmemset({str_stars}{token}, 0x0, sizeof({str_stars}{token}));"
+        
+            return decl_str
 
     def get_new_file_pointer(self):
         cnt = self.file_pointer_cnt
@@ -636,13 +606,24 @@ class LFBackendDriver(BackendDriver):
         var_len = dynarrayinit.get_len_var()
         buff = dynarrayinit.get_buffer()
         
-        dst_type = self.type_emit(buff.get_type())
+        buff_type = buff.get_type()
+        dst_type = self.type_emit(buff_type)
+        
+        # TODO: check if this is a good idea!
+        
+        x_elm_size = ""
+        if (isinstance(buff_type, PointerType) and 
+            not buff_type.get_pointee_type().is_incomplete):
+            x_elm_size = f"*sizeof({self.value_emit(buff[0])}[0])"
+        else:
+            raise Exception(f"sizeof({buff[0]}) is incomplete in dynarrayinit_emit!")
+            
 
         # var_len from fuzzer seed
         var_len_init = BuffInit(var_len.get_buffer())
         stmt += "\t" + self.buffinit_emit(var_len_init) + "\n"
         # malloc
-        stmt += f"\t{self.value_emit(buff[0])} = ({dst_type}*)malloc({self.value_emit(var_len)});\n"
+        stmt += f"\t{self.value_emit(buff[0])} = ({dst_type}*)malloc({self.value_emit(var_len)}{x_elm_size});\n"
         # add a shadow copy for the array
         x_idx = 0
         x_token = self.clean_token(buff.get_token()) + "_shadow"
@@ -707,6 +688,7 @@ class LFBackendDriver(BackendDriver):
         ret_var = apicall.ret_var
         ret_type = apicall.ret_type
         arg_vars = apicall.arg_vars
+        arg_types = apicall.arg_types
         function_name = apicall.function_name
         namespace = apicall.namespace
         is_vararg = apicall.is_vararg
@@ -723,6 +705,23 @@ class LFBackendDriver(BackendDriver):
         str_vals = []
         for p, a in enumerate(arg_vars):
             x = self.value_emit(a)
+            
+            va = a
+            if isinstance(va, Address):
+                va = va.get_variable()
+            
+            # print("type cast?")
+            # from IPython import embed; embed(); exit(1)
+            
+            if (p < len(arg_types) and
+                self.has_some_const(arg_types[p]) and 
+                not arg_types[p].to_function):
+            # != va.get_type():
+                # print("xxxaaa")
+                # from IPython import embed; embed(); exit(1)
+                cast = self.full_type_emit(arg_types[p])
+                x = f"({cast}){x}"
+            
             if apicall.has_max_value(p):
                 m = apicall.get_max_value(p)
                 str_vals += [f" ((uint){x}) % {m}"]
@@ -746,14 +745,59 @@ class LFBackendDriver(BackendDriver):
         #     from IPython import embed; embed(); exit()
 
         cast_operator = ""
+        
+        # if function_name == "cJSON_Version":
+        #     print("apicall_emit")
+        #     from IPython import embed; embed(); exit(1)
 
-        if ret_type != ret_var_type:
+        if ret_type != ret_var_type or self.has_some_const(ret_type):
             # type_emit = self.type_emit(ret_var_type)
+            # print("Xxxx")
             # from IPython import embed; embed(); exit()
             # type_emit = self.clean_token()
-            cast_operator = f"({ret_var_type.token})"
+            cast_operator = f"({self.full_type_emit(ret_type, False)})"
 
         return f"{ret_var_code} = {cast_operator} {function_name}({arg_vars_code});"
+    
+    # def is_pointer_function(self, type) -> bool:
+    #     return isinstance(type, PointerType) and type.get_base_type().to_function
+    #     arg_types[p].to_function
+    
+    def full_type_emit(self, type, with_const: bool = True):
+        
+        if isinstance(type, PointerType):
+            
+            base_token = self.clean_token(type.get_base_type().get_token())
+            consts = type.get_all_consts()
+            if not with_const:
+                consts = [False for _ in consts]
+                
+            pointer_level = DataLayout.get_ptr_level(type)
+            
+            s = ""
+            
+            i = 0
+            while i < pointer_level:
+                if consts[i]:
+                    s += "const "
+                if i == 0:
+                    s += f"{base_token} "
+                s += "* "
+                i = i + 1
+            
+            # print(f"full_type_emit {type}")
+            # from IPython import embed; embed(); exit(1)
+            
+            return s
+            
+        else:
+            return self.type_emit(type)
+    
+    def has_some_const(self, type):
+        if isinstance(type, PointerType):
+            return any(type.get_all_consts())
+        
+        return type.is_const
     
     # Value
     def value_emit(self, value: Value) -> str:

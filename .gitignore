@@ -20,6 +20,9 @@ condition_extractor/node_modules/**/*
 
 selection_main/*
 
+feedback.txt
+feedback_received.txt
+
 ## C gitignore
 # Prerequisites
 *.d
@@ -94,3 +97,8 @@ fuzzing_campaigns/time_budget.csv
 
 
 point_to_test/
+service.log
+
+llvm-project/build
+llvm-project-old
+llvm-project/

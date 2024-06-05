@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/var/cache/apt apt-get -q update && \
     bash-completion less apt-utils apt-transport-https curl  \
     ca-certificates gnupg dialog libpixman-1-dev gnuplot-nox \
     nodejs npm graphviz libtinfo-dev libz-dev zip unzip libclang-12-dev \
-    tmux tree gdb jq bc cloc ccache lsb-release \
+    tmux tree gdb jq bc cloc ccache lsb-release lsof \
     && rm -rf /var/lib/apt/lists/*
 
 # Clang dependencies
@@ -117,9 +117,11 @@ ARG target_name=simple_connection
 # ARG timeout=10m
 # ARG driver=*.cc
 
-COPY LLVM/update-alternatives-clang.sh .
-RUN sudo ./update-alternatives-clang.sh 12 200
-ENV LLVM_DIR /usr
+# COPY LLVM/update-alternatives-clang.sh .
+# RUN sudo ./update-alternatives-clang.sh 12 200
+# ENV LLVM_DIR /usr
+COPY --link ./llvm-project/build ${HOME}/LLVM/
+ENV LLVM_DIR ${HOME}/LLVM
 
 ENV TARGET_NAME ${target_name}
 ENV TARGET ${HOME}/library
@@ -163,3 +165,13 @@ FROM libfuzzpp_dev_image AS libfuzzpp_fuzzing_campaigns
 COPY LLVM/update-alternatives-clang.sh .
 RUN sudo ./update-alternatives-clang.sh 12 200
 WORKDIR ${LIBFUZZ}
+
+# ------------------------------------------------------------------------------------------------------------------
+# TARGET FOR DYNAMIC DRIVER CREATION
+FROM libfuzzpp_fuzzing AS libfuzzpp_dyndrvgen
+ENV DRIVER_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
+ENV CORPUS_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/corpus_new
+WORKDIR ${LIBFUZZ}
+COPY LLVM/update-alternatives-clang.sh .
+RUN sudo ./update-alternatives-clang.sh 12 200
+CMD ${LIBFUZZ}/targets/start_dyndrvcreation.sh

@@ -19,6 +19,7 @@ from driver.factory.only_type import *
 from driver.factory.constraint_based import *
 from driver.factory.constraint_based_weight import *
 from driver.factory.constraint_based_search import *
+from driver.factory.constraint_based_grammar import *
 
 from generator import Pool
 
@@ -46,6 +47,16 @@ class Configuration:
 
         self.start_term = NonTerminal("start")
         self.end_term = Terminal("end")
+
+        self._config_path = config_path
+        self._overwrite_path = overwrite_path
+
+    def get_info(self):
+        if self._overwrite_path is not None:
+            return f"{self._config_path}({self._overwrite_path})"
+    
+        return f"{self._config_path}"
+
 
     @cached_property
     def driver_size(self):
@@ -291,6 +302,11 @@ class Configuration:
         if policy == "constraint_based_weight":
             dep_graph = self.dependency_graph
             return CBWFactory(self.api_list, self.driver_size, dep_graph, 
+                              self.function_conditions)
+            
+        if policy == "constraint_based_grammar":
+            dep_graph = self.dependency_graph
+            return CBGFactory(self.api_list, self.driver_size, dep_graph, 
                               self.function_conditions)
 
         if policy == "constraint_based_search":

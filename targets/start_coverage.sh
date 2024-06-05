@@ -16,7 +16,7 @@ DRIVER_PATH_REGEX="\/workspaces\/libfuzz\/workdir\/.*\/drivers\/.*\.cc"
 if [[ $TOTAL_LIBRARY_COVERAGE ]]; then
     MERGED_PROFDATAS="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/coverage_data/iter_*/merged.profdata)"
     mkdir -p fuzzing_campaigns/total_library_coverage/${TARGET_NAME}
-    llvm-profdata-12 merge -sparse $MERGED_PROFDATAS -o fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/merged.profdata
+    ${LLVM_DIR}/bin/llvm-profdata merge -sparse $MERGED_PROFDATAS -o fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/merged.profdata
     PROFILES="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/profiles/*_profile)"
 
     OBJECTS=""
@@ -29,9 +29,9 @@ if [[ $TOTAL_LIBRARY_COVERAGE ]]; then
         fi
     done
 
-    llvm-cov-12 show $OBJECTS -instr-profile=fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/merged.profdata > show
-    llvm-cov-12 report $OBJECTS -instr-profile=fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
-    llvm-cov-12 report -show-functions $OBJECTS -instr-profile=fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
+    ${LLVM_DIR}/bin/llvm-cov show $OBJECTS -instr-profile=fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/merged.profdata > show
+    ${LLVM_DIR}/bin/llvm-cov report $OBJECTS -instr-profile=fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
+    ${LLVM_DIR}/bin/llvm-cov report -show-functions $OBJECTS -instr-profile=fuzzing_campaigns/total_library_coverage/${TARGET_NAME}/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
 
     mv show fuzzing_campaigns/total_library_coverage/${TARGET_NAME}
     mv report fuzzing_campaigns/total_library_coverage/${TARGET_NAME}
@@ -42,11 +42,11 @@ if [[ $TOTAL_LIBRARY_COVERAGE ]]; then
 
         MERGED_PROFDATAS="$(ls -d fuzzing_campaigns/*/${TARGET_NAME}/coverage_data/iter_${i}/merged.profdata)"
         mkdir -p ${TARGET_ITER}
-        llvm-profdata-12 merge -sparse $MERGED_PROFDATAS -o ${TARGET_ITER}/merged.profdata
+        ${LLVM_DIR}/bin/llvm-profdata merge -sparse $MERGED_PROFDATAS -o ${TARGET_ITER}/merged.profdata
 
-        llvm-cov-12 show $OBJECTS -instr-profile=${TARGET_ITER}/merged.profdata > show
-        llvm-cov-12 report $OBJECTS -instr-profile=${TARGET_ITER}/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
-        llvm-cov-12 report -show-functions $OBJECTS -instr-profile=${TARGET_ITER}/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
+        ${LLVM_DIR}/bin/llvm-cov show $OBJECTS -instr-profile=${TARGET_ITER}/merged.profdata > show
+        ${LLVM_DIR}/bin/llvm-cov report $OBJECTS -instr-profile=${TARGET_ITER}/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
+        ${LLVM_DIR}/bin/llvm-cov report -show-functions $OBJECTS -instr-profile=${TARGET_ITER}/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
 
         mv show ${TARGET_ITER}/
         mv report ${TARGET_ITER}/
@@ -64,13 +64,13 @@ if [[ $TOTAL_DRIVER_COVERAGE ]]; then
         DRIVER_NAME=$(basename $d)
         DRIVER_PROFDATAS="$(ls -d ${PROJECT_FOLDER}/coverage_data/iter_*/${DRIVER_NAME}.profdata)"
         mkdir -p ${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}
-        llvm-profdata-12 merge -sparse $DRIVER_PROFDATAS -o ${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}/merged.profdata
+        ${LLVM_DIR}/bin/llvm-profdata merge -sparse $DRIVER_PROFDATAS -o ${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}/merged.profdata
 
         PROFILE_BINARY=${PROJECT_FOLDER}/profiles/${DRIVER_NAME}_profile
 
-        llvm-cov-12 show $PROFILE_BINARY -instr-profile=${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}/merged.profdata > show
-        llvm-cov-12 report $PROFILE_BINARY -instr-profile=${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
-        llvm-cov-12 report -show-functions $PROFILE_BINARY -instr-profile=${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
+        ${LLVM_DIR}/bin/llvm-cov show $PROFILE_BINARY -instr-profile=${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}/merged.profdata > show
+        ${LLVM_DIR}/bin/llvm-cov report $PROFILE_BINARY -instr-profile=${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
+        ${LLVM_DIR}/bin/llvm-cov report -show-functions $PROFILE_BINARY -instr-profile=${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
 
         mv show ${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}
         mv report ${PROJECT_FOLDER}/coverage_data/${DRIVER_NAME}
@@ -82,7 +82,7 @@ fi
 if [[ $TOTAL_LIBRARY_COVERAGE_FOR_CONFIGURATION ]]; then
     MERGED_PROFDATAS="$(ls -d ${PROJECT_FOLDER}/coverage_data/iter_*/merged.profdata)"
     mkdir -p ${PROJECT_FOLDER}/coverage_data/total
-    llvm-profdata-12 merge -sparse $MERGED_PROFDATAS -o ${PROJECT_FOLDER}/coverage_data/total/merged.profdata
+    ${LLVM_DIR}/bin/llvm-profdata merge -sparse $MERGED_PROFDATAS -o ${PROJECT_FOLDER}/coverage_data/total/merged.profdata
     PROFILES="$(ls -d ${PROJECT_FOLDER}/profiles/*_profile)"
 
     OBJECTS=""
@@ -95,9 +95,9 @@ if [[ $TOTAL_LIBRARY_COVERAGE_FOR_CONFIGURATION ]]; then
         fi
     done
 
-    llvm-cov-12 show $OBJECTS -instr-profile=${PROJECT_FOLDER}/coverage_data/total/merged.profdata > show
-    llvm-cov-12 report $OBJECTS -instr-profile=${PROJECT_FOLDER}/coverage_data/total/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
-    llvm-cov-12 report -show-functions $OBJECTS -instr-profile=${PROJECT_FOLDER}/coverage_data/total/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
+    ${LLVM_DIR}/bin/llvm-cov show $OBJECTS -instr-profile=${PROJECT_FOLDER}/coverage_data/total/merged.profdata > show
+    ${LLVM_DIR}/bin/llvm-cov report $OBJECTS -instr-profile=${PROJECT_FOLDER}/coverage_data/total/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
+    ${LLVM_DIR}/bin/llvm-cov report -show-functions $OBJECTS -instr-profile=${PROJECT_FOLDER}/coverage_data/total/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
 
     mv show ${PROJECT_FOLDER}/coverage_data/total
     mv report ${PROJECT_FOLDER}/coverage_data/total
@@ -131,12 +131,12 @@ do
         mv ${DRIVER_NAME}-${input}.profraw $PROJECT_COVERAGE
     done
 
-    llvm-profdata-12 merge -sparse $PROJECT_COVERAGE/${DRIVER_NAME}-*.profraw -o $PROJECT_COVERAGE/${DRIVER_NAME}.profdata
+    ${LLVM_DIR}/bin/llvm-profdata merge -sparse $PROJECT_COVERAGE/${DRIVER_NAME}-*.profraw -o $PROJECT_COVERAGE/${DRIVER_NAME}.profdata
     rm -f $PROJECT_COVERAGE/${DRIVER_NAME}-*.profraw
-    llvm-cov-12 show $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > show
-    llvm-cov-12 report $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
-    llvm-cov-12 report -show-functions $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
-    llvm-cov-12 export -format=text $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > export.json
+    ${LLVM_DIR}/bin/llvm-cov show $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > show
+    ${LLVM_DIR}/bin/llvm-cov report $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
+    ${LLVM_DIR}/bin/llvm-cov report -show-functions $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
+    ${LLVM_DIR}/bin/llvm-cov export -format=text $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > export.json
     mv show $DRIVER_COVERAGE
     mv report $DRIVER_COVERAGE
     mv functions $DRIVER_COVERAGE
@@ -145,7 +145,7 @@ done
 
 OBJECTS=""
 for d in $FUZZ_TARGETS; do
-    llvm-profdata-12 merge -sparse $PROJECT_COVERAGE/*.profdata -o $PROJECT_COVERAGE/merged.profdata
+    ${LLVM_DIR}/bin/llvm-profdata merge -sparse $PROJECT_COVERAGE/*.profdata -o $PROJECT_COVERAGE/merged.profdata
     DRIVER_NAME=$(basename $d)
     PROFILE_BINARY=${DRIVER_FOLDER}/../profiles/${DRIVER_NAME}_profile
     if [[ -z $OBJECTS ]]; then
@@ -155,9 +155,9 @@ for d in $FUZZ_TARGETS; do
         OBJECTS="$OBJECTS -object=$PROFILE_BINARY"
     fi
 done
-llvm-cov-12 show $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata > show
-llvm-cov-12 report $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
-llvm-cov-12 report -show-functions $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
+${LLVM_DIR}/bin/llvm-cov show $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata > show
+${LLVM_DIR}/bin/llvm-cov report $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > report
+${LLVM_DIR}/bin/llvm-cov report -show-functions $OBJECTS -instr-profile=$PROJECT_COVERAGE/merged.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > functions
 mv show $PROJECT_COVERAGE
 mv report $PROJECT_COVERAGE
 mv functions $PROJECT_COVERAGE

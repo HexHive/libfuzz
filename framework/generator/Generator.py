@@ -12,6 +12,8 @@ class Generator:
         self._factory       = config.factory
         self._backend       = config.backend
         self._pool          = config.pool
+
+        self._config = config
         
     def run(self):
         # print("Cleaning previous drivers...")

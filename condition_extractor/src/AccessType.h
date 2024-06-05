@@ -304,8 +304,8 @@ class AccessType {
 
             Json::Value debugInfo(Json::arrayValue);
 
-            for (auto inst: getICFGNodes())
-                debugInfo.append(inst->toString());
+            // for (auto inst: getICFGNodes())
+            //     debugInfo.append(inst->toString());
 
             return debugInfo;
         }
