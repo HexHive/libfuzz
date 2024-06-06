@@ -1,6 +1,7 @@
 #!/bin/bash
 
-export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" "c-ares" "zlib" "cjson" )
+# export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" "c-ares" "zlib" "cjson" )
+export PROJECTS=( "minijail" )
 # trick to make ${PROJECTS} visible outside
 export PROJECTS_STRING=$(IFS=:; echo "${PROJECTS[*]}")
 export NUM_OF_DRIVERS=( 40 )
@@ -67,8 +68,8 @@ case $CONF in
     ;;
 
   grammar)
-    export TIMEOUT=24h
-    export ITERATIONS=2
+    export TIMEOUT=2h
+    export ITERATIONS=1
     export POLICY="constraint_based_grammar"
     # NOTE: these Xs need for run_coverage.sh and run_custer.sh
     export NUM_OF_DRIVERS=( "X" )
