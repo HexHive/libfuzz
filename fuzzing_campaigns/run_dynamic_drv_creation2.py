@@ -45,6 +45,7 @@ def create_driver_generator_conf(project, iteration, config):
         f.write(f"headers = \"{an_res_dir}/exported_functions.txt\"\n")
         f.write(f"incomplete_types = \"{an_res_dir}/incomplete_types.txt\"\n")
         f.write(f"conditions = \"{an_res_dir}/conditions.json\"\n")
+        # f.write(f"minimum_apis = \"{pub_head_dir}/api_min_2.txt\"\n")
         f.write(f"minimum_apis = \"\"\n")
         f.write(f"data_layout = \"{an_res_dir}/data_layout.txt\"\n")
         f.write(f"enum_types = \"{an_res_dir}/enum_types.txt\"\n")
@@ -225,7 +226,7 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
     
     print(f"Starting {project}-{iteration} on CPU {cpu_id}")
     
-    time_plateau = "30" # seconds
+    time_plateau = "10" #  "30" # seconds
     
     # prepare generator.toml
     config_file = create_driver_generator_conf(project, iteration, conf)
