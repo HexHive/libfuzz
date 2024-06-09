@@ -6,4 +6,4 @@
 ##
 git clone --no-checkout https://github.com/the-tcpdump-group/libpcap.git \
     "$TARGET/repo"
-git -C "$TARGET/repo" checkout 7d92092c7f6b4bcd36c192aae68b8663bce831a0
+git -C "$TARGET/repo" checkout b13fd42b1ebd3386985728286a92d9720ee89113

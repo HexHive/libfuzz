@@ -41,7 +41,7 @@ fuzz() {
 }
 
 
-#build_library
+build_library
 
 for i in $( eval echo {1..$ITERATIONS} )
 do
