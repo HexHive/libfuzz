@@ -16,6 +16,10 @@ if [ -z $DRIVER ]; then
     DRIVER="*"
 fi
 
+if [ -z $FORK_MODE ]; then
+    FORK_MODE=0
+fi
+
 IMG_NAME="libpp-fuzzing-$TARGET"
 LIBPP=../
 
@@ -30,4 +34,5 @@ set +x
 echo "[INFO] Running: $IMG_NAME"
 
 docker run --env DRIVER=${DRIVER} --env TIMEOUT=${TIMEOUT} \
+    --env FORK_MODE=${FORK_MODE} \
     -v $(pwd)/..:/workspaces/libfuzz $IMG_NAME

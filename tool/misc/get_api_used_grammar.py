@@ -42,10 +42,13 @@ def _main():
             libs.add(l)
     
     stats = {}
+    stats_f = {}
     for l in libs:
         base_fold = f"{workdir_token}X_X"    
         ll = stats.get(l, set())
         stats[l] = ll
+        ll2 = stats_f.get(l, 0)
+        stats_f[l] = ll2
         meta_path = os.path.join(root_dir, f"{base_fold}", l)
         for m in find_meta_files(meta_path):
             if os.path.isfile(m):
@@ -54,10 +57,14 @@ def _main():
                 am = md["api_multiset"]
                 for au in am.keys():
                     stats[l].add(au)
+                for k, f in am.items():
+                    stats_f[l] += f
 
     if summary:
         for l, s in stats.items():
             print(f"{l}: {len(s)}")
+        for l, s in stats_f.items():
+            print(f"{l}: {s}")
     else:
         for l, s in stats.items():
             print(f"{l}: {s}")

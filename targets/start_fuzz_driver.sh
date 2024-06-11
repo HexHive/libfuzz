@@ -36,7 +36,7 @@ do
     # echo "COV_PLATEAU_TIMEOUT: ${COV_PLATEAU_TIMEOUT}"
     echo "FORK_MODE: ${FORK_MODE}"
 
-    if [[ -z ${FORK_MODE} ]]; then
+    if [[ ${FORK_MODE} -eq 0 || -z ${FORK_MODE} ]]; then
         (sleep $TIMEOUT && pkill ${DRIVER_NAME}) &
         $d ${DRIVER_CORNEW} -artifact_prefix=${CRASHES_DIR}/ -ignore_crashes=1 \
             -ignore_timeouts=1 -ignore_ooms=1 -detect_leaks=0 || echo "Done: $d"
