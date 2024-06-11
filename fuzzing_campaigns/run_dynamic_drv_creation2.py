@@ -226,7 +226,7 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
     
     print(f"Starting {project}-{iteration} on CPU {cpu_id}")
     
-    time_plateau = "10" #  "30" # seconds
+    time_plateau = "30" # seconds
     
     # prepare generator.toml
     config_file = create_driver_generator_conf(project, iteration, conf)
