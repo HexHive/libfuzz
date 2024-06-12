@@ -26,17 +26,13 @@ class CBGFactory(CBFactory):
     def __init__(self, api_list: Set[Api], driver_size: int, 
                     dgraph: DependencyGraph, conditions: FunctionConditionsSet):
         super().__init__(api_list, driver_size, dgraph, conditions)
-
-        # self.api_initial_weigth = {}
-        # self.api_frequency = {}
-        # for a in self.dependency_graph.keys():
-        #     self.api_initial_weigth[a] = len(self.get_reachable_apis(a))
-        #     self.api_frequency[a] = 0
             
         self.history_api_sequence = {}
         
+        ## TODO: make these two values as parameters from confguration.toml
         self.max_driver_size = 10
-
+        self.number_of_unknonw = 1
+        
     def get_random_source_api(self):
         
         w = list()
@@ -148,21 +144,21 @@ class CBGFactory(CBFactory):
     #         return
     #     self.api_frequency[api] += rel_freq
 
-    def get_reachable_apis(self, api):
+    # def get_reachable_apis(self, api):
 
-        visited_api = set()
-        working = [api]
+    #     visited_api = set()
+    #     working = [api]
 
-        while(len(working) != 0):
-            a = working.pop()
-            for n in  self.dependency_graph[a]:
-                if n in visited_api:
-                    continue
+    #     while(len(working) != 0):
+    #         a = working.pop()
+    #         for n in  self.dependency_graph[a]:
+    #             if n in visited_api:
+    #                 continue
 
-                visited_api.add(n)
-                working += [n]
+    #             visited_api.add(n)
+    #             working += [n]
 
-        return visited_api
+    #     return visited_api
 
     def create_random_driver(self) -> Driver:
 
@@ -204,7 +200,7 @@ class CBGFactory(CBFactory):
         # print(f"after {call_begin.function_name}")
         # from IPython import embed; embed(); exit(1)
 
-        # min_driver_size = 8
+        left_accepted_unknown = self.number_of_unknonw
 
         api_n = begin_api
         while len(drv) < self.max_driver_size:
@@ -275,27 +271,33 @@ class CBGFactory(CBFactory):
                 drv += [(api_call, rng_ctx_1)]
                 
                 if api_state == ApiSeqState.UNKNOWN:
-                    break
+                    if left_accepted_unknown == 0:
+                        break
+                    else:
+                        left_accepted_unknown = left_accepted_unknown - 1
+                    
             else:
-                break
-                # if len(drv) >= min_driver_size:
-                #     break
-                # else:
-                #     api_n = self.get_random_source_api()
-                #     begin_condition = get_cond(api_n)
-                #     call_begin = to_api(api_n)
+                # break
+                if left_accepted_unknown == 0:
+                    break
+                else:
+                    api_n = self.get_random_source_api()
+                    begin_condition = get_cond(api_n)
+                    call_begin = to_api(api_n)
 
-                #     print(f"[INFO] starting new chain with {api_n.function_name}")
+                    print(f"[INFO] starting new chain with {api_n.function_name}")
 
-                #     rng_ctx_1, unsat_var_1 = self.try_to_instantiate_api_call(call_begin, begin_condition, rng_ctx_1)
+                    rng_ctx_1, unsat_var_1 = self.try_to_instantiate_api_call(call_begin, begin_condition, rng_ctx_1)
 
-                #     if len(unsat_var_1) > 0:
-                #         print("[ERROR] Cannot instantiate the first function [second] :(")
-                #         print(unsat_var_1)
-                #         from IPython import embed; embed(); exit(1)
-                #         exit(1)
+                    if len(unsat_var_1) > 0:
+                        print("[ERROR] Cannot instantiate the first function [second] :(")
+                        print(unsat_var_1)
+                        from IPython import embed; embed(); exit(1)
+                        exit(1)
 
-                #     drv += [(call_begin, rng_ctx_1)]
+                    drv += [(call_begin, rng_ctx_1)]
+                    
+                    left_accepted_unknown = left_accepted_unknown - 1
             
         # print("after loop, debug exit..")
         # exit()
