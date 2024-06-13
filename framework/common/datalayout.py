@@ -244,6 +244,9 @@ class DataLayout:
         if a_type not in self.clang_to_llvm_struct:
             return False
         
+        if self.is_enum_type(a_type):
+            return False
+        
         a_llvm = self.clang_to_llvm_struct[a_type]
 
         if DataLayout.is_a_pointer(a_llvm):
