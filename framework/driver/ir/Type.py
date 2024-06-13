@@ -29,7 +29,8 @@ class Type:
 
     # for an element, the hash is just the key
     def __hash__(self):
-        return hash(self.token + str(self.__class__.__name__) + str(self.is_const))
+        return hash(self.token + str(self.__class__.__name__))
+        # return hash(self.token + str(self.__class__.__name__) + str(self.is_const))
 
     def __eq__(self, other):
         return hash(self) == hash(other)
