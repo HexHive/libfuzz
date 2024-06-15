@@ -100,7 +100,7 @@ def get_new_driver(sess, drivers_list, driver_list_history):
     if hasattr(driver, "statements_apicall"):
         drivers_list[driver_name] = (driver.statements_apicall, ApiSeqState.UNKNOWN, 0)
     else:
-        drivers_list[driver_name] = (driver, ApiSeqState.UNKNOWN, 0)
+        drivers_list[driver_name] = (driver, ApiSeqState.NEGATIVE, 0)
 
     return driver_name
 
