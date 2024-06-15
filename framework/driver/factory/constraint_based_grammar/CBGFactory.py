@@ -24,14 +24,13 @@ class ApiSeqState(IntEnum):
 class CBGFactory(CBFactory):
     
     def __init__(self, api_list: Set[Api], driver_size: int, 
-                    dgraph: DependencyGraph, conditions: FunctionConditionsSet):
+                    dgraph: DependencyGraph, conditions: FunctionConditionsSet, 
+                    number_of_unknown: int):
         super().__init__(api_list, driver_size, dgraph, conditions)
             
         self.history_api_sequence = {}
         
-        ## TODO: make these two values as parameters from confguration.toml
-        self.max_driver_size = 10
-        self.number_of_unknonw = 1
+        self.number_of_unknown = number_of_unknown
         
     def get_random_source_api(self):
         
@@ -200,10 +199,10 @@ class CBGFactory(CBFactory):
         # print(f"after {call_begin.function_name}")
         # from IPython import embed; embed(); exit(1)
 
-        left_accepted_unknown = self.number_of_unknonw
+        left_accepted_unknown = self.number_of_unknown
 
         api_n = begin_api
-        while len(drv) < self.max_driver_size:
+        while len(drv) < self.driver_size:
 
             # List[(ApiCall, RunningContext, Api, ApiSeqState)]
             candidate_api = []

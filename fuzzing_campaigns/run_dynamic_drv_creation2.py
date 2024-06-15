@@ -36,6 +36,9 @@ def create_driver_generator_conf(project, iteration, config):
     an_inc_dir = os.path.join(base_dir, "..", "analysis", project, "work", "include")
     pub_head_dir = os.path.join(base_dir, "..", "targets", project)
     
+    driver_size = config["NUM_OF_API_GRAMMAR"]
+    num_unknown_api = config["NUM_OF_UNKNOWN_API"]
+    
     with open(generator_conf_path, "w") as f:
         
         f.write("[analysis]\n")
@@ -57,7 +60,8 @@ def create_driver_generator_conf(project, iteration, config):
         f.write(f"policy = \"{policy}\"\n")
         f.write(f"dep_graph = \"type\"\n")
         f.write("pool_size = 1\n")
-        f.write("driver_size = 1\n")
+        f.write(f"driver_size = {driver_size}\n")
+        f.write(f"num_unknown_api = {num_unknown_api}\n")
         f.write("num_seeds = 1\n")
         f.write("backend = \"libfuzz\"\n")
         f.write("\n")

@@ -307,7 +307,7 @@ class Configuration:
         if policy == "constraint_based_grammar":
             dep_graph = self.dependency_graph
             return CBGFactory(self.api_list, self.driver_size, dep_graph, 
-                              self.function_conditions)
+                              self.function_conditions, self.number_of_unknown)
 
         if policy == "constraint_based_search":
             dep_graph = self.dependency_graph
@@ -316,6 +316,20 @@ class Configuration:
                               self.function_conditions, self.weights)
 
         raise NotImplementedError
+    
+    @cached_property
+    def number_of_unknown(self):
+        if not "generator" in self._config:
+            raise Exception("'generator' not defined")
+
+        generator = self._config["generator"]
+
+        if not "num_unknown_api" in generator:
+            raise Exception("'num_unknown_api' not defined")
+
+        num_unknown_api = generator["num_unknown_api"]
+        
+        return int(num_unknown_api)
 
     @cached_property
     def function_conditions(self):
