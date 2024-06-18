@@ -48,8 +48,13 @@ def create_driver_generator_conf(project, iteration, config):
         f.write(f"headers = \"{an_res_dir}/exported_functions.txt\"\n")
         f.write(f"incomplete_types = \"{an_res_dir}/incomplete_types.txt\"\n")
         f.write(f"conditions = \"{an_res_dir}/conditions.json\"\n")
-        # f.write(f"minimum_apis = \"{pub_head_dir}/api_min_2.txt\"\n")
-        f.write(f"minimum_apis = \"\"\n")
+        
+        if config["USE_CUSTOM_APIS"] == "1":
+            custom_api_path = os.path.join(base_dir, "..",  "targets", project, "custom_apis_minized.txt")
+            f.write(f"minimum_apis = \"{custom_api_path}\"\n")
+        else:
+            f.write(f"minimum_apis = \"\"\n")
+            
         f.write(f"data_layout = \"{an_res_dir}/data_layout.txt\"\n")
         f.write(f"enum_types = \"{an_res_dir}/enum_types.txt\"\n")
         f.write(f"weights = \"{an_res_dir}/weights.json\"\n")
