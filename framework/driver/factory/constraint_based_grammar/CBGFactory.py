@@ -14,12 +14,18 @@ from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
 
 from enum import IntEnum
 
+import numpy as np
+
 class ApiSeqState(IntEnum):
     POSITIVE = 1
     NEGATIVE = 2
     UNKNOWN = 3
     def __str__(self):
         return str(self.name)
+
+# Sigmoid function
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
 
 class CBGFactory(CBFactory):
     
@@ -88,6 +94,8 @@ class CBGFactory(CBFactory):
         n_pos_weights = len(positive_weights)
         
         if n_pos_weights > 0:
+            
+            positive_weights = [(a, sigmoid(w)) for a, w in positive_weights]
             
             sum_pos_weights = sum([w for _, w in positive_weights])
             
