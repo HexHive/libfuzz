@@ -95,7 +95,8 @@ class CBGFactory(CBFactory):
         
         if n_pos_weights > 0:
             
-            positive_weights = [(a, sigmoid(w)) for a, w in positive_weights]
+            # this was a test for biasing API func call, it was a failure
+            # positive_weights = [(a, sigmoid(w)) for a, w in positive_weights]
             
             sum_pos_weights = sum([w for _, w in positive_weights])
             

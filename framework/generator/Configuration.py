@@ -20,6 +20,7 @@ from driver.factory.constraint_based import *
 from driver.factory.constraint_based_weight import *
 from driver.factory.constraint_based_search import *
 from driver.factory.constraint_based_grammar import *
+from driver.factory.constraint_based_backward import *
 
 from generator import Pool
 
@@ -314,6 +315,11 @@ class Configuration:
             # pool_size = self.pool.pool_size
             return CBSFactory(self.api_list, self.driver_size, dep_graph, 
                               self.function_conditions, self.weights)
+
+        if policy == "constraint_based_backward":
+            dep_graph = self.dependency_graph
+            return CBBFactory(self.api_list, self.driver_size, dep_graph, 
+                              self.function_conditions)
 
         raise NotImplementedError
     
