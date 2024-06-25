@@ -12,6 +12,8 @@ from driver.factory import Factory
 from driver.ir import ApiCall, PointerType, Variable, AllocType, Constant
 from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
 
+import json
+
 from enum import IntEnum
 
 import numpy as np
@@ -38,6 +40,42 @@ class CBGFactory(CBFactory):
         
         self.number_of_unknown = number_of_unknown
         
+        self.n_driver = 0
+        
+    def dump_log(self, driver, candidate_api, weights):
+        with open("weight_logs.txt", "a") as fp:
+            
+            r = {}
+            r["driver_name"] = f"driver{self.n_driver}"
+            
+            r["driver"] = ";".join([d[0].function_name for d in driver])
+            
+            candidates = []
+            for i, c in enumerate(candidate_api):
+                rc = {}
+                
+                rc["function_name"] = c[0].function_name # function name
+                rc["state"] = f"{c[3]}" # state
+                
+                # num. seed
+                if c[3] == ApiSeqState.POSITIVE:
+                    rc["seeds"] = self.calc_seeds(driver, c[0]) 
+                else:
+                    rc["seeds"] = 0
+                
+                rc["weight"] = weights[i] # weight
+                
+                candidates += [rc]
+                
+            r["candidates"] = candidates
+            
+            # if len(driver) == 1:
+            #     print("dump_log")
+            #     from IPython import embed; embed(); exit(1)
+                
+            fp.write(json.dumps(r) + "\n")
+
+        
     def get_random_source_api(self):
         
         w = list()
@@ -47,12 +85,12 @@ class CBGFactory(CBFactory):
             if sa.function_name in self.history_api_sequence:
                 api_state, _ = self.history_api_sequence[sa.function_name]
             else:
-                api_state = None
+                api_state = ApiSeqState.UNKNOWN
                 
             if api_state == ApiSeqState.NEGATIVE:
                 continue
             
-            tmp_source_api += [(sa, None, None, None)]
+            tmp_source_api += [(sa, None, None, api_state)]
             
         return self.get_random_candidate([], tmp_source_api)[0]
             
@@ -82,7 +120,7 @@ class CBGFactory(CBFactory):
         positive_weights = []
         unknown_weights = []
         for call_next, x, y, api_state in candidate_api:
-            if api_state == ApiSeqState.UNKNOWN:
+            if api_state == ApiSeqState.UNKNOWN or api_state is None: 
                 unknown_weights += [(call_next, x, y, api_state)]
             elif api_state == ApiSeqState.POSITIVE:
                 n_seeds = self.calc_seeds(driver, call_next)
@@ -100,21 +138,29 @@ class CBGFactory(CBFactory):
             
             sum_pos_weights = sum([w for _, w in positive_weights])
             
-            prob_unkn = float(n_unk_weights)/(n_unk_weights+n_pos_weights)
-            
-            sum_unk_weights = prob_unkn/(1.0-prob_unkn)*sum_pos_weights
-            
             candidate_api_new = positive_weights
             for u in unknown_weights:
-                candidate_api_new += [(u, sum_unk_weights/n_unk_weights)]
+                candidate_api_new += [(u, sum_pos_weights/n_unk_weights)]
+            
+            # OLD CALCULUS --- WRONG --- BEGIN
+            # prob_unkn = float(n_unk_weights)/(n_unk_weights+n_pos_weights)
+            
+            # sum_unk_weights = prob_unkn/(1.0-prob_unkn)*sum_pos_weights
+            
+            # candidate_api_new = positive_weights
+            # for u in unknown_weights:
+            #     candidate_api_new += [(u, sum_unk_weights/n_unk_weights)]
+            # OLD CALCULUST --- WRONG -- END
             
             w = [ww for _, ww in candidate_api_new]
             candidate_api = [c for c, _ in candidate_api_new]
             r_api = random.choices(candidate_api, weights=w)[0] 
+            self.dump_log(driver, candidate_api, w)
             return r_api
         else:
             w = [1 for _ in candidate_api]
             r_api = random.choices(candidate_api, weights=w)[0] 
+            self.dump_log(driver, candidate_api, w)
             return r_api
             
     
@@ -204,111 +250,113 @@ class CBGFactory(CBFactory):
 
         print(f"[INFO] starting with {call_begin.function_name}")
         drv += [(call_begin, rng_ctx_1)]
-
+        
         # print(f"after {call_begin.function_name}")
         # from IPython import embed; embed(); exit(1)
+        
+        if self.calc_api_state(drv) != ApiSeqState.UNKNOWN:
 
-        left_accepted_unknown = self.number_of_unknown
+            left_accepted_unknown = self.number_of_unknown
 
-        api_n = begin_api
-        while len(drv) < self.driver_size:
+            api_n = begin_api
+            while len(drv) < self.driver_size:
 
-            # List[(ApiCall, RunningContext, Api, ApiSeqState)]
-            candidate_api = []
-
-            if api_n in self.dependency_graph:
-                for next_possible in self.dependency_graph[api_n]:
-
-                    if next_possible in self.source_api:
-                        continue
-                
-                    # if next_possible in self.init_api:
-                    #     continue
-                    
-                    # print("[INFO] Again...")
-                    
-                    api_state = self.calc_api_state(drv, next_possible)
-                    # print(f"[INFO] Get API State: {api_state}")
-                    if api_state == ApiSeqState.NEGATIVE:
-                        # print("[INFO] skip")
-                        continue
-                    
-                    # if next_possible.function_name == "TIFFGetField":
-                    #     print("[INFO] double check api_state")
-                    #     from IPython import embed; embed()
-                    #     print("[INFO] doesn't matter...")
-                    
-                    # print("[INFO] continue...")
-
-                    print(f"[INFO] Trying: {next_possible}")
-
-                    next_condition = get_cond(next_possible)
-                    call_next = to_api(next_possible)
-
-                    rng_ctx_2, unsat_var_2 = self.try_to_instantiate_api_call(call_next, next_condition, rng_ctx_1)      # type: ignore
-
-                    l_unsat_var = len(unsat_var_2)
-                    if l_unsat_var == 0:
-                        print("[INFO] This works!")
-                        candidate_api += [(call_next, rng_ctx_2, next_possible, api_state)]
-                    else:
-                        print(f"[INFO] Unsat vars: {l_unsat_var}")
-                        for p, c in unsat_var_2:
-                            arg_type = call_next.arg_types[p]
-                            print(f" => arg{p}: {arg_type} -> {c}")
-
-            print(f"[INFO] Complete doable functions: {len(candidate_api)}")
-
-            # if api_n.function_name == "TIFFWarning":
-            #     print("next to close?")
-            #     from IPython import embed; embed(); exit(1)
-
-            # this check avoids the driver to degenerate in a list with a single
-            # API repetitively invoked
-            if len(candidate_api) == 1 and candidate_api[0][2] == api_n:
+                # List[(ApiCall, RunningContext, Api, ApiSeqState)]
                 candidate_api = []
-                
-            if candidate_api:
-                # (ApiCall, RunningContext, Api)
-                (api_call, rng_ctx_1, api_n, api_state) = self.get_random_candidate(drv, candidate_api)
-                print(f"[INFO] choose {api_call.function_name}")
 
-                # if api_call.function_name == "TIFFReadRGBAImage":
+                if api_n in self.dependency_graph:
+                    for next_possible in self.dependency_graph[api_n]:
+
+                        if next_possible in self.source_api:
+                            continue
+                    
+                        # if next_possible in self.init_api:
+                        #     continue
+                        
+                        # print("[INFO] Again...")
+                        
+                        api_state = self.calc_api_state(drv, next_possible)
+                        # print(f"[INFO] Get API State: {api_state}")
+                        if api_state == ApiSeqState.NEGATIVE:
+                            # print("[INFO] skip")
+                            continue
+                        
+                        # if next_possible.function_name == "TIFFGetField":
+                        #     print("[INFO] double check api_state")
+                        #     from IPython import embed; embed()
+                        #     print("[INFO] doesn't matter...")
+                        
+                        # print("[INFO] continue...")
+
+                        print(f"[INFO] Trying: {next_possible}")
+
+                        next_condition = get_cond(next_possible)
+                        call_next = to_api(next_possible)
+
+                        rng_ctx_2, unsat_var_2 = self.try_to_instantiate_api_call(call_next, next_condition, rng_ctx_1)      # type: ignore
+
+                        l_unsat_var = len(unsat_var_2)
+                        if l_unsat_var == 0:
+                            print("[INFO] This works!")
+                            candidate_api += [(call_next, rng_ctx_2, next_possible, api_state)]
+                        else:
+                            print(f"[INFO] Unsat vars: {l_unsat_var}")
+                            for p, c in unsat_var_2:
+                                arg_type = call_next.arg_types[p]
+                                print(f" => arg{p}: {arg_type} -> {c}")
+
+                print(f"[INFO] Complete doable functions: {len(candidate_api)}")
+
+                # if api_n.function_name == "TIFFWarning":
+                #     print("next to close?")
                 #     from IPython import embed; embed(); exit(1)
 
-                drv += [(api_call, rng_ctx_1)]
-                
-                if api_state == ApiSeqState.UNKNOWN:
+                # this check avoids the driver to degenerate in a list with a single
+                # API repetitively invoked
+                if len(candidate_api) == 1 and candidate_api[0][2] == api_n:
+                    candidate_api = []
+                    
+                if candidate_api:
+                    # (ApiCall, RunningContext, Api)
+                    (api_call, rng_ctx_1, api_n, api_state) = self.get_random_candidate(drv, candidate_api)
+                    print(f"[INFO] choose {api_call.function_name}")
+
+                    # if api_call.function_name == "TIFFReadRGBAImage":
+                    #     from IPython import embed; embed(); exit(1)
+
+                    drv += [(api_call, rng_ctx_1)]
+                    
+                    if api_state == ApiSeqState.UNKNOWN:
+                        if left_accepted_unknown == 0:
+                            break
+                        else:
+                            left_accepted_unknown = left_accepted_unknown - 1
+                        
+                else:
+                    # break
                     if left_accepted_unknown == 0:
                         break
                     else:
+                        api_n = self.get_random_source_api()
+                        begin_condition = get_cond(api_n)
+                        call_begin = to_api(api_n)
+
+                        print(f"[INFO] starting new chain with {api_n.function_name}")
+
+                        rng_ctx_1, unsat_var_1 = self.try_to_instantiate_api_call(call_begin, begin_condition, rng_ctx_1)
+
+                        if len(unsat_var_1) > 0:
+                            print("[ERROR] Cannot instantiate the first function [second] :(")
+                            print(unsat_var_1)
+                            from IPython import embed; embed(); exit(1)
+                            exit(1)
+
+                        drv += [(call_begin, rng_ctx_1)]
+                        
                         left_accepted_unknown = left_accepted_unknown - 1
-                    
-            else:
-                # break
-                if left_accepted_unknown == 0:
-                    break
-                else:
-                    api_n = self.get_random_source_api()
-                    begin_condition = get_cond(api_n)
-                    call_begin = to_api(api_n)
-
-                    print(f"[INFO] starting new chain with {api_n.function_name}")
-
-                    rng_ctx_1, unsat_var_1 = self.try_to_instantiate_api_call(call_begin, begin_condition, rng_ctx_1)
-
-                    if len(unsat_var_1) > 0:
-                        print("[ERROR] Cannot instantiate the first function [second] :(")
-                        print(unsat_var_1)
-                        from IPython import embed; embed(); exit(1)
-                        exit(1)
-
-                    drv += [(call_begin, rng_ctx_1)]
-                    
-                    left_accepted_unknown = left_accepted_unknown - 1
-            
-        # print("after loop, debug exit..")
-        # exit()
+                
+            # print("after loop, debug exit..")
+            # exit()
 
         # I want the last RunningContext
         context = [rng_ctx for _, rng_ctx in drv][-1]
@@ -355,6 +403,7 @@ class CBGFactory(CBFactory):
         
         d.statements_apicall = drv
 
+        self.n_driver = self.n_driver + 1
         return d
     
     def calc_api_seq_str(self, driver, api = None) -> str:
@@ -387,5 +436,8 @@ class CBGFactory(CBFactory):
         api_seq_str = self.calc_api_seq_str(driver)
         
         self.history_api_sequence[api_seq_str] = (api_seq_state, n_seeds)
+        
+        # print("update_api_state")
+        # from IPython import embed; embed(); exit(1)
         
         return api_seq_state
