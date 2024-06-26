@@ -57,6 +57,8 @@ class CBGFactory(CBFactory):
                     rc["seeds"] = self.calc_seeds([], c[0]) 
                 else:
                     rc["seeds"] = 0
+                    
+                rc["ats"] = self.calc_ast(c[0])
                 
                 # rc["weight"] = weights[i] # weight
                 
@@ -126,6 +128,21 @@ class CBGFactory(CBFactory):
         # # self.inc_api_frequency(s_api)
         
         # return s_api
+        
+    def calc_ast(self, api_call):
+        
+        get_cond = lambda x: self.conditions.get_function_conditions(x.function_name)
+        
+        fc = get_cond(api_call)
+        
+        ats = list()
+        
+        ats += [len(fc.return_at.ats.access_type_set)]
+        
+        for arg in fc.argument_at:
+            ats += [len(arg.ats.access_type_set)]
+            
+        return sum(ats)
     
     def calc_seeds(self, driver, api_call):
         
@@ -185,51 +202,61 @@ class CBGFactory(CBFactory):
         #     # Api object is in position 2
         #     w += [self.get_weigth(ca[2])]
         
-        positive_weights = []
-        unknown_weights = []
+        
+        # positive_weights = []
+        # unknown_weights = []
+        candidate_api_new = []
         for call_next, x, y, api_state in candidate_api:
-            if api_state == ApiSeqState.UNKNOWN or api_state is None: 
-                unknown_weights += [(call_next, x, y, api_state)]
+            if api_state == ApiSeqState.UNKNOWN or api_state is None:
+                n_ast = self.calc_ast(call_next)
+                candidate_api_new += [((call_next, x, y, api_state), n_ast)]
             elif api_state == ApiSeqState.POSITIVE:
-                n_seeds = self.calc_seeds(driver, call_next)
-                positive_weights += [((call_next, x, y, api_state), n_seeds)]
+                # n_seeds = self.calc_seeds(driver, call_next)
+                n_ast = self.calc_ast(call_next)
+                candidate_api_new += [((call_next, x, y, api_state), n_ast)]
             elif api_state == ApiSeqState.NEGATIVE:
                 continue
             
-        n_unk_weights = len(unknown_weights)
-        n_pos_weights = len(positive_weights)
+        w = [ww for _, ww in candidate_api_new]
+        candidate_api = [c for c, _ in candidate_api_new]
+        r_api = random.choices(candidate_api, weights=w)[0] 
+        self.dump_log(driver, candidate_api, w)
+        return r_api
+            
+        # n_unk_weights = len(unknown_weights)
+        # n_pos_weights = len(positive_weights)
         
-        if n_pos_weights > 0:
+        # if n_pos_weights > 0:
             
-            # this was a test for biasing API func call, it was a failure
-            # positive_weights = [(a, sigmoid(w)) for a, w in positive_weights]
+        #     # this was a test for biasing API func call, it was a failure
+        #     # positive_weights = [(a, sigmoid(w)) for a, w in positive_weights]
             
-            sum_pos_weights = sum([w for _, w in positive_weights])
+        #     sum_pos_weights = sum([w for _, w in positive_weights])
             
-            candidate_api_new = positive_weights
-            for u in unknown_weights:
-                candidate_api_new += [(u, sum_pos_weights/n_unk_weights)]
+        #     candidate_api_new = positive_weights
+        #     for u in unknown_weights:
+        #         candidate_api_new += [(u, sum_pos_weights/n_unk_weights)]
             
-            # OLD CALCULUS --- WRONG --- BEGIN
-            # prob_unkn = float(n_unk_weights)/(n_unk_weights+n_pos_weights)
+        #     # OLD CALCULUS --- WRONG --- BEGIN
+        #     # prob_unkn = float(n_unk_weights)/(n_unk_weights+n_pos_weights)
             
-            # sum_unk_weights = prob_unkn/(1.0-prob_unkn)*sum_pos_weights
+        #     # sum_unk_weights = prob_unkn/(1.0-prob_unkn)*sum_pos_weights
             
-            # candidate_api_new = positive_weights
-            # for u in unknown_weights:
-            #     candidate_api_new += [(u, sum_unk_weights/n_unk_weights)]
-            # OLD CALCULUST --- WRONG -- END
+        #     # candidate_api_new = positive_weights
+        #     # for u in unknown_weights:
+        #     #     candidate_api_new += [(u, sum_unk_weights/n_unk_weights)]
+        #     # OLD CALCULUST --- WRONG -- END
             
-            w = [ww for _, ww in candidate_api_new]
-            candidate_api = [c for c, _ in candidate_api_new]
-            r_api = random.choices(candidate_api, weights=w)[0] 
-            self.dump_log(driver, candidate_api, w)
-            return r_api
-        else:
-            w = [1 for _ in candidate_api]
-            r_api = random.choices(candidate_api, weights=w)[0] 
-            self.dump_log(driver, candidate_api, w)
-            return r_api
+        #     w = [ww for _, ww in candidate_api_new]
+        #     candidate_api = [c for c, _ in candidate_api_new]
+        #     r_api = random.choices(candidate_api, weights=w)[0] 
+        #     self.dump_log(driver, candidate_api, w)
+        #     return r_api
+        # else:
+        #     w = [1 for _ in candidate_api]
+        #     r_api = random.choices(candidate_api, weights=w)[0] 
+        #     self.dump_log(driver, candidate_api, w)
+        #     return r_api
             
     
     # def inc_api_frequency(self, api):
