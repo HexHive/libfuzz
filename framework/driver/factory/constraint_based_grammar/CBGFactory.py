@@ -42,6 +42,32 @@ class CBGFactory(CBFactory):
         
         self.n_driver = 0
         
+    def dump_log_2(self, source_api):
+        with open("source_weight_logs.json", "w") as fp:
+            
+            candidates = list()
+            for i, c in enumerate(source_api):
+                rc = {}
+                
+                rc["function_name"] = c[0].function_name # function name
+                rc["state"] = f"{c[3]}" # state
+                
+                # num. seed
+                if c[3] == ApiSeqState.POSITIVE:
+                    rc["seeds"] = self.calc_seeds([], c[0]) 
+                else:
+                    rc["seeds"] = 0
+                
+                # rc["weight"] = weights[i] # weight
+                
+                candidates += [rc]
+                
+            json.dump(candidates, fp, indent=4, sort_keys=True)
+            
+            # if len(driver) == 1:
+            #     print("dump_log")
+            #     from IPython import embed; embed(); exit(1)
+        
     def dump_log(self, driver, candidate_api, weights):
         with open("weight_logs.txt", "a") as fp:
             
@@ -92,6 +118,8 @@ class CBGFactory(CBFactory):
             
             tmp_source_api += [(sa, None, None, api_state)]
             
+        self.dump_log_2(tmp_source_api)
+            
         return self.get_random_candidate([], tmp_source_api)[0]
             
         # s_api = random.choices(tmp_source_api, weights=w)[0]
@@ -103,13 +131,53 @@ class CBGFactory(CBFactory):
         
         api_seq_str = self.calc_api_seq_str(driver, api_call)
         
+        ok_seq = {}
+        
+        for seq, val in self.history_api_sequence.items():
+            if seq.startswith(api_seq_str): # and val[0] == ApiSeqState.POSITIVE:
+                ok_seq[seq] = val[1]
+            
+            
+        ok_seq_save = ok_seq
+            
+        while True:
+            ok_seq_new = {}
+            
+            for s1, v1 in ok_seq.items():
+                has_longer = False
+                for s2, _ in ok_seq.items():
+                    if s1 == s2: 
+                        continue
+                    
+                    if s2.startswith(s1):
+                        has_longer = True
+                        break
+                if not has_longer:
+                    ok_seq_new[s1] = v1
+                    
+            # Fix point: I reach the minimum set
+            if ok_seq.keys() == ok_seq_new.keys():
+                break
+            
+            ok_seq = ok_seq_new
+            
+        
+        # if len(ok_seq_save) >= 3:
+        #     print("calc_seeds..")
+        #     from IPython import embed; embed(); exit(1)
+            
+        n_seq = len(ok_seq)
+        sum_seeds = sum([v for _, v in ok_seq.items()])
+            
+        return np.arctan(sum_seeds/n_seq)
+        
         # sum_positive = 0
         # nun_negative = 0
         # tot_leafes = 0
         # for seq, (state, n_seeds) in self.history_api_sequence.items():
         #     if seq.startswith(api_seq_str):
                 
-        return self.history_api_sequence[api_seq_str][1]
+        # return self.history_api_sequence[api_seq_str][1]
 
     def get_random_candidate(self, driver, candidate_api):
         # w = []
