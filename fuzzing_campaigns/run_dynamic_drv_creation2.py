@@ -160,7 +160,8 @@ def kick_fuzzing_camp(project, iteration, driver_name, cpu_id, time_plateau):
         if is_debug:
             print(f"Error: Failed to start '{cmd}': {e}")
     
-def push_feedfback(sess, result_folder, driver_name, time, cause, time_plateau, drivers_list, n_seeds):
+def push_feedfback(sess, result_folder, driver_name, time, cause, 
+                   time_plateau, drivers_list, n_seeds, has_empty_seed):
     
     global base_dir
     
@@ -187,7 +188,11 @@ def push_feedfback(sess, result_folder, driver_name, time, cause, time_plateau, 
     if ((cause == "O" or cause == "P") and 
         time > time_plateau):
         api_cause = ApiSeqState.POSITIVE
-    
+        
+    # this is a special case when the only seed is empty
+    if n_seeds == 1 and has_empty_seed:
+        api_cause = ApiSeqState.POSITIVE
+
     update_api_state = getattr(sess._factory, "update_api_state", None)
     if update_api_state is not None and callable(update_api_state):
         driver, _, _ = drivers_list[driver_name]
@@ -205,6 +210,14 @@ def convert_to_seconds(timeout):
         raise Exception(f"I do not know this format {timeout}")
         
     return t
+
+def seed_is_empty(project, driver_name, iteration):
+    
+    global base_dir
+    seed_path = os.path.join(base_dir, "workdir_X_X", project, 
+                                 f"iter_{iteration}", "corpus_new", driver_name, "seed1.bin")
+    
+    return os.path.getsize(seed_path) == 0
 
 def get_produced_seed(project, driver_name, iteration):     
     global base_dir
@@ -281,9 +294,10 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
                 driver_exec_time = f.readline()[:-1]
                 
             n_seeds = get_produced_seed(project, driver_name, iteration)
+            has_empty_seed = seed_is_empty(project, driver_name, iteration)
                 
             push_feedfback(sess, host_result_folder, driver_name, driver_exec_time, 
-                        cause_driver_stop, time_plateau, drivers_list, n_seeds)
+                        cause_driver_stop, time_plateau, drivers_list, n_seeds, has_empty_seed)
             
             # to save some space, I delete the drivers that do not contribute to new coverage
             if len(os.listdir(os.path.join(host_result_folder, "corpus_new", driver_name))) == 1:
