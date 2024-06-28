@@ -120,7 +120,7 @@ class CBGFactory(CBFactory):
             
             tmp_source_api += [(sa, None, None, api_state)]
             
-        self.dump_log_2(tmp_source_api)
+        # self.dump_log_2(tmp_source_api)
             
         return self.get_random_candidate([], tmp_source_api)[0]
             
@@ -220,7 +220,7 @@ class CBGFactory(CBFactory):
         w = [ww for _, ww in candidate_api_new]
         candidate_api = [c for c, _ in candidate_api_new]
         r_api = random.choices(candidate_api, weights=w)[0] 
-        self.dump_log(driver, candidate_api, w)
+        # self.dump_log(driver, candidate_api, w)
         return r_api
             
         # n_unk_weights = len(unknown_weights)
