@@ -106,3 +106,4 @@ llvm-project-old
 llvm-project/
 fuzzing_campaigns/weight_logs.txt
 fuzzing_campaigns/source_weight_logs.json
+paths_observed.txt
