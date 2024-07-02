@@ -16,7 +16,7 @@ weights = "/workspaces/libfuzz/analysis/libtiff/work/apipass/weights.json"
 
 [generator]
 workdir = "/workspaces/libfuzz/workdir/libtiff"
-policy = "constraint_based_grammar"
+policy = "constraint_based"
 dep_graph = "type"
 # dep_graph = "undef"
 pool_size = 1

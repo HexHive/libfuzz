@@ -108,10 +108,23 @@ class RunningContext(Context):
             cond: AccessTypeSet) -> Optional[Value]:
 
         # print("Debug get_value_that_strictly_satisfy")
-        # from IPython import embed; embed(); exit()
+        
+        dl = DataLayout.instance()
+
+        # if type.token == 'hostent*':
+        #     print("get_value_that_strictly_satisfy")
+        #     from IPython import embed; embed(); exit()    
 
         vars = set()
-
+        
+        if isinstance(type, PointerType) and dl.is_a_struct(type.get_pointee_type().token):
+            for v in self.variables_alive:
+                if (isinstance(v.get_type(), PointerType) and 
+                    DataLayout.is_ptr_level(v.get_type(), 2) and 
+                    v.get_type().get_pointee_type() == type and 
+                    self.var_to_cond[v].is_compatible_with(cond)):
+                    vars.add(v)
+            
         for v in self.variables_alive:
             if (v.get_type() == type and 
                 self.var_to_cond[v].is_compatible_with(cond)):
@@ -175,8 +188,7 @@ class RunningContext(Context):
         #     type.get_base_type().token == "char" and api_call.function_name == "foo"):
         #     RunningContext.attempt -= 1
 
-        # if (isinstance(type, PointerType) and 
-        #     type.get_base_type().token == "char" and api_call.function_name == "foo") and RunningContext.attempt == 0:
+        # if (arg_pos == 0 and api_call.function_name == "ares_free_hostent"):
         #     print(f"try_to_get_var {type}")
         #     from IPython import embed; embed(); exit(1)
 
@@ -249,8 +261,7 @@ class RunningContext(Context):
                 # if (not ((v.get_type() == tt or v.get_type() == type) and 
                 #     self.var_to_cond[v].is_compatible_with(cond))):
                 #     continue
-                if (v.get_type() != type or 
-                    not self.var_to_cond[v].is_compatible_with(cond)):
+                if not self.var_is_equal_to_type_cond(v, type, cond):
                     continue
 
                 c = self.var_to_cond[v]
@@ -718,10 +729,28 @@ class RunningContext(Context):
                                   cond: ValueMetadata) -> bool:
         # if ((v.get_type() == tt or v.get_type() == type)
         #     and self.var_to_cond[v].is_compatible_with(cond)):
+        
+        # if type.token == "char*":
+        #     print("var_is_equal_to_type_cond")
+        #     from IPython import embed; embed(); exit(1)
+        
+        if self.var_to_cond[var].len_depends_on is not None:
+            return False
+            
+        if (isinstance(var.get_type(), PointerType) and 
+            any(var.get_type().get_all_consts())):
+            return False
+        
+        if (isinstance(var.get_type(), PointerType) and 
+            DataLayout.get_ptr_level(var.get_type()) == 2 and
+            var.get_type().get_pointee_type() == type and
+            self.var_to_cond[var].is_compatible_with(cond)):
+            return True    
+        
         if (var.get_type() == type and
-            self.var_to_cond[var].is_compatible_with(cond) and 
-            self.var_to_cond[var].len_depends_on is None):
+            self.var_to_cond[var].is_compatible_with(cond)):
             return True
+        
         return False
     
     def get_random_var(self, type: Type, cond: ValueMetadata) -> Variable:

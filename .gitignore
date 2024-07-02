@@ -13,6 +13,8 @@ LLVM/llvm-build
 *.ll
 *.dot
 
+meta/*
+
 condition_extractor/src_bkp/*
 condition_extractor/src_bkp/**/*
 
