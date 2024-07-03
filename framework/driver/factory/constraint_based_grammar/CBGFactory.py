@@ -123,11 +123,33 @@ class CBGFactory(CBFactory):
         # self.dump_log_2(tmp_source_api)
             
         return self.get_random_candidate([], tmp_source_api)[0]
-            
-        # s_api = random.choices(tmp_source_api, weights=w)[0]
-        # # self.inc_api_frequency(s_api)
         
-        # return s_api
+    def get_ast(self, api_call: ApiCall):
+        
+        get_cond = lambda x: self.conditions.get_function_conditions(x.function_name)
+        
+        fc = get_cond(api_call)
+        
+        ats = {}
+        
+        rt = api_call.ret_type
+        if isinstance(rt, PointerType):
+            rt = rt.get_base_type()
+        ats[rt] = set([".".join([f"{f}" for f in at.fields]) for at in fc.return_at.ats.access_type_set])
+        
+        # ats += [len(fc.return_at.ats.access_type_set)]
+        
+        for a, arg_c in enumerate(fc.argument_at):
+            # ats += [len(arg.ats.access_type_set)]
+            at = api_call.arg_types[a]
+            if isinstance(at, PointerType):
+                at = at.get_base_type()
+                
+            t_fields = ats.get(at, set())
+            t_fields |= set([".".join([f"{f}" for f in at.fields]) for at in arg_c.ats.access_type_set])
+            ats[at] = t_fields 
+            
+        return ats
         
     def calc_ast(self, api_call):
         
@@ -197,75 +219,88 @@ class CBGFactory(CBFactory):
         # return self.history_api_sequence[api_seq_str][1]
 
     def get_random_candidate(self, driver, candidate_api):
-        # w = []
-        # for ca in candidate_api:
-        #     # Api object is in position 2
-        #     w += [self.get_weigth(ca[2])]
         
+        if driver is None or len(driver) == 0:
+            
+            candidate_api_new = []
+            for call_next, x, y, api_state in candidate_api:
+                if api_state == ApiSeqState.UNKNOWN or api_state is None:
+                    n_ast = self.calc_ast(call_next)
+                    candidate_api_new += [((call_next, x, y, api_state), n_ast)]
+                elif api_state == ApiSeqState.POSITIVE:
+                    n_ast = self.calc_ast(call_next)
+                    candidate_api_new += [((call_next, x, y, api_state), n_ast)]
+                elif api_state == ApiSeqState.NEGATIVE:
+                    continue
+                
+            w = [ww for _, ww in candidate_api_new]
+            candidate_api = [c for c, _ in candidate_api_new]
+            r_api = random.choices(candidate_api, weights=w)[0] 
+            return r_api
         
-        # positive_weights = []
-        # unknown_weights = []
-        candidate_api_new = []
-        for call_next, x, y, api_state in candidate_api:
-            if api_state == ApiSeqState.UNKNOWN or api_state is None:
-                n_ast = self.calc_ast(call_next)
-                candidate_api_new += [((call_next, x, y, api_state), n_ast)]
-            elif api_state == ApiSeqState.POSITIVE:
-                # n_seeds = self.calc_seeds(driver, call_next)
-                n_ast = self.calc_ast(call_next)
-                candidate_api_new += [((call_next, x, y, api_state), n_ast)]
-            elif api_state == ApiSeqState.NEGATIVE:
-                continue
+        else:
             
-        w = [ww for _, ww in candidate_api_new]
-        candidate_api = [c for c, _ in candidate_api_new]
-        r_api = random.choices(candidate_api, weights=w)[0] 
-        # self.dump_log(driver, candidate_api, w)
-        return r_api
+            last_apicall = driver[-1][0]
             
-        # n_unk_weights = len(unknown_weights)
-        # n_pos_weights = len(positive_weights)
+            last_apicall_ats = self.get_ast(last_apicall)
+            
+            # from IPython import embed; embed(); exit
+            
+            candidate_api_new = []
+            for call_next, x, y, api_state in candidate_api:
+                if api_state == ApiSeqState.UNKNOWN or api_state is None:
+                    # n_ast = self.calc_ast(call_next)
+                    n_ast = self.get_ast(call_next)
+                    
+                    common_fields = 0
+                    for ct in n_ast.keys() & last_apicall_ats.keys():
+                        common_fields += len(n_ast[ct] & last_apicall_ats[ct])                    
+                    
+                    candidate_api_new += [((call_next, x, y, api_state), common_fields)]
+                elif api_state == ApiSeqState.POSITIVE:
+                    
+                    # n_ast = self.calc_ast(call_next)
+                    n_ast = self.get_ast(call_next)
+                    
+                    common_fields = 0
+                    for ct in n_ast.keys() & last_apicall_ats.keys():
+                        common_fields += len(n_ast[ct] & last_apicall_ats[ct])
+                    
+                    candidate_api_new += [((call_next, x, y, api_state), common_fields)]
+                    
+                elif api_state == ApiSeqState.NEGATIVE:
+                    continue
+                
+            w = [ww for _, ww in candidate_api_new]
+            if sum(w) == 0:
+                w = [1 for _, _ in candidate_api_new]
+            candidate_api = [c for c, _ in candidate_api_new]
+            r_api = random.choices(candidate_api, weights=w)[0] 
+            return r_api
+            
         
-        # if n_pos_weights > 0:
+        return []
+        
+        # NOTE: do not delete this part below, it is an important piece of my mind
+        # candidate_api_new = []
+        # for call_next, x, y, api_state in candidate_api:
+        #     if api_state == ApiSeqState.UNKNOWN or api_state is None:
+        #         n_ast = self.calc_ast(call_next)
+        #         candidate_api_new += [((call_next, x, y, api_state), n_ast)]
+        #     elif api_state == ApiSeqState.POSITIVE:
+        #         # NOTE: this is for using seeds as weight
+        #         # n_seeds = self.calc_seeds(driver, call_next)
+        #         n_ast = self.calc_ast(call_next)
+        #         candidate_api_new += [((call_next, x, y, api_state), n_ast)]
+        #     elif api_state == ApiSeqState.NEGATIVE:
+        #         continue
             
-        #     # this was a test for biasing API func call, it was a failure
-        #     # positive_weights = [(a, sigmoid(w)) for a, w in positive_weights]
-            
-        #     sum_pos_weights = sum([w for _, w in positive_weights])
-            
-        #     candidate_api_new = positive_weights
-        #     for u in unknown_weights:
-        #         candidate_api_new += [(u, sum_pos_weights/n_unk_weights)]
-            
-        #     # OLD CALCULUS --- WRONG --- BEGIN
-        #     # prob_unkn = float(n_unk_weights)/(n_unk_weights+n_pos_weights)
-            
-        #     # sum_unk_weights = prob_unkn/(1.0-prob_unkn)*sum_pos_weights
-            
-        #     # candidate_api_new = positive_weights
-        #     # for u in unknown_weights:
-        #     #     candidate_api_new += [(u, sum_unk_weights/n_unk_weights)]
-        #     # OLD CALCULUST --- WRONG -- END
-            
-        #     w = [ww for _, ww in candidate_api_new]
-        #     candidate_api = [c for c, _ in candidate_api_new]
-        #     r_api = random.choices(candidate_api, weights=w)[0] 
-        #     self.dump_log(driver, candidate_api, w)
-        #     return r_api
-        # else:
-        #     w = [1 for _ in candidate_api]
-        #     r_api = random.choices(candidate_api, weights=w)[0] 
-        #     self.dump_log(driver, candidate_api, w)
-        #     return r_api
-            
-    
-    # def inc_api_frequency(self, api):
-    #     freq = self.get_api_frequency(api)
-    #     if freq is None:
-    #         freq = 1
-    #     else:
-    #         freq = freq + 1
-    #     self.set_api_frequency(api, freq)
+        # w = [ww for _, ww in candidate_api_new]
+        # candidate_api = [c for c, _ in candidate_api_new]
+        # r_api = random.choices(candidate_api, weights=w)[0] 
+        # # self.dump_log(driver, candidate_api, w)
+        # return r_api
+        # NOTE: do not delete till HERE!!
 
     def get_weigth(self, drv, api):
 
