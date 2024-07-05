@@ -22,6 +22,8 @@ from driver.factory.constraint_based_search import *
 from driver.factory.constraint_based_grammar import *
 from driver.factory.constraint_based_backward import *
 
+from bias import Bias, WBias, SBias, IBias, FBias
+
 from generator import Pool
 
 class Configuration:
@@ -58,6 +60,37 @@ class Configuration:
     
         return f"{self._config_path}"
 
+    @cached_property
+    def bias(self):
+        
+        if not "generator" in self._config:
+            raise Exception("'generator' not defined")
+
+        generator = self._config["generator"]
+
+        # default value
+        if not "bias" in generator:
+            return Bias()
+        
+        bias_type = generator["bias"]
+        
+        # "none" return the default bias class
+        if bias_type == "none":
+            return Bias()
+        
+        if bias_type == "api_frequency":
+            return WBias(self.dependency_graph)
+        
+        if bias_type == "seed_number":
+            return SBias()
+
+        if bias_type == "field_inter":
+            return IBias(self.function_conditions)
+        
+        if bias_type == "field_sum":
+            return FBias(self.function_conditions)
+        
+        raise NotImplementedError
 
     @cached_property
     def driver_size(self):
@@ -298,17 +331,19 @@ class Configuration:
         if policy == "constraint_based":
             dep_graph = self.dependency_graph
             return CBFactory(self.api_list, self.driver_size, dep_graph, 
-                             self.function_conditions)
+                             self.function_conditions, self.bias)
         
-        if policy == "constraint_based_weight":
-            dep_graph = self.dependency_graph
-            return CBWFactory(self.api_list, self.driver_size, dep_graph, 
-                              self.function_conditions)
+        ## NOTE: I want to remove this factory
+        # if policy == "constraint_based_weight":
+        #     dep_graph = self.dependency_graph
+        #     return CBWFactory(self.api_list, self.driver_size, dep_graph, 
+        #                       self.function_conditions)
             
         if policy == "constraint_based_grammar":
             dep_graph = self.dependency_graph
             return CBGFactory(self.api_list, self.driver_size, dep_graph, 
-                              self.function_conditions, self.number_of_unknown)
+                              self.function_conditions, self.bias,
+                              self.number_of_unknown)
 
         if policy == "constraint_based_search":
             dep_graph = self.dependency_graph

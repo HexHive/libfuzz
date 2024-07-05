@@ -3,7 +3,7 @@ import random
 import re
 from typing import Set
 
-from common import Api, FunctionConditionsSet
+from common import Api, FunctionConditionsSet, Utils
 from constraints import ConditionUnsat, RunningContext, ConditionManager
 from dependency import DependencyGraph
 from driver import Driver
@@ -11,6 +11,7 @@ from driver.factory.constraint_based import CBFactory
 from driver.factory import Factory
 from driver.ir import ApiCall, PointerType, Variable, AllocType, Constant
 from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
+from bias import Bias
 
 import json
 
@@ -33,8 +34,8 @@ class CBGFactory(CBFactory):
     
     def __init__(self, api_list: Set[Api], driver_size: int, 
                     dgraph: DependencyGraph, conditions: FunctionConditionsSet, 
-                    number_of_unknown: int):
-        super().__init__(api_list, driver_size, dgraph, conditions)
+                    bias: Bias, number_of_unknown: int):
+        super().__init__(api_list, driver_size, dgraph, conditions, bias)
             
         self.history_api_sequence = {}
         
@@ -106,7 +107,6 @@ class CBGFactory(CBFactory):
         
     def get_random_source_api(self):
         
-        w = list()
         tmp_source_api = list()
         
         for sa in self.source_api:
@@ -118,231 +118,20 @@ class CBGFactory(CBFactory):
             if api_state == ApiSeqState.NEGATIVE:
                 continue
             
-            tmp_source_api += [(sa, None, None, api_state)]
+            tmp_source_api += [sa]
             
         # self.dump_log_2(tmp_source_api)
             
-        return self.get_random_candidate([], tmp_source_api)[0]
+        return self.bias.get_random_candidate([], tmp_source_api)
         
-    def get_ast(self, api_call: ApiCall):
-        
-        get_cond = lambda x: self.conditions.get_function_conditions(x.function_name)
-        
-        fc = get_cond(api_call)
-        
-        ats = {}
-        
-        rt = api_call.ret_type
-        if isinstance(rt, PointerType):
-            rt = rt.get_base_type()
-        ats[rt] = set([".".join([f"{f}" for f in at.fields]) for at in fc.return_at.ats.access_type_set])
-        
-        # ats += [len(fc.return_at.ats.access_type_set)]
-        
-        for a, arg_c in enumerate(fc.argument_at):
-            # ats += [len(arg.ats.access_type_set)]
-            at = api_call.arg_types[a]
-            if isinstance(at, PointerType):
-                at = at.get_base_type()
-                
-            t_fields = ats.get(at, set())
-            t_fields |= set([".".join([f"{f}" for f in at.fields]) for at in arg_c.ats.access_type_set])
-            ats[at] = t_fields 
+    def get_random_candidate_grammar(self, drv, candidate_api):
+        apis = [a[2] for a in candidate_api]        
+        a = self.bias.get_random_candidate(drv, apis)
+        for ca in candidate_api:
+            if ca[2] == a:
+                return ca
             
-        return ats
-        
-    def calc_ast(self, api_call):
-        
-        get_cond = lambda x: self.conditions.get_function_conditions(x.function_name)
-        
-        fc = get_cond(api_call)
-        
-        ats = list()
-        
-        ats += [len(fc.return_at.ats.access_type_set)]
-        
-        for arg in fc.argument_at:
-            ats += [len(arg.ats.access_type_set)]
-            
-        return sum(ats)
-    
-    def calc_seeds(self, driver, api_call):
-        
-        api_seq_str = self.calc_api_seq_str(driver, api_call)
-        
-        ok_seq = {}
-        
-        for seq, val in self.history_api_sequence.items():
-            if seq.startswith(api_seq_str): # and val[0] == ApiSeqState.POSITIVE:
-                ok_seq[seq] = val[1]
-            
-            
-        ok_seq_save = ok_seq
-            
-        while True:
-            ok_seq_new = {}
-            
-            for s1, v1 in ok_seq.items():
-                has_longer = False
-                for s2, _ in ok_seq.items():
-                    if s1 == s2: 
-                        continue
-                    
-                    if s2.startswith(s1):
-                        has_longer = True
-                        break
-                if not has_longer:
-                    ok_seq_new[s1] = v1
-                    
-            # Fix point: I reach the minimum set
-            if ok_seq.keys() == ok_seq_new.keys():
-                break
-            
-            ok_seq = ok_seq_new
-            
-        
-        # if len(ok_seq_save) >= 3:
-        #     print("calc_seeds..")
-        #     from IPython import embed; embed(); exit(1)
-            
-        n_seq = len(ok_seq)
-        sum_seeds = sum([v for _, v in ok_seq.items()])
-            
-        return np.arctan(sum_seeds/n_seq)
-        
-        # sum_positive = 0
-        # nun_negative = 0
-        # tot_leafes = 0
-        # for seq, (state, n_seeds) in self.history_api_sequence.items():
-        #     if seq.startswith(api_seq_str):
-                
-        # return self.history_api_sequence[api_seq_str][1]
-
-    def get_random_candidate(self, driver, candidate_api):
-        
-        if driver is None or len(driver) == 0:
-            
-            candidate_api_new = []
-            for call_next, x, y, api_state in candidate_api:
-                if api_state == ApiSeqState.UNKNOWN or api_state is None:
-                    n_ast = self.calc_ast(call_next)
-                    candidate_api_new += [((call_next, x, y, api_state), n_ast)]
-                elif api_state == ApiSeqState.POSITIVE:
-                    n_ast = self.calc_ast(call_next)
-                    candidate_api_new += [((call_next, x, y, api_state), n_ast)]
-                elif api_state == ApiSeqState.NEGATIVE:
-                    continue
-                
-            w = [ww for _, ww in candidate_api_new]
-            candidate_api = [c for c, _ in candidate_api_new]
-            r_api = random.choices(candidate_api, weights=w)[0] 
-            return r_api
-        
-        else:
-            
-            last_apicall = driver[-1][0]
-            
-            last_apicall_ats = self.get_ast(last_apicall)
-            
-            # from IPython import embed; embed(); exit
-            
-            candidate_api_new = []
-            for call_next, x, y, api_state in candidate_api:
-                if api_state == ApiSeqState.UNKNOWN or api_state is None:
-                    # n_ast = self.calc_ast(call_next)
-                    n_ast = self.get_ast(call_next)
-                    
-                    common_fields = 0
-                    for ct in n_ast.keys() & last_apicall_ats.keys():
-                        common_fields += len(n_ast[ct] & last_apicall_ats[ct])                    
-                    
-                    candidate_api_new += [((call_next, x, y, api_state), common_fields)]
-                elif api_state == ApiSeqState.POSITIVE:
-                    
-                    # n_ast = self.calc_ast(call_next)
-                    n_ast = self.get_ast(call_next)
-                    
-                    common_fields = 0
-                    for ct in n_ast.keys() & last_apicall_ats.keys():
-                        common_fields += len(n_ast[ct] & last_apicall_ats[ct])
-                    
-                    candidate_api_new += [((call_next, x, y, api_state), common_fields)]
-                    
-                elif api_state == ApiSeqState.NEGATIVE:
-                    continue
-                
-            w = [ww for _, ww in candidate_api_new]
-            if sum(w) == 0:
-                w = [1 for _, _ in candidate_api_new]
-            candidate_api = [c for c, _ in candidate_api_new]
-            r_api = random.choices(candidate_api, weights=w)[0] 
-            return r_api
-            
-        
-        return []
-        
-        # NOTE: do not delete this part below, it is an important piece of my mind
-        # candidate_api_new = []
-        # for call_next, x, y, api_state in candidate_api:
-        #     if api_state == ApiSeqState.UNKNOWN or api_state is None:
-        #         n_ast = self.calc_ast(call_next)
-        #         candidate_api_new += [((call_next, x, y, api_state), n_ast)]
-        #     elif api_state == ApiSeqState.POSITIVE:
-        #         # NOTE: this is for using seeds as weight
-        #         # n_seeds = self.calc_seeds(driver, call_next)
-        #         n_ast = self.calc_ast(call_next)
-        #         candidate_api_new += [((call_next, x, y, api_state), n_ast)]
-        #     elif api_state == ApiSeqState.NEGATIVE:
-        #         continue
-            
-        # w = [ww for _, ww in candidate_api_new]
-        # candidate_api = [c for c, _ in candidate_api_new]
-        # r_api = random.choices(candidate_api, weights=w)[0] 
-        # # self.dump_log(driver, candidate_api, w)
-        # return r_api
-        # NOTE: do not delete till HERE!!
-
-    # def get_weigth(self, drv, api):
-
-    #     if api not in self.api_frequency:
-    #         self.api_frequency[api] = 0
-    #         self.api_initial_weigth[api] = max([w for _, w in self.api_initial_weigth.items()])
-
-    #     if self.api_frequency[api] == 0:
-    #         return self.api_initial_weigth[api]
-        
-    #     return float(self.api_initial_weigth[api])/self.api_frequency[api]
-    
-    # def set_api_frequency(self, api, freq):
-    #     if api not in self.api_frequency:
-    #         return
-    #     self.api_frequency[api] = freq
-
-    # def get_api_frequency(self, api):
-    #     if api not in self.api_frequency:
-    #         return None
-    #     return self.api_frequency[api]
-    
-    # def upd_api_frequency(self, api, rel_freq):
-    #     if api not in self.api_frequency:
-    #         return
-    #     self.api_frequency[api] += rel_freq
-
-    # def get_reachable_apis(self, api):
-
-    #     visited_api = set()
-    #     working = [api]
-
-    #     while(len(working) != 0):
-    #         a = working.pop()
-    #         for n in  self.dependency_graph[a]:
-    #             if n in visited_api:
-    #                 continue
-
-    #             visited_api.add(n)
-    #             working += [n]
-
-    #     return visited_api
+        raise Exception(f"Did not match {a} with the {candidate_api}")
 
     def create_random_driver(self) -> Driver:
 
@@ -448,7 +237,7 @@ class CBGFactory(CBFactory):
                     
                 if candidate_api:
                     # (ApiCall, RunningContext, Api)
-                    (api_call, rng_ctx_1, api_n, api_state) = self.get_random_candidate(drv, candidate_api)
+                    (api_call, rng_ctx_1, api_n, api_state) = self.get_random_candidate_grammar(drv, candidate_api)
                     print(f"[INFO] choose {api_call.function_name}")
 
                     # if api_call.function_name == "TIFFReadRGBAImage":
@@ -535,26 +324,10 @@ class CBGFactory(CBFactory):
 
         self.n_driver = self.n_driver + 1
         return d
-    
-    def calc_api_seq_str(self, driver, api = None) -> str:
-        
-        api_seq = []
-        for s in driver:
-            api_seq += [s[0].original_api.function_name]
-        api_seq_str = ";".join(api_seq)
-        
-        if api is not None:
-            if api_seq_str == "":
-                api_seq_str += f"{api.function_name}"
-            else:
-                api_seq_str += f";{api.function_name}"
-                
-        return api_seq_str
-
 
     def calc_api_state(self, driver, api = None):
         
-        api_seq_str = self.calc_api_seq_str(driver, api)
+        api_seq_str = Utils.calc_api_seq_str(driver, api)
         
         if api_seq_str not in self.history_api_sequence:
             return ApiSeqState.UNKNOWN
@@ -563,11 +336,15 @@ class CBGFactory(CBFactory):
     
     def update_api_state(self, driver, api_seq_state, n_seeds) -> ApiSeqState:
         
-        api_seq_str = self.calc_api_seq_str(driver)
+        api_seq_str = Utils.calc_api_seq_str(driver)
         
         self.history_api_sequence[api_seq_str] = (api_seq_state, n_seeds)
         
-        # print("update_api_state")
-        # from IPython import embed; embed(); exit(1)
+        update_feedback = getattr(self.bias, "update_feedback", None) 
+        if update_feedback is not None and callable(update_feedback):
+            if api_seq_state == ApiSeqState.NEGATIVE:
+                self.bias.update_feedback(api_seq_str, -1)
+            elif api_seq_state == ApiSeqState.POSITIVE:
+                self.bias.update_feedback(api_seq_str, n_seeds)
         
         return api_seq_state
