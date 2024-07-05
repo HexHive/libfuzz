@@ -302,16 +302,16 @@ class CBGFactory(CBFactory):
         # return r_api
         # NOTE: do not delete till HERE!!
 
-    def get_weigth(self, drv, api):
+    # def get_weigth(self, drv, api):
 
-        if api not in self.api_frequency:
-            self.api_frequency[api] = 0
-            self.api_initial_weigth[api] = max([w for _, w in self.api_initial_weigth.items()])
+    #     if api not in self.api_frequency:
+    #         self.api_frequency[api] = 0
+    #         self.api_initial_weigth[api] = max([w for _, w in self.api_initial_weigth.items()])
 
-        if self.api_frequency[api] == 0:
-            return self.api_initial_weigth[api]
+    #     if self.api_frequency[api] == 0:
+    #         return self.api_initial_weigth[api]
         
-        return float(self.api_initial_weigth[api])/self.api_frequency[api]
+    #     return float(self.api_initial_weigth[api])/self.api_frequency[api]
     
     # def set_api_frequency(self, api, freq):
     #     if api not in self.api_frequency:
