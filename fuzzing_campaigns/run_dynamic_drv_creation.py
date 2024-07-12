@@ -38,6 +38,7 @@ def create_driver_generator_conf(project, iteration, config):
     
     driver_size = config["NUM_OF_API_GRAMMAR"]
     num_unknown_api = config["NUM_OF_UNKNOWN_API"]
+    bias = config["BIAS"]
     
     with open(generator_conf_path, "w") as f:
         
@@ -69,8 +70,7 @@ def create_driver_generator_conf(project, iteration, config):
         f.write(f"num_unknown_api = {num_unknown_api}\n")
         f.write("num_seeds = 1\n")
         f.write("backend = \"libfuzz\"\n")
-        
-        f.write(f"bias = \"field_sum\"\n")
+        f.write(f"bias = \"{bias}\"\n")
         
         f.write("\n")
         
