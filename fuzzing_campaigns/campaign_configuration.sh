@@ -6,8 +6,7 @@ export PROJECTS_STRING=$(IFS=:; echo "${PROJECTS[*]}")
 export NUM_OF_DRIVERS=( 40 )
 export NUM_OF_APIs=( 2 4 8 16 32  )
 export NUM_OF_SEEDS=1
-# export POLICY="constraint_based"
-export POLICY="constraint_based_weight"
+export POLICY="constraint_based"
 # export MAX_CPUs=6
 export MAX_CPUs=$(($(nproc) - 1))
 # used w/ CONF=minimized
