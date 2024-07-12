@@ -1,5 +1,7 @@
 import random
 
+from typing import Union
+
 from . import Bias
 from constraints import ConditionManager
 from driver.ir import ApiCall, PointerType
@@ -54,7 +56,7 @@ class IBias(Bias):
             r_api = random.choices(candidate_api, weights=w)[0] 
             return r_api
         
-    def get_ast(self, api: Api|ApiCall):
+    def get_ast(self, api:  Union[Api, ApiCall]):
         
         if isinstance(api, Api):
             api_call = Factory.api_to_apicall(api)

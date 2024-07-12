@@ -17,7 +17,6 @@ from common import Utils, DataLayout
 
 from driver.factory.only_type import *
 from driver.factory.constraint_based import *
-from driver.factory.constraint_based_weight import *
 from driver.factory.constraint_based_search import *
 from driver.factory.constraint_based_grammar import *
 from driver.factory.constraint_based_backward import *
@@ -44,9 +43,7 @@ class Configuration:
                 for k_section, v in new_conf.items():
                     if k_section in self._config:
                         for k_par, v_par in v.items():
-                            if k_par in self._config[k_section]:
-                                self._config[k_section][k_par] = v_par
-
+                            self._config[k_section][k_par] = v_par
 
         self.start_term = NonTerminal("start")
         self.end_term = Terminal("end")
@@ -70,7 +67,7 @@ class Configuration:
 
         # default value
         if not "bias" in generator:
-            return Bias()
+            raise Exception("'bias' not defined")
         
         bias_type = generator["bias"]
         
@@ -332,12 +329,6 @@ class Configuration:
             dep_graph = self.dependency_graph
             return CBFactory(self.api_list, self.driver_size, dep_graph, 
                              self.function_conditions, self.bias)
-        
-        ## NOTE: I want to remove this factory
-        # if policy == "constraint_based_weight":
-        #     dep_graph = self.dependency_graph
-        #     return CBWFactory(self.api_list, self.driver_size, dep_graph, 
-        #                       self.function_conditions)
             
         if policy == "constraint_based_grammar":
             dep_graph = self.dependency_graph
