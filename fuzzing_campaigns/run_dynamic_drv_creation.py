@@ -69,6 +69,9 @@ def create_driver_generator_conf(project, iteration, config):
         f.write(f"num_unknown_api = {num_unknown_api}\n")
         f.write("num_seeds = 1\n")
         f.write("backend = \"libfuzz\"\n")
+        
+        f.write(f"bias = \"field_sum\"\n")
+        
         f.write("\n")
         
         f.write("[backend]\n")
@@ -269,6 +272,7 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
     global base_dir
     host_result_folder = os.path.join(base_dir, "workdir_X_X", project, f"iter_{iteration}", )
     
+    i = 0
     while True:
         
         current_time = datetime.now()
@@ -308,7 +312,7 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
                     os.remove(os.path.join(host_result_folder, "cluster_drivers", f"{driver_name}_cluster"))
                 except:
                     pass
-        
+    
     print("[INFO] Storing paths observed")
     with open(os.path.join(host_result_folder, "paths_observed.txt"), "w") as file:
         for d, (l, t, s) in drivers_list.items():
