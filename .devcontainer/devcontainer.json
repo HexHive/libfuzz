@@ -20,7 +20,10 @@
 		"vscode": {
 			"extensions": [
 				"Stephanvs.dot",
-				"mohsen1.prettify-json"
+				"mohsen1.prettify-json",
+				"llvm-vs-code-extensions.vscode-clangd"
+				"ms-python.python",
+				"tamasfe.even-better-toml"
 			]
 		}
 	}

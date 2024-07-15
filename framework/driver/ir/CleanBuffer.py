@@ -17,8 +17,8 @@ class CleanBuffer(Statement):
         if not isinstance(type, PointerType):
             # and
             # buffer.get_alloctype() == AllocType.HEAP):
-            print("CleanBuffer")
-            from IPython import embed; embed(); exit(1)
+            # print("CleanBuffer")
+            # from IPython import embed; embed(); exit(1)
             raise Exception(f"CleanBuffer accepts only PointerType to heap, {type} received")
 
         self.token = buffer.token

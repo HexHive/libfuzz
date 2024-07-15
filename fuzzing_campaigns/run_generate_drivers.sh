@@ -16,6 +16,7 @@ for ndrivers in "${NUM_OF_DRIVERS[@]}"; do
             echo "driver_size = ${napis}" >> ../overwrite.toml
             echo "num_seeds = ${NUM_OF_SEEDS}" >> ../overwrite.toml
             echo "policy = \"${POLICY}\"" >> ../overwrite.toml
+            echo "bias = \"${BIAS}\"" >> ../overwrite.toml
 
             if [ ${USE_CUSTOM_APIS} -eq 1 ]; then
                 echo "[analysis]" >> ../overwrite.toml

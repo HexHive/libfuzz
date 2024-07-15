@@ -90,13 +90,19 @@ void GlobalStruct::analyze() {
         const CallICFGNode* callBlockNode = pag->getICFG()->getCallICFGNode(cnode->getCallSite());
 
         unsigned int x = 0;
+        // SVFUtil::outs() << "callBlockNode: " << callBlockNode->toString() << "\n";
         for (auto f: fncs[fun_type_hash]) {
             auto fun_callee = llvmModuleSet->getSVFFunction(f);
+
+            // if (ExtAPI::getExtAPI()->is_ext(fun_callee))
+            //     SVFUtil::outs() << "it is external!\n";
+            // else
+            //     SVFUtil::outs() << "it is internal!\n";
+                
 
             newEdges[callBlockNode].insert(fun_callee);
             getIndCallMap()[callBlockNode].insert(fun_callee);
             ptacg->addIndirectCallGraphEdge(callBlockNode, fun_caller, fun_callee);
-            x++;
         }
         // SVFUtil::outs() << "connected to: " << x << "\n";
         // SVFUtil::outs() << "----\n";

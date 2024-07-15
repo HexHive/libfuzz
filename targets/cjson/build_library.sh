@@ -39,7 +39,8 @@ mv "$WORK"/lib/libcjson.a "$WORK"/lib/libcjson_profile.a
 # Compile library for debugging
 cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_AND_STATIC_LIBS=On \
         -DBUILD_SHARED_LIBS=off -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_C_FLAGS_DEBUG=" -fPIE" -DCMAKE_CXX_FLAGS_DEBUG=" -fPIE"
+        -DCMAKE_C_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g" \
+        -DCMAKE_CXX_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g"
 
 echo "make clean"
 make -j"$(nproc)" clean

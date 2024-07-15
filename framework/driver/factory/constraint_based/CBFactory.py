@@ -10,7 +10,7 @@ from driver import Driver
 from driver.factory import Factory
 from driver.ir import ApiCall, PointerType, Variable, AllocType, Constant
 from driver.ir import NullConstant, AssertNull, SetNull, Address, Variable
-
+from bias import Bias
 
 class CBFactory(Factory):
     api_list            : Set[Api]
@@ -22,15 +22,18 @@ class CBFactory(Factory):
     MAX_ALLOC_SIZE = 1024
     
     def __init__(self, api_list: Set[Api], driver_size: int, 
-                    dgraph: DependencyGraph, conditions: FunctionConditionsSet):
+                    dgraph: DependencyGraph, conditions: FunctionConditionsSet,
+                    bias: Bias):
         self.api_list = api_list
         self.driver_size = driver_size
         # self.dependency_graph = dgraph
         self.conditions = conditions
+        
+        self.bias = bias
 
         # I need this to build synthetic constraints in "update" method
         RunningContext.type_to_hash = {}
-        for f, c in self.conditions:
+        for _, c in self.conditions:
             for arg in c.argument_at + [c.return_at]:
                 for at in arg.ats:
                     RunningContext.type_to_hash[at.type_string] = at.type
@@ -70,7 +73,15 @@ class CBFactory(Factory):
             arg_cond = conditions.argument_at[arg_pos]
             #  TODO: add and test if it works
             #  and not isinstance(arg_type, PonterType)
-            if arg_cond.len_depends_on != "":
+            # if arg_type.token == "htp_mpartp_t*":
+            #     print("try_to_instantiate_api_call")
+            #     from IPython import embed; embed(); exit(1)
+            
+            # if (arg_cond.len_depends_on != ""):
+            if (arg_cond.len_depends_on != "" and 
+                (isinstance(arg_type, PointerType) and
+                not arg_type.get_base_type().is_incomplete or
+                arg_type.get_base_type() == rng_ctx.stub_void)):
                 idx = int(arg_cond.len_depends_on.replace("param_", ""))
                 idx_type = api_call.arg_types[idx]
 
@@ -206,9 +217,6 @@ class CBFactory(Factory):
             if isinstance(ret_type, PointerType) and ret_type.to_function:
                 ret_var = rng_ctx.get_null_constant()
             else:
-                # ret_var = rng_ctx.try_to_get_var(ret_type, ret_cond,
-                #                                  fun_name, conditions,
-                #                                  -1)
                 ret_var = rng_ctx.try_to_get_var(api_call, conditions, -1)
             api_call.set_ret_var(ret_var)
         except ConditionUnsat:
@@ -233,10 +241,16 @@ class CBFactory(Factory):
         return (rng_ctx, {})
     
     def get_random_source_api(self):
-        return random.choice(self.source_api)
+        return self.bias.get_random_candidate([], self.source_api)
 
     def get_random_candidate(self, candidate_api):
-        return random.choice(candidate_api)
+        apis = [a[2] for a in candidate_api]
+        a = self.bias.get_random_candidate([], apis)         
+        for ca in candidate_api:
+            if ca[2] == a:
+                return ca
+        
+        raise Exception(f"Did not match {a} with the {candidate_api}")
 
     def create_random_driver(self) -> Driver:
 

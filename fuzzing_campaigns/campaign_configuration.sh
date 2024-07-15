@@ -1,16 +1,20 @@
 #!/bin/bash
 
 export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" "c-ares" "zlib" "cjson" )
+# trick to make ${PROJECTS} visible outside
+export PROJECTS_STRING=$(IFS=:; echo "${PROJECTS[*]}")
 export NUM_OF_DRIVERS=( 40 )
 export NUM_OF_APIs=( 2 4 8 16 32  )
 export NUM_OF_SEEDS=1
-# export POLICY="constraint_based"
-export POLICY="constraint_based_weight"
+export POLICY="constraint_based"
+# export MAX_CPUs=6
 export MAX_CPUs=$(($(nproc) - 1))
 # used w/ CONF=minimized
 export USE_CUSTOM_APIS=0
 # used w/ CONF=long
 export USE_PER_LIBRARY_TIMEBUDGET=0
+
+export BIAS="none" # none, api_frequency, seed_number, field_interm, field_sum
 
 case $CONF in
 
@@ -63,8 +67,36 @@ case $CONF in
     export USE_CUSTOM_APIS=1
     ;;
 
+  grammar)
+    export TIMEOUT=24h
+    export ITERATIONS=1
+    export POLICY="constraint_based_grammar"
+    # NOTE: these Xs need for run_coverage.sh and run_custer.sh
+    export NUM_OF_DRIVERS=( "X" )
+    export NUM_OF_APIs=( "X" )
+    export NUM_OF_API_GRAMMAR=10
+    export NUM_OF_UNKNOWN_API=0
+    export GRAMMAR_MODE=1
+    ;;
+
+  grammarminimized)
+    export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" "libpcap" "c-ares" "zlib" "cjson" )
+    # unset $PROJECTS_STRING
+    export PROJECTS_STRING=$(IFS=:; echo "${PROJECTS[*]}")
+    export TIMEOUT=24h
+    export ITERATIONS=1
+    export POLICY="constraint_based_grammar"
+    # NOTE: these Xs need for run_coverage.sh and run_custer.sh
+    export NUM_OF_DRIVERS=( "X" )
+    export NUM_OF_APIs=( "X" )
+    export NUM_OF_API_GRAMMAR=10
+    export NUM_OF_UNKNOWN_API=0
+    export GRAMMAR_MODE=1
+    export USE_CUSTOM_APIS=1
+    ;;
+
   *)
-    echo -n "unknown CONF"
+    echo -n "unknown CONF=${CONF}"
     exit 1
     ;;
 esac

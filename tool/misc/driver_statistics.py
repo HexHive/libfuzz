@@ -7,7 +7,7 @@ from tabulate import tabulate
 import matplotlib.pyplot as plt
 
 def print_summary(libraries):
-    for lib, drvs in libraries.items():
+    for lib, drvs in dict(sorted(libraries.items())).items():
         max_cov = 0
         n_drv_cov = 0
         n_drv_cov_1 = 0

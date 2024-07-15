@@ -61,10 +61,12 @@ class DataLayout:
             #     from IPython import embed; embed(); exit(1)
             for arg_pos, arg in enumerate(api["arguments_info"]):
                 type_clang = arg["type_clang"]
-                self.populate_table(type_clang, function_name, arg_pos)
+                llvm_arg_flag = self.apis_llvm[function_name]["arguments_info"][arg_pos]["flag"]
+                self.populate_table(type_clang, function_name, arg_pos, llvm_arg_flag)
 
             type_clang = api["return_info"]["type_clang"]
-            self.populate_table(type_clang, function_name, -1)
+            llvm_arg_flag = self.apis_llvm[function_name]["return_info"]["flag"]
+            self.populate_table(type_clang, function_name, -1, llvm_arg_flag)
 
         # print(self.layout)
         # from IPython import embed; embed(); exit(1)
@@ -81,12 +83,15 @@ class DataLayout:
         return l_type, l_size
 
     
-    def multi_level_size_infer(self, ttype, function_name, pos, is_original):
+    def multi_level_size_infer(self, ttype: str, function_name: str, pos: int, is_original: bool):
         t_size = 0
 
         # if ttype == "cpu_features::CacheInfo" and pos == -1:
         #     print("multi_level_size_infer")
         #     from IPython import embed; embed(); exit(1)
+        
+        # sanity check for annoying spaces
+        ttype = ttype.replace(" ", "")
 
         # first step, search in the tables
         known_type = False
@@ -123,7 +128,13 @@ class DataLayout:
 
         return t_size
     
-    def populate_table(self, type_clang, function_name, arg_pos):
+    def populate_table(self, type_clang, function_name, arg_pos, arg_flag):
+
+        # function ponters
+        if arg_flag == "fun":
+            t_size = self.multi_level_size_infer(type_clang, function_name, arg_pos, True)
+            self.layout[type_clang.replace(" ", "")] = t_size
+            return
 
         # remove pointers
         tmp_type = type_clang
@@ -132,14 +143,14 @@ class DataLayout:
         while pointer_level > 0:
 
             t_size = self.multi_level_size_infer(tmp_type, function_name, arg_pos, is_original)
-            self.layout[tmp_type] = t_size
+            self.layout[tmp_type.replace(" ", "")] = t_size
 
             tmp_type = tmp_type[:-1]
             pointer_level = tmp_type.count("*")
             is_original = False
 
         t_size = t_size = self.multi_level_size_infer(tmp_type, function_name, arg_pos, is_original)
-        self.layout[tmp_type] = t_size
+        self.layout[tmp_type.replace(" ", "")] = t_size
 
         # if self.layout[type_clang] == 0:
         #     print(f"[DEBUG] size of {type_clang} is {self.layout[type_clang]}")
@@ -148,6 +159,19 @@ class DataLayout:
 
     @staticmethod
     def is_ptr_level(type, lvl: int) -> bool:
+        # from driver.ir.PointerType import PointerType
+
+        # ptr_level = 0
+
+        # tmp_type = type
+        # while isinstance(tmp_type, PointerType):
+        #     ptr_level += 1
+        #     tmp_type = tmp_type.get_pointee_type()
+
+        return DataLayout.get_ptr_level(type) == lvl
+    
+    @staticmethod
+    def get_ptr_level(type) -> int:
         from driver.ir.PointerType import PointerType
 
         ptr_level = 0
@@ -157,7 +181,7 @@ class DataLayout:
             ptr_level += 1
             tmp_type = tmp_type.get_pointee_type()
 
-        return ptr_level == lvl
+        return ptr_level
 
     @staticmethod
     def is_a_pointer(type) -> bool:
@@ -182,7 +206,7 @@ class DataLayout:
             return 8*8
         elif type == "unsigned long":
             return 8*8
-        elif type == "char" or type == "const char" or type == "char const":
+        elif type == "char" or type == "signed char":
             return 1*8
         elif type == "void":
             return 0
@@ -204,6 +228,8 @@ class DataLayout:
             return 8
         elif type == "wchar_t":
             return 8*4
+        elif type == "unsigned short":
+            return 8*2
         else:
             raise Exception(f"I don't know the size of '{type}'")
 
@@ -216,6 +242,9 @@ class DataLayout:
     def is_a_struct(self, a_type: str) -> bool:
 
         if a_type not in self.clang_to_llvm_struct:
+            return False
+        
+        if self.is_enum_type(a_type):
             return False
         
         a_llvm = self.clang_to_llvm_struct[a_type]

@@ -368,8 +368,20 @@ class Utils:
     @staticmethod
     def get_value_metadata(mdata_json) -> ValueMetadata:
         ats = Utils.get_access_type_set(mdata_json["access_type_set"])
+        
+        # this is a trick to infer the type form the conditions
+        is_a_string = False
+        for x_type in ats.access_type_set:
+            if x_type.type_string == "i8*" and x_type.parent is None:
+                is_a_string = True
+                break
+        
         is_array = mdata_json["is_array"]
-        is_file_path = mdata_json["is_file_path"]
+        # NOTE: due to static analysis overapprox, we consider file path
+        # condition only if the type is string-like.   
+        # In this case, I use the information in the coindition to infer the
+        # type, otherwise I would need too much code rewriting.
+        is_file_path = mdata_json["is_file_path"] and is_a_string
         is_malloc_size = mdata_json["is_malloc_size"]
         len_depends_on = mdata_json["len_depends_on"]
         set_by = mdata_json["set_by"]
@@ -470,3 +482,19 @@ class Utils:
                     enum_list += [l]
 
         return enum_list
+    
+    @staticmethod
+    def calc_api_seq_str(driver, api = None) -> str:
+        
+        api_seq = []
+        for s in driver:
+            api_seq += [s[0].original_api.function_name]
+        api_seq_str = ";".join(api_seq)
+        
+        if api is not None:
+            if api_seq_str == "":
+                api_seq_str += f"{api.function_name}"
+            else:
+                api_seq_str += f";{api.function_name}"
+                
+        return api_seq_str

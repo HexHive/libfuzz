@@ -34,7 +34,10 @@ def get_driver(raw_values, rootdir = None, lib = None):
     n_apis = raw_values[2]
     # do not need this?
     # n_iter = raw_values[3]
-    cov = p2f(raw_values[4])
+    if raw_values[4] == "":
+        cov = 0
+    else:
+        cov = p2f(raw_values[4])
     # no need
     # libcov = raw_values[5]
     n_crashes = int(raw_values[6])

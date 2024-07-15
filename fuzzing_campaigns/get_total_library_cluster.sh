@@ -20,8 +20,13 @@ done
 
       
 for project in "${PROJECTS[@]}"; do
-    PROJECT_FOLDER="/workspaces/libfuzz/fuzzing_campaigns/workdir_*_*/${project}"
+    if [[ -z ${GRAMMAR_MODE} ]]; then
+        PROJECT_FOLDER="/workspaces/libfuzz/fuzzing_campaigns/workdir_*_*/${project}"
+    else
+        PROJECT_FOLDER="/workspaces/libfuzz/fuzzing_campaigns/workdir_*_*/${project}/iter_*"
+    fi
     docker run --env TOTAL_LIBRARY_CLUSTER="YES" \
+        --env GRAMMAR_MODE=${GRAMMAR_MODE} \
         --env TARGET_WORKDIR=${PROJECT_FOLDER} \
         -v $(pwd)/..:/workspaces/libfuzz "${IMG_NAME}-${project}"
 done
