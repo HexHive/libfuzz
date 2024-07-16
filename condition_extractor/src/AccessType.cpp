@@ -54,12 +54,37 @@ bool doesReturnGlobalVarConst(const ICFGNode* icfgNode) {
 
             auto rv = retinst->getReturnValue();
 
+            // outs() << "[START CHECK]\n";
+
             // outs() << "rv: " << *rv << "\n";
 
             if (SVFUtil::isa<llvm::GlobalVariable>(rv)) {
                 // outs() << "is a global variable\n";
                 itReturnGlobalVarConst = true; 
+            } 
+            
+            if (SVFUtil::isa<llvm::ConstantExpr>(rv)) {
+                // outs() << "is a ConstantExpr\n";
+
+                auto cexp = SVFUtil::dyn_cast<ConstantExpr>(rv);
+                auto asi = cexp->getAsInstruction();
+
+                // outs() << "asi: " << *asi << "\n";
+
+                if (SVFUtil::isa<llvm::BitCastInst>(asi)) {
+                    // outs() << "asi is a BitCastInst variable\n";
+
+                    auto src = asi->getOperand(0);
+
+                    if (SVFUtil::isa<llvm::GlobalVariable>(src)) {
+                        // outs() << "src is a global variable\n";
+                        itReturnGlobalVarConst = true; 
+                    }
+                }
             }
+            
+            // outs() << "[END CHECK]\n";
+
         }
 
     }
