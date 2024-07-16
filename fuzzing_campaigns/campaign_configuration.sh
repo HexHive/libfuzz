@@ -14,7 +14,7 @@ export USE_CUSTOM_APIS=0
 # used w/ CONF=long
 export USE_PER_LIBRARY_TIMEBUDGET=0
 
-export BIAS="none" # none, api_frequency, seed_number, field_interm, field_sum
+export BIAS="none" # none, api_frequency, seed_number, field_inter, field_sum
 
 case $CONF in
 
