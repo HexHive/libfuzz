@@ -9,6 +9,7 @@ conditions = "/workspaces/libfuzz/analysis/minijail/work/apipass/conditions.json
 # minimum_apis = "/workspaces/libfuzz/analysis/minijail/work/apipass/apis_minimized_2.txt"
 # minimum_apis = "/workspaces/libfuzz/analysis/minijail/work/apipass/apis_minimized_3.txt"
 minimum_apis = ""
+# minimum_apis = "/workspaces/libfuzz/targets/minijail/api_min_2.txt"
 data_layout = "/workspaces/libfuzz/analysis/minijail/work/apipass/data_layout.txt"
 enum_types = "/workspaces/libfuzz/analysis/minijail/work/apipass/enum_types.txt"
 weights = "/workspaces/libfuzz/analysis/minijail/work/apipass/weights.json"

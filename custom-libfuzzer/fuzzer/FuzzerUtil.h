@@ -114,6 +114,8 @@ template <typename T> T HostToLE(T X) { return X; }
 template <typename T> T HostToLE(T X) { return Bswap(X); }
 #endif
 
+void StoreFeedbackAndExit(char);
+
 }  // namespace fuzzer
 
 #endif  // LLVM_FUZZER_UTIL_H

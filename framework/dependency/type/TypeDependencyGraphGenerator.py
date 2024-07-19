@@ -42,8 +42,8 @@ class TypeDependencyGraphGenerator(DependencyGraphGenerator):
 
         # api_a_functionname = api_a.function_name
         # api_b_functionname = api_b.function_name
-        input_a, output_a = self.get_input_output(api_a)
-        input_b, output_b = self.get_input_output(api_b)
+        input_a, _ = self.get_input_output(api_a)
+        _, output_b = self.get_input_output(api_b)
 
         # print("-"*30)
 
@@ -85,10 +85,10 @@ class TypeDependencyGraphGenerator(DependencyGraphGenerator):
         intersection_set = set()
         for arg_a in args_a:
             for arg_b in args_b:
-                type_match = arg_a.type.replace("*", "") == arg_b.type.replace("*", "")
-                size_match = arg_a.size == arg_b.size
+                type_a_clean = arg_a.type.replace("*", "").replace(" ", "") 
+                type_b_clean = arg_b.type.replace("*", "").replace(" ", "")
 
-                if type_match: # or size_match:
+                if type_a_clean == type_b_clean: # or size_match:
                     intersection_set.add((arg_a.name, arg_b.name))
 
         return intersection_set

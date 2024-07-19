@@ -1,9 +1,9 @@
 TIFFOpen
-# TIFFSetErrorHandler
-# TIFFSetWarningHandler
+TIFFSetErrorHandler
+TIFFSetWarningHandler
 TIFFTileSize64
 TIFFGetField
-# _TIFFmalloc
-# TIFFReadRGBAImage
-# _TIFFfree
-# TIFFClose
+_TIFFmalloc
+TIFFReadRGBAImage
+_TIFFfree
+TIFFClose

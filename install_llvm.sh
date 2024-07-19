@@ -13,5 +13,4 @@ wget https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-14.0.0.zip -
 echo "Unzipping LLVM source..."
 unzip llvm.zip &> /dev/null
 mv llvm-project-llvmorg-14.0.0 llvm-project
-cp custom-libfuzzer/build.sh llvm-project/
 rm llvm.zip

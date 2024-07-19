@@ -22,6 +22,7 @@ import logging
 lock = threading.Lock()  # Lock to ensure thread safety
 sess = None
 drivers_list = dict()
+result_folder = ""
 
 @app.route('/')
 def index():
@@ -84,7 +85,7 @@ def push_feedback():
     if cause == -1:
         return "Error: cause not given"
 
-    with open("/workspaces/libfuzz/feedback_received.txt", "a") as f:
+    with open(f"{result_folder}/feedback_received.txt", "a") as f:
         f.write(f"{driver_name}|{time}|{cause}\n")
        
     api_cause = ApiSeqState.NEGATIVE
@@ -130,6 +131,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     config = Configuration(args.config, args.overwrite)
+
+    # very dangerous :) but it should be ok here
+    result_folder = config.work_dir
 
     sess = Generator(config)
 

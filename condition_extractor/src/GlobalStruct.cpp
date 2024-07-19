@@ -90,7 +90,7 @@ void GlobalStruct::analyze() {
         const CallICFGNode* callBlockNode = pag->getICFG()->getCallICFGNode(cnode->getCallSite());
 
         unsigned int x = 0;
-        SVFUtil::outs() << "callBlockNode: " << callBlockNode->toString() << "\n";
+        // SVFUtil::outs() << "callBlockNode: " << callBlockNode->toString() << "\n";
         for (auto f: fncs[fun_type_hash]) {
             auto fun_callee = llvmModuleSet->getSVFFunction(f);
 

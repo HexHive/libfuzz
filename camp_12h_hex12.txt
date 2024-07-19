@@ -1,0 +1,11 @@
+cpu_features 5000
+libtiff 5001
+minijail 5005
+pthreadpool 5010
+libaom 5004
+libvpx 5003
+libhtp 5002
+libpcap 5006
+c-ares 5007
+zlib 5008
+cjson 5009

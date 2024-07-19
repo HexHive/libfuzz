@@ -50,7 +50,7 @@ void StoreFeedbackAndExit(char cause) {
 
   Printf("[INFO] I store and exit!\n");
   std::ofstream feedbackFile;
-  feedbackFile.open ("feedback.txt");
+  feedbackFile.open (Fuzzer::FeedbackPath);
   feedbackFile << cause << "\n";
   feedbackFile << FuzzingLast << "\n";
   feedbackFile.close();
@@ -59,6 +59,7 @@ void StoreFeedbackAndExit(char cause) {
 system_clock::time_point Fuzzer::FuzzingStart;
 bool Fuzzer::MeasureCoveragePlateau = false;
 long Fuzzer::CovPlateauTimeout;
+std::string Fuzzer::FeedbackPath;
 /// FLAVIO: To handle Seed Plateau -- end
 
 static const size_t kMaxUnitSizeToPrint = 256;

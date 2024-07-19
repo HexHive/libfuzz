@@ -305,7 +305,7 @@ class LFBackendDriver(BackendDriver):
         return cm
 
     # Address
-    def address_emit(self, address: Address) -> str:
+    def address_emit(self, address: Address, depth: int = -1) -> str:
         variable = address.variable
         type = variable.get_type()
         buffer  = variable.get_buffer()
@@ -318,7 +318,7 @@ class LFBackendDriver(BackendDriver):
         if isinstance(type, PointerType):
             # idx     = variable.get_index()
             if buffer.get_alloctype() in [AllocType.HEAP, AllocType.GLOBAL]:
-                return f"{self.variable_emit(variable)}"
+                return f"{self.variable_emit(variable, depth)}"
             else:
                 return f"{token}"
         else:
@@ -477,8 +477,9 @@ class LFBackendDriver(BackendDriver):
     # SetNull
     def setnull_emit(self, setnull: SetNull) -> str:
         buff = setnull.get_buffer()
-
-        v = self.value_emit(buff[0])
+        
+        depth = DataLayout.get_ptr_level(buff.get_type()) - 1
+        v = self.value_emit(buff[0], depth)
         return f"{v} = 0;"
 
     # CleanBuffer
@@ -704,11 +705,23 @@ class LFBackendDriver(BackendDriver):
 
         str_vals = []
         for p, a in enumerate(arg_vars):
-            x = self.value_emit(a)
+            # if p == 0 and apicall.function_name == "ares_free_hostent":
+            #     print("apicall_emit")
+            #     from IPython import embed; embed(); exit(1)
             
-            va = a
-            if isinstance(va, Address):
-                va = va.get_variable()
+            if isinstance(a, Address) and p < len(arg_types):
+                va = a.get_variable()
+                lvl_arg = DataLayout.get_ptr_level(arg_types[p])
+                lvl_var = DataLayout.get_ptr_level(va.get_type())
+            else:
+                lvl_arg = 0
+                lvl_var = 0
+                
+            if lvl_var > lvl_arg:
+                x = self.value_emit(a, lvl_var - lvl_arg)
+            else:
+                x = self.value_emit(a)
+            
             
             # print("type cast?")
             # from IPython import embed; embed(); exit(1)
@@ -800,11 +813,11 @@ class LFBackendDriver(BackendDriver):
         return type.is_const
     
     # Value
-    def value_emit(self, value: Value) -> str:
+    def value_emit(self, value: Value, depth: int = -1) -> str:
         if isinstance(value, Variable):
-            return self.variable_emit(value)
+            return self.variable_emit(value, depth)
         if isinstance(value, Address):
-            return self.address_emit(value)
+            return self.address_emit(value, depth)
         if isinstance(value, NullConstant):
             return self.nullconst_emit(value)
         if isinstance(value, Function):
@@ -833,11 +846,15 @@ class LFBackendDriver(BackendDriver):
         return t
 
     # Variable
-    def variable_emit(self, variable: Variable) -> str:
+    def variable_emit(self, variable: Variable, depth=-1) -> str:
         idx     = variable.get_index()
         buffer  = variable.get_buffer()
         token   = self.clean_token(buffer.token)
         type    = buffer.get_type()
+        
+        if depth != -1:
+            extr_lvl = "[0]" * depth
+            return f"{token}[{idx}]{extr_lvl}"    
 
         return f"{token}[{idx}]"
 

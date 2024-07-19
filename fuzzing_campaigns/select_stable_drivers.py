@@ -29,6 +29,7 @@ def _main():
     parser.add_argument('-timebudget', '-b', type=str,
                         help='Compute budget time for long testing', 
                         required=True)
+    parser.add_argument('-keepcorpus', '-k', action='store_true', help='Keep corpus from previous campaign')
 
     args = parser.parse_args()
 
@@ -37,6 +38,7 @@ def _main():
     simulate = args.simulate
     threshold = args.threshold
     timebudget = normalize_time_boudget(args.timebudget)
+    keepcorpus = args.keepcorpus
     
     libraries = scr.load_report(report, rootdir)
 
@@ -101,7 +103,11 @@ def _main():
 
             # cp corpus for driver
             os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/corpus")
-            os.system(f"cp -r {rootdir}/workdir_{n_drivers}_{n_apis}/{lib}/corpus/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus")
+            
+            if keepcorpus:
+                os.system(f"cp -r {rootdir}/workdir_{n_drivers}_{n_apis}/{lib}/results/iter_1/corpus_new/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus")
+            else:
+                os.system(f"cp -r {rootdir}/workdir_{n_drivers}_{n_apis}/{lib}/corpus/{driver} workdir_{n_drivers}_{n_apis}/{lib}/corpus")
 
             # cp metadata for driver
             os.system(f"mkdir -p workdir_{n_drivers}_{n_apis}/{lib}/metadata")
