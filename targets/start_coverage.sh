@@ -129,9 +129,9 @@ do
 
     DRIVER_COVERAGE=${PROJECT_COVERAGE}/${DRIVER_NAME}
     DRIVER_COR=${CORPUS_FOLDER}/${DRIVER_NAME}
-    if [[ -z ${GRAMMAR_MODE} ]]; then
-        mkdir -p $DRIVER_COVERAGE
-    fi
+    # if [[ -z ${GRAMMAR_MODE} ]]; then
+    mkdir -p $DRIVER_COVERAGE
+    # fi
 
     PROFILE_BINARY=${DRIVER_FOLDER}/../profiles/${DRIVER_NAME}_profile
 
@@ -154,6 +154,12 @@ do
         ${LLVM_DIR}/bin/llvm-cov report $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > $DRIVER_COVERAGE/report
         ${LLVM_DIR}/bin/llvm-cov report -show-functions $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > $DRIVER_COVERAGE/functions
         ${LLVM_DIR}/bin/llvm-cov export -format=text $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > $DRIVER_COVERAGE/export.json
+    else
+        # TODO: tail -n 1 report text and remove it
+        ${LLVM_DIR}/bin/llvm-cov report $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > $DRIVER_COVERAGE/report
+        mv $DRIVER_COVERAGE/report $DRIVER_COVERAGE/report_old
+        tail -n 1 $DRIVER_COVERAGE/report_old > $DRIVER_COVERAGE/report
+        rm $DRIVER_COVERAGE/report_old
     fi
 done
 

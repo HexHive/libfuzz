@@ -1,0 +1,54 @@
+
+[INFO] A TASK CRASHED!
+multiprocessing.pool.RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/workspace/libfuzz/main/fuzzing_campaigns/./run_dynamic_drv_creation.py", line 264, in dyn_drv_gen
+    sess = Generator(config)
+  File "/workspace/libfuzz/main/fuzzing_campaigns/../framework/generator/Generator.py", line 7, in __init__
+    config.build_data_layout()
+  File "/workspace/libfuzz/main/fuzzing_campaigns/../framework/generator/Configuration.py", line 275, in build_data_layout
+    data_layout_inst.setup(apis_clang, apis_llvm, incomplete_types,
+  File "/workspace/libfuzz/main/fuzzing_campaigns/../framework/common/datalayout.py", line 43, in setup
+    data_layout = Utils.get_data_layout(data_layout_p)
+  File "/workspace/libfuzz/main/fuzzing_campaigns/../framework/common/utils.py", line 110, in get_data_layout
+    with open(data_layout_p) as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/libfuzz/main/fuzzing_campaigns/../analysis/libvpx/work/apipass/data_layout.txt'
+"""
+
+
+The above exception was the direct cause of the following exception:
+
+
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/libfuzz/main/fuzzing_campaigns/../analysis/libvpx/work/apipass/data_layout.txt'
+
+
+
+[INFO] A TASK CRASHED!
+multiprocessing.pool.RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/workspace/libfuzz/main/fuzzing_campaigns/./run_dynamic_drv_creation.py", line 264, in dyn_drv_gen
+    sess = Generator(config)
+  File "/workspace/libfuzz/main/fuzzing_campaigns/../framework/generator/Generator.py", line 7, in __init__
+    config.build_data_layout()
+  File "/workspace/libfuzz/main/fuzzing_campaigns/../framework/generator/Configuration.py", line 275, in build_data_layout
+    data_layout_inst.setup(apis_clang, apis_llvm, incomplete_types,
+  File "/workspace/libfuzz/main/fuzzing_campaigns/../framework/common/datalayout.py", line 43, in setup
+    data_layout = Utils.get_data_layout(data_layout_p)
+  File "/workspace/libfuzz/main/fuzzing_campaigns/../framework/common/utils.py", line 110, in get_data_layout
+    with open(data_layout_p) as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/libfuzz/main/fuzzing_campaigns/../analysis/libaom/work/apipass/data_layout.txt'
+"""
+
+
+The above exception was the direct cause of the following exception:
+
+
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/libfuzz/main/fuzzing_campaigns/../analysis/libaom/work/apipass/data_layout.txt'
+
+

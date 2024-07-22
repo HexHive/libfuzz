@@ -23,6 +23,7 @@ pool_size = 1
 driver_size = 2
 num_seeds = 1
 backend = "libfuzz"
+bias = "none"
 
 [backend]
 headers = "/workspaces/libfuzz/analysis/libtiff/work/include/"

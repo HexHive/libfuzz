@@ -68,7 +68,7 @@ case $CONF in
     ;;
 
   grammar)
-    export TIMEOUT=24h
+    export TIMEOUT=1h
     export ITERATIONS=1
     export POLICY="constraint_based_grammar"
     # NOTE: these Xs need for run_coverage.sh and run_custer.sh

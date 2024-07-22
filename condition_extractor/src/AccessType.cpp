@@ -540,7 +540,7 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
     // std::map<const Instruction*, AccessTypeSet> all_ats;
     std::map<const Instruction*, ValueMetadata> all_ats;
     for (auto a: allocainst_set) {
-        outs() << "[INFO] paramAT() " << *a << " -- ";
+        // outs() << "[INFO] paramAT() " << *a << " -- ";
         outs() << a->getFunction()->getName().str() << "\n";
         ValueMetadata mdata = ValueMetadata::extractParameterMetadata(
             vfg, a, retType);
@@ -552,9 +552,9 @@ ValueMetadata ValueMetadata::extractReturnMetadata(
         //     outs() << "IsFilePath -> False \n";
         // }
 
-        outs() << "[STARTING POINT] " << *a << "\n";
-        outs() << " result -> " << mdata.getAccessNum() << "AT\n";
-        outs() << " result -> " << mdata.toString(false) << "\n";
+        // outs() << "[STARTING POINT] " << *a << "\n";
+        // outs() << " result -> " << mdata.getAccessNum() << "AT\n";
+        // outs() << " result -> " << mdata.toString(false) << "\n";
         // // exit(1);
 
         // XXX: TO REMOVE LATER

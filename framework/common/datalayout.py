@@ -116,9 +116,15 @@ class DataLayout:
             else:
                 # type_llvm = type_llvm.replace("*", "")
 
+                # if function_name == "cmsIsToneCurveMultisegment":
+                # # if "cmsToneCurve" in type_llvm:
+                #     from IPython import embed; embed(); exit(1)
+
                 # I remove only the last *, if it exists
-                if type_llvm[-1] == "*":
-                    type_llvm = type_llvm[:-1]
+                # if type_llvm[-1] == "*":
+                #     type_llvm = type_llvm[:-1]
+                if "*" in type_llvm:
+                    type_llvm = type_llvm.replace("*", "").replace(" ", "")
                 if type_llvm in self.incomplete_types:
                     t_size = 0
                 elif type_llvm in self.data_layout:
