@@ -1,4 +1,0 @@
-bstr_util_mem_index_of_c
-bstr_wrap_c
-bstr_adjust_realptr
-htp_get_version

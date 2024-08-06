@@ -1,2 +1,0 @@
-bstr_wrap_c
-bstr_adjust_realptr
