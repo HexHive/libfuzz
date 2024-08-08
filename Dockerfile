@@ -77,6 +77,37 @@ COPY ./requirements.txt ${HOME}/python/requirements.txt
 RUN cd ${HOME}/python && python3 -m pip install -r requirements.txt
 
 # ------------------------------------------------------------------------------------------------------------------
+# TARGET FOR LIBRARY DEBUG
+FROM libfuzzpp_dev_image AS libfuzzpp_debug
+
+ENV TOOLS_DIR ${HOME}
+ARG target_name=simple_connection
+
+ENV TARGET_NAME ${target_name}
+
+COPY --link ./llvm-project/build ${HOME}/LLVM/
+ENV LLVM_DIR ${HOME}/LLVM
+# ENV LLVM_DIR ${LIBFUZZ}/llvm-project/build
+ENV TARGET ${HOME}/library
+ENV DRIVER_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
+ENV DRIVER "*"
+
+RUN mkdir -p ${HOME}/${TARGET_NAME}
+WORKDIR ${HOME}/${TARGET_NAME}
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/preinstall.sh ${HOME}/${TARGET_NAME}
+RUN sudo ./preinstall.sh
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/fetch.sh ${HOME}/${TARGET_NAME}
+RUN ./fetch.sh
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/build_library.sh ${HOME}/${TARGET_NAME}
+RUN sed -i 's/-g /-gdwarf-4 /g' ./build_library.sh; 
+RUN sed -i 's/-g\"/-gdwarf-4\"/g' ./build_library.sh
+RUN ./build_library.sh
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/compile_driver.sh ${HOME}/${TARGET_NAME}
+RUN sed -i 's/-g /-gdwarf-4 /g' ./compile_driver.sh
+
+WORKDIR ${LIBFUZZ}
+
+# ------------------------------------------------------------------------------------------------------------------
 # TARGET FOR LIBRARY ANALYSIS
 FROM libfuzzpp_dev_image AS libfuzzpp_analysis
 
