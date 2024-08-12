@@ -104,6 +104,8 @@ RUN sed -i 's/-g\"/-gdwarf-4\"/g' ./build_library.sh
 RUN ./build_library.sh
 COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/compile_driver.sh ${HOME}/${TARGET_NAME}
 RUN sed -i 's/-g /-gdwarf-4 /g' ./compile_driver.sh
+RUN bash -c "$(curl -fsSL https://gef.blah.cat/sh)"
+RUN echo "PROMPT=\"Debug \"\$PROMPT" >> ~/.zshrc
 
 WORKDIR ${LIBFUZZ}
 
