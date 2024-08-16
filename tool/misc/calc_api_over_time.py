@@ -4,16 +4,17 @@ import os, json, argparse
 import matplotlib.pyplot as plt
 
 tot_api = {
-    "pthreadpool":30,
-    "libaom":47,
-    "zlib":88,
-    "c-ares":126,
-    "cpu_features":7,
-    "libpcap":88,
-    "cjson":78,
-    "libvpx":35,
-    'libtiff':197,
-    "minijail":97
+    "pthreadpool": 30,
+    "libaom": 47,
+    "zlib": 88,
+    "c-ares": 126,
+    "cpu_features": 7,
+    "libpcap": 88,
+    "cjson": 78,
+    "libvpx": 35,
+    'libtiff': 197,
+    "minijail": 97,
+    "libhtp": 251
 }
 
 def read_drivers_metadata(d):

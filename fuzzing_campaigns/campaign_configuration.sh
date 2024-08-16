@@ -14,7 +14,7 @@ export USE_CUSTOM_APIS=0
 # used w/ CONF=long
 export USE_PER_LIBRARY_TIMEBUDGET=0
 
-export BIAS="none" # none, api_frequency, seed_number, field_inter, field_sum
+export BIAS="field_sum" # none, api_frequency, seed_number, field_inter, field_sum
 
 case $CONF in
 
@@ -68,7 +68,7 @@ case $CONF in
     ;;
 
   grammar)
-    export TIMEOUT=1h
+    export TIMEOUT=12h
     export ITERATIONS=1
     export POLICY="constraint_based_grammar"
     # NOTE: these Xs need for run_coverage.sh and run_custer.sh

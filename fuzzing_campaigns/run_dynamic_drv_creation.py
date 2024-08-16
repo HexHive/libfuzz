@@ -13,6 +13,19 @@ from framework.driver.factory.constraint_based_grammar import ApiSeqState
 
 is_debug = False
 
+tot_api = {
+    "pthreadpool": 30,
+    "libaom": 47,
+    "zlib": 88,
+    "c-ares": 126,
+    "cpu_features": 7,
+    "libpcap": 88,
+    "cjson": 78,
+    "libvpx": 35,
+    'libtiff': 197,
+    "minijail": 97,
+    "libhtp": 251
+}
 def source_bash_file(file_path):
     """Sources a bash file and returns the environment variables."""
     command = f"source {file_path} && env"
@@ -263,6 +276,7 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
     _ = config.work_dir
     sess = Generator(config)
     drivers_list = dict()
+    library_api_used = set()
     driver_list_history = set()
     
     whole_timeout = convert_to_seconds(conf['TIMEOUT'])
@@ -272,11 +286,20 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
     global base_dir
     host_result_folder = os.path.join(base_dir, "workdir_X_X", project, f"iter_{iteration}", )
     
+    tot_api_project = tot_api[project]
+
     i = 0
     while True:
         
         current_time = datetime.now()
         if (current_time - start_time).total_seconds() >= whole_timeout:
+            break
+
+        l_used = len(library_api_used)
+        perc_used = (l_used/tot_api_project)*100
+        print(f"[INFO] {l_used}/{tot_api_project} [{perc_used}%] API funcs used")
+        if perc_used >= 90:
+            print("[INFO] Enough API func")
             break
     
         # get a new driver
@@ -312,6 +335,17 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
                     os.remove(os.path.join(host_result_folder, "cluster_drivers", f"{driver_name}_cluster"))
                 except:
                     pass
+            # I count its APIs only if the driver 'seems' good
+            else:
+                # print("BBBBB")
+                # from IPython import embed; embed(); exit(1)
+                last_driver = drivers_list[driver_name]
+                for api_func in last_driver[0]:
+                    library_api_used.add(api_func[0].function_name)
+                    
+        with open(os.path.join(base_dir, f"perc_api_{project}.txt"), "w") as f:
+            f.write(f"total: {tot_api_project}\n")
+            f.write(f"used: {l_used}\n")
     
     print("[INFO] Storing paths observed")
     with open(os.path.join(host_result_folder, "paths_observed.txt"), "w") as file:
