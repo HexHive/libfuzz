@@ -1,7 +1,12 @@
 #!/usr/bin/python3
 
-import subprocess, itertools, os, sys, multiprocessing, argparse, traceback
+import subprocess, itertools, os, sys, multiprocessing, argparse, traceback, shutil
 from datetime import datetime
+import numpy as np
+from sklearn.cluster import AffinityPropagation
+from Levenshtein import distance as levenshtein_distance
+
+from typing import Set, Tuple
 
 global base_dir
 base_dir = os.getcwd()
@@ -94,6 +99,65 @@ def create_driver_generator_conf(project, iteration, config):
         
     return generator_conf_path
 
+
+def cluster_drivers(host_result_folder) -> Set[Tuple[str, str]]:
+    make_key = lambda seq : "".join(seq)
+
+    strings = []
+
+    driver_info = dict()
+
+    with open(os.path.join(host_result_folder, "paths_observed.txt"), 'r') as fp:
+        for l in fp:
+            la = l.strip().split(":")
+            if la[2] != "POSITIVE":
+                continue
+            
+            driver_name = la[0]
+            api_seq = la[1].split(";")
+            seeds = int(la[3])
+            
+            key = make_key(api_seq)
+
+            strings += [api_seq]
+            driver_info[key] = (seeds, driver_name)
+
+    n = len(strings)
+    similarity_matrix = np.zeros((n, n))
+
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                similarity_matrix[i, j] = -levenshtein_distance(strings[i], strings[j])
+            else:
+                similarity_matrix[i, j] = 0
+                
+    # Affinity Propagation clustering
+    affinity_propagation = AffinityPropagation(affinity="precomputed", random_state=0)
+    affinity_propagation.fit(similarity_matrix)
+
+    champ_driver = set()
+
+    # Display the results
+    clusters = affinity_propagation.labels_
+    for cluster_id in np.unique(clusters):
+        cluster_info = []
+        for string_id in np.where(clusters == cluster_id)[0]:
+            key = make_key(strings[string_id])
+            (n_seed, driver_name) = driver_info[key]
+            cluster_info += [(n_seed, driver_name, strings[string_id])]
+            # print(f"   {driver_name} {strings[string_id]}: {n_seed}")
+            # break
+            
+        # I know, this can be done in a line...don't annoy please!
+        for _, driver_name, api_seq in sorted(cluster_info, key=lambda tup: tup[0], reverse=True):
+            # a_str = ";".join(a)
+            # print(f"{cluster_id}|{driver_name}|{a_str}|{s}")
+            champ_driver.add((driver_name, ";".join(api_seq)))
+            break
+        
+    return champ_driver
+
 def get_new_driver(sess, drivers_list, driver_list_history):
     
     max_trial = 10
@@ -129,9 +193,12 @@ def get_new_driver(sess, drivers_list, driver_list_history):
 
     return driver_name
 
-def kick_fuzzing_camp(project, iteration, driver_name, cpu_id, time_plateau):
+def kick_fuzzing_camp(project, iteration, driver_name, cpu_id, 
+                      time_plateau = None, driver_timeout = "5m"):
     
     global base_dir
+    
+    print(f"[INFO] Fuzzing {driver_name} for {driver_timeout}")
     
     # working dir -- in the docker
     result_folder = os.path.join(os.sep, "workspaces", "libfuzz", "fuzzing_campaigns", 
@@ -142,11 +209,15 @@ def kick_fuzzing_camp(project, iteration, driver_name, cpu_id, time_plateau):
     
     feedback_file = os.path.join(result_folder, "feedback.txt")
     
-    driver_timeout = "5m"
+    # driver_timeout = "5m"
     
     pwd = f"{base_dir}/.."
     
     # --env LLVM_DIR={llvm_dir}
+    
+    cov_plateau_timeout = ""
+    if time_plateau is not None:
+        cov_plateau_timeout = f"--env COV_PLATEAU_TIMEOUT={time_plateau}"
         
     cmd = f"""docker run 
             --rm 
@@ -158,7 +229,7 @@ def kick_fuzzing_camp(project, iteration, driver_name, cpu_id, time_plateau):
             --env TIMEOUT={driver_timeout} 
             --env FORK_MODE=1 
             --env FEEDBACK={feedback_file} 
-            --env COV_PLATEAU_TIMEOUT={time_plateau}
+            {cov_plateau_timeout}
             -v {pwd}:/workspaces/libfuzz 
             --mount type=tmpfs,destination=/tmpfs 
             -t libfuzzpp_fuzzing_{project}"""
@@ -279,12 +350,24 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
     library_api_used = set()
     driver_list_history = set()
     
+    # from IPython import embed; embed(); exit()
+    
+    is_api_perc_upperbound = "API_PERC_UPPERBOUND" in conf 
+    deep_timeout = None
+    if is_api_perc_upperbound:
+        
+        api_perc_max = int(conf["API_PERC_UPPERBOUND"])
+        
+        if "DEEP_TIMEOUT" not in conf:
+            raise("env var DEEP_TIMEOUT and API_PERC_UPPERBOUND must be set together")
+        deep_timeout = convert_to_seconds(conf['DEEP_TIMEOUT'])
+    
     whole_timeout = convert_to_seconds(conf['TIMEOUT'])
     
     start_time = datetime.now()
     
     global base_dir
-    host_result_folder = os.path.join(base_dir, "workdir_X_X", project, f"iter_{iteration}", )
+    host_result_folder = os.path.join(base_dir, "workdir_X_X", project, f"iter_{iteration}")
     
     tot_api_project = tot_api[project]
 
@@ -298,7 +381,7 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
         l_used = len(library_api_used)
         perc_used = (l_used/tot_api_project)*100
         print(f"[INFO] {l_used}/{tot_api_project} [{perc_used}%] API funcs used")
-        if perc_used >= 90:
+        if is_api_perc_upperbound and perc_used >= api_perc_max:
             print("[INFO] Enough API func")
             break
     
@@ -356,6 +439,32 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
     # mv the generator.toml file in the workdir folder
     config_file_name = os.path.basename(config_file)
     os.rename(config_file, os.path.join(host_result_folder, config_file_name))
+    
+    if deep_timeout is not None:
+        start_time = datetime.now()
+        
+        drivers_for_deep = cluster_drivers(host_result_folder)
+        
+        print("[INFO] Storing the selected drivers")
+        with open(os.path.join(host_result_folder, "selected_drivers.txt"), "w") as f:
+            for driver_name, api_seq in drivers_for_deep:
+                f.write(f"{driver_name};{api_seq}\n")
+        
+        deep_timeout_per_driver = f"{int(deep_timeout/len(drivers_for_deep))}s"
+        
+        print("[INFO] Starting in deep fuzzing for the selected drivers")
+        for driver_name, _ in drivers_for_deep:
+
+            # cp corpus for driver
+            x = os.path.join(host_result_folder, "corpus")
+            y = os.path.join(host_result_folder, "corpus_new", driver_name)
+            z = os.path.join(host_result_folder, "corpus", driver_name)
+            os.system(f"rm -R {z}")
+            os.system(f"cp -r {y} {x}")
+            
+            # kick compilation and fuzzing in docker
+            kick_fuzzing_camp(project, iteration, driver_name, cpu_id, driver_timeout = deep_timeout_per_driver)
+            
     
     print(f"[INFO] Terminate fuzzing session for {project}-{iteration}")
     
