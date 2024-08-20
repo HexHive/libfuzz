@@ -353,13 +353,15 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
     # from IPython import embed; embed(); exit()
     
     is_api_perc_upperbound = "API_PERC_UPPERBOUND" in conf 
-    deep_timeout = None
     if is_api_perc_upperbound:
         
         api_perc_max = int(conf["API_PERC_UPPERBOUND"])
         
         if "DEEP_TIMEOUT" not in conf:
             raise("env var DEEP_TIMEOUT and API_PERC_UPPERBOUND must be set together")
+        
+    deep_timeout = None
+    if "DEEP_TIMEOUT" in conf:        
         deep_timeout = convert_to_seconds(conf['DEEP_TIMEOUT'])
     
     whole_timeout = convert_to_seconds(conf['TIMEOUT'])
