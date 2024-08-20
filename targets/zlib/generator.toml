@@ -21,6 +21,7 @@ pool_size = 1
 driver_size = 2
 num_seeds = 1
 backend = "libfuzz"
+bias = "field_sum"
 
 [backend]
 headers = "/workspaces/libfuzz/analysis/zlib/work/include/"

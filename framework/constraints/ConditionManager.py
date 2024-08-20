@@ -78,6 +78,11 @@ class ConditionManager:
             x.function_name)
 
         for api in self.api_list_all:
+            
+            # if api.function_name == "gzclose_r":
+            #     print(f"check {api.function_name} as sink")
+            #     from IPython import embed; embed(); exit()
+            
             fun_cond = get_cond(api)
             if (len(api.arguments_info) == 1 and 
                 self.is_return_sink(api.return_info.type) and
@@ -96,6 +101,9 @@ class ConditionManager:
 
     def is_return_sink(self, token_type: str):
         if token_type == "void":
+            return True
+        
+        if token_type == "int":
             return True
         
         if DataLayout.instance().is_enum_type(token_type):
