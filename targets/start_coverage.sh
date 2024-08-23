@@ -72,11 +72,7 @@ if [[ $TOTAL_DRIVER_COVERAGE_COMULATIVE ]]; then
     mapfile -t FUZZ_TARGETS_ARR <<< "${FUZZ_TARGETS[@]}"
 
     # Sort the array by extracting the number at the end of each string
-    SORTED_DRIVERS=($(for driver in "${FUZZ_TARGETS_ARR[@]}"; do
-        # Extract the numeric part using parameter expansion and regex
-        num=$(echo "$driver" | grep -o '[0-9]*$')
-        echo "$num $driver"
-    done | sort -n | awk '{print $2}'))
+    SORTED_DRIVERS=($(for driver in "${FUZZ_TARGETS_ARR[@]}"; do num=$(echo "$driver" | grep -o '[0-9]*$'); echo "$num $driver"; done | sort -n | awk '{print $2}'))
 
     PROFDATA_COMULATIVE=()
     OBJECTS=""
