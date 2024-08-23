@@ -6,7 +6,9 @@ echo "[INFO] COVERAGE METRICS: ${TARGET_NAME}"
 REPO="/home/libfuzz/library/repo"
 
 
-rm -Rf ${PROJECT_COVERAGE} || true
+if [[ -z ${TOTAL_DRIVER_COVERAGE_COMULATIVE} ]]; then
+    rm -Rf ${PROJECT_COVERAGE} || true
+fi
 mkdir -p ${PROJECT_COVERAGE}
 
 SOURCES="$(find $REPO -iname '*.h' -or -iname '*.cpp' -or -iname '*.c' -or -iname '*.cc')"
@@ -65,6 +67,59 @@ if [[ $TOTAL_LIBRARY_COVERAGE ]]; then
     exit 0
 fi
 
+if [[ $TOTAL_DRIVER_COVERAGE_COMULATIVE ]]; then
+    FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"    
+    mapfile -t FUZZ_TARGETS_ARR <<< "${FUZZ_TARGETS[@]}"
+
+    # Sort the array by extracting the number at the end of each string
+    SORTED_DRIVERS=($(for driver in "${FUZZ_TARGETS_ARR[@]}"; do
+        # Extract the numeric part using parameter expansion and regex
+        num=$(echo "$driver" | grep -o '[0-9]*$')
+        echo "$num $driver"
+    done | sort -n | awk '{print $2}'))
+
+    PROFDATA_COMULATIVE=()
+    OBJECTS=""
+    for d in ${SORTED_DRIVERS[@]}; do
+        DRIVER_NAME=$(basename $d)
+
+        # workdir_X_X/cpu_features/iter_1/drivers/driver0 -> $d
+        # workdir_X_X/cpu_features/iter_1/coverage_data/driver0.profdata
+
+        # Step 1: Replace 'drivers' with 'coverage_data'
+        d_profdata="${d/drivers/coverage_data}.profdata"
+
+        PROFDATA_COMULATIVE+=("${d_profdata}")
+
+        DRIVER_COVERAGE_COMULATIVE=${PROJECT_COVERAGE}/${DRIVER_NAME}_comulative.profdata
+
+        ${LLVM_DIR}/bin/llvm-profdata merge -sparse ${PROFDATA_COMULATIVE[@]} -o ${DRIVER_COVERAGE_COMULATIVE}
+
+        PROFILE_BINARY=${DRIVER_FOLDER}/../profiles/${DRIVER_NAME}_profile
+        if [[ -z ${OBJECTS} ]]; then
+            # The first object needs to be passed without -object= flag.
+            OBJECTS="$PROFILE_BINARY"
+        else
+            OBJECTS="$OBJECTS -object=${PROFILE_BINARY}"
+        fi
+
+        if [[ -z ${GRAMMAR_MODE} ]]; then
+            # TODO: not sure I need this in non-grammar mode
+            # ${LLVM_DIR}/bin/llvm-cov show $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > $DRIVER_COVERAGE/show
+            # ${LLVM_DIR}/bin/llvm-cov report $OBJECTS -instr-profile=${d_profdata} -ignore-filename-regex=$DRIVER_PATH_REGEX > ${PROJECT_COVERAGE}/${DRIVER_NAME}/report_comulative
+            # ${LLVM_DIR}/bin/llvm-cov report -show-functions $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > $DRIVER_COVERAGE/functions
+            # ${LLVM_DIR}/bin/llvm-cov export -format=text $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > $DRIVER_COVERAGE/export.json
+        else
+            # TODO: tail -n 1 report text and remove it
+            ${LLVM_DIR}/bin/llvm-cov report $OBJECTS -instr-profile=${DRIVER_COVERAGE_COMULATIVE} -ignore-filename-regex=$DRIVER_PATH_REGEX > ${PROJECT_COVERAGE}/${DRIVER_NAME}/report_comulative
+            mv ${PROJECT_COVERAGE}/${DRIVER_NAME}/report_comulative ${PROJECT_COVERAGE}/${DRIVER_NAME}/report_old
+            tail -n 1 ${PROJECT_COVERAGE}/${DRIVER_NAME}/report_old > ${PROJECT_COVERAGE}/${DRIVER_NAME}/report_comulative
+            rm ${PROJECT_COVERAGE}/${DRIVER_NAME}/report_old
+        fi
+
+    done
+    exit 0
+fi
 
 if [[ $TOTAL_DRIVER_COVERAGE ]]; then
     DRIVER_FOLDER=${PROJECT_FOLDER}/drivers
