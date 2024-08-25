@@ -42,7 +42,7 @@ all the runs of a campaign by using a stack trace approach (more in the paper).
 
 ## Debugging a crash
 
-There are two way2 to debug a crash.
+There are two ways to debug a crash.
 
 **Debug with ASAN instrumentation**:  
 Use GDB directly against the driver and the crash under analysis. The
@@ -70,6 +70,18 @@ You have to compile the library and the driver not for fuzzing and repeat the
 same operation from above. It could be that the bug is impossible to reproduce
 without ASAN tho.  
 **TODO:** document how to build library/drivers w/o ASAN.
+
+
+**Debug environment**:
+
+We also provided a debug container to help you set up the minimal environment.
+```bash
+cd $LIBFUZZ_HOME
+./start_debugenv.sh $TARGET_NAME
+```
+
+Where `TARGET_NAME` is one of the project in the `./target` folder.
+
 
 <hr />
 [1] https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
