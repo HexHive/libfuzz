@@ -2,6 +2,7 @@
 
 
 import argparse, os
+import numpy as np
 import matplotlib.pyplot as plt
 
 def get_runs(rootdir, is_grammar):
@@ -30,11 +31,7 @@ def _main():
     
     n_runs = get_runs(rootdir, is_grammar)
     
-    data = dict()
-    
-    # Example data
-    x = []
-    y = []
+    data = []
     
     for i in range(1, n_runs+1):
         if is_grammar:
@@ -42,7 +39,7 @@ def _main():
         else:
             raise Exception("I can't handle w/o is_grammar")
             
-        
+        raw_data = dict()
         
         for a_driver in os.listdir(cov_dir):
             # Get the full path of the item
@@ -55,25 +52,45 @@ def _main():
                     line = f.readline()
                     cov = line.split()[-1].replace("%", "")
                     
-                data[a_driver] = float(cov)
+                raw_data[a_driver] = float(cov)
 
-    sorted_data = {
-        key: data[key] for key in sorted(data.keys(), key=lambda k: int(k[6:]))
-    }
+        # from IPython import embed; embed(); exit(1)
+        data += [list(raw_data[key] for key in sorted(raw_data.keys(), key=lambda k: int(k[6:])))]
+        # print(data)
                 
-    # from IPython import embed; embed(); exit(1)
-    
-    for k, v in sorted_data.items():
-        x += [k[6:]]
-        y += [v]
 
-    # Create a line plot
-    plt.plot(x, y, label=f"{target}", color='blue')
+    max_len = max(len(cov) for cov in data)
+
+    # I propagate last element if series' length does not match
+    for cov in data:
+        to_add = max_len - len(cov) 
+        last_el = cov[-1]
+        for _ in range(to_add):
+            cov += [last_el]
+
+    # from IPython import embed; embed(); exit(1)
 
     # Add title and labels
     plt.title('Comulative Coverage')
     plt.xlabel('N. Drivers')
     plt.ylabel('Com. Coverage')
+
+    # Calculate the mean, max, and min across the temporal series (axis=0 for column-wise operation)
+    mean_series = np.mean(data, axis=0)
+    max_series = np.max(data, axis=0)
+    min_series = np.min(data, axis=0)
+
+
+    # from IPython import embed; embed(); exit(1)
+
+    # Plotting
+    plt.figure(figsize=(10, 6))
+    plt.plot(mean_series, label='Average', color='blue')
+    plt.plot(max_series, label='Max', color='red')
+    plt.plot(min_series, label='Min', color='green')
+
+    # Optional: Fill between min and max for visualization
+    plt.fill_between(range(max_len), min_series, max_series, color='gray', alpha=0.2)
 
     # Add a legend
     plt.legend()
