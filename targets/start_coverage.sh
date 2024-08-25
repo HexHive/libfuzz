@@ -100,6 +100,8 @@ if [[ $TOTAL_DRIVER_COVERAGE_COMULATIVE ]]; then
         fi
 
         if [[ -z ${GRAMMAR_MODE} ]]; then
+            echo "TODO: not implemented yet"
+            exit 0
             # TODO: not sure I need this in non-grammar mode
             # ${LLVM_DIR}/bin/llvm-cov show $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > $DRIVER_COVERAGE/show
             # ${LLVM_DIR}/bin/llvm-cov report $OBJECTS -instr-profile=${d_profdata} -ignore-filename-regex=$DRIVER_PATH_REGEX > ${PROJECT_COVERAGE}/${DRIVER_NAME}/report_comulative
