@@ -194,11 +194,15 @@ def get_new_driver(sess, drivers_list, driver_list_history):
     return driver_name
 
 def kick_fuzzing_camp(project, iteration, driver_name, cpu_id, 
-                      time_plateau = None, driver_timeout = "5m"):
+                      time_plateau = None, driver_timeout = "5m", 
+                      message = ""):
     
     global base_dir
     
-    print(f"[INFO] Fuzzing {driver_name} for {driver_timeout}")
+    if message:
+        print(f"[INFO] Fuzzing {driver_name} for {driver_timeout} [{message}]")
+    else:
+        print(f"[INFO] Fuzzing {driver_name} for {driver_timeout}")
     
     # working dir -- in the docker
     result_folder = os.path.join(os.sep, "workspaces", "libfuzz", "fuzzing_campaigns", 
@@ -398,7 +402,7 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
             
         # kick compilation and fuzzing in docker
         kick_fuzzing_camp(project, iteration, driver_name, 
-                            cpu_id, time_plateau)
+                            cpu_id, time_plateau, message = "GEN")
         
         # process feedback
         if os.path.exists(feedback_file):
@@ -465,7 +469,8 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
             os.system(f"cp -r {y} {x}")
             
             # kick compilation and fuzzing in docker
-            kick_fuzzing_camp(project, iteration, driver_name, cpu_id, driver_timeout = deep_timeout_per_driver)
+            kick_fuzzing_camp(project, iteration, driver_name, cpu_id, 
+                              driver_timeout = deep_timeout_per_driver, message = "DEEP")
             
     
     print(f"[INFO] Terminate fuzzing session for {project}-{iteration}")
