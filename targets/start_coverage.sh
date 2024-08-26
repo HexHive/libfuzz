@@ -6,7 +6,7 @@ echo "[INFO] COVERAGE METRICS: ${TARGET_NAME}"
 REPO="/home/libfuzz/library/repo"
 
 
-if [[ -z ${TOTAL_DRIVER_COVERAGE_COMULATIVE} ]]; then
+if [[ -z ${TOTAL_DRIVER_COVERAGE_COMULATIVE} ]] && [[ -z ${RECALC_COV_ITER} ]]; then
     rm -Rf ${PROJECT_COVERAGE} || true
 fi
 mkdir -p ${PROJECT_COVERAGE}
@@ -174,47 +174,49 @@ fi
 
 
 FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
-for d in $FUZZ_TARGETS
-do
-    echo $d
-    DRIVER_NAME=$(basename $d)
-    echo "COVERAGE: ${DRIVER_NAME}"
+if [[ -z {RECALC_COV_ITER} ]]; then
+    for d in $FUZZ_TARGETS
+    do
+        echo $d
+        DRIVER_NAME=$(basename $d)
+        echo "COVERAGE: ${DRIVER_NAME}"
 
-    DRIVER_COVERAGE=${PROJECT_COVERAGE}/${DRIVER_NAME}
-    DRIVER_COR=${CORPUS_FOLDER}/${DRIVER_NAME}
-    # if [[ -z ${GRAMMAR_MODE} ]]; then
-    mkdir -p $DRIVER_COVERAGE
-    # fi
+        DRIVER_COVERAGE=${PROJECT_COVERAGE}/${DRIVER_NAME}
+        DRIVER_COR=${CORPUS_FOLDER}/${DRIVER_NAME}
+        # if [[ -z ${GRAMMAR_MODE} ]]; then
+        mkdir -p $DRIVER_COVERAGE
+        # fi
 
-    PROFILE_BINARY=${DRIVER_FOLDER}/../profiles/${DRIVER_NAME}_profile
+        PROFILE_BINARY=${DRIVER_FOLDER}/../profiles/${DRIVER_NAME}_profile
 
-    INPUTS="$(ls $DRIVER_COR)"
-    for input in $INPUTS; do
-        LLVM_PROFILE_FILE="${DRIVER_NAME}-${input}.profraw" timeout -k 10s 1m $PROFILE_BINARY -runs=0 $DRIVER_COR/$input
-        # the coverage produces a timeout, we might consider it as a timeout crash
-        if [[ $? -ne 0 ]]; then
-            echo "[INFO] Error while computing the coverage, moving to crashes"
-            CRASH_FOLDER="${CORPUS_FOLDER/corpus_new/crashes}"
-            cp $DRIVER_COR/$input ${CRASH_FOLDER}/${DRIVER_NAME}/coverr-$input
+        INPUTS="$(ls $DRIVER_COR)"
+        for input in $INPUTS; do
+            LLVM_PROFILE_FILE="${DRIVER_NAME}-${input}.profraw" timeout -k 10s 1m $PROFILE_BINARY -runs=0 $DRIVER_COR/$input
+            # the coverage produces a timeout, we might consider it as a timeout crash
+            if [[ $? -ne 0 ]]; then
+                echo "[INFO] Error while computing the coverage, moving to crashes"
+                CRASH_FOLDER="${CORPUS_FOLDER/corpus_new/crashes}"
+                cp $DRIVER_COR/$input ${CRASH_FOLDER}/${DRIVER_NAME}/coverr-$input
+            fi
+            mv ${DRIVER_NAME}-${input}.profraw $PROJECT_COVERAGE
+        done
+
+        ${LLVM_DIR}/bin/llvm-profdata merge -sparse $PROJECT_COVERAGE/${DRIVER_NAME}-*.profraw -o $PROJECT_COVERAGE/${DRIVER_NAME}.profdata
+        rm -f $PROJECT_COVERAGE/${DRIVER_NAME}-*.profraw
+        if [[ -z ${GRAMMAR_MODE} ]]; then
+            ${LLVM_DIR}/bin/llvm-cov show $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > $DRIVER_COVERAGE/show
+            ${LLVM_DIR}/bin/llvm-cov report $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > $DRIVER_COVERAGE/report
+            ${LLVM_DIR}/bin/llvm-cov report -show-functions $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > $DRIVER_COVERAGE/functions
+            ${LLVM_DIR}/bin/llvm-cov export -format=text $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > $DRIVER_COVERAGE/export.json
+        else
+            # TODO: tail -n 1 report text and remove it
+            ${LLVM_DIR}/bin/llvm-cov report $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > $DRIVER_COVERAGE/report
+            mv $DRIVER_COVERAGE/report $DRIVER_COVERAGE/report_old
+            tail -n 1 $DRIVER_COVERAGE/report_old > $DRIVER_COVERAGE/report
+            rm $DRIVER_COVERAGE/report_old
         fi
-        mv ${DRIVER_NAME}-${input}.profraw $PROJECT_COVERAGE
     done
-
-    ${LLVM_DIR}/bin/llvm-profdata merge -sparse $PROJECT_COVERAGE/${DRIVER_NAME}-*.profraw -o $PROJECT_COVERAGE/${DRIVER_NAME}.profdata
-    rm -f $PROJECT_COVERAGE/${DRIVER_NAME}-*.profraw
-    if [[ -z ${GRAMMAR_MODE} ]]; then
-        ${LLVM_DIR}/bin/llvm-cov show $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > $DRIVER_COVERAGE/show
-        ${LLVM_DIR}/bin/llvm-cov report $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > $DRIVER_COVERAGE/report
-        ${LLVM_DIR}/bin/llvm-cov report -show-functions $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata $SOURCES -ignore-filename-regex=$DRIVER_PATH_REGEX > $DRIVER_COVERAGE/functions
-        ${LLVM_DIR}/bin/llvm-cov export -format=text $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata > $DRIVER_COVERAGE/export.json
-    else
-        # TODO: tail -n 1 report text and remove it
-        ${LLVM_DIR}/bin/llvm-cov report $PROFILE_BINARY -instr-profile=$PROJECT_COVERAGE/${DRIVER_NAME}.profdata -ignore-filename-regex=$DRIVER_PATH_REGEX > $DRIVER_COVERAGE/report
-        mv $DRIVER_COVERAGE/report $DRIVER_COVERAGE/report_old
-        tail -n 1 $DRIVER_COVERAGE/report_old > $DRIVER_COVERAGE/report
-        rm $DRIVER_COVERAGE/report_old
-    fi
-done
+fi
 
 OBJECTS=""
 for d in $FUZZ_TARGETS; do

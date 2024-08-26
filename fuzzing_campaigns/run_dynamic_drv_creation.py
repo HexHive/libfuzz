@@ -15,6 +15,7 @@ sys.path.append(PROJECT_FOLDER)
 from framework import * 
 from generator import Generator, Configuration
 from framework.driver.factory.constraint_based_grammar import ApiSeqState
+import tool.misc.cluster as clst
 
 is_debug = False
 
@@ -98,65 +99,6 @@ def create_driver_generator_conf(project, iteration, config):
         f.write("\n")
         
     return generator_conf_path
-
-
-def cluster_drivers(host_result_folder) -> Set[Tuple[str, str]]:
-    make_key = lambda seq : "".join(seq)
-
-    strings = []
-
-    driver_info = dict()
-
-    with open(os.path.join(host_result_folder, "paths_observed.txt"), 'r') as fp:
-        for l in fp:
-            la = l.strip().split(":")
-            if la[2] != "POSITIVE":
-                continue
-            
-            driver_name = la[0]
-            api_seq = la[1].split(";")
-            seeds = int(la[3])
-            
-            key = make_key(api_seq)
-
-            strings += [api_seq]
-            driver_info[key] = (seeds, driver_name)
-
-    n = len(strings)
-    similarity_matrix = np.zeros((n, n))
-
-    for i in range(n):
-        for j in range(n):
-            if i != j:
-                similarity_matrix[i, j] = -levenshtein_distance(strings[i], strings[j])
-            else:
-                similarity_matrix[i, j] = 0
-                
-    # Affinity Propagation clustering
-    affinity_propagation = AffinityPropagation(affinity="precomputed", random_state=0)
-    affinity_propagation.fit(similarity_matrix)
-
-    champ_driver = set()
-
-    # Display the results
-    clusters = affinity_propagation.labels_
-    for cluster_id in np.unique(clusters):
-        cluster_info = []
-        for string_id in np.where(clusters == cluster_id)[0]:
-            key = make_key(strings[string_id])
-            (n_seed, driver_name) = driver_info[key]
-            cluster_info += [(n_seed, driver_name, strings[string_id])]
-            # print(f"   {driver_name} {strings[string_id]}: {n_seed}")
-            # break
-            
-        # I know, this can be done in a line...don't annoy please!
-        for _, driver_name, api_seq in sorted(cluster_info, key=lambda tup: tup[0], reverse=True):
-            # a_str = ";".join(a)
-            # print(f"{cluster_id}|{driver_name}|{a_str}|{s}")
-            champ_driver.add((driver_name, ";".join(api_seq)))
-            break
-        
-    return champ_driver
 
 def get_new_driver(sess, drivers_list, driver_list_history):
     
@@ -449,12 +391,12 @@ def dyn_drv_gen(project, iteration, conf, running_threads = None):
     if deep_timeout is not None:
         start_time = datetime.now()
         
-        drivers_for_deep = cluster_drivers(host_result_folder)
+        drivers_for_deep = clst.cluster_drivers(host_result_folder)
         
         print("[INFO] Storing the selected drivers")
         with open(os.path.join(host_result_folder, "selected_drivers.txt"), "w") as f:
             for driver_name, api_seq in drivers_for_deep:
-                f.write(f"{driver_name};{api_seq}\n")
+                f.write(f"{driver_name}:{api_seq}\n")
         
         deep_timeout_per_driver = f"{int(deep_timeout/len(drivers_for_deep))}s"
         
