@@ -5,7 +5,6 @@ echo "[INFO] COVERAGE METRICS: ${TARGET_NAME}"
 
 REPO="/home/libfuzz/library/repo"
 
-
 if [[ -z ${TOTAL_DRIVER_COVERAGE_COMULATIVE} ]] && [[ -z ${RECALC_COV_ITER} ]]; then
     rm -Rf ${PROJECT_COVERAGE} || true
 fi
@@ -172,9 +171,8 @@ if [[ $TOTAL_LIBRARY_COVERAGE_FOR_CONFIGURATION ]]; then
     exit 0
 fi
 
-
 FUZZ_TARGETS="$(find ${DRIVER_FOLDER} -type f -executable)"
-if [[ -z {RECALC_COV_ITER} ]]; then
+if [[ -z ${RECALC_COV_ITER} ]]; then
     for d in $FUZZ_TARGETS
     do
         echo $d

@@ -28,19 +28,19 @@ store_results_to ${GEN24_DEEP0}
 export CONF=grammar; ./select_stable_drivers_cluster.py -d ${GEN24_DEEP0} -t ${GEN_TIME18} -k
 export CONF=grammar; ./run_dynamic_drv_deep.py; ./run_coverage.sh
 export CONF=grammar; ./cp_coverage_from_generation_phase.py -d ${GEN24_DEEP0}
-export CONF=grammar; ./run_coverage_recalc_iter.sh; ./get_total_library_coverage.sh; 
+export CONF=grammar; ./run_coverage.sh recalciter; ./get_total_library_coverage.sh; 
 store_results_to ${GEN18_DEEP6}
 
 # select best drivers from 12h and deep for 12h
 export CONF=grammar; ./select_stable_drivers_cluster.py -d ${GEN24_DEEP0} -t ${GEN_TIME12} -k
 export CONF=grammar; ./run_dynamic_drv_deep.py; ./run_coverage.sh
 export CONF=grammar; ./cp_coverage_from_generation_phase.py -d ${GEN24_DEEP0}
-export CONF=grammar; ./run_coverage_recalc_iter.sh; ./get_total_library_coverage.sh; 
+export CONF=grammar; ./run_coverage.sh recalciter; ./get_total_library_coverage.sh; 
 store_results_to ${GEN12_DEEP12}
 
 # select best drivers from 6h and deep for 18h
 export CONF=grammar; ./select_stable_drivers_cluster.py -d ${GEN24_DEEP0} -t ${GEN_TIME6} -k
 export CONF=grammar; ./run_dynamic_drv_deep.py; ./run_coverage.sh
 export CONF=grammar; ./cp_coverage_from_generation_phase.py -d ${GEN24_DEEP0}
-export CONF=grammar; ./run_coverage_recalc_iter.sh; ./get_total_library_coverage.sh; 
+export CONF=grammar; ./run_coverage.sh recalciter; ./get_total_library_coverage.sh; 
 store_results_to ${GEN6_DEEP18}

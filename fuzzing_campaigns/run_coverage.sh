@@ -7,6 +7,32 @@ LIBPP=../
 
 echo "[INFO] Running: $IMG_NAME"
 
+DO_COMULATIVE_COVERAGE=0
+DO_RECALC_COVERAGE_PER_ITER=0
+if [ "$#" -eq 1 ]
+then
+    if [ "$1" == "-h" ]
+    then
+        echo "$0 comulative -> to calculate comulative cogerage"
+        echo "$0 recalciter -> to re-calculate cogerage per iter"
+        exit 0
+    fi
+
+    if [ "$1" == "comulative" ];
+    then
+        DO_COMULATIVE_COVERAGE=1
+    elif [ "$1" == "recalciter" ];
+    then
+        DO_RECALC_COVERAGE_PER_ITER=1
+    else
+        echo "[ERROR] unknown paramenter '$1'"
+        exit 1
+    fi
+fi
+
+echo "DO_COMULATIVE_COVERAGE: ${DO_COMULATIVE_COVERAGE}"
+echo "DO_RECALC_COVERAGE_PER_ITER: ${DO_RECALC_COVERAGE_PER_ITER}"
+
 CPU_ID=0
 declare -A CPU_ALLOCATED
 for cpu in $( eval echo {0..${MAX_CPUs}} ); do
@@ -37,6 +63,16 @@ for project in "${PROJECTS[@]}"; do
         -f "$LIBPP/Dockerfile" "$LIBPP"
     set +x
 done
+
+ADDITIONAL_OPTION=""
+if [[ ${DO_COMULATIVE_COVERAGE} -eq 1 ]]
+then
+    ADDITIONAL_OPTION="--env TOTAL_DRIVER_COVERAGE_COMULATIVE=1 "
+fi
+if [[ ${DO_RECALC_COVERAGE_PER_ITER} -eq 1 ]]
+then
+    ADDITIONAL_OPTION="--env RECALC_COV_ITER=1 "
+fi
 
 COV_ID=0
 for project in "${PROJECTS[@]}"; do
@@ -83,6 +119,7 @@ for project in "${PROJECTS[@]}"; do
                         --env TARGET=${project} \
                         --env CORPUS_FOLDER=${CORPUS_FOLDER} \
                         --env GRAMMAR_MODE=${GRAMMAR_MODE} \
+                        ${ADDITIONAL_OPTION} \
                         -v $(pwd)/..:/workspaces/libfuzz \
                         --mount type=tmpfs,destination=/tmpfs \
                         "${IMG_NAME}-${project}"
@@ -99,9 +136,20 @@ while [[ $(count_docker_running) -gt 0 ]]; do
     sleep 1m
 done
 
-echo "[INFO] Coverage collection terminated"
+if [[ ${DO_COMULATIVE_COVERAGE} -eq 1 ]];
+then
+    echo "[INFO] Comulative collection terminated"
+elif [[ ${DO_RECALC_COVERAGE_PER_ITER} -eq 1 ]];
+then
+    echo "[INFO] Recalc coverage per iter terminated"
+else
+    echo "[INFO] Coverage collection terminated"
+fi
 
-rm ../crash-* || true
-rm ../oom-* || true
-rm ../timeout-* || true
-rm ../*.bin || true
+if [[ ${DO_COMULATIVE_COVERAGE} -eq 1 ]] || [[ ${DO_RECALC_COVERAGE_PER_ITER} -eq 1 ]];
+then
+    rm ../crash-* || true
+    rm ../oom-* || true
+    rm ../timeout-* || true
+    rm ../*.bin || true
+fi
