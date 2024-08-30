@@ -43,6 +43,7 @@ def _main():
     simulate = args.simulate
     # keepcorpus = args.keepcorpus
     selecting_gen_time = normalize_time_boudget(args.selectig_gen_time)
+    time_window = timedelta(seconds=selecting_gen_time)
     
     # # I do not like this mix'd configuration
     my_conf = source_bash_file("campaign_configuration.sh")
@@ -66,9 +67,9 @@ def _main():
                     driver_name, _ = l.split(":")
                     drivers_for_deep += [driver_name]
                     
-            creation_time_driver0 = clst.get_creation_time(os.path.join(result_folder, "drivers", "driver0.cc"))
+            creation_time_driver0 = clst.get_creation_time(os.path.join(result_folder, "driver0.cc"))
             driver0_creation_datetime = datetime.fromtimestamp(creation_time_driver0)
-            time_window = timedelta(seconds=selecting_gen_time)
+            
             
             drivers_to_keep[lib][r] = []
             for driver in os.listdir(result_folder):
@@ -78,7 +79,7 @@ def _main():
                 if driver in drivers_for_deep:
                     continue
                 
-                driver_path = os.path.join(result_folder, "drivers", f"{driver_name}.cc")
+                driver_path = os.path.join(result_folder, f"{driver}.cc")
                 driver_creation_time = clst.get_creation_time(driver_path)
                 driver_creation_datetime = datetime.fromtimestamp(driver_creation_time)
                 
