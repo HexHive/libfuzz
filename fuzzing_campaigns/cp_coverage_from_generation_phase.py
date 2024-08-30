@@ -7,6 +7,7 @@ PROJECT_FOLDER="../"
 sys.path.append(PROJECT_FOLDER)
 
 import tool.misc.cluster as clst
+from datetime import datetime, timedelta
 
 seconds_per_unit = {"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800}
 
@@ -29,8 +30,8 @@ def _main():
     parser = argparse.ArgumentParser(description='Select stable drivers')
     parser.add_argument('-rootdir', '-d', type=str, 
                         help='Driver Folder', required=True)
-    # parser.add_argument('-selectig_gen_time', '-t', type=str, default="12h",
-    #                     help='Time interval for selecting the drivers to cluster', required=True)
+    parser.add_argument('-selectig_gen_time', '-t', type=str, default="12h",
+                        help='Time interval for selecting the drivers to cluster', required=True)
     parser.add_argument('-simulate', '-s', choices=['full', 'short'], const='full', nargs='?',
                         help='Simulation only, not moving files around', 
                         required=False)
@@ -41,7 +42,7 @@ def _main():
     rootdir = args.rootdir
     simulate = args.simulate
     # keepcorpus = args.keepcorpus
-    # selecting_gen_time = normalize_time_boudget(args.selectig_gen_time)
+    selecting_gen_time = normalize_time_boudget(args.selectig_gen_time)
     
     # # I do not like this mix'd configuration
     my_conf = source_bash_file("campaign_configuration.sh")
@@ -64,11 +65,27 @@ def _main():
                 for l in f:
                     driver_name, _ = l.split(":")
                     drivers_for_deep += [driver_name]
+                    
+            creation_time_driver0 = clst.get_creation_time(os.path.join(result_folder, "drivers", "driver0.cc"))
+            driver0_creation_datetime = datetime.fromtimestamp(creation_time_driver0)
+            time_window = timedelta(seconds=selecting_gen_time)
             
             drivers_to_keep[lib][r] = []
             for driver in os.listdir(result_folder):
-                if not driver.endswith(".cc") and driver not in drivers_for_deep:
-                    drivers_to_keep[lib][r] += [driver]
+                if driver.endswith(".cc"):
+                    continue
+            
+                if driver in drivers_for_deep:
+                    continue
+                
+                driver_path = os.path.join(result_folder, "drivers", f"{driver_name}.cc")
+                driver_creation_time = clst.get_creation_time(driver_path)
+                driver_creation_datetime = datetime.fromtimestamp(driver_creation_time)
+                
+                if driver_creation_datetime - driver0_creation_datetime >= time_window:
+                    continue
+                    
+                drivers_to_keep[lib][r] += [driver]
             # drivers_for_deep = clst.cluster_drivers(result_folder, selecting_gen_time)
             # deep_fuzzing_time = total_generation_time-selecting_gen_time
             # best_drivers[lib][r] = drivers_for_deep
@@ -102,20 +119,20 @@ def _main():
             print(f"{lib} {r}: {len(drvs)} drivers")
             for driver in drvs:
 
-                # cp compiled driver
-                os.system(f"mkdir -p workdir_X_X/{lib}/iter_{r}/drivers")
-                os.system(f"cp {rootdir}/workdir_X_X/{lib}/iter_{r}/drivers/{driver} workdir_X_X/{lib}/iter_{r}/drivers")
+                # # cp compiled driver
+                # os.system(f"mkdir -p workdir_X_X/{lib}/iter_{r}/drivers")
+                # os.system(f"cp {rootdir}/workdir_X_X/{lib}/iter_{r}/drivers/{driver} workdir_X_X/{lib}/iter_{r}/drivers")
 
-                # cp source code driver
-                os.system(f"cp {rootdir}/workdir_X_X/{lib}/iter_{r}/drivers/{driver}.cc workdir_X_X/{lib}/iter_{r}/drivers")
+                # # cp source code driver
+                # os.system(f"cp {rootdir}/workdir_X_X/{lib}/iter_{r}/drivers/{driver}.cc workdir_X_X/{lib}/iter_{r}/drivers")
 
                 # cp profile driver
                 os.system(f"mkdir -p workdir_X_X/{lib}/iter_{r}/profiles")
                 os.system(f"cp {rootdir}/workdir_X_X/{lib}/iter_{r}/profiles/{driver}_profile workdir_X_X/{lib}/iter_{r}/profiles")
 
-                # cp cluster driver
-                os.system(f"mkdir -p workdir_X_X/{lib}/iter_{r}/cluster_drivers")
-                os.system(f"cp {rootdir}/workdir_X_X/{lib}/iter_{r}/cluster_drivers/{driver}_cluster workdir_X_X/{lib}/iter_{r}/cluster_drivers")
+                # # cp cluster driver
+                # os.system(f"mkdir -p workdir_X_X/{lib}/iter_{r}/cluster_drivers")
+                # os.system(f"cp {rootdir}/workdir_X_X/{lib}/iter_{r}/cluster_drivers/{driver}_cluster workdir_X_X/{lib}/iter_{r}/cluster_drivers")
 
                 # # cp corpus for driver
                 # os.system(f"mkdir -p workdir_X_X/{lib}/iter_{r}/corpus")
