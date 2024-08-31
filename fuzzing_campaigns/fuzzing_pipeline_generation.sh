@@ -21,7 +21,7 @@ GEN12_DEEP12=gen12_deep12
 GEN6_DEEP18=gen6_deep18
 
 # dyn generation for 24 hours and no deep
-export CONF=grammar; ./run_dynamic_drv_creation.py; ./run_coverage.sh; ./get_total_library_coverage.sh;
+export CONF=grammar; ./run_dynamic_drv_creation.py; ./run_coverage.sh; ./run_coverage.sh comulative; ./get_total_library_coverage.sh;
 store_results_to ${GEN24_DEEP0}
 
 # select best drivers from 18h and deep for 6h

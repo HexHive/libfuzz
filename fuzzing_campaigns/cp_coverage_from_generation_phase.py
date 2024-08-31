@@ -128,8 +128,11 @@ def _main():
                 # os.system(f"cp {rootdir}/workdir_X_X/{lib}/iter_{r}/drivers/{driver}.cc workdir_X_X/{lib}/iter_{r}/drivers")
 
                 # cp profile driver
-                os.system(f"mkdir -p workdir_X_X/{lib}/iter_{r}/profiles")
-                os.system(f"cp {rootdir}/workdir_X_X/{lib}/iter_{r}/profiles/{driver}_profile workdir_X_X/{lib}/iter_{r}/profiles")
+                # os.system(f"mkdir -p workdir_X_X/{lib}/iter_{r}/profiles")
+                src = f"./{rootdir}/workdir_X_X/{lib}/iter_{r}/profiles/{driver}_profile"
+                dst = f"./workdir_X_X/{lib}/iter_{r}/profiles"
+                rel_path = os.path.join(*[".."] * dst.count(os.path.sep))
+                os.system(f"ln -sf {rel_path}/{src} {dst}")
 
                 # # cp cluster driver
                 # os.system(f"mkdir -p workdir_X_X/{lib}/iter_{r}/cluster_drivers")
@@ -144,11 +147,20 @@ def _main():
                 #     os.system(f"cp -r {rootdir}/workdir_X_X/{lib}/iter_{r}/corpus/{driver} workdir_X_X/{lib}/iter_{r}/corpus")
 
                 # cp metadata for driver
-                os.system(f"mkdir -p workdir_X_X/{lib}/iter_{r}/metadata")
-                os.system(f"cp -r {rootdir}/workdir_X_X/{lib}/iter_{r}/metadata/{driver}.meta workdir_X_X/{lib}/iter_{r}/metadata")
+                # os.system(f"mkdir -p workdir_X_X/{lib}/iter_{r}/metadata")
+                # os.system(f"cp -r {rootdir}/workdir_X_X/{lib}/iter_{r}/metadata/{driver}.meta workdir_X_X/{lib}/iter_{r}/metadata")
+                # os.system(f"ln -fsr ")
+                src = f"{rootdir}/workdir_X_X/{lib}/iter_{r}/metadata/{driver}.meta"
+                dst = f"workdir_X_X/{lib}/iter_{r}/metadata/{driver}.meta"
+                rel_path = os.path.join(*[".."] * dst.count(os.path.sep))
+                os.system(f"ln -sf {rel_path}/{src} {dst}")
                 
-                os.system(f"mkdir -p workdir_X_X/{lib}/iter_{r}/coverage_data")
-                os.system(f"cp -r {rootdir}/workdir_X_X/{lib}/iter_{r}/coverage_data/{driver}.profdata workdir_X_X/{lib}/iter_{r}/coverage_data")
+                # os.system(f"mkdir -p workdir_X_X/{lib}/iter_{r}/coverage_data")
+                # os.system(f"cp -r {rootdir}/workdir_X_X/{lib}/iter_{r}/coverage_data/{driver}.profdata workdir_X_X/{lib}/iter_{r}/coverage_data")
+                src = f"{rootdir}/workdir_X_X/{lib}/iter_{r}/coverage_data/{driver}.profdata"
+                dst = f"workdir_X_X/{lib}/iter_{r}/coverage_data/{driver}.profdata"
+                rel_path = os.path.join(*[".."] * dst.count(os.path.sep))
+                os.system(f"ln -sf {rel_path}/{src} {dst}")
 
                 # os.system(f"mkdir -p workdir_X_X/{lib}/iter_{r}/corpus_new")
                 # os.system(f"cp -r workdir_X_X/{lib}/iter_{r}/corpus_new/{driver} workdir_X_X/{lib}/iter_{r}/corpus_new")
