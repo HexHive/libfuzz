@@ -1,6 +1,6 @@
-# LibFuzz++
+# libErator
 
-Purpose: LibFuzz++ automatically generates drivers (unit-tests) starting from a library source.
+Purpose: libErator automatically generates drivers (unit-tests) starting from a library source.
 
 The whole framework is composed of three main components:
 
