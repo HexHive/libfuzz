@@ -4,14 +4,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 font = {'family' : 'normal',
-        'weight' : 'bold',
+        'weight' : 'ultralight',
         'size'   : 15}
 
 mpl.rc('font', **font)
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}']
 # Data
-generations = ['24h', '18h', '12h', '6h']
+generations = list(map(lambda x: r"\textbf{"+x+"}", ['24h', '18h', '12h', '6h']))
 generations.reverse() 
 data = {}
 data["c_ares"] = [55.29, 50.88, 49.06, 52.65]
@@ -45,8 +45,12 @@ for(lib, values) in data.items():
 
 # Labels and Title
 #ax.set_ylim(ymin=0)
-plt.xlabel(r"$T_{gen}$")
-plt.ylabel('Normalized Coverage [\%]')
+plt.xlabel(r"$\mathbf{T_{gen}}$")
+plt.ylabel(r'\textbf{Normalized Coverage [\%]}')
+fig.canvas.draw()
+labels = [item.get_text() for item in ax.get_yticklabels()]
+m = map(lambda x: x.replace("default", "bf"), labels)
+ax.set_yticklabels(list(m))
 plt.legend(bbox_to_anchor=(.7, 0.69), loc='upper left')
 
 # Show plot
