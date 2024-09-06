@@ -46,10 +46,11 @@ for(lib, values) in data.items():
 # Labels and Title
 #ax.set_ylim(ymin=0)
 plt.xlabel(r"$T_{gen}$")
-plt.ylabel('Coverage [\%]')
-plt.legend(bbox_to_anchor=(.7, 0.68), loc='upper left')
+plt.ylabel('Normalized Coverage [\%]')
+plt.legend(bbox_to_anchor=(.7, 0.69), loc='upper left')
 
 # Show plot
 plt.tight_layout()
 plt.savefig('rq1.png')
+plt.savefig('rq1.pdf')
 plt.show()
