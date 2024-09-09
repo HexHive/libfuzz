@@ -2,19 +2,20 @@
 
 import os, json, argparse
 import matplotlib.pyplot as plt
-
+import matplotlib.gridspec as gridspec
+plt.rcParams['text.usetex'] = True
 tot_api = {
-    "pthreadpool": 30,
-    "libaom": 47,
-    "zlib": 88,
     "c-ares": 126,
-    "cpu_features": 7,
-    "libpcap": 88,
     "cjson": 78,
-    "libvpx": 35,
+    "cpu_features": 7,
+    "libaom": 47,
+    "libhtp": 251,
+    "libpcap": 88,
     'libtiff': 197,
+    "libvpx": 35,
     "minijail": 97,
-    "libhtp": 251
+    "pthreadpool": 30,
+    "zlib": 88,
 }
 
 def read_drivers_metadata(d):
@@ -63,41 +64,86 @@ def _main():
     print(root_folder)
     
     # drivers_metadata = read_drivers_metadata(root_folder)
-    
+   
+    f = plt.figure(figsize=(24, 8))
+    gs = gridspec.GridSpec(8, 24)
+    ax =[0]*12
+    for i in range(0,11):
+        if i//6 == 0:
+            ax[i] = f.add_subplot(gs[0:4, 0+i*4:4+i*4])
+        else:
+            ax[i] = f.add_subplot(gs[4:8, 2+(i-6)*4:6+(i-6)*4])
+    f.set_tight_layout(True)
+    plot_index = 0
     for t, max in tot_api.items():
+        print(t)
+        iterations = 5
+        x = [0] * iterations
+        y = [0] * iterations
+        for iter in range(0, iterations): 
+            root_folder_p = os.path.join(root_folder, t, "iter_" + str(iter+1))
         
-        root_folder_p = os.path.join(root_folder, t, "iter_1")
+            paths_observed = read_paths_observed(root_folder_p)
         
-        paths_observed = read_paths_observed(root_folder_p)
+            # print(paths_observed)
+            # exit(1)
         
-        # print(paths_observed)
-        # exit(1)
+            # from IPython import embed; embed(); exit(1)
         
-        # from IPython import embed; embed(); exit(1)
+            n_api_acc = set()
         
-        n_api_acc = set()
-        
-        max_api = tot_api[t]
-        
-        x = []
-        y = []    
-        for i, d in enumerate(paths_observed):
-            n_api_acc |= d["apis"]
-            # print(len(n_api_acc))
-            x += [i]
-            y += [len(n_api_acc)]
+            x[iter] = []
+            y[iter] = []    
+            for i, d in enumerate(paths_observed):
+                n_api_acc |= d["apis"]
+                # print(len(n_api_acc))
+                x[iter] += [i]
+                y[iter] += [len(n_api_acc)]
             
+        stop = False
+        new_max = 0
+        newx = []
+        idx = 0
+        for i in range(0, iterations):
+            if len(x[i]) > new_max:
+                new_max = len(x[i])
+                newx = x[i]
+        newy = [0]*new_max
+        last = [0]*iterations
+        while not stop:
+            stop = True
+            for i in range(0, iterations):
+                if idx < len(x[i]):
+                    last[i] =  y[i][idx]
+            
+                    stop = False
+            if not stop:
+                newy[idx] = sum(last)/iterations/max*100
+            idx += 1
         plt.cla()
-        
-        plt.plot(x, y, label='APIs used over time')    
-        
-        plt.title('Simple Line Plot')
-        plt.xlabel('x')
-        plt.ylabel('y')
-        
-        plt.legend()
-        
+
+        plt.plot(newx, newy, label='APIs used over time')    
+
+        plt.title("\\texttt{" + t+ "}")
+        plt.xlabel('\# of drivers')
+        plt.ylabel('Percentage of API functions reached')
+        plt.ylim(top=105)
+
         plt.savefig(f"api_over_time_{t}.pdf", format='pdf')
+
+        ax[plot_index].plot(newx, newy, label='APIs used over time')    
+        ax[plot_index].set_title("\\texttt{" + t+ "}")
+        ax[plot_index].set_xlabel('\# of drivers')
+        ax[plot_index].set_ylabel('Percentage of API functions reached')
+        ax[plot_index].set_ylim(bottom=0, top=105)
+        #ax[plot_index].set_lim(xmin=0)
+        #ax[pp].legend()
+
+
+
+        plot_index += 1
+    #f.suptitle('This is a somewhat long figure title', fontsize=16)
+    plt.savefig(f"api_over_time.pdf", format='pdf')
         
     
 if __name__ == "__main__":
