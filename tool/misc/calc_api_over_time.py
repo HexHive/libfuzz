@@ -4,6 +4,8 @@ import os, json, argparse
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 plt.rcParams['text.usetex'] = True
+plt.rcParams.update({'font.size': 13})
+print(plt.rcParams.get('font.size'))
 tot_api = {
     "c-ares": 126,
     "cjson": 78,
@@ -65,14 +67,17 @@ def _main():
     
     # drivers_metadata = read_drivers_metadata(root_folder)
    
-    f = plt.figure(figsize=(24, 8))
-    gs = gridspec.GridSpec(8, 24)
+    factor = 4
+    size = (4,3)
+    f = plt.figure(figsize=(size[0]*factor, size[1]*factor))
+    gs = gridspec.GridSpec(factor * size[1], factor * size[0])
     ax =[0]*12
     for i in range(0,11):
-        if i//6 == 0:
-            ax[i] = f.add_subplot(gs[0:4, 0+i*4:4+i*4])
-        else:
-            ax[i] = f.add_subplot(gs[4:8, 2+(i-6)*4:6+(i-6)*4])
+        
+        x_ax = i//size[0]
+        y_ax = i%size[0]
+        shift = 0 if x_ax != size[1]-1 else 0.5
+        ax[i] = f.add_subplot(gs[factor * x_ax: factor*(x_ax+1), int((shift +  y_ax)*factor): int((shift + y_ax + 1)*factor)])
     f.set_tight_layout(True)
     plot_index = 0
     for t, max in tot_api.items():
@@ -120,16 +125,16 @@ def _main():
             if not stop:
                 newy[idx] = sum(last)/iterations/max*100
             idx += 1
-        plt.cla()
+        #plt.cla()
 
-        plt.plot(newx, newy, label='APIs used over time')    
+        #plt.plot(newx, newy, label='APIs used over time')    
 
-        plt.title("\\texttt{" + t+ "}")
-        plt.xlabel('\# of drivers')
-        plt.ylabel('Percentage of API functions reached')
-        plt.ylim(top=105)
+        #plt.title("\\texttt{" + t+ "}")
+        #plt.xlabel('\# of drivers')
+        #plt.ylabel('Percentage of API functions reached')
+        #plt.ylim(top=105)
 
-        plt.savefig(f"api_over_time_{t}.pdf", format='pdf')
+        #plt.savefig(f"api_over_time_{t}.pdf", format='pdf')
 
         ax[plot_index].plot(newx, newy, label='APIs used over time')    
         ax[plot_index].set_title("\\texttt{" + t+ "}")
