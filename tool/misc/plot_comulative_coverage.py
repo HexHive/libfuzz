@@ -4,6 +4,7 @@
 import argparse, os
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 
 def get_runs(rootdir, is_grammar):
     
@@ -37,7 +38,7 @@ def _main():
     for target in all_targets:
         rootdir = os.path.join(workdir, target)
         
-        n_runs = get_runs(rootdir, is_grammar)
+        n_runs = 2 # get_runs(rootdir, is_grammar)
         
         data = []
         
@@ -79,9 +80,7 @@ def _main():
         # from IPython import embed; embed(); exit(1)
 
         # Add title and labels
-        plt.title('Comulative Coverage')
-        plt.xlabel('N. Drivers')
-        plt.ylabel('Com. Coverage')
+        plt.title('Cumulative Coverage')
 
         # Calculate the mean, max, and min across the temporal series (axis=0 for column-wise operation)
         mean_series = np.mean(data, axis=0)
@@ -93,18 +92,34 @@ def _main():
 
         # Plotting
         plt.figure(figsize=(10, 6))
-        plt.plot(mean_series, label='Average', color='blue')
-        plt.plot(max_series, label='Max', color='red')
-        plt.plot(min_series, label='Min', color='green')
+        plt.plot(mean_series, label=f"{target}", color='blue')
+        # plt.plot(max_series, label='Max', color='red')
+        # plt.plot(min_series, label='Min', color='green')
+        
+        plt.grid(True, color='lightgray', linestyle='-', linewidth=0.5)
+        
+        plt.gca().xaxis.set_major_locator(MaxNLocator(nbins=5))        
+        plt.gca().yaxis.set_major_locator(MaxNLocator(nbins=4))                
+        # from IPython import embed; embed(); exit(1)
+        
+        # plt.locator_params(axis='y', nbins=6)
+        # plt.axis.xaxis.axesset_major_locator(plt.MaxNLocator(3))
+        plt.xlabel("# of drivers", fontsize=40)
+        if target in ["c-ares", "libhtp", "minijail"]:
+            plt.ylabel("% edge cov.", fontsize=40)
+        
+        plt.xticks(fontsize=40)
+        plt.yticks(fontsize=40)
 
         # Optional: Fill between min and max for visualization
-        plt.fill_between(range(max_len), min_series, max_series, color='gray', alpha=0.2)
+        # plt.fill_between(range(max_len), min_series, max_series, color='gray', alpha=0.2)
 
         # Add a legend
-        plt.legend()
+        # plt.legend()
+        plt.tight_layout()
 
         # Display the plot
-        plt.savefig(f"{target}_comulative.pdf")
+        plt.savefig(f"{target}_cumulative.pdf")
     
     
 if __name__ == "__main__":
