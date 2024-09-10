@@ -33,7 +33,7 @@ def read_drivers_metadata(d):
             
     return driver_meta
 
-def read_paths_observed(d):
+def read_paths_observed(d, only_positive=False):
     
     paths_observed = []
     
@@ -45,11 +45,11 @@ def read_paths_observed(d):
                 apis = set(la[1].split(";"))
                 status = la[2]
                 n_seeds = int(la[3])
-                
-                paths_observed += [{"driver": driver,
-                                    "apis": apis, 
-                                    "status": status, 
-                                    "n_seed": n_seeds}]
+                if not only_positive or (status == "POSITIVE" and n_seeds > 1): 
+                    paths_observed += [{"driver": driver,
+                                        "apis": apis, 
+                                        "status": status, 
+                                        "n_seed": n_seeds}]
         
     return paths_observed                
                 
@@ -89,7 +89,7 @@ def _main():
         for iter in range(0, iterations): 
             root_folder_p = os.path.join(root_folder, t, "iter_" + str(iter+1))
         
-            paths_observed = read_paths_observed(root_folder_p)
+            paths_observed = read_paths_observed(root_folder_p, only_positive=args.p)
         
             # print(paths_observed)
             # exit(1)
