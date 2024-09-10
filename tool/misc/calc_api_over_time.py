@@ -3,8 +3,9 @@
 import os, json, argparse
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-plt.rcParams['text.usetex'] = True
-plt.rcParams.update({'font.size': 13})
+from matplotlib.ticker import MaxNLocator
+label_font = 38
+#plt.rcParams.update({'font.size': label_font})
 print(plt.rcParams.get('font.size'))
 tot_api = {
     "c-ares": 126,
@@ -69,16 +70,16 @@ def _main():
    
     factor = 4
     size = (4,3)
-    f = plt.figure(figsize=(size[0]*factor, size[1]*factor))
-    gs = gridspec.GridSpec(factor * size[1], factor * size[0])
-    ax =[0]*12
-    for i in range(0,11):
-        
-        x_ax = i//size[0]
-        y_ax = i%size[0]
-        shift = 0 if x_ax != size[1]-1 else 0.5
-        ax[i] = f.add_subplot(gs[factor * x_ax: factor*(x_ax+1), int((shift +  y_ax)*factor): int((shift + y_ax + 1)*factor)])
-    f.set_tight_layout(True)
+    #f = plt.figure(figsize=(size[0]*factor, size[1]*factor))
+    #gs = gridspec.GridSpec(factor * size[1], factor * size[0])
+    #ax =[0]*12
+    #for i in range(0,11):
+    #    
+    #    x_ax = i//size[0]
+    #    y_ax = i%size[0]
+    #    shift = 0 if x_ax != size[1]-1 else 0.5
+    #    ax[i] = f.add_subplot(gs[factor * x_ax: factor*(x_ax+1), int((shift +  y_ax)*factor): int((shift + y_ax + 1)*factor)])
+    #f.set_tight_layout(True)
     plot_index = 0
     for t, max in tot_api.items():
         print(t)
@@ -125,22 +126,29 @@ def _main():
             if not stop:
                 newy[idx] = sum(last)/iterations/max*100
             idx += 1
-        #plt.cla()
+        plt.cla()
+        plt.figure(figsize=(10, 6))
 
-        #plt.plot(newx, newy, label='APIs used over time')    
+        plt.plot(newx, newy, label='APIs used over time', color='blue')    
 
         #plt.title("\\texttt{" + t+ "}")
-        #plt.xlabel('\# of drivers')
-        #plt.ylabel('Percentage of API functions reached')
-        #plt.ylim(top=105)
+        plt.xlabel('# of drivers', fontsize=label_font)
+        if t == "minijail" or t == "libhtp" or t == "c-ares":
+            plt.ylabel('% of API functions', fontsize=label_font)
+        plt.ylim(top=102)
+        plt.gca().xaxis.set_major_locator(MaxNLocator(nbins=5))
+        plt.yticks([0,50,100], fontsize=label_font)
+        plt.xticks(fontsize=label_font)
 
-        #plt.savefig(f"api_over_time_{t}.pdf", format='pdf')
+        plt.grid(True, color='lightgray', linestyle='-', linewidth=0.5)
+        plt.tight_layout()
+        plt.savefig(f"api_over_time_{t}.pdf", format='pdf')
 
-        ax[plot_index].plot(newx, newy, label='APIs used over time')    
-        ax[plot_index].set_title("\\texttt{" + t+ "}")
-        ax[plot_index].set_xlabel('\# of drivers')
-        ax[plot_index].set_ylabel('Percentage of API functions reached')
-        ax[plot_index].set_ylim(bottom=0, top=105)
+        #ax[plot_index].plot(newx, newy, label='APIs used over time')    
+        #ax[plot_index].set_title("\\texttt{" + t+ "}")
+        #ax[plot_index].set_xlabel('\# of drivers')
+        #ax[plot_index].set_ylabel('Percentage of API functions reached')
+        #ax[plot_index].set_ylim(bottom=0, top=105)
         #ax[plot_index].set_lim(xmin=0)
         #ax[pp].legend()
 
@@ -148,7 +156,7 @@ def _main():
 
         plot_index += 1
     #f.suptitle('This is a somewhat long figure title', fontsize=16)
-    plt.savefig(f"api_over_time.pdf", format='pdf')
+    #plt.savefig(f"api_over_time.pdf", format='pdf')
         
     
 if __name__ == "__main__":
