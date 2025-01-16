@@ -51,6 +51,8 @@ case $CONF in
     export PROJECTS=( "cjson" "libpcap" )
     export NUM_OF_DRIVERS=( XX  )
     export NUM_OF_APIs=( X )
+    export TIMEOUT=10s
+    export ITERATIONS=1
     ;;
 
   minimized)
