@@ -40,11 +40,11 @@ case $CONF in
     ;;
 
   fuzzgen)
-    # export PROJECTS=( "libaom" "libvpx" )
-    export PROJECTS=( "libaom" )
-    export NUM_OF_DRIVERS=( 20  )
-    export NUM_OF_APIs=( 5  )
-    export TIMEOUT=10m
+    export PROJECTS=( "libaom" "libvpx" )
+    # export PROJECTS=( "libvpx" )
+    export NUM_OF_DRIVERS=( XX  )
+    export NUM_OF_APIs=( X  )
+    export TIMEOUT=2h
     export ITERATIONS=1
     export USE_PER_LIBRARY_TIMEBUDGET=1
     ;;
@@ -61,8 +61,9 @@ case $CONF in
     export PROJECTS=( "cjson" "libpcap" )
     export NUM_OF_DRIVERS=( XX  )
     export NUM_OF_APIs=( X )
-    export TIMEOUT=10s
-    export ITERATIONS=1
+    export TIMEOUT=24h
+    export ITERATIONS=5
+    export USE_PER_LIBRARY_TIMEBUDGET=1
     ;;
 
   minimized)

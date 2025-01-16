@@ -3,8 +3,8 @@
 export CONF=fuzzgen;
 source campaign_configuration.sh
 
-rm -drf workdir_20_5
-cp ../fuzzgen-targets workdir_20_5 -r
+rm -drf workdir_XX_X
+cp ../fuzzgen-targets workdir_XX_X -r
 
 echo $TIMEOUT
 
@@ -23,7 +23,7 @@ esac
 rm time_budget.csv || true
 # touch time_budget.csv
 for project in "${PROJECTS[@]}"; do
-    N_DRIVER="$(ls ./workdir_20_5/${project}/drivers/driver*.cc | wc -l)"
+    N_DRIVER="$(ls ./workdir_XX_X/${project}/drivers/driver*.cc | wc -l)"
     time_slot=$((seconds / N_DRIVER))
     echo "${project}|${time_slot}" >> time_budget.csv
 done
