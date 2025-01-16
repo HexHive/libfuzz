@@ -56,7 +56,7 @@ mv "$WORK"/lib/libcjson.a "$WORK"/lib/libcjson_cluster.a
 cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_AND_STATIC_LIBS=On \
         -DBUILD_SHARED_LIBS=off -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_C_FLAGS_RELEASE="-fsanitize=fuzzer-no-link,address" \
-        -DCMAKE_CXX_FLAGS_RELELASE="-fsanitize=fuzzer-no-link,address"
+        -DCMAKE_CXX_FLAGS_RELEASE="-fsanitize=fuzzer-no-link,address"
 
 echo "make clean"
 make -j"$(nproc)" clean

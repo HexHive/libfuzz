@@ -56,6 +56,14 @@ case $CONF in
     export TIMEOUT=1h
     export ITERATIONS=1
     ;;
+  
+  ossllm)
+    export PROJECTS=( "cjson" "libpcap" )
+    export NUM_OF_DRIVERS=( XX  )
+    export NUM_OF_APIs=( X )
+    export TIMEOUT=10s
+    export ITERATIONS=1
+    ;;
 
   minimized)
     export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" "libpcap" "c-ares" "zlib" "cjson" )
