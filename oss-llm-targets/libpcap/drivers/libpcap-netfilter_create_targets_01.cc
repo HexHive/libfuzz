@@ -40,24 +40,24 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
     sock_initfuzz(Data, Size);
     //initialize structure
-    is_ours = pcap_findalldevs(&pkts, errbuf);
+    //is_ours = pcap_findalldevs(&pkts, errbuf);
     if (is_ours < 0) {
         fprintf(outfile, "Couldn't open pcap file %s\n", errbuf);
         return 0;
     }
 
     //loop over packets
-    r = pcap_next_ex(pkts, &header, &pkt);
-    while (r > 0) {
-        fprintf(outfile, "packet length=%d/%d\n",header->caplen, header->len);
-        r = pcap_next_ex(pkts, &header, &pkt);
-    }
-    if (pcap_stats(pkts, &stats) == 0) {
-        fprintf(outfile, "number of packets=%d\n", stats.ps_recv);
-    }
-    //close structure
-    pcap_close(pkts);
-    pcap_t *netfilter_create(const char *device, char *ebuf, int *is_ours);
+    //r = pcap_next_ex(pkts, &header, &pkt);
+    //while (r > 0) {
+    //    fprintf(outfile, "packet length=%d/%d\n",header->caplen, header->len);
+    //    r = pcap_next_ex(pkts, &header, &pkt);
+    //}
+    //if (pcap_stats(pkts, &stats) == 0) {
+    //    fprintf(outfile, "number of packets=%d\n", stats.ps_recv);
+    //}
+    ////close structure
+    //pcap_close(pkts);
+    //pcap_t *netfilter_create(const char *device, char *ebuf, int *is_ours);
     return 0;
 }
 
