@@ -39,6 +39,16 @@ case $CONF in
     export ITERATIONS=1
     ;;
 
+  fuzzgen)
+    # export PROJECTS=( "libaom" "libvpx" )
+    export PROJECTS=( "libaom" )
+    export NUM_OF_DRIVERS=( 20  )
+    export NUM_OF_APIs=( 5  )
+    export TIMEOUT=10m
+    export ITERATIONS=1
+    export USE_PER_LIBRARY_TIMEBUDGET=1
+    ;;
+
   bestconf)
     export PROJECTS=( "libaom" "libvpx" "libhtp" "libtiff" "minijail" )
     export NUM_OF_DRIVERS=( 20  )
