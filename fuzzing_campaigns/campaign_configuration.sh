@@ -49,6 +49,8 @@ case $CONF in
   
   ossllm)
     export PROJECTS=( "cjson" "libpcap" )
+    export NUM_OF_DRIVERS=( XX  )
+    export NUM_OF_APIs=( X )
     ;;
 
   minimized)
