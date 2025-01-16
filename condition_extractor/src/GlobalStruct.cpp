@@ -108,7 +108,7 @@ void GlobalStruct::analyze() {
         // SVFUtil::outs() << "----\n";
     }
 
-    // SVFUtil::outs() << "[DEBUG] early stop\n";
+    // SVFUtil::outs() << libfuzz::logTime() << "[DEBUG] early stop\n";
     // exit(1);
     
     this->new_edges = newEdges;

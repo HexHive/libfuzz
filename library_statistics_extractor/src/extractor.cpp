@@ -38,6 +38,7 @@
 #include "PhiFunction.h"
 #include "TypeMatcher.h"
 #include "GlobalStruct.h"
+#include "LibfuzzUtil.h"
 
 // for random sampling
 #include <random>
@@ -267,12 +268,12 @@ int main(int argc, char ** argv)
         LLVMModuleSet::getLLVMModuleSet()->preProcessBCs(moduleNameVec);
     }
 
-    SVFUtil::outs() << "[INFO] Loading library...\n";
+    SVFUtil::outs() << libfuzz::logTime() << "[INFO] Loading library...\n";
 
     LLVMModuleSet* llvmModuleSet = LLVMModuleSet::getLLVMModuleSet();
     SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
 
-    SVFUtil::outs() << "[INFO] Done\n";
+    SVFUtil::outs() << libfuzz::logTime() << "[INFO] Done\n";
 
     // I extract all the function names from the LLVM module
     std::set<std::string> functions_llvm;
@@ -287,7 +288,7 @@ int main(int argc, char ** argv)
     std::set<std::string> functions;
     // read all the functions from apis_clang.json
     if (all_functions) {
-        SVFUtil::outs() << "[INFO] I analyze all the functions\n";
+        SVFUtil::outs() << libfuzz::logTime() << "[INFO] I analyze all the functions\n";
 
         ifstream f(LibInterface);
 
@@ -315,13 +316,13 @@ int main(int argc, char ** argv)
         f.close();
     }
     else {
-        SVFUtil::outs() << "[INFO] analyzing function: " << function << "\n";
+        SVFUtil::outs() << libfuzz::logTime() << "[INFO] analyzing function: " << function << "\n";
         // functions.push_back(function);
         functions.insert(function);
     }
 
     if (OutputType == OutType::stdo)
-        SVFUtil::outs() << "[WARNING] outputting in stdout, ignoring OutputFile\n";
+        SVFUtil::outs() << libfuzz::logTime() << "[WARNING] outputting in stdout, ignoring OutputFile\n";
 
     /// Build Program Assignment Graph (SVFIR)
     SVFIRBuilder builder(svfModule);
@@ -336,7 +337,7 @@ int main(int argc, char ** argv)
 
     point_to_analysys->analyze();
 
-    SVFUtil::outs() << "[INFO] Analysis done!\n";
+    SVFUtil::outs() << libfuzz::logTime() << "[INFO] Analysis done!\n";
 
     PAG::FunToArgsListMap funmap_par = pag->getFunArgsMap();
 
@@ -371,7 +372,7 @@ int main(int argc, char ** argv)
 
     std::map<std::string, unsigned int> weights;
 
-    SVFUtil::outs() << "[INFO] running analysis...\n";
+    SVFUtil::outs() << libfuzz::logTime() << "[INFO] running analysis...\n";
     for(const SVFFunction* svfFun : svfModule->getFunctionSet() ){
         auto llvm_val = llvmModuleSet->getLLVMValue(svfFun);
         const llvm::Function* F = SVFUtil::dyn_cast<Function>(llvm_val);
@@ -386,11 +387,11 @@ int main(int argc, char ** argv)
                             std::to_string(tot_function);
 
         // SVFUtil::outs() << "Processing " << f << "\n";
-        SVFUtil::outs() << "[INFO " << prog << "] processing: " 
+        SVFUtil::outs() << libfuzz::logTime() << "[INFO " << prog << "] processing: " 
                 << function_name << "\n";
 
         unsigned int n_instruction = countReachableInst(pag, icfg, svfFun); 
-        SVFUtil::outs() << "[INFO] N. Inst.: " << n_instruction << "\n";
+        SVFUtil::outs() << libfuzz::logTime() << "[INFO] N. Inst.: " << n_instruction << "\n";
         weights[function_name] = n_instruction;
     }
 
