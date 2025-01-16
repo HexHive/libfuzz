@@ -44,7 +44,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         /* unbuffered printing */
         if(formatted)
         {
-            printed_json = cJSON_Print(json);RELELASE
+            printed_json = cJSON_Print(json);
         }
         else
         {
