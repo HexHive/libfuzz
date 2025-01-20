@@ -44,8 +44,8 @@ case $CONF in
     # export PROJECTS=( "libvpx" )
     export NUM_OF_DRIVERS=( XX  )
     export NUM_OF_APIs=( X  )
-    export TIMEOUT=2h
-    export ITERATIONS=1
+    export TIMEOUT=24h
+    export ITERATIONS=5
     export USE_PER_LIBRARY_TIMEBUDGET=1
     ;;
 
