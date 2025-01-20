@@ -388,12 +388,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     //}
 
+    struct vpx_codec_ctx ctx_hEP_0;
 
     /* * * function pool #1 * * */
     //{
         // initializing argument 'ctx_hEP'
         /*
-        struct vpx_codec_ctx ctx_hEP_0;
+        
 
 
         struct vpx_codec_iface v_aKn_0;
@@ -432,7 +433,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
 
         //*(struct vpx_codec_priv**)((uint64_t)&ctx_hEP_0 + 48) = &v_rKA_0;
-        struct vpx_codec_ctx *ctx_hEP_1;// = &ctx_hEP_0;
+        struct vpx_codec_ctx *ctx_hEP_1 = &ctx_hEP_0;
 
         // Dependence family #3 Definition
         dep_3 = (struct vpx_codec_ctx *)ctx_hEP_1;

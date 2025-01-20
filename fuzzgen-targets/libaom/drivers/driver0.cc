@@ -505,6 +505,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         }
     //}
 
+    delete[] perm;
+
 
     /* * * function pool #1 * * */
     //{
@@ -607,7 +609,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         }
     //}
 
-        delete perm;
+        delete[] perm;
        
 
     /* * * function pool #2 * * */
@@ -648,7 +650,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
        }
     //}
 
-    delete perm;
+    delete[] perm;
 
 
 
@@ -699,7 +701,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         }
     //}
 
-    delete perm;
+    delete[] perm;
 
 
     /* * * function pool #4 * * */
@@ -749,7 +751,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         }
     //}
 
-    delete perm;
+    delete[] perm;
 
 
     /* * * function pool #5 * * */
@@ -821,7 +823,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         }
     //}
 
-    delete perm;
+    delete[] perm;
 
     /* * * function pool #6 * * */
     //{
@@ -1002,7 +1004,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         }
     //}
 
-    delete perm;
+    delete[] perm;
 
 
     /* * * function pool #7 * * */
@@ -1036,7 +1038,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         }
     //}
 
-delete perm;
+delete[] perm;
 
         /* don't mess with bits. Keep it simple ;) */
         perm = kperm(3, E.eatIntBw( NBYTES_FOR_FACTORIAL(3) ));
@@ -1095,7 +1097,7 @@ delete perm;
         }
     //}
 
-    delete perm;
+    delete[] perm;
 
 
 
@@ -1137,7 +1139,7 @@ delete perm;
         }
     //}
 
-delete perm;
+delete[] perm;
 
 
     return 0;
