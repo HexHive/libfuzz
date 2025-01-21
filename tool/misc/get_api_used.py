@@ -6,6 +6,7 @@ def _main():
 
     parser = argparse.ArgumentParser(description='Counts the API used')
     parser.add_argument('-root', '-r', type=str, help='Report File', required=True, default="/media/hdd0/libfuzz_scratchpad/main/fuzzing_campaigns")
+    parser.add_argument('-summary', '-s', help='Summary', required=False, action='store_true')
     
     args = parser.parse_args()
     
@@ -13,6 +14,7 @@ def _main():
     # libs =  "cpu_features libtiff minijail pthreadpool libaom libvpx libhtp libpcap c-ares zlib cjson".split()
     # libs =  "cjson".split()
     libs = set()
+    summary = args.summary
 
     workdir_token = "workdir_"
 
@@ -49,8 +51,13 @@ def _main():
                         am = md["api_multiset"]
                         for au in am.keys():
                             stats[l].add(au)
-    for l, s in stats.items():
-        print(f"{l}: {len(s)}")
+
+    if summary:
+        for l, s in stats.items():
+            print(f"{l}: {len(s)}")
+    else:
+        for l, s in stats.items():
+            print(f"{l}: {s}")
 
 if __name__ == "__main__":
     _main()

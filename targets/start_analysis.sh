@@ -13,4 +13,4 @@ echo "[WLLVM] `which wllvm`"
 cd ${LIBFUZZ}/targets/${TARGET_NAME}
 sudo ./preinstall.sh
 ./fetch.sh
-./analysis.sh
+{ time ./analysis.sh ; } 2> ${LIBFUZZ}/${TARGET_NAME}_analysis_time.txt

@@ -7,7 +7,7 @@ from tabulate import tabulate
 import matplotlib.pyplot as plt
 
 def print_summary(libraries):
-    for lib, drvs in libraries.items():
+    for lib, drvs in dict(sorted(libraries.items())).items():
         max_cov = 0
         n_drv_cov = 0
         n_drv_cov_1 = 0
@@ -121,9 +121,9 @@ def _main():
 
     libraries = scr.load_report(report, rootdir)
 
-    # print_summary(libraries)
+    print_summary(libraries)
     # print_table(libraries)
-    print_distribution(libraries)
+    # print_distribution(libraries)
 
 if __name__ == "__main__":
     _main()

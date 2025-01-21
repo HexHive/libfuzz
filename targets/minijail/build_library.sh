@@ -41,7 +41,7 @@ make -j$(nproc) OUT="$WORK/lib" CC_STATIC_LIBRARY\(libminijail.pie.a\)
 mv $WORK/lib/libminijail.pie.a $WORK/lib/libminijail_profile.pie.a
 
 
-# Compile library for clustering
+# Compile library for debugging
 export CFLAGS=$CFLAGS_BASE" -fsanitize=fuzzer-no-link,address -g"
 export CXXFLAGS=$CXXFLAGS_BASE" -fsanitize=fuzzer-no-link,address -g"
 

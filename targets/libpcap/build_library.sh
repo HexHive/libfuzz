@@ -40,7 +40,7 @@ cd ..
 mkdir -p "$TARGET/repo/pcap_build_cluster"
 cd "$TARGET/repo/pcap_build_cluster"
 
-# Compile library for fuzzing
+# Compile library for debugging
 cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_LIBS=off \
         -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_C_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g" \

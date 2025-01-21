@@ -43,10 +43,10 @@ make install
 mv $WORK/lib/libtiff.a $WORK/lib/libtiff_profile.a
 mv $WORK/lib/libtiffxx.a $WORK/lib/libtiffxx_profile.a
 
-# Compile library for clustering
+# Compile library for debugging
 ./configure --disable-shared --prefix="$WORK" \
-        CXXFLAGS="-fsanitize=fuzzer-no-link,address -g" \
-        CFLAGS="-fsanitize=fuzzer-no-link,address -g"
+        CXXFLAGS="-fsanitize=address -g -fPIE" \
+        CFLAGS="-fsanitize=address -g -fPIE"
 
 echo "make clean"
 make -j$(nproc) clean

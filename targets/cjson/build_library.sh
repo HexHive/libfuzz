@@ -36,11 +36,7 @@ make install
 
 mv "$WORK"/lib/libcjson.a "$WORK"/lib/libcjson_profile.a
 
-cd ..
-mkdir -p "$TARGET/repo/aom_build_cluster"
-cd "$TARGET/repo/aom_build_cluster"
-
-# Compile library for clustering
+# Compile library for debugging
 cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_AND_STATIC_LIBS=On \
         -DBUILD_SHARED_LIBS=off -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_C_FLAGS_DEBUG="-fsanitize=fuzzer-no-link,address -g" \
@@ -55,15 +51,12 @@ make install
 
 mv "$WORK"/lib/libcjson.a "$WORK"/lib/libcjson_cluster.a
 
-cd ..
-mkdir -p "$TARGET/repo/aom_build_fuzz"
-cd "$TARGET/repo/aom_build_fuzz"
 
 # Compile library for fuzzing
 cmake .. -DCMAKE_INSTALL_PREFIX="$WORK" -DBUILD_SHARED_AND_STATIC_LIBS=On \
         -DBUILD_SHARED_LIBS=off -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_C_FLAGS_RELEASE="-fsanitize=fuzzer-no-link,address" \
-        -DCMAKE_CXX_FLAGS_RELELASE="-fsanitize=fuzzer-no-link,address"
+        -DCMAKE_CXX_FLAGS_RELEASE="-fsanitize=fuzzer-no-link,address"
 
 echo "make clean"
 make -j"$(nproc)" clean

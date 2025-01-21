@@ -1,12 +1,12 @@
-# LibFuzz++
+# libErator
 
-Purpose: LibFuzz++ automatically generates drivers (unit-tests) starting from a library source.
+Purpose: libErator automatically generates drivers (unit-tests) starting from a library source.
 
 The whole framework is composed of three main components:
 
-- Static analyzer: it takes a library soure code an emits a list of constraints.
-- Driver generator: it uses the library constraints (from the static analyzer) and synthetizes the drivers (+ seeds).
-- Fuzzing: we use libfuzz to fuzz the new generated drivers.
+- Static analyzer: it takes a library soure code an emits a list of constraints - `./condition_extractor`.
+- Driver generator: it uses the library constraints (from the static analyzer) and synthetizes the drivers (+ seeds) - `./tool/main.py`.
+- Fuzzing: we use slightly customized libfuzz to fuzz the new generated drivers - `./custom-libfuzzer`.
 
 ## How to Install
 
@@ -51,6 +51,14 @@ sudo apt install nfs-common
 mkdir $LOCAL_FOLDER
 sudo mount $SERVER_IP:$REMOTE_FOLDER $LOCAL_FOLDER
 ```
+
+**Preliminary installation**
+
+In the host, run the script:
+```bash
+./preinstall.sh
+```
+It will install the minimal Python packages and compile our custom libfuzzer version.
 
 ## How to inteagrate a new a target (a new library)
 

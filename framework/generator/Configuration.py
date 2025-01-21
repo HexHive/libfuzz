@@ -1,8 +1,10 @@
 from functools import cached_property
 
-import os
+import os, json
 from os import path
 import tomli, shutil
+
+from typing import Dict, List, Optional, Set, Tuple
 
 from dependency import TypeDependencyGraphGenerator
 from dependency import UndefDependencyGraphGenerator
@@ -15,7 +17,11 @@ from common import Utils, DataLayout
 
 from driver.factory.only_type import *
 from driver.factory.constraint_based import *
-from driver.factory.constraint_based_weight import *
+from driver.factory.constraint_based_search import *
+from driver.factory.constraint_based_grammar import *
+from driver.factory.constraint_based_backward import *
+
+from bias import Bias, WBias, SBias, IBias, FBias
 
 from generator import Pool
 
@@ -37,12 +43,51 @@ class Configuration:
                 for k_section, v in new_conf.items():
                     if k_section in self._config:
                         for k_par, v_par in v.items():
-                            if k_par in self._config[k_section]:
-                                self._config[k_section][k_par] = v_par
-
+                            self._config[k_section][k_par] = v_par
 
         self.start_term = NonTerminal("start")
         self.end_term = Terminal("end")
+
+        self._config_path = config_path
+        self._overwrite_path = overwrite_path
+
+    def get_info(self):
+        if self._overwrite_path is not None:
+            return f"{self._config_path}({self._overwrite_path})"
+    
+        return f"{self._config_path}"
+
+    @cached_property
+    def bias(self):
+        
+        if not "generator" in self._config:
+            raise Exception("'generator' not defined")
+
+        generator = self._config["generator"]
+
+        # default value
+        if not "bias" in generator:
+            raise Exception("'bias' not defined")
+        
+        bias_type = generator["bias"]
+        
+        # "none" return the default bias class
+        if bias_type == "none":
+            return Bias()
+        
+        if bias_type == "api_frequency":
+            return WBias(self.dependency_graph)
+        
+        if bias_type == "seed_number":
+            return SBias()
+
+        if bias_type == "field_inter":
+            return IBias(self.function_conditions)
+        
+        if bias_type == "field_sum":
+            return FBias(self.function_conditions)
+        
+        raise NotImplementedError
 
     @cached_property
     def driver_size(self):
@@ -283,14 +328,40 @@ class Configuration:
         if policy == "constraint_based":
             dep_graph = self.dependency_graph
             return CBFactory(self.api_list, self.driver_size, dep_graph, 
-                             self.function_conditions)
-        
-        if policy == "constraint_based_weigth":
+                             self.function_conditions, self.bias)
+            
+        if policy == "constraint_based_grammar":
             dep_graph = self.dependency_graph
-            return CBWFactory(self.api_list, self.driver_size, dep_graph, 
+            return CBGFactory(self.api_list, self.driver_size, dep_graph, 
+                              self.function_conditions, self.bias,
+                              self.number_of_unknown)
+
+        if policy == "constraint_based_search":
+            dep_graph = self.dependency_graph
+            # pool_size = self.pool.pool_size
+            return CBSFactory(self.api_list, self.driver_size, dep_graph, 
+                              self.function_conditions, self.weights)
+
+        if policy == "constraint_based_backward":
+            dep_graph = self.dependency_graph
+            return CBBFactory(self.api_list, self.driver_size, dep_graph, 
                               self.function_conditions)
 
         raise NotImplementedError
+    
+    @cached_property
+    def number_of_unknown(self):
+        if not "generator" in self._config:
+            raise Exception("'generator' not defined")
+
+        generator = self._config["generator"]
+
+        if not "num_unknown_api" in generator:
+            raise Exception("'num_unknown_api' not defined")
+
+        num_unknown_api = generator["num_unknown_api"]
+        
+        return int(num_unknown_api)
 
     @cached_property
     def function_conditions(self):
@@ -344,10 +415,8 @@ class Configuration:
 
     @cached_property
     def pool(self) -> Pool:
-        # TODO: make pool_size in config
-
         if not "generator" in self._config:
-            raise Exception("'fuzzer' not defined")
+            raise Exception("'generator' not defined")
 
         fuzzer = self._config["generator"]
 
@@ -357,3 +426,22 @@ class Configuration:
         pool_size = fuzzer["pool_size"]
 
         return Pool(pool_size)
+
+
+    @cached_property
+    def weights(self) -> Dict[str,int]:
+        if not "analysis" in self._config:
+            raise Exception("'analysis' not defined")
+
+        analysis = self._config["analysis"]
+
+        if not "weights" in analysis:
+            raise Exception("'weights' not defined")
+
+        weights_file = analysis["weights"]
+
+        with open(weights_file) as  f:
+            ws = json.load(f)
+
+        return ws
+        

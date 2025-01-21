@@ -11,7 +11,7 @@ from generator import Generator, Configuration
 import logging
 
 logging.getLogger().setLevel(logging.WARN)
-logging.getLogger("generator").setLevel(logging.DEBUG)
+logging.getLogger("generator").setLevel(logging.DEBUG) 
 
 
 def __main():
@@ -29,8 +29,9 @@ def __main():
     # default_config = PROJECT_FOLDER + "/targets/libaom/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/libpcap/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/c-ares/generator.toml"
-    default_config = PROJECT_FOLDER + "/targets/cjson/generator.toml"
+    # default_config = PROJECT_FOLDER +"/targets/cjson/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/zlib/generator.toml"
+    default_config = PROJECT_FOLDER + "/targets/littlecms/generator.toml"
 
     parser = argparse.ArgumentParser(description='Automatic Driver Generator')
     parser.add_argument('--config', type=str, help='The configuration', default=default_config)

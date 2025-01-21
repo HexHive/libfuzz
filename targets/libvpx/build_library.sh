@@ -64,8 +64,8 @@ rm -rf ${build_dir}
 mkdir -p ${build_dir}
 pushd ${build_dir}
 
-export CXXFLAGS="-fsanitize=fuzzer-no-link,address"
-export CFLAGS="-fsanitize=fuzzer-no-link,address"
+export CXXFLAGS="-fsanitize=fuzzer-no-link,address -g"
+export CFLAGS="-fsanitize=fuzzer-no-link,address -g"
 
 # oss-fuzz has 2 GB total memory allocation limit. So, we limit per-allocation
 # limit in libvpx to 1 GB to avoid OOM errors. A smaller per-allocation is

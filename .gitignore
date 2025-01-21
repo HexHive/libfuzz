@@ -1,8 +1,11 @@
 workdir/*
 workdir_*_*/*
 analysis/*
+analysis_old/*
 **/*.pyc
 .vscode/
+results
+crashes
 libfuzz.code-workspace
 
 LLVM/llvm-build
@@ -10,12 +13,21 @@ LLVM/llvm-build
 *.ll
 *.dot
 
+meta/*
+
+fuzzing_campaigns/generate_*_testing_*
+
+fuzzing_campaigns/perc_api*
+
 condition_extractor/src_bkp/*
 condition_extractor/src_bkp/**/*
 
 condition_extractor/node_modules/**/*
 
 selection_main/*
+
+feedback.txt
+feedback_received.txt
 
 ## C gitignore
 # Prerequisites
@@ -62,6 +74,7 @@ selection_main/*
 *.su
 *.idb
 *.pdb
+*.pdf
 
 # Kernel Module Compile Results
 *.mod*
@@ -91,3 +104,11 @@ fuzzing_campaigns/time_budget.csv
 
 
 point_to_test/
+service.log
+
+llvm-project/build
+llvm-project-old
+llvm-project/
+fuzzing_campaigns/weight_logs.txt
+fuzzing_campaigns/source_weight_logs.json
+paths_observed.txt

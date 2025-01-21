@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/var/cache/apt apt-get -q update && \
     bash-completion less apt-utils apt-transport-https curl  \
     ca-certificates gnupg dialog libpixman-1-dev gnuplot-nox \
     nodejs npm graphviz libtinfo-dev libz-dev zip unzip libclang-12-dev \
-    tmux tree gdb jq bc cloc ccache lsb-release \
+    tmux tree gdb jq bc cloc ccache lsb-release lsof \
     && rm -rf /var/lib/apt/lists/*
 
 # Clang dependencies
@@ -59,6 +59,11 @@ RUN --mount=type=cache,target=/var/cache/apt sudo apt-get update && sudo apt-get
     sudo apt-get -y install --no-install-suggests --no-install-recommends \
         gcc g++ libncurses5  clang-12 llvm-12-dev
 
+# gef
+RUN echo "export LC_CTYPE=C.UTF-8" >> ~/.bashrc
+RUN echo "export LC_CTYPE=C.UTF-8" >> ~/.zshrc
+RUN bash -c "$(curl -fsSL https://gef.blah.cat/sh)"
+
 # SVF
 
 RUN --mount=type=cache,target=${HOME}/.ccache/ git clone https://github.com/SVF-tools/SVF.git && \
@@ -70,6 +75,39 @@ RUN cd SVF && ./setup.sh
 
 COPY ./requirements.txt ${HOME}/python/requirements.txt
 RUN cd ${HOME}/python && python3 -m pip install -r requirements.txt
+
+# ------------------------------------------------------------------------------------------------------------------
+# TARGET FOR LIBRARY DEBUG
+FROM libfuzzpp_dev_image AS libfuzzpp_debug
+
+ENV TOOLS_DIR ${HOME}
+ARG target_name=simple_connection
+
+ENV TARGET_NAME ${target_name}
+
+COPY --link ./llvm-project/build ${HOME}/LLVM/
+ENV LLVM_DIR ${HOME}/LLVM
+# ENV LLVM_DIR ${LIBFUZZ}/llvm-project/build
+ENV TARGET ${HOME}/library
+ENV DRIVER_FOLDER ${LIBFUZZ}/workdir/${TARGET_NAME}/drivers
+ENV DRIVER "*"
+
+RUN mkdir -p ${HOME}/${TARGET_NAME}
+WORKDIR ${HOME}/${TARGET_NAME}
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/preinstall.sh ${HOME}/${TARGET_NAME}
+RUN sudo ./preinstall.sh
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/fetch.sh ${HOME}/${TARGET_NAME}
+RUN ./fetch.sh
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/build_library.sh ${HOME}/${TARGET_NAME}
+RUN sed -i 's/-g /-gdwarf-4 /g' ./build_library.sh; 
+RUN sed -i 's/-g\"/-gdwarf-4\"/g' ./build_library.sh
+RUN ./build_library.sh
+COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/compile_driver.sh ${HOME}/${TARGET_NAME}
+RUN sed -i 's/-g /-gdwarf-4 /g' ./compile_driver.sh
+RUN bash -c "$(curl -fsSL https://gef.blah.cat/sh)"
+RUN echo "PROMPT=\"Debug \"\$PROMPT" >> ~/.zshrc
+
+WORKDIR ${LIBFUZZ}
 
 # ------------------------------------------------------------------------------------------------------------------
 # TARGET FOR LIBRARY ANALYSIS
@@ -112,9 +150,11 @@ ARG target_name=simple_connection
 # ARG timeout=10m
 # ARG driver=*.cc
 
-COPY LLVM/update-alternatives-clang.sh .
-RUN sudo ./update-alternatives-clang.sh 12 200
-ENV LLVM_DIR /usr
+# COPY LLVM/update-alternatives-clang.sh .
+# RUN sudo ./update-alternatives-clang.sh 12 200
+# ENV LLVM_DIR /usr
+COPY --link ./llvm-project/build ${HOME}/LLVM/
+ENV LLVM_DIR ${HOME}/LLVM
 
 ENV TARGET_NAME ${target_name}
 ENV TARGET ${HOME}/library
@@ -158,3 +198,12 @@ FROM libfuzzpp_dev_image AS libfuzzpp_fuzzing_campaigns
 COPY LLVM/update-alternatives-clang.sh .
 RUN sudo ./update-alternatives-clang.sh 12 200
 WORKDIR ${LIBFUZZ}
+
+# ------------------------------------------------------------------------------------------------------------------
+# TARGET FOR DYNAMIC DRIVER CREATION
+FROM libfuzzpp_fuzzing AS libfuzzpp_dyndrvgen
+ENV DRIVER_FOLDER ""
+WORKDIR ${LIBFUZZ}
+COPY LLVM/update-alternatives-clang.sh .
+RUN sudo ./update-alternatives-clang.sh 12 200
+CMD ${LIBFUZZ}/targets/start_dyndrvcreation.sh
