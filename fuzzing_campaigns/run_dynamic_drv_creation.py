@@ -30,6 +30,10 @@ tot_api = {
     "libvpx": 35,
     'libtiff': 197,
     "minijail": 97,
+    "libucl": 126,
+    "libdwarf": 334,
+    "libplist": 101,
+    "libsndfile": 34,
     "libhtp": 251
 }
 def source_bash_file(file_path):

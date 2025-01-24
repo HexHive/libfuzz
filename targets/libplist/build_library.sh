@@ -22,7 +22,7 @@ cd "$TARGET/repo"
 echo "./configure"
 
 # Compile library for coverage
-./configure --disable-shared --prefix="$WORK" \
+./configure --without-cython  --prefix="$WORK" --with-tools=no --without-tests --enable-debug \
         CXXFLAGS="-fprofile-instr-generate -fcoverage-mapping -g" \
         CFLAGS="-fprofile-instr-generate -fcoverage-mapping -g"
 
@@ -38,7 +38,7 @@ echo "make clean"
 make -j$(nproc) clean
 
 # Compile library for debugging
-./configure --disable-shared --prefix="$WORK" \
+./configure --without-cython  --prefix="$WORK" --with-tools=no --without-tests --enable-debug  \
         CXXFLAGS="-fsanitize=fuzzer-no-link,address -g" \
         CFLAGS="-fsanitize=fuzzer-no-link,address -g"
 
@@ -54,7 +54,7 @@ echo "make clean"
 make -j$(nproc) clean
 
 # Compile library for fuzzing
-./configure --disable-shared --prefix="$WORK" \
+./configure --without-cython --without-tests --with-tools=no --prefix="$WORK" \
         CXXFLAGS="-fsanitize=fuzzer-no-link,address" \
         CFLAGS="-fsanitize=fuzzer-no-link,address" \
         --disable-debug 

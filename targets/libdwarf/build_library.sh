@@ -27,8 +27,8 @@ mkdir -p "$WORK/lib" "$WORK/include"
 echo "make 1"
 cd "$TARGET/repo"
 echo "cmake"
-mkdir "$TARGET/repo/pthreadpool_cov"
-cd "$TARGET/repo/pthreadpool_cov"
+mkdir "$TARGET/repo/libdwarf_cov"
+cd "$TARGET/repo/libdwarf_cov"
 # Compile library for coverage
 cmake .. -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
         -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
@@ -49,8 +49,8 @@ make install
 mv $WORK/lib/libdwarf.a $WORK/lib/libdwarf_profile.a
 
 cd ..
-mkdir -p "$TARGET/repo/pthreadpool_cluster"
-cd "$TARGET/repo/pthreadpool_cluster"
+mkdir -p "$TARGET/repo/libdwarf_cluster"
+cd "$TARGET/repo/libdwarf_cluster"
 
 cmake .. -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
         -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Debug \
@@ -71,8 +71,8 @@ make install
 mv $WORK/lib/libdwarf.a $WORK/lib/libdwarf_cluster.a
 
 cd ..
-mkdir -p "$TARGET/repo/pthreadpool_fuzz"
-cd "$TARGET/repo/pthreadpool_fuzz"
+mkdir -p "$TARGET/repo/libdwarf_fuzz"
+cd "$TARGET/repo/libdwarf_fuzz"
 
 cmake .. -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off \
         -DENABLE_STATIC=on -DCMAKE_BUILD_TYPE=Release \
