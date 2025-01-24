@@ -57,12 +57,21 @@ case $CONF in
     export ITERATIONS=1
     ;;
   
-  ossllm)
-    export PROJECTS=( "cjson" "libpcap" )
+  ossllmtest)
+    export PROJECTS=( "cjson" "libpcap" "libsndfile" "libucl" "libdwarf" "libplist" )
     export NUM_OF_DRIVERS=( XX  )
     export NUM_OF_APIs=( X )
-    export TIMEOUT=24h
-    export ITERATIONS=5
+    export TIMEOUT=5m
+    export ITERATIONS=1
+    export USE_PER_LIBRARY_TIMEBUDGET=1
+    ;;
+  
+  ossllm)
+    export PROJECTS=( "cjson" "libpcap" "libsndfile" "libucl" "libdwarf" "libplist" )
+    export NUM_OF_DRIVERS=( XX  )
+    export NUM_OF_APIs=( X )
+    export TIMEOUT=10m
+    export ITERATIONS=1
     export USE_PER_LIBRARY_TIMEBUDGET=1
     ;;
 
