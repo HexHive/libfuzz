@@ -171,7 +171,7 @@ COPY --chown=${USERNAME}:${USERNAME}  ./targets/${TARGET_NAME}/build_library.sh 
 RUN ./build_library.sh
 
 # NOTE: start_fuzz_driver.sh finds out its configuration automatically
-WORKDIR ${LIBFUZZ}
+WORKDIR /tmp
 CMD ${LIBFUZZ}/targets/start_fuzz_driver.sh
 
 # ------------------------------------------------------------------------------------------------------------------
