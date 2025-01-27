@@ -1,6 +1,7 @@
 #!/bin/bash
 
-export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" "c-ares" "zlib" "cjson" )
+# export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" "c-ares" "zlib" "cjson" )
+export PROJECTS=( "libdwarf" "libsdnfile" "libplist" )
 # trick to make ${PROJECTS} visible outside
 export PROJECTS_STRING=$(IFS=:; echo "${PROJECTS[*]}")
 export NUM_OF_DRIVERS=( 40 )
@@ -57,15 +58,6 @@ case $CONF in
     export ITERATIONS=1
     ;;
   
-  ossllmtest)
-    export PROJECTS=( "cjson" "libpcap" "libsndfile" "libucl" "libdwarf" "libplist" )
-    export NUM_OF_DRIVERS=( XX  )
-    export NUM_OF_APIs=( X )
-    export TIMEOUT=5m
-    export ITERATIONS=1
-    export USE_PER_LIBRARY_TIMEBUDGET=1
-    ;;
-  
   ossllm)
     export PROJECTS=( "cjson" "libpcap" "libsndfile" "libucl" "libdwarf" "libplist" )
     export NUM_OF_DRIVERS=( XX  )
@@ -96,8 +88,8 @@ case $CONF in
     ;;
 
   grammar)
-    export TIMEOUT=10m
-    export ITERATIONS=2
+    export TIMEOUT=24h
+    export ITERATIONS=5
     export POLICY="constraint_based_grammar"
     # NOTE: these Xs need for run_coverage.sh and run_custer.sh
     export NUM_OF_DRIVERS=( "X" )

@@ -75,6 +75,10 @@ class Factory(ABC):
             a_type_core = a_type.replace("*", "").replace(" ", "")
             
             # some types are fuck'd up. They need to be rebuilt.
+            if a_type_core == "unsignedlonglong":
+                a_type_core = "unsigned long long"
+            if a_type_core == "longlong":
+                a_type_core = "long long"
             if a_type_core == "unsignedlong":
                 a_type_core = "unsigned long"
             if a_type_core == "unsignedint":

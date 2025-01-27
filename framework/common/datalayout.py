@@ -236,6 +236,10 @@ class DataLayout:
             return 8*4
         elif type == "unsigned short":
             return 8*2
+        elif type == "unsigned long long":
+            return 8*8
+        elif type == "long long":
+            return 8*8
         else:
             raise Exception(f"I don't know the size of '{type}'")
 
