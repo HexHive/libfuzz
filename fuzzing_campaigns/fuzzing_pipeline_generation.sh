@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# export CONF=quickcamp; ./run_analysis.sh
+export CONF=quickcamp; ./run_analysis.sh
 
 function store_results_to() {
     DEST_FOLDER=$1
@@ -21,14 +21,11 @@ GEN12_DEEP12=gen12_deep12
 GEN6_DEEP18=gen6_deep18
 
 # dyn generation for 24 hours and no deep
-export CONF=grammar; ./run_dynamic_drv_creation.py; ./run_coverage.sh; ./get_total_library_coverage.sh;
-# export CONF=grammar; ./run_dynamic_drv_creation.py; ./run_coverage.sh; ./run_coverage.sh comulative; ./get_total_library_coverage.sh;
+export CONF=grammar; ./run_dynamic_drv_creation.py; ./run_coverage.sh; ./run_coverage.sh comulative; ./get_total_library_coverage.sh;
 store_results_to ${GEN24_DEEP0}
 
-exit 1
-
 # select best drivers from 18h and deep for 6h
-export CONF=grammar; ./select_stable_drivers_cluster.py -d ${GEN24_DEEP0} -t 18h -k 12
+export CONF=grammar; ./select_stable_drivers_cluster.py -d ${GEN24_DEEP0} -t 18h -k
 export CONF=grammar; ./run_dynamic_drv_deep.py; ./run_coverage.sh
 export CONF=grammar; ./cp_coverage_from_generation_phase.py -d ${GEN24_DEEP0} -t 18h
 export CONF=grammar; ./run_coverage.sh recalciter; ./get_total_library_coverage.sh; 
