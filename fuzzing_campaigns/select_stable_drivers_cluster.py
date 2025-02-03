@@ -2,6 +2,7 @@
 
 import argparse
 import os, sys, subprocess
+import datetime
 
 PROJECT_FOLDER="../"
 sys.path.append(PROJECT_FOLDER)
@@ -53,12 +54,21 @@ def _main():
     n_runs = int(my_conf["ITERATIONS"])
     libraries = my_conf["PROJECTS_STRING"].split(":")
     
+    elapsed_time_libraries_iters = {}
     for lib in libraries:
         best_drivers[lib] = {}
         timebudget_per_libary[lib] = {}
         for r in range(1, n_runs+1):
             result_folder = os.path.join(rootdir, "workdir_X_X", lib, f"iter_{r}")
+
+            start_clustering = datetime.datetime.now()
             drivers_for_deep = clst.cluster_drivers(result_folder, selecting_gen_time)
+            end_clustering = datetime.datetime.now()
+
+            epalsed_time = end_clustering - start_clustering
+
+            elapsed_time_libraries_iters[f"{lib}_{r}"] = epalsed_time
+
             deep_fuzzing_time = total_generation_time-selecting_gen_time
             best_drivers[lib][r] = drivers_for_deep
             if len(drivers_for_deep) == 0:
@@ -69,9 +79,14 @@ def _main():
     if simulate in ["full", "short"]:
         print("[INFO] Only simulation, here the drivers I would select:")
         for lib, drvs in best_drivers.items():
+            accumulated_time = 0
+            accumulated_drivers = 0
             for r in range(1, n_runs+1):
                 tb = timebudget_per_libary[lib][r]
-                print(f"{lib} run {r}: {len(drvs[r])} drivers w/ timebudget {tb}")
+                elapsed_time = elapsed_time_libraries_iters[f'{lib}_{r}']
+                print(f"{lib} run {r}: {len(drvs[r])} drivers w/ timebudget {tb}, clustering time {elapsed_time}")
+                accumulated_time += elapsed_time.total_seconds()
+                accumulated_drivers += len(drvs[r])
                 if simulate == "full":
                     for driver, api_seq in drvs[r]:
                         # n_drivers = d['n_drivers']
@@ -81,6 +96,8 @@ def _main():
                         print(f"{d_path} {api_seq}")
 
                     print("-" * 30)
+            print(f"Average clustering time {accumulated_time/n_runs}")
+            print(f"Average drivers {accumulated_drivers/n_runs}")
 
         exit(0)
         
