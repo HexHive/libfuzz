@@ -71,7 +71,7 @@ def _main():
         for lib, drvs in best_drivers.items():
             for r in range(1, n_runs+1):
                 tb = timebudget_per_libary[lib][r]
-                print(f"{lib} run {r}: {len(drvs)} drivers w/ timebudget {tb}")
+                print(f"{lib} run {r}: {len(drvs[r])} drivers w/ timebudget {tb}")
                 if simulate == "full":
                     for driver, api_seq in drvs[r]:
                         # n_drivers = d['n_drivers']
