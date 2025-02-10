@@ -19,6 +19,10 @@ tot_api = {
     "minijail": 97,
     "pthreadpool": 30,
     "zlib": 88,
+    "libdward": 333,
+    "libplist": 101,
+    "libsndfile": 40,
+    "libucl": 125
 }
 
 def read_drivers_metadata(d):

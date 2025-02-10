@@ -11,7 +11,7 @@ font = {'family' : 'normal',
 
 mpl.rc('font', **font)
 mpl.rcParams['text.usetex'] = True
-mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}']
+mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
 # Data
 generations = list(map(lambda x: r"\textbf{"+x+"}", ['24h', '18h', '12h', '6h']))
 generations.reverse() 
@@ -27,12 +27,15 @@ data["minijail"] = [18.45, 15.48, 16.03, 16.07]
 data["cpufeatures"] = [19.22, 19.22, 19.22, 19.22]
 data["pthreadpool"] = [50.44, 44.21, 36.42, 40.42]
 data["zlib"] = [58.32, 58.83, 46.26, 55.01]
-
+data["libdwarf"] = [18.08, 17.88, 17.89, 17.89]
+data["libplist"] = [33.22, 35.59, 36.00, 37.11]
+data["libsndfile"] = [26.50, 31.75, 35.46, 36.59]
+data["libucl"] = [56.34, 57.02, 57.43, 57.78]
 
 
 
 # Plotting
-fig, ax = plt.subplots(figsize=(10, 7.7))
+fig, ax = plt.subplots(figsize=(13, 9.7))
 
 l = ['solid', 'dotted']
 colors = ['b', 'g', 'r', 'c', 'm', 'k', 'peru']
@@ -47,14 +50,14 @@ for(lib, values) in data.items():
 
 # Labels and Title
 #ax.set_ylim(ymin=0)
-fig.subplots_adjust(top=0.8, left=0.15, bottom=0.14, right=0.98)
+fig.subplots_adjust(top=0.8, left=0.12, bottom=0.27, right=0.98)
 plt.xlabel(r"$\bf{t_{gen}}$")
 plt.ylabel(r'\textbf{Normalized Coverage [\%]}')
 fig.canvas.draw()
 labels = [item.get_text() for item in ax.get_yticklabels()]
 m = map(lambda x: x.replace("default", "bf"), labels)
 ax.set_yticklabels(list(m))
-plt.legend(bbox_to_anchor=(.43, 0.45), markerscale=1.3, loc='upper left', fontsize=25, labelspacing=0.015, borderpad=0.2, handlelength=1.5, handletextpad=0.1, columnspacing=0.2, ncol=2)
+plt.legend(bbox_to_anchor=(-0.05, -0.2), markerscale=1.3, loc='upper left', fontsize=25, labelspacing=0.015, borderpad=0.2, handlelength=1.5, handletextpad=0.1, columnspacing=0.2, ncol=5)
 
 # Show plot
 fig.add_artist(lines.Line2D([0.22,0.87], [0.9, 0.9], color='black', linewidth=2, marker='<', markersize=12, markevery=2))
