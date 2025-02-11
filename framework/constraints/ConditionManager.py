@@ -205,6 +205,23 @@ class ConditionManager:
         # print("get_source_api")
         # from IPython import embed; embed(); exit(1)
 
+
+        # FLAVIO: this is supposed to handle cases where a type T is alias of void* AND a function allocates new T
+        custom_voidp_source = False
+        for api in source_api:
+            cond = self.conditions.get_function_conditions(api.function_name).return_at
+            if self.is_source(cond) and api.return_info.type == "void *":
+                custom_voidp_source = True
+
+        if custom_voidp_source:
+            new_source = []
+            for api in source_api:
+                if all([a.type != "void *" for a in api.arguments_info]):
+                    new_source.append(api)
+            source_api = new_source
+
+        self.custom_voidp_source = custom_voidp_source
+
         self.source_api = source_api
 
     def init_init(self):

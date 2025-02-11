@@ -242,7 +242,8 @@ class RunningContext(Context):
                     raise ConditionUnsat(traceback.format_stack())
         # special case for void* types
         elif (isinstance(type, PointerType) and 
-            type.get_pointee_type() == self.stub_void):
+            type.get_pointee_type() == self.stub_void and 
+            not ConditionManager.instance().custom_voidp_source):
             new_buff = self.create_new_var(self.stub_char_array, cond, False)
             val = new_buff.get_address()
         elif is_init or is_setby:
@@ -1133,6 +1134,7 @@ class RunningContext(Context):
             if b.get_alloctype() == AllocType.STACK:
                 cm = ConditionManager.instance().find_cleanup_method(b, "")
                 if cm != "":
+                    from IPython import embed; embed(); exit(1)
                     clean_up += [CleanBuffer(b, cm)]
 
         return clean_up

@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" "c-ares" "zlib" "cjson" )
-export PROJECTS=( "libdwarf" "libsndfile" "libplist" "libucl" )
+export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "libvpx" "libhtp" "libpcap" "c-ares" "zlib" "cjson" "libdwarf" "libsndfile" "libplist" "libucl" )
 # trick to make ${PROJECTS} visible outside
 export PROJECTS_STRING=$(IFS=:; echo "${PROJECTS[*]}")
 export NUM_OF_DRIVERS=( 40 )
