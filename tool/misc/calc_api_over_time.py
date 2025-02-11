@@ -137,7 +137,7 @@ def _main():
 
         #plt.title("\\texttt{" + t+ "}")
         plt.xlabel('# of drivers', fontsize=label_font)
-        if t == "minijail" or t == "libhtp" or t == "c-ares":
+        if t == "minijail" or t == "libdwarf" or t == "libsndfile" or t == "c-ares":
             plt.ylabel('% of API functions', fontsize=label_font)
         plt.ylim(top=102)
         plt.gca().xaxis.set_major_locator(MaxNLocator(nbins=5))

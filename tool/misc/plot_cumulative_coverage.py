@@ -105,7 +105,7 @@ def _main():
         # plt.locator_params(axis='y', nbins=6)
         # plt.axis.xaxis.axesset_major_locator(plt.MaxNLocator(3))
         plt.xlabel("# of drivers", fontsize=40)
-        if target in ["c-ares", "libhtp", "minijail"]:
+        if target in ["c-ares", "libdwarf", "libsndfile", "minijail"]:
             plt.ylabel("% edge cov.", fontsize=40)
         
         plt.xticks(fontsize=40)

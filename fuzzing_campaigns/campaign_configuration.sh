@@ -57,6 +57,15 @@ case $CONF in
     export TIMEOUT=1h
     export ITERATIONS=1
     ;;
+    
+  ossmanual)
+    export PROJECTS=( "libdwarf" "libsndfile" "libucl"  "libplist" )
+    export NUM_OF_DRIVERS=( XX  )
+    export NUM_OF_APIs=( X  )
+    export TIMEOUT=24h
+    export ITERATIONS=5
+    export USE_PER_LIBRARY_TIMEBUDGET=1
+    ;;
   
   ossllm)
     export PROJECTS=( "cjson" "libpcap" "libsndfile" "libucl" "libdwarf" "libplist" )
