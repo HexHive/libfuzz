@@ -31,7 +31,8 @@ def __main():
     # default_config = PROJECT_FOLDER + "/targets/c-ares/generator.toml"
     # default_config = PROJECT_FOLDER +"/targets/cjson/generator.toml"
     # default_config = PROJECT_FOLDER + "/targets/zlib/generator.toml"
-    default_config = PROJECT_FOLDER + "/targets/libplist/generator.toml"
+    # default_config = PROJECT_FOLDER + "/targets/libplist/generator.toml"
+    default_config = PROJECT_FOLDER + "/targets/libucl/generator.toml"
 
     parser = argparse.ArgumentParser(description='Automatic Driver Generator')
     parser.add_argument('--config', type=str, help='The configuration', default=default_config)
