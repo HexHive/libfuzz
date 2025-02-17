@@ -25,7 +25,7 @@ export CONF=grammar; ./run_dynamic_drv_creation.py; ./run_coverage.sh; ./run_cov
 store_results_to ${GEN24_DEEP0}
 
 # select best drivers from 18h and deep for 6h
-export CONF=grammar; ./select_stable_drivers_cluster.py -d ${GEN24_DEEP0} -t 18h -k 12
+export CONF=grammar; ./select_stable_drivers_cluster.py -d ${GEN24_DEEP0} -t 18h -k
 export CONF=grammar; ./run_dynamic_drv_deep.py; ./run_coverage.sh
 export CONF=grammar; ./cp_coverage_from_generation_phase.py -d ${GEN24_DEEP0} -t 18h
 export CONF=grammar; ./run_coverage.sh recalciter; ./get_total_library_coverage.sh; 

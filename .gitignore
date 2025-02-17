@@ -19,6 +19,7 @@ fuzzing_campaigns/generate_*_testing_*
 
 fuzzing_campaigns/gen*_deep*
 fuzzing_campaigns/perc_api*
+fuzzing_campaigns/fix*
 
 condition_extractor/src_bkp/*
 condition_extractor/src_bkp/**/*

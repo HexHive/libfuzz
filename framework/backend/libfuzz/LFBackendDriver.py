@@ -480,7 +480,20 @@ class LFBackendDriver(BackendDriver):
         
         depth = DataLayout.get_ptr_level(buff.get_type()) - 1
         v = self.value_emit(buff[0], depth)
-        return f"{v} = 0;"
+
+        shadow_update = ""
+        if buff.get_alloctype() == AllocType.HEAP:
+            x_idx = 0
+            # x_token = self.clean_token(buff.get_token()) + "_shadow"
+            # x_value = f"{x_token}[{x_idx}][i]"            
+            x_token = self.clean_token(buff.get_token()) + "_shadow"
+            x_value = f"{x_token}[{x_idx}]"
+            shadow_update = f"\n\t{x_value} = 0;"
+
+        # print("setnull_emit")
+        # from IPython import embed; embed(); exit(1)
+
+        return f"{v} = 0;{shadow_update}"
 
     # CleanBuffer
     def cleanbuffer_emit(self, cleanbuffer: CleanBuffer) -> str:
@@ -491,8 +504,6 @@ class LFBackendDriver(BackendDriver):
 
         # NOTE: this is super ugly but not sure how to do otherwise
         num_extra_brackets = buff.type.token.count("*")-1
-        # print("cleanbuffer_emit")
-        # from IPython import embed; embed(); exit(1)
 
         extra_brackets = "[0]" * num_extra_brackets
 
@@ -501,6 +512,9 @@ class LFBackendDriver(BackendDriver):
             v_stack = self.clean_token(buff.token)
             return f"{cleanup_method}({v_stack});"
         elif buff.alloctype == AllocType.HEAP:
+            # print("cleanbuffer_emit 2")
+            # from IPython import embed; embed(); exit(1)
+
             # add a shadow copy for the array
             x_idx = 0
             x_token = self.clean_token(buff.get_token()) + "_shadow"
@@ -743,13 +757,16 @@ class LFBackendDriver(BackendDriver):
 
         arg_vars_code = ", ".join(str_vals)
 
-
+        ret_buff = None
         if isinstance(ret_var, Address):
             ret_var_type = ret_var.get_variable().get_type()
+            ret_buff = ret_var.get_variable().get_buffer()
         elif isinstance(ret_var, NullConstant):
             ret_var_type = ret_var.type
+            ret_buff = None
         else:
             ret_var_type = ret_var.get_type()
+            ret_buff = ret_var.get_buffer()
 
         if ret_var_type == Type("void"):
             return f"{function_name}({arg_vars_code});"
@@ -770,7 +787,16 @@ class LFBackendDriver(BackendDriver):
             # type_emit = self.clean_token()
             cast_operator = f"({self.full_type_emit(ret_type, False)})"
 
-        return f"{ret_var_code} = {cast_operator} {function_name}({arg_vars_code});"
+        shadow_update = ""
+        if ret_buff != None and ret_buff.get_alloctype() == AllocType.HEAP:
+            x_idx = 0
+            # x_token = self.clean_token(buff.get_token()) + "_shadow"
+            # x_value = f"{x_token}[{x_idx}][i]"            
+            x_token = self.clean_token(ret_buff.get_token()) + "_shadow"
+            x_value = f"{x_token}[{x_idx}]"
+            shadow_update = f"\n\t{x_value} = {ret_var_code};"
+
+        return f"{ret_var_code} = {cast_operator} {function_name}({arg_vars_code});{shadow_update}"
     
     # def is_pointer_function(self, type) -> bool:
     #     return isinstance(type, PointerType) and type.get_base_type().to_function
