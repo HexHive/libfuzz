@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/var/cache/apt apt-get -q update && \
     bash-completion less apt-utils apt-transport-https curl  \
     ca-certificates gnupg dialog libpixman-1-dev gnuplot-nox \
     nodejs npm graphviz libtinfo-dev libz-dev zip unzip libclang-12-dev \
-    tmux tree gdb jq bc cloc ccache lsb-release lsof \
+    tmux tree gdb jq bc cloc ccache lsb-release lsof cargo \
     && rm -rf /var/lib/apt/lists/*
 
 # Clang dependencies
