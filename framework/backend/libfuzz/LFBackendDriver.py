@@ -487,7 +487,10 @@ class LFBackendDriver(BackendDriver):
             # x_token = self.clean_token(buff.get_token()) + "_shadow"
             # x_value = f"{x_token}[{x_idx}][i]"            
             x_token = self.clean_token(buff.get_token()) + "_shadow"
+            # from IPython import embed; embed(); exit(1)
             x_value = f"{x_token}[{x_idx}]"
+            if depth > 0:
+                x_value += "[0]"
             shadow_update = f"\n\t{x_value} = 0;"
 
         # print("setnull_emit")
