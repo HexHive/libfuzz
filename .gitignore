@@ -31,6 +31,8 @@ selection_main/*
 feedback.txt
 feedback_received.txt
 
+analysis_result.zip
+
 ## C gitignore
 # Prerequisites
 *.d

@@ -8,6 +8,6 @@ if [ -d "analysis" ]; then
 fi
 
 # add link to Nico's server
-# wget https://drive.google.com/file/d/1enJJL0dlBxs9T5TzpajOUa6XpFckaccW/view?usp=sharing
+wget https://zenodo.org/records/15174089/files/analysis_result.zip
 
 unzip analysis_result.zip 
