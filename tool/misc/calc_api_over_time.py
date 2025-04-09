@@ -19,11 +19,18 @@ tot_api = {
     "minijail": 97,
     "pthreadpool": 30,
     "zlib": 88,
-    "libdward": 333,
+    "libdwarf": 333,
     "libplist": 101,
     "libsndfile": 40,
     "libucl": 125
 }
+
+def get_runs(rootdir, is_grammar):
+    
+    if is_grammar:
+        return len(os.listdir(rootdir))
+    
+    raise Exception("get_runs w/o is_grammar not implemented yet")
 
 def read_drivers_metadata(d):
     
@@ -87,7 +94,7 @@ def _main():
     plot_index = 0
     for t, max in tot_api.items():
         print(t)
-        iterations = 5
+        iterations = get_runs(os.path.join(root_folder, t), True)
         x = [0] * iterations
         y = [0] * iterations
         for iter in range(0, iterations): 

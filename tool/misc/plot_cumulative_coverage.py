@@ -38,7 +38,7 @@ def _main():
     for target in all_targets:
         rootdir = os.path.join(workdir, target)
         
-        n_runs = 2 # get_runs(rootdir, is_grammar)
+        n_runs = get_runs(rootdir, is_grammar)
         
         data = []
         
