@@ -30,7 +30,7 @@ def _main():
     parser = argparse.ArgumentParser(description='Select stable drivers')
     parser.add_argument('-rootdir', '-d', type=str, 
                         help='Driver Folder', required=True)
-    parser.add_argument('-gen_time_ratio', '-t', type=int, default=0.5,
+    parser.add_argument('-gen_time_ratio', '-t', type=float, default=0.5,
                         help='Ratio of tgen to total fuzzing session for selecting the drivers to cluster', required=True)
     parser.add_argument('-simulate', '-s', choices=['full', 'short'], const='full', nargs='?',
                         help='Simulation only, not moving files around', 

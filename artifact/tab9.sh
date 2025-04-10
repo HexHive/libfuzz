@@ -2,8 +2,6 @@
 
 # run experiments w/o bias
 
-../fuzzing_campaigns/fuzzing_pipeline_generation_nobias.sh
-
 export CONF=grammar 
 source ../fuzzing_campaigns/campaign_configuration.sh
 
