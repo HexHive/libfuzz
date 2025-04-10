@@ -30,8 +30,8 @@ def _main():
     parser = argparse.ArgumentParser(description='Select stable drivers')
     parser.add_argument('-rootdir', '-d', type=str, 
                         help='Driver Folder', required=True)
-    parser.add_argument('-selectig_gen_time', '-t', type=str, default="12h",
-                        help='Time interval for selecting the drivers to cluster', required=True)
+    parser.add_argument('-gen_time_ratio', '-t', type=int, default=0.5,
+                        help='Ratio of tgen to total fuzzing session for selecting the drivers to cluster', required=True)
     parser.add_argument('-simulate', '-s', choices=['full', 'short'], const='full', nargs='?',
                         help='Simulation only, not moving files around', 
                         required=False)
@@ -42,12 +42,12 @@ def _main():
     rootdir = args.rootdir
     simulate = args.simulate
     # keepcorpus = args.keepcorpus
-    selecting_gen_time = normalize_time_boudget(args.selectig_gen_time)
-    time_window = timedelta(seconds=selecting_gen_time)
     
     # # I do not like this mix'd configuration
     my_conf = source_bash_file("campaign_configuration.sh")
-    # total_generation_time = normalize_time_boudget(my_conf["TIMEOUT"])
+    total_generation_time = normalize_time_boudget(my_conf["TIMEOUT"])
+    selecting_gen_time = total_generation_time * args.gen_time_ratio
+    time_window = timedelta(seconds=selecting_gen_time)
     n_runs = int(my_conf["ITERATIONS"])
     libraries = my_conf["PROJECTS_STRING"].split(":")
     
