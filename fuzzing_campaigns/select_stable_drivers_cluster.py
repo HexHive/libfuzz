@@ -3,6 +3,7 @@
 import argparse
 import os, sys, subprocess
 import datetime
+from prettytable import PrettyTable
 
 PROJECT_FOLDER="../"
 sys.path.append(PROJECT_FOLDER)
@@ -32,7 +33,7 @@ def _main():
                         help='Driver Folder', required=True)
     parser.add_argument('-selectig_gen_time', '-t', type=str, default="12h",
                         help='Time interval for selecting the drivers to cluster', required=True)
-    parser.add_argument('-simulate', '-s', choices=['full', 'short'], const='full', nargs='?',
+    parser.add_argument('-simulate', '-s', choices=['full', 'short', 'table'], const='full', nargs='?',
                         help='Simulation only, not moving files around', 
                         required=False)
     parser.add_argument('-keepcorpus', '-k', action='store_true', help='Keep corpus from previous campaign')
@@ -47,6 +48,8 @@ def _main():
     best_drivers = {}
 
     timebudget_per_libary = {}
+
+    # from IPython import embed; embed(); exit(1)
     
     # I do not like this mix'd configuration
     my_conf = source_bash_file("campaign_configuration.sh")
@@ -76,7 +79,11 @@ def _main():
             else:
                 timebudget_per_libary[lib][r] = f"{int(deep_fuzzing_time/len(drivers_for_deep))}s"
 
-    if simulate in ["full", "short"]:
+    t = None
+    if simulate == "table":
+        t = PrettyTable(['Library', 'tot. drv.', 'sel. drv', 'avg [s]'])
+
+    if simulate in ["full", "short", "table"]:
         print("[INFO] Only simulation, here the drivers I would select:")
         for lib, drvs in best_drivers.items():
             accumulated_time = 0
@@ -84,7 +91,8 @@ def _main():
             for r in range(1, n_runs+1):
                 tb = timebudget_per_libary[lib][r]
                 elapsed_time = elapsed_time_libraries_iters[f'{lib}_{r}']
-                print(f"{lib} run {r}: {len(drvs[r])} drivers w/ timebudget {tb}, clustering time {elapsed_time}")
+                if simulate != "table":
+                    print(f"{lib} run {r}: {len(drvs[r])} drivers w/ timebudget {tb}, clustering time {elapsed_time}")
                 accumulated_time += elapsed_time.total_seconds()
                 accumulated_drivers += len(drvs[r])
                 if simulate == "full":
@@ -96,8 +104,14 @@ def _main():
                         print(f"{d_path} {api_seq}")
 
                     print("-" * 30)
-            print(f"Average clustering time {accumulated_time/n_runs}")
-            print(f"Average drivers {accumulated_drivers/n_runs}")
+            if simulate == "table":
+                t.add_row([lib, len(drvs[r]), int(accumulated_drivers/n_runs), accumulated_time/n_runs])
+            else:
+                print(f"Average clustering time {accumulated_time/n_runs}")
+                print(f"Average drivers {accumulated_drivers/n_runs}")
+
+        if t is not None:
+            print(t)
 
         exit(0)
         
