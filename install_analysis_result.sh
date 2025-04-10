@@ -7,7 +7,7 @@ if [ -d "analysis" ]; then
   exit 0
 fi
 
-# add link to Nico's server
 wget https://zenodo.org/records/15174089/files/analysis_result.zip
 
 unzip analysis_result.zip 
+rm -drf analysis_result.zip 
