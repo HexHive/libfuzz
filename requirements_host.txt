@@ -3,3 +3,4 @@ scikit-learn
 Levenshtein
 networkx
 tomli
+PrettyTable

@@ -25,6 +25,6 @@ while IFS= read -r line; do
     fi
 done < "$REQ_FILE"
 
-cd docker
-./build_llvm.sh
-cd -
+# cd docker
+# ./build_llvm.sh
+# cd -
