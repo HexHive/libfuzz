@@ -3,10 +3,11 @@
 
 import os
 import csv
-from tabulate import tabulate
+from prettytable import PrettyTable
 
 base_dir = "../fuzzing_campaigns"  # Change if needed
-folders = [d for d in os.listdir(base_dir) if d.startswith("gen") and os.path.isdir(os.path.join(base_dir, d))]
+# folders = [d for d in os.listdir(base_dir) if d.startswith("gen") and os.path.isdir(os.path.join(base_dir, d))]
+folders = ["gen24_deep0", "gen18_deep6", "gen12_deep12", "gen6_deep18"] 
 
 data = {}
 libraries = set()
@@ -27,13 +28,13 @@ for folder in sorted(folders):
 
 # Build table
 headers = ["Library"] + sorted(data.keys())
-table = []
+table = PrettyTable(headers)
 
 for lib in sorted(libraries):
     row = [lib]
     for folder in sorted(data.keys()):
         row.append(data[folder].get(lib, "-"))
-    table.append(row)
+    table.add_row(row)
 
 # Print table
-print(tabulate(table, headers=headers, tablefmt="fancy_grid"))
+print(table)
