@@ -26,40 +26,40 @@ function store_results_to() {
 }
 
 if [ "${ONLY_GENERATION}"]; then
-    GEN24_DEEP0=gen24_deep0_nobias
+    ONLY_GEN=gen24_deep0_nobias
 else
-    GEN24_DEEP0=gen24_deep0
+    ONLY_GEN=gen24_deep0
 fi
 
-GEN18_DEEP6=gen18_deep6
-GEN12_DEEP12=gen12_deep12
-GEN6_DEEP18=gen6_deep18
 
 # dyn generation for 24 hours and no deep
-export CONF=${CONFIG_NAME}; ./run_dynamic_drv_creation.py; ./run_coverage.sh; ./run_coverage.sh comulative; ./get_total_library_coverage.sh;
-store_results_to ${GEN24_DEEP0}
+export CONF=${CONFIG_NAME};
+source campaign_configuration.sh
+echo "TIMEOUT=${TIMEOUT}"
+UNIT=${TIMEOUT: -1}
+TIMEOUT_NO_UNIT=${TIMEOUT::-1}
+ONLY_GEN=gen${TIMEOUT_NO_UNIT}_deep0
 
-if [ "${ONLY_GENERATION}"]; then
-    exit 0
-fi
+./run_dynamic_drv_creation.py; ./run_coverage.sh; ./run_coverage.sh comulative; ./get_total_library_coverage.sh;
+store_results_to ${ONLY_GEN}
 
-# select best drivers from 18h and deep for 6h
-export CONF=${CONFIG_NAME}; ./select_stable_drivers_cluster.py -d ${GEN24_DEEP0} -t 0.75 -k
-export CONF=${CONFIG_NAME}; ./run_dynamic_drv_deep.py; ./run_coverage.sh
-export CONF=${CONFIG_NAME}; ./cp_coverage_from_generation_phase.py -d ${GEN24_DEEP0} -t 0.75
-export CONF=${CONFIG_NAME}; ./run_coverage.sh recalciter; ./get_total_library_coverage.sh; 
-store_results_to ${GEN18_DEEP6}
+# From the number of interval and the TIMEOUT value, create the campaigns names
+for (( i=0; i<${INTERVAL}; i++ ))
+do
+    echo "STEP iteration: ${i}"
+    # Calculate the start and end time for each interval
+    RATIO=$(awk "BEGIN { print (${i}+1) * 1/(${INTERVAL}+1)}")
+    TTEST=$(awk "BEGIN { print (${i}+1) * 1/(${INTERVAL}+1) * ${TIMEOUT_NO_UNIT}}")
+    TGEN=$(awk "BEGIN { print (1-(${i}+1) * 1/(${INTERVAL}+1)) * ${TIMEOUT_NO_UNIT}}")
 
-# select best drivers from 12h and deep for 12h
-export CONF=${CONFIG_NAME}; ./select_stable_drivers_cluster.py -d ${GEN24_DEEP0} -t 0.5 -k
-export CONF=${CONFIG_NAME}; ./run_dynamic_drv_deep.py; ./run_coverage.sh
-export CONF=${CONFIG_NAME}; ./cp_coverage_from_generation_phase.py -d ${GEN24_DEEP0} -t 0.5
-export CONF=${CONFIG_NAME}; ./run_coverage.sh recalciter; ./get_total_library_coverage.sh; 
-store_results_to ${GEN12_DEEP12}
-
-# select best drivers from 6h and deep for 18h
-export CONF=${CONFIG_NAME}; ./select_stable_drivers_cluster.py -d ${GEN24_DEEP0} -t 0.25 -k
-export CONF=${CONFIG_NAME}; ./run_dynamic_drv_deep.py; ./run_coverage.sh
-export CONF=${CONFIG_NAME}; ./cp_coverage_from_generation_phase.py -d ${GEN24_DEEP0} -t 0.25
-export CONF=${CONFIG_NAME}; ./run_coverage.sh recalciter; ./get_total_library_coverage.sh; 
-store_results_to ${GEN6_DEEP18}
+    # Create the campaign name
+    CAMPAIGN_NAME="gen${TGEN}_deep${TTEST}"
+    
+    # Print the campaign name
+    echo "Campaign name: ${CAMPAIGN_NAME}"
+    export CONF=${CONFIG_NAME}; ./select_stable_drivers_cluster.py -d ${ONLY_GEN} -t ${RATIO} -k
+    export CONF=${CONFIG_NAME}; ./run_dynamic_drv_deep.py; ./run_coverage.sh
+    export CONF=${CONFIG_NAME}; ./cp_coverage_from_generation_phase.py -d ${ONLY_GEN} -t ${RATIO}
+    export CONF=${CONFIG_NAME}; ./run_coverage.sh recalciter; ./get_total_library_coverage.sh; 
+    store_results_to ${CAMPAIGN_NAME}
+done
