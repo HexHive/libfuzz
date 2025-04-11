@@ -8,7 +8,7 @@ for project in "${PROJECTS[@]}"; do
 done
 
 echo "[INFO] Waiting for dockers to terminate..."
-sleep 5m
+sleep 10s
 
 for project in "${PROJECTS[@]}"; do
     docker wait libpp-analysis-$project
