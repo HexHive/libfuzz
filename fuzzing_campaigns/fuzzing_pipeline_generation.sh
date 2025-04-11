@@ -28,7 +28,7 @@ function store_results_to() {
 if [ "${ONLY_GENERATION}" ]; then
     GEN24_DEEP0=gen24_deep0_nobias
 else
-    ONLY_GEN=gen24_deep0
+    GEN24_DEEP0=gen24_deep0
 fi
 
 
