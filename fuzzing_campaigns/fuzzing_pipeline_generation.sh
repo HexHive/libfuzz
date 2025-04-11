@@ -25,7 +25,7 @@ function store_results_to() {
     fi
 }
 
-if [ "${ONLY_GENERATION}"]; then
+if [ "${ONLY_GENERATION}" ]; then
     GEN24_DEEP0=gen24_deep0_nobias
 else
     GEN24_DEEP0=gen24_deep0
@@ -39,7 +39,7 @@ GEN6_DEEP18=gen6_deep18
 export CONF=${CONFIG_NAME}; ./run_dynamic_drv_creation.py; ./run_coverage.sh; ./run_coverage.sh comulative; ./get_total_library_coverage.sh;
 store_results_to ${GEN24_DEEP0}
 
-if [ "${ONLY_GENERATION}"]; then
+if [ "${ONLY_GENERATION}" ]; then
     exit 0
 fi
 
