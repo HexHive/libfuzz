@@ -6,13 +6,17 @@ import matplotlib.text as text
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import csv
-# font = {'family' : 'normal',
-#        'weight' : 'bold',
-#        'size'   : 30}
+try:
+    font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 30}
 
-# mpl.rc('font', **font)
-# mpl.rcParams['text.usetex'] = True
-# mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
+    mpl.rc('font', **font)
+    mpl.rcParams['text.usetex'] = True
+    mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
+except:
+    print("[INFO] LaTeX not detected, keep going without")
+    pass
 import argparse
 import os
 parser = argparse.ArgumentParser(description='Plotting script')
