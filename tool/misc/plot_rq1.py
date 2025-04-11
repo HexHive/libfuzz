@@ -6,13 +6,13 @@ import matplotlib.text as text
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import csv
-#font = {'family' : 'normal',
+# font = {'family' : 'normal',
 #        'weight' : 'bold',
 #        'size'   : 30}
-#
-#mpl.rc('font', **font)
-#mpl.rcParams['text.usetex'] = True
-#mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
+
+# mpl.rc('font', **font)
+# mpl.rcParams['text.usetex'] = True
+# mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
 import argparse
 import os
 parser = argparse.ArgumentParser(description='Plotting script')
@@ -95,6 +95,6 @@ fig.add_artist(text.Text(0.71, 0.94, r"\textbf{more drivers}"), )
 fig.add_artist(text.Text(0.11, 0.94, r"\textbf{less drivers}"), )
 fig.add_artist(text.Text(0.71, 0.84, r"\textbf{less testing}"), )
 fig.add_artist(text.Text(0.11, 0.84, r"\textbf{more testing}"), )
-plt.savefig('fig3.png')
+# plt.savefig('fig3.png')
 plt.savefig('fig3.pdf')
-plt.show()
+# plt.show()

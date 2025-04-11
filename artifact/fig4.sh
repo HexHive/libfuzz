@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CONF=grammar 
+export CONF=grammar_quick 
 source ../fuzzing_campaigns/campaign_configuration.sh
 
 # echo ${PROJECTS_STRING}

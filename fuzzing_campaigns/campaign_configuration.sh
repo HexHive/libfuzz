@@ -5,7 +5,6 @@ export PROJECTS=( "cpu_features" "libtiff" "minijail" "pthreadpool" "libaom" "li
 export PROJECTS_STRING=$(IFS=:; echo "${PROJECTS[*]}")
 export NUM_OF_DRIVERS=( 40 )
 export NUM_OF_APIs=( 2 4 8 16 32  )
-export INTERVAL=3
 export NUM_OF_SEEDS=1
 export POLICY="constraint_based"
 # export MAX_CPUs=6

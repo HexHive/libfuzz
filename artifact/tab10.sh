@@ -2,7 +2,7 @@
 
 cd ../fuzzing_campaigns
 
-export CONF=grammar
+export CONF=grammar_quick
 source campaign_configuration.sh
 
 GEN24_DEEP0=./gen24_deep0
