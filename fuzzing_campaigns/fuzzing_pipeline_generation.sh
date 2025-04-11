@@ -28,12 +28,9 @@ function store_results_to() {
 if [ "${ONLY_GENERATION}" ]; then
     GEN24_DEEP0=gen24_deep0_nobias
 else
-    GEN24_DEEP0=gen24_deep0
+    ONLY_GEN=gen24_deep0
 fi
 
-GEN18_DEEP6=gen18_deep6
-GEN12_DEEP12=gen12_deep12
-GEN6_DEEP18=gen6_deep18
 
 # dyn generation for 24 hours and no deep
 export CONF=${CONFIG_NAME}; ./run_dynamic_drv_creation.py; ./run_coverage.sh; ./run_coverage.sh comulative; ./get_total_library_coverage.sh;
